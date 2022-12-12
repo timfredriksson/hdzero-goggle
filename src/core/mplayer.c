@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <pthread.h>
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "style.h"
 #include "mplayer.h"
 #include "common.hh"

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "lvgl/lvgl.h"      
+ #include "lvgl.h"      
 #include "../player/media.h"
 
 

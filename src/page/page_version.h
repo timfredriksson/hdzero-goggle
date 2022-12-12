@@ -2,7 +2,7 @@
 #define _PAGE_VERSION_H
 
 
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "page_common.h"
 
 lv_obj_t *page_version_create(lv_obj_t *parent, struct panel_arr *arr);

@@ -1,6 +1,6 @@
 #ifndef _STYLE_H
 #define _STYLE_H
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 
 extern lv_style_t style_rootmenu;
 extern lv_style_t style_submenu;

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "statusbar.h"
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "page_common.h"
 #include "playback.h"
 #include "style.h"

@@ -1,9 +1,11 @@
-#!/bin/sh
+#!/bin/bash
+set -e
 
-if [ ! -d build ]
-then
-	mkdir build
-else
-	rm build/* -rf
+if [[ ! -d toolchain ]]; then
+	echo "downloading toolchain..."
+	mkdir toolchain
+	wget -qO- http://musl.cc/arm-linux-musleabihf-cross.tgz | tar xz -C toolchain
 fi
-cd build && cmake .. -DCMAKE_TOOLCHAIN_FILE=../toolchain.cmake
+
+rm -rf build && mkdir build
+cmake . --toolchain=toolchain.cmake -Bbuild
