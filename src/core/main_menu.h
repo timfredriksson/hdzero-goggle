@@ -5,7 +5,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "../page/page_common.h"
 
 typedef struct {

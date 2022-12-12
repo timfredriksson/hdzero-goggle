@@ -2,7 +2,7 @@
 #define _OSD_H
 
 #include <stdbool.h>
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "defines.h"
 
 #define OSD_VNUM 32  

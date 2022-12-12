@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include "defines.h"
-#include "lvgl/lvgl.h"      
+#include "lvgl.h"      
 
 #define DIAL_KEY_UP     1
 #define DIAL_KEY_DOWN   2

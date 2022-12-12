@@ -2,7 +2,7 @@
 #define _PAGE_SCANNOW_H
 
 
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 lv_obj_t *page_scannow_create(lv_obj_t *parent);
 
 int scan(void);

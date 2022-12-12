@@ -1,0 +1,5 @@
+--- a/config.sub
++++ b/config.sub
+@@ -1363,1 +1363,1 @@
+-	      | -linux-newlib* | -linux-uclibc* \
++	      | -linux-newlib* | -linux-uclibc* | -musleabihf* \

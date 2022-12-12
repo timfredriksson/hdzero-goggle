@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "main_menu.h"
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 
 #include "style.h"
 #include "porting.h"

@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <pthread.h>
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "self_test.h"
 #include "main_menu.h"
 #include "statusbar.h"

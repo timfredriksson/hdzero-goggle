@@ -9,7 +9,7 @@
 #define TOP_TEMPERATURE_RISKH  500  //
 #define TOP_TEMPERATURE_NORM   400  //
 
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "page_common.h"
 
 lv_obj_t *page_fans_create(lv_obj_t *parent, struct panel_arr *arr);

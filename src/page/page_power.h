@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "page_common.h"
 lv_obj_t *page_power_create(lv_obj_t *parent, struct panel_arr *arr);
 void set_voltage(int val);

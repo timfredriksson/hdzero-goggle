@@ -10,7 +10,7 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include "common.hh"
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "msp_displayport.h"
 #include "../driver/mcp3021.h"
 #include "../driver/nct75.h"

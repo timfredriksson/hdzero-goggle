@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "imagesetting.h"
 #include "oled.h"
 #include "page_common.h"

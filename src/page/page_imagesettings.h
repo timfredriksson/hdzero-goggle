@@ -2,7 +2,7 @@
 #define _PAGE_IMAGESETTINGS_H
 
 
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "page_common.h"
 lv_obj_t *page_imagesettings_create(lv_obj_t *parent, struct panel_arr *arr);
 

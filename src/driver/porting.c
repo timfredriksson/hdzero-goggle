@@ -4,7 +4,7 @@
 
 #include "porting.h"
 #include "fbtools.h"
-#include "lvgl/lvgl.h"
+ #include "lvgl.h"
 #include "../core/common.hh"
 
 #define DISP_HOR_RES (1920)
