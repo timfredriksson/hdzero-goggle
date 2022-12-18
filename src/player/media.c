@@ -1,7 +1,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "play"
 #include "media.h"
-#include <plat_log.h>
+#include <log/log.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -139,7 +139,7 @@ void *thread_media(void *params)
 	{
         if(!media) break;
         //if(media->is_media_thread_exit) 
-        //    printf("is_media_thread_exit = 1\n");
+        //    LOGI("is_media_thread_exit = 1");
 
 		if(media->is_media_thread_exit)
 			break;
@@ -156,7 +156,7 @@ void *thread_media(void *params)
         pthread_mutex_unlock(&playCtx->mutex);
 
         //if(media->is_media_thread_exit) 
-        //    printf("is_media_thread_exit = 2\n");
+        //    LOGI("is_media_thread_exit = 2");
 
 		info.playing_time =playCtx->playingTime; 
 		info.duration =playCtx->dmx->msDuration; 
@@ -214,13 +214,13 @@ media_t *media_instantiate(char *filename, notify_cb_t notify)
 
     playCtx->vv = vdec2vo_initSys();
     if( playCtx->vv == NULL ) {
-        aloge("create vdec2vo failed");
+        LOGE("create vdec2vo failed");
         goto failed;
     }
 
     playCtx->dmx = awdmx_open(filename);
     if( playCtx->dmx == NULL ) {
-        aloge("create vdec2vo failed");
+        LOGE("create vdec2vo failed");
         goto failed;
     }
     else {
@@ -243,18 +243,18 @@ media_t *media_instantiate(char *filename, notify_cb_t notify)
         ret = vdec2vo_prepare(playCtx->vv, &vvParams);
     }
     if( ret != 0 ) {
-        aloge("prepare vdec2vo failed");
+        LOGE("prepare vdec2vo failed");
         goto failed;
     }
 
     awdmx_bindVdecAndClock(playCtx->dmx, playCtx->vv->vdecChn, playCtx->vv->clkChn);
 
-    aloge("ready to play");
+    LOGE("ready to play");
 	media->is_media_thread_exit = false;
 	ret = pthread_create( &pid, NULL, thread_media, (void *)media);
 	if(ret)
 	{
-		aloge("create thread media failed, exit");
+		LOGE("create thread media failed, exit");
 		return NULL;
 	}
 	media->pid = pid;
@@ -264,7 +264,7 @@ failed:
     vdec2vo_deinitSys(playCtx->vv);
     pthread_mutex_destroy(&playCtx->mutex);
     free(playCtx);
-    alogd("exit done");
+    LOGD("exit done");
 
     return NULL;
 }

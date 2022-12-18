@@ -2,7 +2,7 @@
 #include <stdlib.h>
  #include <unistd.h>
 #include "i2c.h"
-#include "../core/common.hh"
+#include "../core/common.h"
 
 void TP2825_close()
 {

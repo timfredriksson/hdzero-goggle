@@ -10,7 +10,7 @@
 #include "osd.h"
 #include "input_device.h"
 #include "ht.h"
-#include "common.hh"
+#include "common.h"
 #include "../driver/porting.h"
 #include "../driver/mcp3021.h"
 #include "../driver/nct75.h"
@@ -100,7 +100,7 @@ static void check_hdzero_signal(int vtmg_change)  //fix me. ntant, Need to consi
 	//Analog
 	if(g_source_info.source >= 2) {
 		if(vtmg_change && is_recording) {
-			Printf("AV VTMG change\n");
+			LOGI("AV VTMG change");
 			rbtn_click(1,1);
 			rbtn_click(1,2);
 		}
@@ -110,7 +110,7 @@ static void check_hdzero_signal(int vtmg_change)  //fix me. ntant, Need to consi
 	is_valid = rx_status[0].rx_valid || rx_status[1].rx_valid;
 
 	if(vtmg_change) {
-		Printf("VTMG change\n");
+		LOGI("VTMG change");
 		rbtn_click(1,1);
 		cnt = 0;
 	}
@@ -120,7 +120,7 @@ static void check_hdzero_signal(int vtmg_change)  //fix me. ntant, Need to consi
 			cnt++;
 			if(cnt >= SIGNAL_LOSS_DURATION_THR) {
 				cnt = 0;
-				Printf("Signal lost\n");
+				LOGI("Signal lost");
 				rbtn_click(1,1);
 			}
 		}
@@ -132,7 +132,7 @@ static void check_hdzero_signal(int vtmg_change)  //fix me. ntant, Need to consi
 			cnt++;
 			if(cnt >= SIGNAL_ACCQ_DURATION_THR) {
 				cnt = 0;
-				Printf("Signal accquired\n");
+				LOGI("Signal accquired");
 				rbtn_click(1,2);
 			}
 		}

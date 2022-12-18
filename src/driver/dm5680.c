@@ -22,7 +22,7 @@
 #include <unistd.h>  /* UNIX Standard Definitions 	   */
 #include <errno.h>   /* ERROR Number Definitions           */
 
-#include "common.hh"
+#include "common.h"
 #include "page_common.h"
 #include "msp_displayport.h"
 #include "../core/osd.h"
@@ -90,7 +90,7 @@ void uart_parse(uint8_t sel,uint8_t* state, uint8_t* len, uint8_t* payload,uint8
 	pkt_cnt = uart_parse_core(uart_buf,uart_buf_rptr,uart_buf_wptr, state,len,payload,payload_ptr);
 	ptr = payload;
 	while(pkt_cnt--) {
-		//Printf("UART%d:Cmd=%x,len=%x,Value=%x\n",sel+1,ptr[1],ptr[0],ptr[2]);
+		//LOGI("UART%d:Cmd=%x,len=%x,Value=%x",sel+1,ptr[1],ptr[0],ptr[2]);
 		switch(ptr[1]) {
 			case 0x01: //Ver
 				DM5680_get_ver(sel,ptr);
@@ -116,7 +116,7 @@ void uart_parse(uint8_t sel,uint8_t* state, uint8_t* len, uint8_t* payload,uint8
 			case 0x20:// right_btn
 				if(sel) {
 					g_key = RIGHT_KEY_CLICK+(ptr[2]&1);
-					Printf("btn:%x\n", ptr[2]);	//0=short,1=long
+					LOGI("btn:%x", ptr[2]);	//0=short,1=long
 					if((g_source_info.source != 1) && (g_menu_op == OPLEVEL_VIDEO)) //no record feature for HDMI in or non-Video mode
 						rbtn_click(!ptr[2], 0);
 				}
@@ -127,7 +127,7 @@ void uart_parse(uint8_t sel,uint8_t* state, uint8_t* len, uint8_t* payload,uint8
 				break;
 
 			default:
-				Printf("UART%d bad command\n",sel+1);
+				LOGI("UART%d bad command",sel+1);
 				break;
 		}
 		(*payload_ptr) -= (ptr[0]+1);
@@ -137,7 +137,7 @@ void uart_parse(uint8_t sel,uint8_t* state, uint8_t* len, uint8_t* payload,uint8
 	for(i=0;i<(*payload_ptr);i++) 
 		payload[i] = (*ptr++);
 	
-	//Printf("(UART%d:%d %d %d)\n",sel+1,*uart_buf_rptr,*uart_buf_wptr,*payload_ptr);	
+	//LOGI("(UART%d:%d %d %d)",sel+1,*uart_buf_rptr,*uart_buf_wptr,*payload_ptr);	
 }
 
 
@@ -162,18 +162,18 @@ static void *pthread_recv_dm5680l(void *arg)
 		while(FD_ISSET(fd_dm5680l,&rd))
 		{
 		  if(select(fd_dm5680l+1,&rd,NULL,NULL,NULL) < 0)
-			Printf("UART1:select error!\n");
+			LOGI("UART1:select error!");
 		  else
 		  {
 			len = uart_read(fd_dm5680l, buffer, 128);
-			//if(len) Printf("(UART1-%d)\n",len);
+			//if(len) LOGI("(UART1-%d)",len);
 			for(i=0;i<len;i++)
 			{
 				uart_buffer[0][uart_wptr[0]] = buffer[i];
 				uart_wptr[0]++; 
 
 				if(uart_wptr[0] == uart_rptr[0]) 
-					Printf("UART1 fifo full!\n");
+					LOGI("UART1 fifo full!");
 			}
 			if(len) 
 				uart_parse(0,&state, &len8, payload,&payload_ptr);
@@ -205,18 +205,18 @@ static void *pthread_recv_dm5680r(void *arg)
 		while(FD_ISSET(fd_dm5680r,&rd))
 		{
 		  if(select(fd_dm5680r+1,&rd,NULL,NULL,NULL) < 0)
-			Printf("UART2:select error!\n");
+			LOGI("UART2:select error!");
 		  else
 		  {
 			len = uart_read(fd_dm5680r, buffer, 128);
-			//if(len) Printf("(UART2-%d)\n",len);
+			//if(len) LOGI("(UART2-%d)",len);
 			for(i=0;i<len;i++)
 			{
 				uart_buffer[1][uart_wptr[1]] = buffer[i];
 				uart_wptr[1]++; 
 
 				if(uart_wptr[1] == uart_rptr[1]) 
-					Printf("UART2 fifo full!\n");
+					LOGI("UART2 fifo full!");
 			}
 			if(len) 
 				uart_parse(1,&state, &len8, payload,&payload_ptr);
@@ -398,14 +398,14 @@ void DM5680_get_rssi(uint8_t sel, uint8_t* payload)
 		rx_status_ptr->rx_DLQ  = payload[4];
 		rx_status_ptr->rx_Stat = payload[5];
 		#if 0 
-		Printf("(RSSI %x %x %x %x)\n",	rx_status[0].rx_rssi[0],
+		LOGI("(RSSI %x %x %x %x)",	rx_status[0].rx_rssi[0],
 										rx_status[0].rx_rssi[1],
 										rx_status[1].rx_rssi[0],
 										rx_status[1].rx_rssi[1]);
 		#endif								
 	}
 	else {
-		perror("GetRssi: CRC Error\n");
+		perror("GetRssi: CRC Error");
 	}
 }
 
@@ -426,7 +426,7 @@ void DM5680_get_vtxinfo(uint8_t sel, uint8_t* payload)
 		rx_status_ptr->rx_vtx_stat = payload[4];
 	}
 	else {
-		perror("GetVTXinfo: CRC Error\n");
+		perror("GetVTXinfo: CRC Error");
 	}
 }
 

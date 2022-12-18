@@ -14,7 +14,7 @@
 #include "msp_displayport.h"
 #include "it66021.h"
 #include "../core/osd.h"
-#include "../core/common.hh"
+#include "../core/common.h"
 /////////////////////////////////////////////////////////////////////////
 // global
 hw_status_t g_hw_stat;
@@ -154,7 +154,7 @@ void HDZero_open()
 		g_hw_stat.hdzero_open = 1;
 	}
 
-    Printf("HDZero: open\n");
+    LOGI("HDZero: open");
 }
 
 void HDZero_Close()
@@ -164,7 +164,7 @@ void HDZero_Close()
     g_hw_stat.hdzero_open = 0;
     g_hw_stat.m0_open = 0;
 
-    Printf("HDZero: close\n");
+    LOGI("HDZero: close");
 }
 
 void AV_Mode_Switch_fpga(int is_pal)
@@ -253,7 +253,7 @@ int HDZERO_detect() // return = 1: vtmg to V536 changed
     if(g_hw_stat.source_mode == HW_SRC_MODE_HDZERO) {
 
         if(cam_mode_last != CAM_MODE){ //Camera mode changed
-            Printf("CAM_mode: %d->%d\n", cam_mode_last,CAM_MODE);
+            LOGI("CAM_mode: %d->%d", cam_mode_last,CAM_MODE);
             cam_mode_last = CAM_MODE;
 
             // 1. Change fps
@@ -264,14 +264,14 @@ int HDZERO_detect() // return = 1: vtmg to V536 changed
                     Display_720P60_50_t(CAM_MODE, cam_4_3);
                     break;
                 case VR_720P30: 
-                    perror("cam_mode =2 fix me!!\n ");
+                    LOGF("cam_mode =2 fix me!!");
                     break;
                 case VR_540P90:
                 case VR_540P90_CROP:
                     Display_720P90_t(CAM_MODE);
                     break;
                 default:
-                    Printf("cam_mode =%d not suppored!!\n ",CAM_MODE);
+                    LOGI("cam_mode =%d not suppored!!",CAM_MODE);
                     break;
             }
 
@@ -279,7 +279,7 @@ int HDZERO_detect() // return = 1: vtmg to V536 changed
         }
 
         if(cam_4_3_last != cam_4_3) {
-            Printf("cam_4_3: %d  CAM_MODE=%d\n", cam_4_3, CAM_MODE);
+            LOGI("cam_4_3: %d  CAM_MODE=%d", cam_4_3, CAM_MODE);
             cam_4_3_last = cam_4_3;
 
             if(CAM_MODE != VR_720P50)
@@ -378,7 +378,7 @@ void HDMI_in_detect()
             vtmg = IT66021_Get_VTMG();
             if(vtmg_last != vtmg){
                 vtmg_last = vtmg;
-                Printf("IT66021: VTMG change: %d\n", vtmg);
+                LOGI("IT66021: VTMG change: %d", vtmg);
 
                 OLED_display(0);
 
@@ -401,7 +401,7 @@ void HDMI_in_detect()
             cs = IT66021_Get_CS();
             if(cs_last != cs) {
                 cs_last = cs;
-                Printf("IT66021: Color space change: %d\n", cs);
+                LOGI("IT66021: Color space change: %d", cs);
 
                 IT66021_Set_CSMatrix(cs);
             }

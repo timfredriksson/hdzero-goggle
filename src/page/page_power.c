@@ -5,7 +5,7 @@
 #include "style.h"
 #include "mcp3021.h"
 #include "../minIni/minIni.h"
-#include "../core/common.hh"
+#include "../core/common.h"
 
 static btn_group_t btn_group0;
 static btn_group_t btn_group1;
@@ -96,7 +96,7 @@ void power_voltage_inc(void)
    	lv_label_set_text(slider_group.label, buf);
 
 	g_setting.power.voltage = value;
-	printf("vol:%d\n", g_setting.power.voltage);
+	LOGI("vol:%d", g_setting.power.voltage);
 	ini_putl("power", "voltage", g_setting.power.voltage, SETTING_INI);
 }
 void power_voltage_dec(void)
@@ -113,7 +113,7 @@ void power_voltage_dec(void)
    	lv_label_set_text(slider_group.label, buf);
 
 	g_setting.power.voltage = value;
-	Printf("vol:%d\n", g_setting.power.voltage);
+	LOGI("vol:%d", g_setting.power.voltage);
 	ini_putl("power", "voltage", g_setting.power.voltage, SETTING_INI);
 }
 

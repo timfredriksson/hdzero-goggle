@@ -6,7 +6,7 @@
 #include "style.h"
 #include "mcp3021.h"
 #include "osd.h"
-#include "common.hh"
+#include "common.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 //local

@@ -4,7 +4,7 @@
 #include "style.h"
 #include "../minIni/minIni.h"
 #include "playback.h"
-#include "../core/common.hh"
+#include "../core/common.h"
 
 static btn_group_t btn_group0;
 static btn_group_t btn_group1;
