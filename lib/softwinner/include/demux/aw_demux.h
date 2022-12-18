@@ -1,7 +1,7 @@
 #ifndef CEDAR_AW_DEMUX_H_
 #define CEDAR_AW_DEMUX_H_
 
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include "cedarx_demux.h"
 //#include "CDX_Debug.h"

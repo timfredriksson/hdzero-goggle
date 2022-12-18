@@ -94,7 +94,7 @@ static int64_t GetNowUs()
 void oldSocketDestr(void *p)
 {
     int oldFd = (long)p - 1;
-    CDX_LOGD("close old socket %d", oldFd);
+    LOGD("close old socket %d", oldFd);
     close(oldFd);
 }
 
@@ -103,7 +103,7 @@ static void createoldSocketKey()
     int ret = pthread_key_create(&oldSocketKey, oldSocketDestr);
     if (ret)
     {
-        CDX_LOGE("pthread_key_create failed: %s", strerror(errno));
+        LOGE("pthread_key_create failed: %s", strerror(errno));
         abort();
     }
 }
@@ -121,7 +121,7 @@ static cdx_int32 __CdxTcpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 le
 
     if(stream == NULL || buf == NULL || len <= 0)
     {
-        CDX_LOGW("check parameter.");
+        LOGW("check parameter.");
         return -1;
     }
 
@@ -139,7 +139,7 @@ static cdx_int32 __CdxTcpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 le
     {
         if(impl->forceStopFlag)
         {
-            CDX_LOGV("__CdxTcpStreamRead forceStop.");
+            LOGV("__CdxTcpStreamRead forceStop.");
             if(recvSize > 0)
                 break;
             else
@@ -158,7 +158,7 @@ static cdx_int32 __CdxTcpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 le
                 goto __exit1;
             }
             impl->ioState = CDX_IO_STATE_ERROR;
-            CDX_LOGE("__CdxTcpStreamRead error(%d): %s. recvSize(%d)",
+            LOGE("__CdxTcpStreamRead error(%d): %s. recvSize(%d)",
                 errno, strerror(errno), recvSize);
             recvSize = -1;
 
@@ -175,10 +175,10 @@ static cdx_int32 __CdxTcpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 le
         }
         else if(ret == 0)
         {
-            //CDX_LOGD("xxx ret = 0.");
+            //LOGD("xxx ret = 0.");
             //if(++num >= 100)
             //{
-            //    CDX_LOGW("xxx connection closed by peer, fd(%d)", impl->sockFd);
+            //    LOGW("xxx connection closed by peer, fd(%d)", impl->sockFd);
             //    impl->ioState = CDX_IO_STATE_ERROR;
             //    CdxAtomicDec(&impl->ref);
             //    return -1;
@@ -235,7 +235,7 @@ static cdx_int32 __CdxTcpStreamWrite(CdxStreamT *stream, void *buf, cdx_uint32 l
                                                         0, &impl->forceStopFlag);
         if(ret < 0)
         {
-            CDX_LOGE("send failed. error(%d): %s.", errno, strerror(errno));
+            LOGE("send failed. error(%d): %s.", errno, strerror(errno));
             break;
         }
         else if(ret == 0)
@@ -261,7 +261,7 @@ static cdx_int32 CdxTcpStreamForceStop(CdxStreamT *stream)
     CDX_CHECK(stream);
     impl = CdxContainerOf(stream, CdxTcpStreamImplT, base);
 
-    CDX_LOGV("begin tcp force stop");
+    LOGV("begin tcp force stop");
     pthread_mutex_lock(&impl->lock);
     if(impl->forceStopFlag == 1)
     {
@@ -277,7 +277,7 @@ static cdx_int32 CdxTcpStreamForceStop(CdxStreamT *stream)
     pthread_mutex_unlock(&impl->lock);
 
     CdxTcpStreamDecRef(stream);
-    CDX_LOGV("finish tcp force stop");
+    LOGV("finish tcp force stop");
     return 0;
 }
 static cdx_int32 CdxTcpStreamClrForceStop(CdxStreamT *stream)
@@ -343,7 +343,7 @@ static cdx_int32 __CdxTcpStreamControl(CdxStreamT *stream, cdx_int32 cmd, void *
 
         default:
         {
-            CDX_LOGV("control cmd %d is not supported by tcp",cmd);
+            LOGV("control cmd %d is not supported by tcp",cmd);
             break;
         }
     }
@@ -356,7 +356,7 @@ static cdx_int32 __CdxTcpStreamClose(CdxStreamT *stream)
 
     CDX_CHECK(stream);
     impl = CdxContainerOf(stream, CdxTcpStreamImplT, base);
-    CDX_LOGV("xxx tcp close begin.");
+    LOGV("xxx tcp close begin.");
     CdxAtomicInc(&impl->ref);
 
     CdxTcpStreamForceStop(stream);
@@ -380,7 +380,7 @@ static void CdxTcpStreamDecRef(CdxStreamT *stream)
     {
         if (impl->saveOldSocket)
         {
-            CDX_LOGD("save old socket");
+            LOGD("save old socket");
             /* sockFd can be zero (at least in theory).
              * The value initially associated with oldSocketKey is NULL.
              * If we don't add one to sockFd, it's difficult to figure out
@@ -392,7 +392,7 @@ static void CdxTcpStreamDecRef(CdxStreamT *stream)
             {
                 if (oldsock >= 0)
                 {
-                    CDX_LOGD("stream open and close in different threads, "
+                    LOGD("stream open and close in different threads, "
                             "socket reuse like HTTP keep alive won't work");
                     close(oldsock);
                 }
@@ -418,7 +418,7 @@ static void CdxTcpStreamDecRef(CdxStreamT *stream)
     impl->dnsMutex = NULL;
     free(impl);
     impl=NULL;
-    CDX_LOGV("xxx tcp close end.");
+    LOGV("xxx tcp close end.");
 }
 
 static void DnsResponeHook(void *userhdr, int ret, struct addrinfo *ai)
@@ -431,7 +431,7 @@ static void DnsResponeHook(void *userhdr, int ret, struct addrinfo *ai)
     if (ret == SDS_OK)
     {
         impl->dnsAI = ai;
-        /*CDX_LOGD("%x%x%x", ai->ai_addr->sa_data[0],
+        /*LOGD("%x%x%x", ai->ai_addr->sa_data[0],
                                                   ai->ai_addr->sa_data[1],
                                                   ai->ai_addr->sa_data[2]);*/
     }
@@ -541,13 +541,13 @@ static int StartTcpStreamConnect(CdxStreamT *stream)
             {
                 // Todo: set impl->sockRecvBufLen or remove this field completely
                 impl->sockFd = oldFd;
-                CDX_LOGD("reuse old socket");
+                LOGD("reuse old socket");
                 return 0;
             }
-            CDX_LOGD("ret %d, error: %s", ret, strerror(errno));
+            LOGD("ret %d, error: %s", ret, strerror(errno));
         }
 
-        CDX_LOGD("close old socket");
+        LOGD("close old socket");
         close(oldFd);
     }
 
@@ -566,7 +566,7 @@ static int StartTcpStreamConnect(CdxStreamT *stream)
         }
         else if(ret < 0)
         {
-            CDX_LOGE("connect failed. error(%d): %s.", errno, strerror(errno));
+            LOGE("connect failed. error(%d): %s.", errno, strerror(errno));
 
 #if defined(CONF_YUNOS)
             if(impl->callback)
@@ -582,29 +582,29 @@ static int StartTcpStreamConnect(CdxStreamT *stream)
 
         if(impl->forceStopFlag == 1)
         {
-            CDX_LOGV("force stop connect.");
+            LOGV("force stop connect.");
             goto err_out;
         }
     } while ((ai = ai->ai_next) != NULL);
 
     if (ai == NULL)
     {
-        CDX_LOGE("connect failed. error(%d): %s.", errno, strerror(errno));
+        LOGE("connect failed. error(%d): %s.", errno, strerror(errno));
         goto err_out;
     }
 
     end = GetNowUs();
-    //CDX_LOGV("Start tcp time(%lld)", end-start);
+    //LOGV("Start tcp time(%lld)", end-start);
     return 0;
 
 err_out:
     end = GetNowUs();
     if(errno == 101)
     {
-        CDX_LOGD("errno 101, reconnect");
+        LOGD("errno 101, reconnect");
         return -2;
     }
-    //CDX_LOGV("Start tcp time(%lld)", end-start);
+    //LOGV("Start tcp time(%lld)", end-start);
     return -1;
 }
 
@@ -629,7 +629,7 @@ static cdx_int32 __CdxTcpStreamConnect(CdxStreamT *stream)
     result = StartTcpStreamConnect(stream);
     if (result < 0)
     {
-        CDX_LOGE("StartTcpStreamConnect failed!");
+        LOGE("StartTcpStreamConnect failed!");
         pthread_mutex_lock(&impl->lock);
         impl->ioState = CDX_IO_STATE_ERROR;
         pthread_mutex_unlock(&impl->lock);
@@ -666,7 +666,7 @@ static CdxStreamT *__CdxTcpStreamCreate(CdxDataSourceT *source)
     impl = (CdxTcpStreamImplT *)malloc(sizeof(CdxTcpStreamImplT));
     if(NULL == impl)
     {
-        CDX_LOGE("malloc failed");
+        LOGE("malloc failed");
         return NULL;
     }
 
@@ -677,7 +677,7 @@ static CdxStreamT *__CdxTcpStreamCreate(CdxDataSourceT *source)
     impl->sockFd = -1;
     impl->port = *(cdx_int32 *)((CdxHttpSendBufferT *)source->extraData)->size;
     impl->hostname = (char *)((CdxHttpSendBufferT *)source->extraData)->buf;
-    //CDX_LOGV("port (%d), hostname(%s)", impl->port, impl->hostname);
+    //LOGV("port (%d), hostname(%s)", impl->port, impl->hostname);
     CdxAtomicSet(&impl->ref, 1);
     pthread_mutex_init(&impl->lock, NULL);
     pthread_cond_init(&impl->cond, NULL);
@@ -685,7 +685,7 @@ static CdxStreamT *__CdxTcpStreamCreate(CdxDataSourceT *source)
     impl->dnsMutex = (pthread_mutex_t*)calloc(1,sizeof(pthread_mutex_t));
     if (impl->dnsMutex == NULL)
     {
-        CDX_LOGE("malloc failed");
+        LOGE("malloc failed");
         return NULL;
     }
 

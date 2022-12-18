@@ -14,7 +14,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mpgRead"
-#include <cdx_log.h>
+#include <log/log.h>
 
 #include "CdxMpgParser.h"
 #include "CdxMpgParserImpl.h"
@@ -100,7 +100,7 @@ cdx_uint8 MpgReadParserReadData(CdxMpgParserT *MpgParser)
         if(nSize <=4)
         {
 
-            CDX_LOGV("here1:file pEndPtr flag is true.nSize=%x\n", nSize);
+            LOGV("here1:file pEndPtr flag is true.nSize=%x", nSize);
             return 0;
         }
 
@@ -117,7 +117,7 @@ cdx_uint8 MpgReadParserReadData(CdxMpgParserT *MpgParser)
         size1 = CdxStreamRead(mMpgParserCxt->pStreamT,mMpgParserCxt->mDataChunkT.pEndPtr,want);
         if((size1 + nSize)<=4)
         {
-            CDX_LOGV("here2:file pEndPtr flag is true.\n");
+            LOGV("here2:file pEndPtr flag is true.");
             return 0;
         }
         mMpgParserCxt->mDataChunkT.pEndPtr = mMpgParserCxt->mDataChunkT.pEndPtr + size1;
@@ -247,7 +247,7 @@ cdx_uint8 *MpgReadProcessAudioPacket(CdxMpgParserT *MpgParser, cdx_uint32 cur_id
                 }
             }
         }
-        //CDX_LOGV("**************i=%d,code=%x, cur_id=%x,mMpgParserCxt->nSendAudioIndex=%d\n",
+        //LOGV("**************i=%d,code=%x, cur_id=%x,mMpgParserCxt->nSendAudioIndex=%d",
         //            i, code, cur_id,mMpgParserCxt->nSendAudioIndex);
         if(i == MpgParser->nhasAudioNum)
         {
@@ -259,7 +259,7 @@ cdx_uint8 *MpgReadProcessAudioPacket(CdxMpgParserT *MpgParser, cdx_uint32 cur_id
         code = *cur_packet_ptr;
         flag1 = (cur_id==MPG_PRIVATE_STREAM_1)&&(code != mMpgParserCxt->mDataChunkT.nSubId);
         flag2 = (cur_id!=MPG_PRIVATE_STREAM_1)&&(cur_id != mMpgParserCxt->mDataChunkT.nId);
-        // CDX_LOGV("*************here3:cur_id=%x, code=%x,
+        // LOGV("*************here3:cur_id=%x, code=%x,
         // mMpgParserCxt->mDataChunkT.nSubId=%x, flag1=%x, flag2=%x\n",
         //        cur_id, code,mMpgParserCxt->mDataChunkT.nSubId, flag1, flag2);
 
@@ -587,7 +587,7 @@ cdx_int16 MpgReadAddPacketIntoArray(CdxMpgParserT *MpgParser, cdx_uint32 cur_id,
 
        if((nDataLen+packetLen) > MPG_H264_CHECK_NUL_BUF_SIZE)
        {
-           loge("***error : the check-nul buf size(%d) is too small! nDataLen:%d, packetLen: %lld",
+           LOGE("***error : the check-nul buf size(%d) is too small! nDataLen:%d, packetLen: %lld",
             MPG_H264_CHECK_NUL_BUF_SIZE, nDataLen, packetLen);
            abort();
        }

@@ -19,7 +19,7 @@
  */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "hevc"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include "libavcodec/avcodec.h"
 #include "libavcodec/get_bits.h"
@@ -865,51 +865,51 @@ static int hvcc_write(ByteIOContext *pb, HEVCDecoderConfigurationRecord *hvcc)
     hvcc->avgFrameRate      = 0;
     hvcc->constantFrameRate = 0;
 
-    alogv("configurationVersion:                %d\n",
+    LOGV("configurationVersion:                %d",
             hvcc->configurationVersion);
-    alogv("general_profile_space:               %d\n",
+    LOGV("general_profile_space:               %d",
             hvcc->general_profile_space);
-    alogv("general_tier_flag:                   %d\n",
+    LOGV("general_tier_flag:                   %d",
             hvcc->general_tier_flag);
-    alogv("general_profile_idc:                 %d\n",
+    LOGV("general_profile_idc:                 %d",
             hvcc->general_profile_idc);
-    alogv("general_profile_compatibility_flags: 0x%08u\n",
+    LOGV("general_profile_compatibility_flags: 0x%08u",
             hvcc->general_profile_compatibility_flags);
-    alogv("general_constraint_indicator_flags:  0x%012llu\n",
+    LOGV("general_constraint_indicator_flags:  0x%012llu",
             hvcc->general_constraint_indicator_flags);
-    alogv("general_level_idc:                   %d\n",
+    LOGV("general_level_idc:                   %d",
             hvcc->general_level_idc);
-    alogv("min_spatial_segmentation_idc:        %d\n",
+    LOGV("min_spatial_segmentation_idc:        %d",
             hvcc->min_spatial_segmentation_idc);
-    alogv("parallelismType:                     %d\n",
+    LOGV("parallelismType:                     %d",
             hvcc->parallelismType);
-    alogv("chromaFormat:                        %d\n",
+    LOGV("chromaFormat:                        %d",
             hvcc->chromaFormat);
-    alogv("bitDepthLumaMinus8:                  %d\n",
+    LOGV("bitDepthLumaMinus8:                  %d",
             hvcc->bitDepthLumaMinus8);
-    alogv("bitDepthChromaMinus8:                %d\n",
+    LOGV("bitDepthChromaMinus8:                %d",
             hvcc->bitDepthChromaMinus8);
-    alogv("avgFrameRate:                        %d\n",
+    LOGV("avgFrameRate:                        %d",
             hvcc->avgFrameRate);
-    alogv("constantFrameRate:                   %d\n",
+    LOGV("constantFrameRate:                   %d",
             hvcc->constantFrameRate);
-    alogv("numTemporalLayers:                   %d\n",
+    LOGV("numTemporalLayers:                   %d",
             hvcc->numTemporalLayers);
-    alogv("temporalIdNested:                    %d\n",
+    LOGV("temporalIdNested:                    %d",
             hvcc->temporalIdNested);
-    alogv("lengthSizeMinusOne:                  %d\n",
+    LOGV("lengthSizeMinusOne:                  %d",
             hvcc->lengthSizeMinusOne);
-    alogv("numOfArrays:                         %d\n",
+    LOGV("numOfArrays:                         %d",
             hvcc->numOfArrays);
     for (i = 0; i < hvcc->numOfArrays; i++) {
-        alogv("array_completeness[%d]:               %d\n",
+        LOGV("array_completeness[%d]:               %d",
                 i, hvcc->array[i].array_completeness);
-        alogv("NAL_unit_type[%d]:                    %d\n",
+        LOGV("NAL_unit_type[%d]:                    %d",
                 i, hvcc->array[i].NAL_unit_type);
-        alogv("numNalus[%d]:                         %d\n",
+        LOGV("numNalus[%d]:                         %d",
                 i, hvcc->array[i].numNalus);
         for (j = 0; j < hvcc->array[i].numNalus; j++)
-            alogv("nalUnitLength[%d][%d]:                 %d\n",
+            LOGV("nalUnitLength[%d][%d]:                 %d",
                     i, j, hvcc->array[i].nalUnitLength[j]);
     }
 
@@ -1210,51 +1210,51 @@ static unsigned int get_hvcc_write_size(HEVCDecoderConfigurationRecord *hvcc)
     hvcc->avgFrameRate      = 0;
     hvcc->constantFrameRate = 0;
 
-    alogv("configurationVersion:                %d\n",
+    LOGV("configurationVersion:                %d",
             hvcc->configurationVersion);
-    alogv("general_profile_space:               %d\n",
+    LOGV("general_profile_space:               %d",
             hvcc->general_profile_space);
-    alogv("general_tier_flag:                   %d\n",
+    LOGV("general_tier_flag:                   %d",
             hvcc->general_tier_flag);
-    alogv("general_profile_idc:                 %d\n",
+    LOGV("general_profile_idc:                 %d",
             hvcc->general_profile_idc);
-    alogv("general_profile_compatibility_flags: 0x%08u\n",
+    LOGV("general_profile_compatibility_flags: 0x%08u",
             hvcc->general_profile_compatibility_flags);
-    alogv("general_constraint_indicator_flags:  0x%012llu\n",
+    LOGV("general_constraint_indicator_flags:  0x%012llu",
             hvcc->general_constraint_indicator_flags);
-    alogv("general_level_idc:                   %d\n",
+    LOGV("general_level_idc:                   %d",
             hvcc->general_level_idc);
-    alogv("min_spatial_segmentation_idc:        %d\n",
+    LOGV("min_spatial_segmentation_idc:        %d",
             hvcc->min_spatial_segmentation_idc);
-    alogv("parallelismType:                     %d\n",
+    LOGV("parallelismType:                     %d",
             hvcc->parallelismType);
-    alogv("chromaFormat:                        %d\n",
+    LOGV("chromaFormat:                        %d",
             hvcc->chromaFormat);
-    alogv("bitDepthLumaMinus8:                  %d\n",
+    LOGV("bitDepthLumaMinus8:                  %d",
             hvcc->bitDepthLumaMinus8);
-    alogv("bitDepthChromaMinus8:                %d\n",
+    LOGV("bitDepthChromaMinus8:                %d",
             hvcc->bitDepthChromaMinus8);
-    alogv("avgFrameRate:                        %d\n",
+    LOGV("avgFrameRate:                        %d",
             hvcc->avgFrameRate);
-    alogv("constantFrameRate:                   %d\n",
+    LOGV("constantFrameRate:                   %d",
             hvcc->constantFrameRate);
-    alogv("numTemporalLayers:                   %d\n",
+    LOGV("numTemporalLayers:                   %d",
             hvcc->numTemporalLayers);
-    alogv("temporalIdNested:                    %d\n",
+    LOGV("temporalIdNested:                    %d",
             hvcc->temporalIdNested);
-    alogv("lengthSizeMinusOne:                  %d\n",
+    LOGV("lengthSizeMinusOne:                  %d",
             hvcc->lengthSizeMinusOne);
-    alogv("numOfArrays:                         %d\n",
+    LOGV("numOfArrays:                         %d",
             hvcc->numOfArrays);
     for (i = 0; i < hvcc->numOfArrays; i++) {
-        alogv("array_completeness[%d]:               %d\n",
+        LOGV("array_completeness[%d]:               %d",
                 i, hvcc->array[i].array_completeness);
-        alogv("NAL_unit_type[%d]:                    %d\n",
+        LOGV("NAL_unit_type[%d]:                    %d",
                 i, hvcc->array[i].NAL_unit_type);
-        alogv("numNalus[%d]:                         %d\n",
+        LOGV("numNalus[%d]:                         %d",
                 i, hvcc->array[i].numNalus);
         for (j = 0; j < hvcc->array[i].numNalus; j++)
-            alogv("nalUnitLength[%d][%d]:                 %d\n",
+            LOGV("nalUnitLength[%d][%d]:                 %d",
                     i, j, hvcc->array[i].nalUnitLength[j]);
     }
 
@@ -1451,7 +1451,7 @@ unsigned int FFIsomGetHvccSize(unsigned char *data, int size, int ps_array_compl
 end:
     hvcc_close(&hvcc);
     av_free(start);
-    alogv("hvcc size[%d]", hvccSize);
+    LOGV("hvcc size[%d]", hvccSize);
     return hvccSize;
 }
 

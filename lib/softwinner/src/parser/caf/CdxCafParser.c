@@ -251,7 +251,7 @@ static int CafInit(CdxParserT *caf_impl)
         impl->theIndexBuffer = (cdx_uint32 *)malloc(thePacketTableSize * sizeof(uint32_t));
         if (!impl->theIndexBuffer)
         {
-            CDX_LOGW("Warning!! No enough memory for theIndexBuffer!!!");
+            LOGW("Warning!! No enough memory for theIndexBuffer!!!");
             goto OPENFAILURE;
         }
         memset(impl->theIndexBuffer, 0, thePacketTableSize);
@@ -283,14 +283,14 @@ static int CafInit(CdxParserT *caf_impl)
                 impl->extradata = malloc(impl->extradata_size + 8);
                 if(!impl->extradata)
                 {
-                    CDX_LOGW("Warning!! No enough memory for extradata!!!");
+                    LOGW("Warning!! No enough memory for extradata!!!");
                     goto OPENFAILURE;
                 }
                 memset(impl->extradata,0,impl->extradata_size + 8);
                 if(CdxStreamRead(cdxStream,impl->extradata+4,impl->extradata_size-4) <
                                  impl->extradata_size-4)
                 {
-                    CDX_LOGW("Read extradata failed!!! No enough %d bytes!",impl->extradata_size);
+                    LOGW("Read extradata failed!!! No enough %d bytes!",impl->extradata_size);
                     goto OPENFAILURE;
                 }
                 done = CDX_TRUE;
@@ -317,7 +317,7 @@ static int CafInit(CdxParserT *caf_impl)
     impl->totalsamples = impl->sampleperpkt * thePacketTableSize;
     impl->thePacketTableSize = thePacketTableSize;
     impl->ulDuration   = (1000LL * impl->totalsamples)/impl->ulSampleRate;
-    CDX_LOGV("sample per packet:%d,packets:%d",impl->sampleperpkt,impl->thePacketTableSize);
+    LOGV("sample per packet:%d,packets:%d",impl->sampleperpkt,impl->thePacketTableSize);
     CdxStreamSeek(cdxStream,impl->firstpktpos,SEEK_SET);
     impl->file_offset = impl->firstpktpos;
     impl->mErrno = PSR_OK;
@@ -325,7 +325,7 @@ static int CafInit(CdxParserT *caf_impl)
     return 0;
 
 OPENFAILURE:
-    CDX_LOGE("CafOpenThread fail!!!");
+    LOGE("CafOpenThread fail!!!");
     impl->mErrno = PSR_OPEN_FAIL;
     pthread_cond_signal(&impl->cond);
     return -1;
@@ -350,7 +350,7 @@ static cdx_int32 __CafParserControl(CdxParserT *parser, cdx_int32 cmd, void *par
             CdxStreamClrForceStop(impl->stream);
             break;
         default :
-            CDX_LOGW("not implement...(%d)", cmd);
+            LOGW("not implement...(%d)", cmd);
             break;
     }
     impl->flags = cmd;
@@ -392,13 +392,13 @@ static cdx_int32 __CafParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
     if(read_length < 0)
     {
-        CDX_LOGE("CdxStreamRead fail");
+        LOGE("CdxStreamRead fail");
         impl->mErrno = PSR_IO_ERR;
         return CDX_FAILURE;
     }
     else if(read_length == 0)
     {
-       CDX_LOGD("CdxStream EOS");
+       LOGD("CdxStream EOS");
        impl->mErrno = PSR_EOS;
        return CDX_FAILURE;
     }
@@ -421,7 +421,7 @@ static cdx_int32 __CafParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *medi
 
     if(impl->mErrno != PSR_OK)
     {
-        CDX_LOGD("audio parse status no PSR_OK");
+        LOGD("audio parse status no PSR_OK");
         return CDX_FAILURE;
     }
 
@@ -476,7 +476,7 @@ static cdx_int32 __CafParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
         }
         if(CdxStreamSeek(impl->stream,offset,SEEK_SET))
         {
-            CDX_LOGE("CdxStreamSeek fail");
+            LOGE("CdxStreamSeek fail");
             return CDX_FAILURE;
         }
     }
@@ -484,7 +484,7 @@ static cdx_int32 __CafParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
     impl->framecount = samples / impl->sampleperpkt;
     impl->nowsamples = impl->framecount * impl->sampleperpkt;
     CdxStreamSeek(impl->stream,impl->file_offset,SEEK_SET);
-    CDX_LOGV("Seek to time:%lld,to position:%lld,fliesize:%lld,packets index:%d",
+    LOGV("Seek to time:%lld,to position:%lld,fliesize:%lld,packets index:%d",
               timeUs,impl->file_offset,impl->fileSize,tableindex);
     return CDX_SUCCESS;
 }
@@ -558,13 +558,13 @@ static cdx_uint32 __CafParserProbe(CdxStreamProbeDataT *probeData)
     CDX_CHECK(probeData);
     if(probeData->len < 4)
     {
-        CDX_LOGE("Probe Caf_header data is not enough.");
+        LOGE("Probe Caf_header data is not enough.");
         return 0;
     }
 
     if(memcmp(probeData->buf, "caff", 4))
     {
-        CDX_LOGE("Caf probe failed.");
+        LOGE("Caf probe failed.");
         return 0;
     }
     return 100;
@@ -576,7 +576,7 @@ static CdxParserT *__CafParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     struct CafParserImplS *impl;
     impl = CdxMalloc(sizeof(*impl));
     if (impl == NULL) {
-        CDX_LOGE("CafParserOpen Failed");
+        LOGE("CafParserOpen Failed");
         CdxStreamClose(stream);
         return NULL;
     }

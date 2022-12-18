@@ -30,7 +30,7 @@ char *AwFromCharset(const char *charset, const void *pData, size_t dataSize)
     iconv_t handle = iconv_open("UTF-8", charset);
     if (handle == (iconv_t)(-1))
     {
-        CDX_LOGE("iconv open failed.");
+        LOGE("iconv open failed.");
         return NULL;
     }
     char *pOut = NULL;
@@ -42,7 +42,7 @@ char *AwFromCharset(const char *charset, const void *pData, size_t dataSize)
         char *tmp = pOut = malloc (1 + outMax);
         if (!pOut)
         {
-            CDX_LOGE("malloc failed.");
+            LOGE("malloc failed.");
             break;
         }
         if (iconv(handle, (char **)&in, &inSize, &tmp, &outMax) != (size_t)(-1))
@@ -70,7 +70,7 @@ SmsStreamT *SmsNew(void)
     SmsStreamT *sms = malloc(sizeof(SmsStreamT));
     if(!sms)
     {
-        CDX_LOGE("no memory.");
+        LOGE("no memory.");
         return NULL;
     }
     memset(sms, 0x00, sizeof(SmsStreamT));
@@ -341,14 +341,14 @@ char *CdxStrToKr(char *pStr, const char *pDelim, char **ppSavePtr)
         pStr = *ppSavePtr;
 
     /* Scan leading delimiters. */
-    pStr += strspn (pStr, pDelim);//* ·µ»Ø×Ö·û´®ÖÐµÚÒ»¸ö²»ÔÚÖ¸¶¨×Ö·û´®ÖÐ³öÏÖµÄ×Ö·ûÏÂ±ê
+    pStr += strspn (pStr, pDelim);//* ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ðµï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ð³ï¿½ï¿½Öµï¿½ï¿½Ö·ï¿½ï¿½Â±ï¿½
     if (*pStr == '\0')
         return NULL;
 
     /* Find the end of the token. */
     flag = pStr;
-    //* ÒÀ´Î¼ìÑé×Ö·û´®s1ÖÐµÄ×Ö·û£¬µ±±»¼ìÑé×Ö·ûÔÚ×Ö·û´®s2ÖÐÒ²°üº¬Ê±£¬ÔòÍ£Ö¹¼ìÑé£¬²¢·µ»Ø¸Ã×Ö·ûÎ»ÖÃ,
-    //* ¿Õ×Ö·ûNULL²»°üÀ¨ÔÚÄÚ¡£
+    //* ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½s1ï¿½Ðµï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½s2ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½é£¬ï¿½ï¿½ï¿½ï¿½ï¿½Ø¸ï¿½ï¿½Ö·ï¿½Î»ï¿½ï¿½,
+    //* ï¿½ï¿½ï¿½Ö·ï¿½NULLï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¡ï¿½
     pStr = strpbrk(flag, pDelim);
     if (pStr == NULL)
         /* This token finishes the string. */

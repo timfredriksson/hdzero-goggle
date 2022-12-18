@@ -14,7 +14,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CdxMpgParseImpl"
-#include <cdx_log.h>
+#include <log/log.h>
 
 #include "CdxMpgParser.h"
 #include "CdxMpgParserImpl.h"
@@ -153,7 +153,7 @@ void InitSendVidFrmParam(CdxMpgParserT *MpgParser)
 
     if(MpgParser->mMpgVidFrmInfT.pVidFrmDataBuf  == NULL)
     {
-        CDX_LOGV("*********malloc memory for MpgParser->mMpgVidFrmInfT.pVidFrmDataBuf failed.\n");
+        LOGV("*********malloc memory for MpgParser->mMpgVidFrmInfT.pVidFrmDataBuf failed.");
     }
     MpgParser->mMpgVidFrmInfT.pCurVidFrmDataPtr = MpgParser->mMpgVidFrmInfT.pVidFrmDataBuf;
     MpgParser->mMpgVidFrmInfT.pVidFrmDataBufEnd =
@@ -211,7 +211,7 @@ cdx_int16 MpgOpen(CdxMpgParserT *MpgParser, CdxStreamT *stream)
     {
         JudgeFileType(MpgParser, stream);
         if(!mMpgParserCxt->pStreamT) {
-            CDX_LOGE("FILE_PARSER_OPEN_FILE_FAIL");
+            LOGE("FILE_PARSER_OPEN_FILE_FAIL");
             return FILE_PARSER_OPEN_FILE_FAIL;
         }
 
@@ -230,7 +230,7 @@ cdx_int16 MpgOpen(CdxMpgParserT *MpgParser, CdxStreamT *stream)
                     nRet = DvdOpenTitleFile(MpgParser, pUrl);
                     if(nRet < 0)
                     {
-                        CDX_LOGE("DvdOpenTitleFile fail");
+                        LOGE("DvdOpenTitleFile fail");
                         return nRet;
                     }
                 }
@@ -247,7 +247,7 @@ cdx_int16 MpgOpen(CdxMpgParserT *MpgParser, CdxStreamT *stream)
         nRet = MpgOpenReaderOpenFile(MpgParser, stream);
         if(nRet < 0)
         {
-            CDX_LOGE("MpgOpenReaderOpenFile fail, nRet(%d)", nRet);
+            LOGE("MpgOpenReaderOpenFile fail, nRet(%d)", nRet);
             return nRet;
         }
          nIndex = 0;

@@ -11,7 +11,7 @@
   History       :
 ******************************************************************************/
 #define LOG_TAG "mpi_mux"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <stdlib.h>
@@ -111,7 +111,7 @@ static MUX_CHN_GROUP_S* MUX_CHN_GROUP_S_Construct()
     MUX_CHN_GROUP_S *pGroup = (MUX_CHN_GROUP_S*)malloc(sizeof(MUX_CHN_GROUP_S));
     if(NULL == pGroup)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pGroup, 0, sizeof(MUX_CHN_GROUP_S));
@@ -125,7 +125,7 @@ static void MUX_CHN_GROUP_S_Destruct(MUX_CHN_GROUP_S *pGroup)
 {
     if(pGroup->mComp)
     {
-        aloge("fatal error! muxGroup component need free before!");
+        LOGE("fatal error! muxGroup component need free before!");
         COMP_FreeHandle(pGroup->mComp);
         pGroup->mComp = NULL;
     }
@@ -141,20 +141,20 @@ ERRORTYPE MUX_Construct(void)
     int ret;
     if(gMuxGrpMgr)
     {
-        alogw("mpi_mux module already create!");
+        LOGW("mpi_mux module already create!");
         return SUCCESS;
     }
     gMuxGrpMgr = malloc(sizeof(MuxChnGroupManager));
     if(NULL == gMuxGrpMgr)
     {
-        aloge("fatal error! malloc fail!");
+        LOGE("fatal error! malloc fail!");
         return ERR_MUX_NULL_PTR;
     }
     INIT_LIST_HEAD(&gMuxGrpMgr->mMuxChnGrpList);
     ret = pthread_mutex_init(&gMuxGrpMgr->mMuxChnGrpListLock, NULL);
 	if (ret!=0)
 	{
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         eError = ERR_MUX_NOMEM;
         goto _err0;
 	}
@@ -171,14 +171,14 @@ ERRORTYPE MUX_Destruct(void)
 {
     if(NULL == gMuxGrpMgr)
     {
-        alogw("mpi_mux module already NULL!");
+        LOGW("mpi_mux module already NULL!");
         return SUCCESS;
     }
     pthread_mutex_lock(&gMuxGrpMgr->mMuxChnGrpListLock);
     if(!list_empty(&gMuxGrpMgr->mMuxChnGrpList))
     {
         pthread_mutex_unlock(&gMuxGrpMgr->mMuxChnGrpListLock);
-        aloge("fatal error! mux channel group is not empty!");
+        LOGE("fatal error! mux channel group is not empty!");
         return ERR_MUX_BUSY;
     }
     pthread_mutex_unlock(&gMuxGrpMgr->mMuxChnGrpListLock);
@@ -213,7 +213,7 @@ static ERRORTYPE RecRenderEventHandler(
     ret = ((MM_COMPONENTTYPE*)hComponent)->GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &muxGroupInfo);
     if(SUCCESS == ret)
     {
-        alogv("muxGroup comp event, muxGroupId[%d][%d][%d]", muxGroupInfo.mModId, muxGroupInfo.mDevId, muxGroupInfo.mChnId);
+        LOGV("muxGroup comp event, muxGroupId[%d][%d][%d]", muxGroupInfo.mModId, muxGroupInfo.mDevId, muxGroupInfo.mChnId);
     }
     MUX_CHN_GROUP_S *pGrp = (MUX_CHN_GROUP_S*)pAppData;
 
@@ -223,25 +223,25 @@ static ERRORTYPE RecRenderEventHandler(
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("muxGroup EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("muxGroup EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pGrp->mSemCompCmd);
                 break;
             }
             else if(COMP_CommandVendorAddChn == nData1)
             {
-                alogv("muxGroup EventCmdComplete, add chn done! result[0x%x]", nData2);
+                LOGV("muxGroup EventCmdComplete, add chn done! result[0x%x]", nData2);
                 cdx_sem_up(&pGrp->mSemAddChn);
                 break;
             }
             else if(COMP_CommandVendorRemoveChn == nData1)
             {
-                alogv("muxGroup EventCmdComplete, remove chn done! result[0x%x]", nData2);
+                LOGV("muxGroup EventCmdComplete, remove chn done! result[0x%x]", nData2);
                 cdx_sem_up(&pGrp->mSemRemoveChn);
                 break;
             }
             else
             {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
@@ -249,23 +249,23 @@ static ERRORTYPE RecRenderEventHandler(
         {
             if(ERR_MUX_SAMESTATE == nData1)
             {
-                alogv("set same state to muxGroup!");
+                LOGV("set same state to muxGroup!");
                 cdx_sem_up(&pGrp->mSemCompCmd);
                 break;
             }
             else if(ERR_MUX_INVALIDSTATE == nData1)
             {
-                aloge("why muxGroup state turn to invalid?");
+                LOGE("why muxGroup state turn to invalid?");
                 break;
             }
             else if(ERR_MUX_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("fatal error! muxGroup state transition incorrect.");
+                LOGE("fatal error! muxGroup state transition incorrect.");
                 break;
             }
             else
             {
-                aloge("fatal error! other param[%d][%d]", nData1, nData2);
+                LOGE("fatal error! other param[%d][%d]", nData1, nData2);
                 break;
             }
         }
@@ -310,7 +310,7 @@ static ERRORTYPE RecRenderEventHandler(
             break;
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
     return SUCCESS;
@@ -326,12 +326,12 @@ ERRORTYPE AW_MPI_MUX_CreateGrp(MUX_GRP muxGrp, MUX_GRP_ATTR_S *pGrpAttr)
 {
     if(!(muxGrp>=0 && muxGrp <MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGrp[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGrp[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     if(NULL == pGrpAttr)
     {
-        aloge("fatal error! illagal VencAttr!");
+        LOGE("fatal error! illagal VencAttr!");
         return ERR_MUX_ILLEGAL_PARAM;
     }
     pthread_mutex_lock(&gMuxGrpMgr->mMuxChnGrpListLock);
@@ -349,7 +349,7 @@ ERRORTYPE AW_MPI_MUX_CreateGrp(MUX_GRP muxGrp, MUX_GRP_ATTR_S *pGrpAttr)
     eRet = COMP_GetHandle((COMP_HANDLETYPE*)&pNode->mComp, CDX_ComponentNameMuxer, (void*)pNode, &RecRenderCallback);
     if(eRet != SUCCESS)
     {
-        aloge("fatal error! get comp handle fail!");
+        LOGE("fatal error! get comp handle fail!");
     }
     MPP_CHN_S ChannelInfo;
     ChannelInfo.mModId = MOD_ID_MUX;
@@ -371,7 +371,7 @@ ERRORTYPE AW_MPI_MUX_DestroyGrpEx(MUX_GRP muxGrp, BOOL bShutDownNowFalg)
     ERRORTYPE ret;
     if(!(muxGrp >= 0 && muxGrp < MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGrp[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGrp[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -395,7 +395,7 @@ ERRORTYPE AW_MPI_MUX_DestroyGrpEx(MUX_GRP muxGrp, BOOL bShutDownNowFalg)
                 cdx_sem_down(&pGrp->mSemCompCmd);
                 if(eRet != SUCCESS)
                 {
-                    aloge("fatal error! why transmit state to loaded fail?");
+                    LOGE("fatal error! why transmit state to loaded fail?");
                 }
             }
             else if(nCompState == COMP_StateLoaded)
@@ -404,12 +404,12 @@ ERRORTYPE AW_MPI_MUX_DestroyGrpEx(MUX_GRP muxGrp, BOOL bShutDownNowFalg)
             }
             else if(nCompState == COMP_StateInvalid)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             }
             else
             {
-                aloge("fatal error! invalid VeChn[%d] state[0x%x]!", muxGrp, nCompState);
+                LOGE("fatal error! invalid VeChn[%d] state[0x%x]!", muxGrp, nCompState);
                 eRet = ERR_MUX_INCORRECT_STATE_OPERATION;
             }
 
@@ -424,13 +424,13 @@ ERRORTYPE AW_MPI_MUX_DestroyGrpEx(MUX_GRP muxGrp, BOOL bShutDownNowFalg)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_MUX_BUSY;
         }
     }
     else
     {
-        aloge("fatal error! no muxGroup component!");
+        LOGE("fatal error! no muxGroup component!");
         list_del(&pGrp->mList);
         MUX_CHN_GROUP_S_Destruct(pGrp);
         ret = SUCCESS;
@@ -448,7 +448,7 @@ ERRORTYPE AW_MPI_MUX_StartGrp(MUX_GRP muxGrp)
 {
     if(!(muxGrp>=0 && muxGrp <MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -468,7 +468,7 @@ ERRORTYPE AW_MPI_MUX_StartGrp(MUX_GRP muxGrp)
     }
     else
     {
-        alogd("muxGroup comp state[0x%x], do nothing!", nCompState);
+        LOGD("muxGroup comp state[0x%x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -478,7 +478,7 @@ ERRORTYPE AW_MPI_MUX_StopGrp(MUX_GRP muxGrp)
 {
     if(!(muxGrp>=0 && muxGrp<MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid mux group[%d]!", muxGrp);
+        LOGE("fatal error! invalid mux group[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -498,12 +498,12 @@ ERRORTYPE AW_MPI_MUX_StopGrp(MUX_GRP muxGrp)
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogv("muxGroup comp state[0x%x], do nothing!", nCompState);
+        LOGV("muxGroup comp state[0x%x], do nothing!", nCompState);
         eError = SUCCESS;
     }
     else
     {
-        aloge("fatal error! check muxGroup state[0x%x]!", nCompState);
+        LOGE("fatal error! check muxGroup state[0x%x]!", nCompState);
         eError = SUCCESS;
     }
     return eError;
@@ -513,7 +513,7 @@ ERRORTYPE AW_MPI_MUX_GetGrpAttr(MUX_GRP muxGrp, MUX_GRP_ATTR_S *pGrpAttr)
 {
     if(!(muxGrp>=0 && muxGrp < MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -526,7 +526,7 @@ ERRORTYPE AW_MPI_MUX_GetGrpAttr(MUX_GRP muxGrp, MUX_GRP_ATTR_S *pGrpAttr)
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     ret = pGrp->mComp->GetConfig(pGrp->mComp, COMP_IndexVendorMuxGroupAttr, (void*)pGrpAttr);
@@ -537,7 +537,7 @@ ERRORTYPE AW_MPI_MUX_SetGrpAttr(MUX_GRP muxGrp, MUX_GRP_ATTR_S *pGrpAttr)
 {
     if(!(muxGrp>=0 && muxGrp < MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -550,7 +550,7 @@ ERRORTYPE AW_MPI_MUX_SetGrpAttr(MUX_GRP muxGrp, MUX_GRP_ATTR_S *pGrpAttr)
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     ret = pGrp->mComp->SetConfig(pGrp->mComp, COMP_IndexVendorMuxGroupAttr, (void*)pGrpAttr);
@@ -561,7 +561,7 @@ ERRORTYPE AW_MPI_MUX_SetH264SpsPpsInfo(MUX_GRP muxGrp, VencHeaderData *pH264SpsP
 {
     if(!(muxGrp>=0 && muxGrp < MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -574,7 +574,7 @@ ERRORTYPE AW_MPI_MUX_SetH264SpsPpsInfo(MUX_GRP muxGrp, VencHeaderData *pH264SpsP
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     ret = pGrp->mComp->SetConfig(pGrp->mComp, COMP_IndexVendorExtraData, (void*)pH264SpsPpsInfo);
@@ -590,7 +590,7 @@ ERRORTYPE AW_MPI_MUX_CreateChn(MUX_GRP muxGrp, MUX_CHN muxChn, MUX_CHN_ATTR_S *p
 {
     if(!(muxGrp>=0 && muxGrp < MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -604,7 +604,7 @@ ERRORTYPE AW_MPI_MUX_CreateChn(MUX_GRP muxGrp, MUX_CHN muxChn, MUX_CHN_ATTR_S *p
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     MuxChnAttr chnAttr;
@@ -622,12 +622,12 @@ ERRORTYPE AW_MPI_MUX_CreateChn(MUX_GRP muxGrp, MUX_CHN muxChn, MUX_CHN_ATTR_S *p
     }
     else if(SUCCESS == ret)
     {
-        alogv("muxChn[%d] of group[%d] is exist!", muxChn, muxGrp);
+        LOGV("muxChn[%d] of group[%d] is exist!", muxChn, muxGrp);
         return ERR_MUX_EXIST;
     }
     else
     {
-        aloge("fatal error! add chn[%d] of group[%d] fail[0x%x]!", muxChn, muxGrp, ret);
+        LOGE("fatal error! add chn[%d] of group[%d] fail[0x%x]!", muxChn, muxGrp, ret);
         return ret;
     }
 }
@@ -636,7 +636,7 @@ ERRORTYPE AW_MPI_MUX_DestroyChnEx(MUX_GRP muxGrp, MUX_CHN muxChn, BOOL bShutDown
 {
     if(!(muxGrp>=0 && muxGrp < MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -649,7 +649,7 @@ ERRORTYPE AW_MPI_MUX_DestroyChnEx(MUX_GRP muxGrp, MUX_CHN muxChn, BOOL bShutDown
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     MuxChnAttr chnAttr;
@@ -671,12 +671,12 @@ ERRORTYPE AW_MPI_MUX_DestroyChnEx(MUX_GRP muxGrp, MUX_CHN muxChn, BOOL bShutDown
     }
     else if(ERR_MUX_UNEXIST == ret)
     {
-        alogd("muxChn[%d] of group[%d] is unexist!", muxChn, muxGrp);
+        LOGD("muxChn[%d] of group[%d] is unexist!", muxChn, muxGrp);
         return ERR_MUX_UNEXIST;
     }
     else
     {
-        aloge("fatal error! remove chn[%d] of group[%d] fail[0x%x]!", muxChn, muxGrp, ret);
+        LOGE("fatal error! remove chn[%d] of group[%d] fail[0x%x]!", muxChn, muxGrp, ret);
         return ret;
     }
 }
@@ -691,7 +691,7 @@ ERRORTYPE AW_MPI_MUX_GetChnAttr(MUX_GRP muxGrp, MUX_CHN muxChn, MUX_CHN_ATTR_S *
 {
     if(!(muxGrp>=0 && muxGrp < MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -704,7 +704,7 @@ ERRORTYPE AW_MPI_MUX_GetChnAttr(MUX_GRP muxGrp, MUX_CHN muxChn, MUX_CHN_ATTR_S *
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     MuxChnAttr chnAttr;
@@ -719,7 +719,7 @@ ERRORTYPE AW_MPI_MUX_SetChnAttr(MUX_GRP muxGrp, MUX_CHN muxChn, MUX_CHN_ATTR_S *
 {
     if(!(muxGrp>=0 && muxGrp < MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -732,7 +732,7 @@ ERRORTYPE AW_MPI_MUX_SetChnAttr(MUX_GRP muxGrp, MUX_CHN muxChn, MUX_CHN_ATTR_S *
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     MuxChnAttr chnAttr;
@@ -749,12 +749,12 @@ ERRORTYPE AW_MPI_MUX_SetChnAttr(MUX_GRP muxGrp, MUX_CHN muxChn, MUX_CHN_ATTR_S *
     }
     else if(ERR_MUX_UNEXIST == ret)
     {
-        alogd("muxChn[%d] of group[%d] is unexist!", muxChn, muxGrp);
+        LOGD("muxChn[%d] of group[%d] is unexist!", muxChn, muxGrp);
         return ERR_MUX_UNEXIST;
     }
     else
     {
-        aloge("fatal error! setChnAttr chn[%d] of group[%d] fail[0x%x]!", muxChn, muxGrp, ret);
+        LOGE("fatal error! setChnAttr chn[%d] of group[%d] fail[0x%x]!", muxChn, muxGrp, ret);
         return ret;
     }
 }
@@ -763,7 +763,7 @@ ERRORTYPE AW_MPI_MUX_SwitchFd(MUX_GRP muxGrp, MUX_CHN muxChn, int fd, int nFallo
 {
     if(!(muxGrp>=0 && muxGrp < MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -776,7 +776,7 @@ ERRORTYPE AW_MPI_MUX_SwitchFd(MUX_GRP muxGrp, MUX_CHN muxChn, int fd, int nFallo
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     MuxChnAttr chnAttr;
@@ -797,7 +797,7 @@ ERRORTYPE AW_MPI_MUX_SwitchFd(MUX_GRP muxGrp, MUX_CHN muxChn, int fd, int nFallo
     }
     else
     {
-        aloge("fatal error! not find MuxChannel group[%d] channelId[%d]", muxGrp, muxChn);
+        LOGE("fatal error! not find MuxChannel group[%d] channelId[%d]", muxGrp, muxChn);
         return ERR_MUX_UNEXIST;
     }
 }
@@ -806,7 +806,7 @@ ERRORTYPE AW_MPI_MUX_SwitchFileNormal(MUX_GRP muxGrp, MUX_CHN muxChn)
 {
     if(!(muxGrp>=0 && muxGrp < MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -819,7 +819,7 @@ ERRORTYPE AW_MPI_MUX_SwitchFileNormal(MUX_GRP muxGrp, MUX_CHN muxChn)
     ret = COMP_GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     MuxChnAttr chnAttr;
@@ -835,7 +835,7 @@ ERRORTYPE AW_MPI_MUX_SwitchFileNormal(MUX_GRP muxGrp, MUX_CHN muxChn)
     }
     else
     {
-        aloge("fatal error! not find MuxChannel group[%d] channelId[%d]", muxGrp, muxChn);
+        LOGE("fatal error! not find MuxChannel group[%d] channelId[%d]", muxGrp, muxChn);
         return ERR_MUX_UNEXIST;
     }
 }
@@ -844,7 +844,7 @@ ERRORTYPE AW_MPI_MUX_RegisterCallback(MUX_GRP muxGrp, MPPCallbackInfo *pCallback
 {
     if(!(muxGrp>=0 && muxGrp <MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -861,7 +861,7 @@ ERRORTYPE AW_MPI_MUX_GetCacheStatus(MUX_GRP muxGrp, CacheState *pCacheState)
 {
     if(!(muxGrp>=0 && muxGrp <MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -874,7 +874,7 @@ ERRORTYPE AW_MPI_MUX_GetCacheStatus(MUX_GRP muxGrp, CacheState *pCacheState)
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     return pGrp->mComp->GetConfig(pGrp->mComp, COMP_IndexVendorMuxCacheState, pCacheState);
@@ -884,13 +884,13 @@ ERRORTYPE AW_MPI_MUX_SetMuxCacheDuration(MUX_GRP muxGrp, int nCacheMs)
 {
     if(!(muxGrp>=0 && muxGrp <MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
     if(SUCCESS != MUX_searchExistGroup(muxGrp, &pGrp))
     {
-        aloge("fatal error! ERR_MUX_UNEXIST!");
+        LOGE("fatal error! ERR_MUX_UNEXIST!");
         return ERR_MUX_UNEXIST;
     }
 
@@ -902,7 +902,7 @@ ERRORTYPE AW_MPI_MUX_SetSwitchFileDurationPolicy(MUX_GRP muxGrp, MUX_CHN muxChn,
 {
     if(!(muxGrp>=0 && muxGrp <MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -915,7 +915,7 @@ ERRORTYPE AW_MPI_MUX_SetSwitchFileDurationPolicy(MUX_GRP muxGrp, MUX_CHN muxChn,
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
 
@@ -926,7 +926,7 @@ ERRORTYPE AW_MPI_MUX_GetSwitchFileDurationPolicy(MUX_GRP muxGrp, MUX_CHN muxChn,
 {
     if(!(muxGrp>=0 && muxGrp <MUX_MAX_GRP_NUM))
     {
-        aloge("fatal error! invalid muxGroup[%d]!", muxGrp);
+        LOGE("fatal error! invalid muxGroup[%d]!", muxGrp);
         return ERR_MUX_INVALID_CHNID;
     }
     MUX_CHN_GROUP_S *pGrp;
@@ -939,7 +939,7 @@ ERRORTYPE AW_MPI_MUX_GetSwitchFileDurationPolicy(MUX_GRP muxGrp, MUX_CHN muxChn,
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateIdle != nState || COMP_StateExecuting != nState || COMP_StatePause != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_MUX_NOT_PERM;
     }
     

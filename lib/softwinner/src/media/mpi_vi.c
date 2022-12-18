@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "mpi_vi"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <errno.h>
@@ -57,33 +57,33 @@ static ERRORTYPE VideoViEventHandler(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_
     switch (eEvent) {
         case COMP_EventCmdComplete: {
             if (COMP_CommandStateSet == nData1) {
-                alogv("video vi EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("video vi EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
             } else {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
             }
             break;
         }
         case COMP_EventError: {
             if (ERR_VI_SAMESTATE == nData1) {
-                alogv("set same state to vi!");
+                LOGV("set same state to vi!");
                 cdx_sem_up(&pChn->mSemCompCmd);
             } else if (ERR_VI_INVALIDSTATE == nData1) {
-                aloge("why vi state turn to invalid?");
+                LOGE("why vi state turn to invalid?");
             } else if (ERR_VI_INCORRECT_STATE_TRANSITION == nData1) {
-                aloge("fatal error! vi state transition incorrect.");
+                LOGE("fatal error! vi state transition incorrect.");
             }
             break;
         }
         case COMP_EventRecVbvFull: {
-            alogw("need handle vbvFull!");
+            LOGW("need handle vbvFull!");
             break;
         }
         case COMP_EventBufferFlag: {
             switch (nData1) {
                 case COMP_IndexVendorViSetLongExp: {
                     videoInputHw_IncreaseLongShutterRef(nData2);
-                    aloge("Got one COMP_IndexVendorViSetLongExp event, vipp %d", nData2);
+                    LOGE("Got one COMP_IndexVendorViSetLongExp event, vipp %d", nData2);
                 } break;
                 case FF_LONGEXP: {
                     ret = videoInputHw_DecreaseLongShutterRef(nData2);
@@ -92,16 +92,16 @@ static ERRORTYPE VideoViEventHandler(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_
                     */
                     if (videoInputHw_IsLongShutterBusy(nData2)) {
                         videoInputHw_SetVippShutterTime(nData2, (VI_SHUTTIME_CFG_S *)pEventData);
-                        aloge("Got on reset shutter event, vipp %d", nData2);
+                        LOGE("Got on reset shutter event, vipp %d", nData2);
                     }
                 } break;
                 default: {
-                    aloge("fatal error! unknown data in COMP_EventBufferFlag event.");
+                    LOGE("fatal error! unknown data in COMP_EventBufferFlag event.");
                 }
             }
         } break;
         default: {
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
         }
     }
@@ -126,18 +126,18 @@ AW_S32 AW_MPI_VI_CreateVipp(VI_DEV ViDev)
     int iRet = 0;
 
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) {
-        aloge("invalid ViDev[%d]", ViDev);
+        LOGE("invalid ViDev[%d]", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
     iRet = videoInputHw_Construct(ViDev);
     if (iRet != SUCCESS) {
-        aloge("construct video input hardware failed!!\n");
+        LOGE("construct video input hardware failed!!");
         goto HwCnst_Err;
     }
     iRet = videoInputHw_ChnInit(ViDev);
     if (iRet != SUCCESS) {
-        aloge("initialize video input hardware failed!!\n");
+        LOGE("initialize video input hardware failed!!");
         goto HwInit_Err;
     }
 
@@ -152,7 +152,7 @@ AW_S32 AW_MPI_VI_DestoryVipp(VI_DEV ViDev)
     int iRet = 0;
 
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) {
-        aloge("invalid ViDev[%d]", ViDev);
+        LOGE("invalid ViDev[%d]", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -168,14 +168,14 @@ AW_S32 AW_MPI_VI_SetVippAttr(VI_DEV ViDev, VI_ATTR_S *pstAttr)
     int iRet = 0;
 
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) {
-        aloge("invalid ViDev[%d]", ViDev);
+        LOGE("invalid ViDev[%d]", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
     if(pstAttr->fps > VI_HIGH_FRAMERATE_STANDARD) {
         unsigned int recommendValue = (pstAttr->fps/30)*5;
         if(pstAttr->nbufs < recommendValue) {
-            alogw("fatal error! suggest set buffer number[%u] to recommendValue[%u], when high frame rate[%u]",
+            LOGW("fatal error! suggest set buffer number[%u] to recommendValue[%u], when high frame rate[%u]",
                 pstAttr->nbufs, recommendValue, pstAttr->fps);
         }
     }
@@ -190,7 +190,7 @@ AW_S32 AW_MPI_VI_SetVippAttr(VI_DEV ViDev, VI_ATTR_S *pstAttr)
 AW_S32 AW_MPI_VI_GetVippAttr(VI_DEV ViDev, VI_ATTR_S *pstAttr)
 {
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) {
-        aloge("invalid ViDev[%d]", ViDev);
+        LOGE("invalid ViDev[%d]", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -203,20 +203,20 @@ AW_S32 AW_MPI_VI_SetVIFreq(VI_DEV ViDev, int nFreq) //nFreq: MHz
      */
 #if 0
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) {
-        aloge("invalid ViDev[%d]", ViDev);
+        LOGE("invalid ViDev[%d]", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
 #endif
     if(nFreq <= VI_FREQ_MIN)
     {
         nFreq = VI_FREQ_DEFAULT;
-        alogw("fatal error! Freq had low equal 0 MHz, set Freq is 432 MHz.");
+        LOGW("fatal error! Freq had low equal 0 MHz, set Freq is 432 MHz.");
     }
 
     if(nFreq > VI_FREQ_MAX)
     {
         nFreq = VI_FREQ_MAX;
-        alogw("fatal error! Freq had over 480 MHz, set Freq is 480 MHz!");
+        LOGW("fatal error! Freq had over 480 MHz, set Freq is 480 MHz!");
     }
 
     return videoInputHw_SetVIFreq(ViDev, nFreq);
@@ -224,7 +224,7 @@ AW_S32 AW_MPI_VI_SetVIFreq(VI_DEV ViDev, int nFreq) //nFreq: MHz
 AW_S32 AW_MPI_VI_EnableVipp(VI_DEV ViDev)
 {
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) {
-        aloge("invalid ViDev[%d]", ViDev);
+        LOGE("invalid ViDev[%d]", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -233,7 +233,7 @@ AW_S32 AW_MPI_VI_EnableVipp(VI_DEV ViDev)
 AW_S32 AW_MPI_VI_DisableVipp(VI_DEV ViDev)
 {
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) {
-        aloge("invalid ViDev[%d]", ViDev);
+        LOGE("invalid ViDev[%d]", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -252,7 +252,7 @@ AW_S32 AW_MPI_VI_SetOsdMaskRegion(VI_DEV ViDev, VI_OsdMaskRegion *pstOsdMaskRegi
 {
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX))
     {
-        aloge("fatal error! invalid ViDev[%d]!", ViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
     return videoInputHw_SetOsdMaskRegion(&ViDev, pstOsdMaskRegion);
@@ -261,7 +261,7 @@ AW_S32 AW_MPI_VI_SetOsdMaskRegion(VI_DEV ViDev, VI_OsdMaskRegion *pstOsdMaskRegi
 AW_S32 AW_MPI_VI_UpdateOsdMaskRegion(VI_DEV ViDev, AW_U32 OnOff)
 {
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) {
-        aloge("fatal error! invalid ViDev[%d]!", ViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
     return videoInputHw_UpdateOsdMaskRegion(&ViDev, OnOff);
@@ -275,7 +275,7 @@ ERRORTYPE AW_MPI_VI_SetRegion(VI_DEV ViDev, RGN_HANDLE RgnHandle, RGN_ATTR_S *pR
 {
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX))
     {
-        aloge("fatal error! invalid ViDev[%d]!", ViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -289,7 +289,7 @@ ERRORTYPE AW_MPI_VI_DeleteRegion(VI_DEV ViDev, RGN_HANDLE RgnHandle)
 {
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX))
     {
-        aloge("fatal error! invalid ViDev[%d]!", ViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
     return videoInputHw_DeleteRegion(ViDev, RgnHandle);
@@ -302,7 +302,7 @@ ERRORTYPE AW_MPI_VI_UpdateOverlayBitmap(VI_DEV ViDev, RGN_HANDLE RgnHandle, BITM
 {
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX))
     {
-        aloge("fatal error! invalid ViDev[%d]!", ViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -313,7 +313,7 @@ ERRORTYPE AW_MPI_VI_UpdateRegionChnAttr(VI_DEV ViDev, RGN_HANDLE RgnHandle, cons
 {
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX))
     {
-        aloge("fatal error! invalid ViDev[%d]!", ViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
     return videoInputHw_UpdateRegionChnAttr(ViDev, RgnHandle, pRgnChnAttr);
@@ -323,7 +323,7 @@ AW_S32 AW_MPI_VI_SetVippMirror(VI_DEV ViDev, int Value)
     int mViDev = ViDev;
     if (!(mViDev >= 0 && mViDev < VI_VIPP_NUM_MAX))
     {
-        aloge("fatal error! invalid ViDev[%d]!", mViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", mViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -334,7 +334,7 @@ AW_S32 AW_MPI_VI_SetVippFlip(VI_DEV ViDev, int Value)
     int mViDev = ViDev;
     if (!(mViDev >= 0 && mViDev < VI_VIPP_NUM_MAX))
     {
-        aloge("fatal error! invalid ViDev[%d]!", mViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", mViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -345,7 +345,7 @@ AW_S32 AW_MPI_VI_GetVippMirror(VI_DEV ViDev, int *Value)
     int mViDev = ViDev;
     if (!(mViDev >= 0 && mViDev < VI_VIPP_NUM_MAX))
     {
-        aloge("fatal error! invalid ViDev[%d]!", mViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", mViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -356,7 +356,7 @@ AW_S32 AW_MPI_VI_GetVippFlip(VI_DEV ViDev, int *Value)
     int mViDev = ViDev;
     if (!(mViDev >= 0 && mViDev < VI_VIPP_NUM_MAX))
     {
-        aloge("fatal error! invalid ViDev[%d]!", mViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", mViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -368,7 +368,7 @@ AW_S32 AW_MPI_ISP_AE_SetMode(ISP_DEV IspDev, int onOff)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -378,7 +378,7 @@ AW_S32 AW_MPI_ISP_AE_SetExposureBias(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -388,7 +388,7 @@ AW_S32 AW_MPI_ISP_AE_SetExposure(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -398,7 +398,7 @@ AW_S32 AW_MPI_ISP_AE_SetISOSensitiveMode(ISP_DEV IspDev, int Mode)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -408,7 +408,7 @@ AW_S32 AW_MPI_ISP_AE_SetISOSensitive(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -418,7 +418,7 @@ AW_S32 AW_MPI_ISP_AE_SetMetering(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -428,7 +428,7 @@ AW_S32 AW_MPI_ISP_AE_SetGain(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -438,7 +438,7 @@ AW_S32 AW_MPI_ISP_AWB_SetMode(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -448,7 +448,7 @@ AW_S32 AW_MPI_ISP_AWB_SetColorTemp(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -458,7 +458,7 @@ AW_S32 AW_MPI_ISP_AWB_SetRGain(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -468,7 +468,7 @@ AW_S32 AW_MPI_ISP_AWB_SetBGain(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -478,7 +478,7 @@ AW_S32 AW_MPI_ISP_AWB_SetGrGain(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -488,7 +488,7 @@ AW_S32 AW_MPI_ISP_AWB_SetGbGain(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -498,7 +498,7 @@ AW_S32 AW_MPI_ISP_SetFlicker(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -506,11 +506,11 @@ AW_S32 AW_MPI_ISP_SetFlicker(ISP_DEV IspDev, int Value)
 }
 AW_S32 AW_MPI_ISP_SetMirror(VI_DEV ViDev, int Value)
 {
-    printf("move mirror to mpi_vi.h : AW_MPI_VI_GetVippMirror. \r\n");
+    LOGI("move mirror to mpi_vi.h : AW_MPI_VI_GetVippMirror. ");
 
     int mViDev = ViDev;
     if (!(mViDev >= 0 && mViDev < VI_VIPP_NUM_MAX)) {
-        aloge("fatal error! invalid ViDev[%d]!", mViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", mViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -518,11 +518,11 @@ AW_S32 AW_MPI_ISP_SetMirror(VI_DEV ViDev, int Value)
 }
 AW_S32 AW_MPI_ISP_SetFlip(VI_DEV ViDev, int Value)
 {
-    printf("move flip to mpi_vi.h : AW_MPI_VI_GetVippFlip. \r\n");
+    LOGI("move flip to mpi_vi.h : AW_MPI_VI_GetVippFlip. ");
 
     int mViDev = ViDev;
     if (!(mViDev >= 0 && mViDev < VI_VIPP_NUM_MAX)) {
-        aloge("fatal error! invalid ViDev[%d]!", mViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", mViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -533,7 +533,7 @@ AW_S32 AW_MPI_ISP_SetBrightness(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -543,7 +543,7 @@ AW_S32 AW_MPI_ISP_SetContrast(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -553,7 +553,7 @@ AW_S32 AW_MPI_ISP_SetSaturation(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -563,7 +563,7 @@ AW_S32 AW_MPI_ISP_SetSharpness(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -575,7 +575,7 @@ AW_S32 AW_MPI_ISP_SetHue(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
     return videoInputHw_Isp_SetHue(&mIspDev, Value);
@@ -586,7 +586,7 @@ AW_S32 AW_MPI_ISP_SetScene(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
     return videoInputHw_Isp_SetScene(&mIspDev, Value);
@@ -596,7 +596,7 @@ AW_S32 AW_MPI_ISP_AE_GetMode(ISP_DEV IspDev, int *onOff)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -606,7 +606,7 @@ AW_S32 AW_MPI_ISP_AE_GetExposureBias(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -616,7 +616,7 @@ AW_S32 AW_MPI_ISP_AE_GetExposure(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -626,7 +626,7 @@ AW_S32 AW_MPI_ISP_AE_GetISOSensitiveMode(ISP_DEV IspDev, int *Mode)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -636,7 +636,7 @@ AW_S32 AW_MPI_ISP_AE_GetISOSensitive(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -646,7 +646,7 @@ AW_S32 AW_MPI_ISP_AE_GetMetering(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -656,7 +656,7 @@ AW_S32 AW_MPI_ISP_AE_GetGain(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -666,7 +666,7 @@ AW_S32 AW_MPI_ISP_AWB_GetMode(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -676,7 +676,7 @@ AW_S32 AW_MPI_ISP_AWB_GetColorTemp(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -686,7 +686,7 @@ AW_S32 AW_MPI_ISP_AWB_GetRGain(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -696,7 +696,7 @@ AW_S32 AW_MPI_ISP_AWB_GetBGain(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -706,7 +706,7 @@ AW_S32 AW_MPI_ISP_AWB_GetGrGain(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -716,7 +716,7 @@ AW_S32 AW_MPI_ISP_AWB_GetGbGain(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -726,7 +726,7 @@ AW_S32 AW_MPI_ISP_GetFlicker(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -734,10 +734,10 @@ AW_S32 AW_MPI_ISP_GetFlicker(ISP_DEV IspDev, int *Value)
 }
 AW_S32 AW_MPI_ISP_GetMirror(VI_DEV ViDev, int *Value)
 {
-    printf("move mirror to mpi_vi.h : AW_MPI_VI_GetVippMirror. \r\n");
+    LOGI("move mirror to mpi_vi.h : AW_MPI_VI_GetVippMirror. ");
     int mViDev = ViDev;
     if (!(mViDev >= 0 && mViDev < VI_VIPP_NUM_MAX)) {
-        aloge("fatal error! invalid ViDev[%d]!", mViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", mViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -745,11 +745,11 @@ AW_S32 AW_MPI_ISP_GetMirror(VI_DEV ViDev, int *Value)
 }
 AW_S32 AW_MPI_ISP_GetFlip(VI_DEV ViDev, int *Value)
 {
-    printf("move flip to mpi_vi.h : AW_MPI_VI_GetVippFlip. \r\n");
+    LOGI("move flip to mpi_vi.h : AW_MPI_VI_GetVippFlip. ");
 
     int mViDev = ViDev;
     if (!(mViDev >= 0 && mViDev < VI_VIPP_NUM_MAX)) {
-        aloge("fatal error! invalid ViDev[%d]!", mViDev);
+        LOGE("fatal error! invalid ViDev[%d]!", mViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
@@ -759,7 +759,7 @@ AW_S32 AW_MPI_ISP_GetBrightness(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -769,7 +769,7 @@ AW_S32 AW_MPI_ISP_GetContrast(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -779,7 +779,7 @@ AW_S32 AW_MPI_ISP_GetSaturation(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -789,7 +789,7 @@ AW_S32 AW_MPI_ISP_GetSharpness(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -799,7 +799,7 @@ AW_S32 AW_MPI_ISP_SetPltmWDR(ISP_DEV IspDev, int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -809,7 +809,7 @@ AW_S32 AW_MPI_ISP_GetPltmWDR(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -819,7 +819,7 @@ AW_S32 AW_MPI_ISP_SetNRAttr(ISP_DEV IspDev,  int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -830,7 +830,7 @@ AW_S32 AW_MPI_ISP_GetNRAttr(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -840,7 +840,7 @@ AW_S32 AW_MPI_ISP_Set3NRAttr(ISP_DEV IspDev,int Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -850,7 +850,7 @@ AW_S32 AW_MPI_ISP_Get3NRAttr(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -861,7 +861,7 @@ AW_S32 AW_MPI_ISP_GetHue(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
  
@@ -872,7 +872,7 @@ AW_S32 AW_MPI_ISP_GetScene(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
  
@@ -885,7 +885,7 @@ AW_S32 AW_MPI_ISP_AE_GetExposureLine(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -896,7 +896,7 @@ AW_S32 AW_MPI_ISP_AWB_GetCurColorT(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -907,7 +907,7 @@ AW_S32 AW_MPI_ISP_AE_GetEvIdx(ISP_DEV IspDev, int *Value)
 {
     int mIspDev = IspDev;
     if (!(mIspDev >= 0 && mIspDev < VI_ISP_NUM_MAX)) {
-        aloge("fatal error! invalid IspDev[%d]!", mIspDev);
+        LOGE("fatal error! invalid IspDev[%d]!", mIspDev);
         return ERR_VI_INVALID_PHYCHNID;
     }
 
@@ -924,25 +924,25 @@ AW_S32 AW_MPI_VI_CreateVirChn(VI_DEV ViDev, VI_CHN ViCh, void *pAttr)
 
     if ((!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) ||
         (!(ViCh >= 0 && ViCh < VI_VIRCHN_NUM_MAX))){
-        aloge("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
+        LOGE("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
         return ERR_VI_INVALID_CHNID;
     }
     videoInputHw_searchVippStatus(ViDev, &status);
     if (0 == status) {
-        aloge("videv[%d] doesn't exist!!\n", ViDev);
+        LOGE("videv[%d] doesn't exist!!", ViDev);
         return ERR_VI_UNEXIST;
     }
     if (SUCCESS == videoInputHw_searchExistDevVirChn(ViDev, ViCh, &pNode)) {
-        alogw("vichn[%d] has exist!!\n", ViCh);
+        LOGW("vichn[%d] has exist!!", ViCh);
         return ERR_VI_EXIST;
     }
 
     pNode = videoInputHw_CHN_MAP_S_Construct();
     // pNode->mViDev = ViDev;
     // pNode->mViChn = ViCh;
-    // printf("pNode->mViChn = %d, %d, .\r\n", ViDev, ViCh);
+    // LOGI("pNode->mViChn = %d, %d, .", ViDev, ViCh);
     pNode->mViChn = ((ViDev << 16) & 0xFFFF0000) | (ViCh & 0x0000FFFF);
-    // printf("pNode->mViChn = %x.\r\n", pNode->mViChn);
+    // LOGI("pNode->mViChn = %x.", pNode->mViChn);
     eRet =
       COMP_GetHandle((COMP_HANDLETYPE *)&(pNode->mViComp), CDX_ComponentNameViScale, (void *)pNode, &VideoViCallback);
     MPP_CHN_S ChannelInfo;
@@ -968,11 +968,11 @@ AW_S32 AW_MPI_VI_DestoryVirChn(VI_DEV ViDev, VI_CHN ViCh)
 
     if ((!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) ||
         (!(ViCh >= 0 && ViCh < VI_VIRCHN_NUM_MAX))){
-        aloge("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
+        LOGE("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
         return ERR_VI_INVALID_CHNID;
     }
     if (SUCCESS != videoInputHw_searchExistDevVirChn(ViDev, ViCh, &pNode)) {
-        alogw("vichn[%d] is unexist!!\n", ViCh);
+        LOGW("vichn[%d] is unexist!!", ViCh);
         return ERR_VI_UNEXIST;
     }
 
@@ -986,10 +986,10 @@ AW_S32 AW_MPI_VI_DestoryVirChn(VI_DEV ViDev, VI_CHN ViCh)
             } else if (nCompState == COMP_StateLoaded) {
                 eRet = SUCCESS;
             } else if (nCompState == COMP_StateInvalid) {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             } else {
-                aloge("fatal error! invalid Vi state[0x%x]!", nCompState);
+                LOGE("fatal error! invalid Vi state[0x%x]!", nCompState);
                 eRet = FAILURE;
             }
             if (eRet == SUCCESS) {
@@ -1002,11 +1002,11 @@ AW_S32 AW_MPI_VI_DestoryVirChn(VI_DEV ViDev, VI_CHN ViCh)
                 eRet = ERR_VI_BUSY;
             }
         } else {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             eRet = ERR_VI_BUSY;
         }
     } else {
-        aloge("fatal error! no Vi component!");
+        LOGE("fatal error! no Vi component!");
         if (NULL != pNode) {
             videoInputHw_CHN_MAP_S_Destruct(pNode);
             eRet = SUCCESS;
@@ -1022,16 +1022,16 @@ AW_S32 AW_MPI_VI_GetVirChnAttr(VI_DEV ViDev, VI_CHN ViCh, void *pAttr)
 
     if ((!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) ||
         (!(ViCh >= 0 && ViCh < VI_VIRCHN_NUM_MAX))){
-        aloge("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
+        LOGE("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
         return ERR_VI_INVALID_CHNID;
     }
     if (SUCCESS != videoInputHw_searchExistDevVirChn(ViDev, ViCh, &pNode)) {
-        aloge("vichn[%d] is unexist!!\n", ViCh);
+        LOGE("vichn[%d] is unexist!!", ViCh);
         return ERR_VI_UNEXIST;
     }
     ret = pNode->mViComp->GetState(pNode->mViComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VI_NOT_PERM;
     }
     // ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorViChnAttr, (void*)pAttr);
@@ -1046,20 +1046,20 @@ AW_S32 AW_MPI_VI_SetVirChnAttr(VI_DEV ViDev, VI_CHN ViCh, void *pAttr)
     /*
     if ((!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) &&
         (!(ViCh >= 0 && ViCh < VI_VIRCHN_NUM_MAX))){
-        aloge("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
+        LOGE("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
         return ERR_VI_INVALID_CHNID;
     }
     if (SUCCESS != videoInputHw_searchExistDevVirChn(ViDev, ViCh, &pNode)) {
-        printf("func=%s, line=%d, ret=%d.\r\n", __func__, __LINE__, ret);
+        LOGI("func=%s, line=%d, ret=%d.", __func__, __LINE__, ret);
         return ERR_VI_UNEXIST;
     }
     ret = pNode->mViComp->GetState(pNode->mViComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VI_NOT_PERM;
     }
     // ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorViChnAttr, (void*)pAttr);
-    printf("func=%s, line=%d, ret=%d.\r\n", __func__, __LINE__, ret);
+    LOGI("func=%s, line=%d, ret=%d.", __func__, __LINE__, ret);
 */
     return 0;
 }
@@ -1068,11 +1068,11 @@ AW_S32 AW_MPI_VI_EnableVirChn(VI_DEV ViDev, VI_CHN ViCh)
     VI_CHN_MAP_S *pNode;
     if ((!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) ||
         (!(ViCh >= 0 && ViCh < VI_VIRCHN_NUM_MAX))){
-        aloge("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
+        LOGE("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
         return ERR_VI_INVALID_CHNID;
     }
     if (SUCCESS != videoInputHw_searchExistDevVirChn(ViDev, ViCh, &pNode)) {
-        aloge("vichn[%d] is unexist!!\n", ViCh);
+        LOGE("vichn[%d] is unexist!!", ViCh);
         return ERR_VI_UNEXIST;
     }
     int eRet;
@@ -1082,7 +1082,7 @@ AW_S32 AW_MPI_VI_EnableVirChn(VI_DEV ViDev, VI_CHN ViCh)
         eRet = pNode->mViComp->SendCommand(pNode->mViComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         cdx_sem_down(&pNode->mSemCompCmd);
     } else {
-        alogd("iseGroup comp state[0x%x], do nothing!", nCompState);
+        LOGD("iseGroup comp state[0x%x], do nothing!", nCompState);
         eRet = SUCCESS;
     }
 
@@ -1093,11 +1093,11 @@ AW_S32 AW_MPI_VI_DisableVirChn(VI_DEV ViDev, VI_CHN ViCh)
     VI_CHN_MAP_S *pNode;
     if ((!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) ||
         (!(ViCh >= 0 && ViCh < VI_VIRCHN_NUM_MAX))){
-        aloge("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
+        LOGE("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
         return ERR_VI_INVALID_CHNID;
     }
     if (SUCCESS != videoInputHw_searchExistDevVirChn(ViDev, ViCh, &pNode)) {
-        aloge("vichn[%d] is unexist!!\n", ViCh);
+        LOGE("vichn[%d] is unexist!!", ViCh);
         return ERR_VI_UNEXIST;
     }
 
@@ -1109,10 +1109,10 @@ AW_S32 AW_MPI_VI_DisableVirChn(VI_DEV ViDev, VI_CHN ViCh)
         cdx_sem_down(&pNode->mSemCompCmd);
         eRet = eRet;
     } else if (COMP_StateIdle == nCompState) {
-        alogd("iseGroup comp state[0x%x], do nothing!", nCompState);
+        LOGD("iseGroup comp state[0x%x], do nothing!", nCompState);
         eRet = SUCCESS;
     } else {
-        aloge("fatal error! check iseGroup state[0x%x]!", nCompState);
+        LOGE("fatal error! check iseGroup state[0x%x]!", nCompState);
         eRet = SUCCESS;
     }
     return eRet;
@@ -1126,11 +1126,11 @@ AW_S32 AW_MPI_VI_GetFrame(VI_DEV ViDev, VI_CHN ViCh, VIDEO_FRAME_INFO_S *pstFram
 
     if ((!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) ||
         (!(ViCh >= 0 && ViCh < VI_VIRCHN_NUM_MAX))) {
-        aloge("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
+        LOGE("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
         return ERR_VI_INVALID_CHNID;
     }
     if (SUCCESS != videoInputHw_searchExistDevVirChn(ViDev, ViCh, &pNode)) {
-        aloge("vichn[%d] is unexist!!\n", ViCh);
+        LOGE("vichn[%d] is unexist!!", ViCh);
         return ERR_VI_UNEXIST;
     }
     VI_Params viParams;
@@ -1141,7 +1141,7 @@ AW_S32 AW_MPI_VI_GetFrame(VI_DEV ViDev, VI_CHN ViCh, VIDEO_FRAME_INFO_S *pstFram
 
     ret = pNode->mViComp->GetState(pNode->mViComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VI_NOT_PERM;
     }
 
@@ -1157,11 +1157,11 @@ AW_S32 AW_MPI_VI_ReleaseFrame(VI_DEV ViDev, VI_CHN ViCh, VIDEO_FRAME_INFO_S *pFr
 
     if ((!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) ||
         (!(ViCh >= 0 && ViCh < VI_VIRCHN_NUM_MAX))) {
-        aloge("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
+        LOGE("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
         return ERR_VI_INVALID_CHNID;
     }
     if (SUCCESS != videoInputHw_searchExistDevVirChn(ViDev, ViCh, &pNode)) {
-        aloge("vichn[%d] is unexist!!\n", ViCh);
+        LOGE("vichn[%d] is unexist!!", ViCh);
         return ERR_VI_UNEXIST;
     }
     VI_Params viParams;
@@ -1171,7 +1171,7 @@ AW_S32 AW_MPI_VI_ReleaseFrame(VI_DEV ViDev, VI_CHN ViCh, VIDEO_FRAME_INFO_S *pFr
 
     eRet = pNode->mViComp->GetState(pNode->mViComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VI_NOT_PERM;
     }
     eRet = pNode->mViComp->SetConfig(pNode->mViComp, COMP_IndexVendorViReleaseFrame, (void *)&viParams);
@@ -1189,18 +1189,18 @@ AW_S32 AW_MPI_VI_SetShutterTime(VI_DEV ViDev, VI_CHN ViChnMask, VI_SHUTTIME_CFG_
     VI_CHN_MAP_S *pNode;
 
     if (!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) {
-        aloge("invalid ViDev[%d]", ViDev);
+        LOGE("invalid ViDev[%d]", ViDev);
         return ERR_VI_INVALID_DEVID;
     }
 
     if (videoInputHw_IsLongShutterBusy(ViDev) && pTime->eShutterMode == VI_SHUTTIME_MODE_NIGHT_VIEW) {
-        aloge("Video %d is in long exposure mode now, return busy.", ViDev);
+        LOGE("Video %d is in long exposure mode now, return busy.", ViDev);
         return ERR_VI_BUSY;
     }
 
     ret = videoInputHw_SetVippShutterTime(ViDev, pTime);
     if (ret != SUCCESS) {
-        aloge("Set video shutter time failed.");
+        LOGE("Set video shutter time failed.");
         goto exit;
     }
 
@@ -1214,16 +1214,16 @@ AW_S32 AW_MPI_VI_SetShutterTime(VI_DEV ViDev, VI_CHN ViChnMask, VI_SHUTTIME_CFG_
             continue;
         ret = pNode->mViComp->GetState(pNode->mViComp, &nState);
         if (!ret && COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-            aloge("Channel %d is in wrong state %d when setting shutter time.", ViCh, ret);
+            LOGE("Channel %d is in wrong state %d when setting shutter time.", ViCh, ret);
             continue;
         }
 
         /* we do not care if this invoke is success or not, but you will know if it is success */
         ret = pNode->mViComp->SetConfig(pNode->mViComp, COMP_IndexVendorViSetLongExp, (void *)pTime);
         if (ret < 0)
-            aloge("Set shutter for channel %d failed.", ViCh);
+            LOGE("Set shutter for channel %d failed.", ViCh);
         else
-            aloge("Set shutter for channel %d success", ViCh);
+            LOGE("Set shutter for channel %d success", ViCh);
     }
 
 exit:
@@ -1238,20 +1238,20 @@ ERRORTYPE AW_MPI_VI_Debug_StoreFrame(VI_DEV ViDev, VI_CHN ViCh, const char* pDir
 
     if ((!(ViDev >= 0 && ViDev < VI_VIPP_NUM_MAX)) ||
         (!(ViCh >= 0 && ViCh < VI_VIRCHN_NUM_MAX))) {
-        aloge("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
+        LOGE("fatal error! invalid ViDev[%d], ViVirChn[%d]!", ViDev, ViCh);
         return ERR_VI_INVALID_CHNID;
     }
     if (SUCCESS != videoInputHw_searchExistDevVirChn(ViDev, ViCh, &pNode)) {
-        aloge("vichn[%d] is unexist!!\n", ViCh);
+        LOGE("vichn[%d] is unexist!!", ViCh);
         return ERR_VI_UNEXIST;
     }
     if(NULL == pDirPath) {
-        alogd("must set a directory path! return now");
+        LOGD("must set a directory path! return now");
         return ERR_VI_INVALID_PARA;
     }
     ret = COMP_GetState(pNode->mViComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VI_NOT_PERM;
     }
     ret = COMP_SetConfig(pNode->mViComp, COMP_IndexVendorViStoreFrame, (void*)pDirPath);

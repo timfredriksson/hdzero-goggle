@@ -157,14 +157,14 @@ static int CdxMmshResponseAppend(CdxHttpHeaderT *httpHdr, char *response, int le
     }
     if((unsigned)length > SIZE_MAX - httpHdr->bufferSize - 1)
     {
-        CDX_LOGE("********************Bad size in memory (re)allocation\n");
+        LOGE("********************Bad size in memory (re)allocation");
         return -1;
     }
     httpHdr->buffer = realloc(httpHdr->buffer, httpHdr->bufferSize+length+1);
    // buffer: response(2K). why realloc:in while, may append one more times..
     if(httpHdr->buffer==NULL)
     {
-        CDX_LOGE("********************Memory (re)allocation failed\n");
+        LOGE("********************Memory (re)allocation failed");
         return -1;
     }
     memcpy(httpHdr->buffer + httpHdr->bufferSize, response, length);
@@ -201,14 +201,14 @@ void CdxMmshSetField(CdxHttpHeaderT *httpHdr, const char *fieldName)
     newField = malloc(sizeof(CdxHttpFieldT));
     if(newField==NULL)
     {
-        CDX_LOGE("**********************************Memory allocation failed\n");
+        LOGE("**********************************Memory allocation failed");
         return;
     }
     newField->next = NULL;
     newField->fieldName = malloc(strlen(fieldName)+1);
     if(newField->fieldName==NULL)
     {
-        CDX_LOGE("*************************Memory allocation failed\n");
+        LOGE("*************************Memory allocation failed");
         free(newField);
         newField = NULL;
         return;
@@ -248,7 +248,7 @@ int CdxMmshResponseParse(CdxHttpHeaderT *httpHdr)
     hdrPtr = strstr(httpHdr->buffer, " " );//"HTTP/1.1 "
     if(hdrPtr==NULL )
     {
-        CDX_LOGE("*********************Malformed answer. No space separator found.\n");
+        LOGE("*********************Malformed answer. No space separator found.");
         return -1;
     }
     len = hdrPtr-httpHdr->buffer;
@@ -263,7 +263,7 @@ int CdxMmshResponseParse(CdxHttpHeaderT *httpHdr)
         if( sscanf( httpHdr->protocol+5,"1.%d", &(httpHdr->httpMinorVersion) )!=1 )
          //--write to httpHdr->httpMinorVersion
         {
-            CDX_LOGE("******Malformed answer. Unable to get HTTP minor version.\n");
+            LOGE("******Malformed answer. Unable to get HTTP minor version.");
             return -1;
         }
     }
@@ -271,7 +271,7 @@ int CdxMmshResponseParse(CdxHttpHeaderT *httpHdr)
     // Get the status code
     if(sscanf(++hdrPtr, "%d", &(httpHdr->statusCode) )!=1 )
     {
-        CDX_LOGE("*******Malformed answer. Unable to get status code.\n");
+        LOGE("*******Malformed answer. Unable to get status code.");
         return -1;
     }
     hdrPtr += 4;
@@ -280,14 +280,14 @@ int CdxMmshResponseParse(CdxHttpHeaderT *httpHdr)
     ptr = strstr(hdrPtr, "\n" );
     if(ptr==NULL)
     {
-        CDX_LOGE("******Malformed answer. Unable to get the reason phrase.\n");
+        LOGE("******Malformed answer. Unable to get the reason phrase.");
         return -1;
     }
     len = ptr-hdrPtr;
     httpHdr->reasonPhrase = malloc(len+1);
     if(httpHdr->reasonPhrase==NULL)
     {
-        CDX_LOGE("*************************Memory allocation failed\n");
+        LOGE("*************************Memory allocation failed");
         return -1;
     }
     strncpy(httpHdr->reasonPhrase, hdrPtr, len );
@@ -305,7 +305,7 @@ int CdxMmshResponseParse(CdxHttpHeaderT *httpHdr)
         ptr = strstr(httpHdr->buffer, "\n\n" );
         if(ptr==NULL)
         {
-            CDX_LOGE("******Header may be incomplete. No CRLF CRLF found.\n");
+            LOGE("******Header may be incomplete. No CRLF CRLF found.");
             return -1;
         }
         hdrSepLen = 2;
@@ -367,7 +367,7 @@ void CdxMmshSetUri(CdxHttpHeaderT *httpHdr, const char *uri)
     httpHdr->uri = malloc(strlen(uri)+1);
     if(httpHdr->uri == NULL )
     {
-        CDX_LOGE("******************Memory allocation failed\n");
+        LOGE("******************Memory allocation failed");
         return;
     }
     strcpy(httpHdr->uri, uri);
@@ -454,7 +454,7 @@ int CdxMmshAddBasicAuthentication(CdxHttpHeaderT *httpHdr, const char *username,
     usrPass = malloc(strlen(username)+passLen+2);
     if(usrPass==NULL)
     {
-        CDX_LOGE("***************************Memory allocation failed\n");
+        LOGE("***************************Memory allocation failed");
         goto out;
     }
 
@@ -465,14 +465,14 @@ int CdxMmshAddBasicAuthentication(CdxHttpHeaderT *httpHdr, const char *username,
     b64UsrPass = malloc(encodedLen);
     if(b64UsrPass==NULL)
     {
-        CDX_LOGE("*********************Memory allocation failed\n");
+        LOGE("*********************Memory allocation failed");
         goto out;
     }
 
     outLen = CdxMmshPase64Encode(usrPass, strlen(usrPass), b64UsrPass, encodedLen);
     if(outLen < 0)
     {
-        CDX_LOGE("************************Base64 out overflow\n");
+        LOGE("************************Base64 out overflow");
         goto out;
     }
 
@@ -481,7 +481,7 @@ int CdxMmshAddBasicAuthentication(CdxHttpHeaderT *httpHdr, const char *username,
     auth = malloc(encodedLen+22);
     if(auth == NULL)
     {
-        CDX_LOGE("*************************Memory allocation failed\n");
+        LOGE("*************************Memory allocation failed");
         goto out;
     }
 
@@ -578,7 +578,7 @@ char* CdxMmshBuildRequest(CdxHttpHeaderT *httpHdr)
     httpHdr->buffer = malloc(len+1);
     if(httpHdr->buffer == NULL)
     {
-        CDX_LOGE("**********************Memory allocation failed\n");
+        LOGE("**********************Memory allocation failed");
         free(uri);
         return NULL;
     }
@@ -843,17 +843,17 @@ static int MmshStreamingType(char *contentType, char *features, CdxHttpHeaderT *
     {
         if((strstr(features, "broadcast")) && !(strstr(features, "playlist")))
         {
-            CDX_LOGD("=====> ASF Live stream\n");
+            LOGD("=====> ASF Live stream");
             return ASF_TYPE_LIVE;
         }
         else if ((strstr(features, "broadcast")) && (strstr(features, "playlist")))
         {
-            CDX_LOGD("=====> ASF Playlist stream\n");
+            LOGD("=====> ASF Playlist stream");
             return ASF_TYPE_PLAYLIST;
         }
         else
         {
-            CDX_LOGD("=====> ASF Prerecorded\n");
+            LOGD("=====> ASF Prerecorded");
             return ASF_TYPE_PRERECORDED;
         }
     }
@@ -868,17 +868,17 @@ static int MmshStreamingType(char *contentType, char *features, CdxHttpHeaderT *
         {
             if(AsfHeaderCheck(httpHdr)==0)  // if it is the ASF_Header_Object
             {
-                CDX_LOGV("=====> ASF Plain text\n");
+                LOGV("=====> ASF Plain text");
                 return ASF_TYPE_PLAINTEXT;
             }
             else if( (!strcasecmp(contentType, "text/html")))
             {
-                CDX_LOGV("=====> HTML, Player is not a browser...yet!\n");
+                LOGV("=====> HTML, Player is not a browser...yet!");
                 return ASF_TYPE_UNKNOWN;
             }
             else
             {
-                CDX_LOGV("=====> ASF Redirector\n");
+                LOGV("=====> ASF Redirector");
                 return ASF_TYPE_REDIRECTOR;
             }
         }
@@ -895,12 +895,12 @@ static int MmshStreamingType(char *contentType, char *features, CdxHttpHeaderT *
             }
             else if( !strcasecmp(contentType, "text/plain") )
             {
-                CDX_LOGV("=====> ASF Plain text\n");
+                LOGV("=====> ASF Plain text");
                 return ASF_TYPE_PLAINTEXT;
             }
             else
             {
-                CDX_LOGV("=====> ASF unknown content-type: %s\n", contentType);
+                LOGV("=====> ASF unknown content-type: %s", contentType);
                 return ASF_TYPE_UNKNOWN;
             }
         }
@@ -937,7 +937,7 @@ static int MmshParseResponse(aw_mmsh_ctrl_t *asfHttpCtrl, CdxHttpHeaderT *httpHd
     {
         return -1;
     }
-    CDX_LOGD("status Code = %d", httpHdr->statusCode);
+    LOGD("status Code = %d", httpHdr->statusCode);
     switch(httpHdr->statusCode)
     {
         case 200:
@@ -1019,9 +1019,9 @@ int NopStreamingRead(int fd, char *buffer, int size, aw_mms_inf_t* mmsStreamInf)
     int ret = 0;
     int bufferLen = 0;
 
-    //* asfHttpDataBufferÖÐµÄÊý¾ÝÊ±ÔÚ½âÎöasf header objectµÄÊ±ºò recvµÄ£¬
-    //ÐèÒªÏÈÈ·ÈÏÆäÖÐµÄÊý¾ÝÊÇ·ñÒÑ¾­copyµ½mmsStreamInf->bufferÖÐ
-    //* Èç¹ûasfHttpDataBufferÖÐ»¹ÓÐÊý¾Ý½«Ëü¿½±´µ½bufferÖÐ£¬È»ºóÊÍ·ÅÆäÄÚ´æ
+    //* asfHttpDataBufferï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Ú½ï¿½ï¿½ï¿½asf header objectï¿½ï¿½Ê±ï¿½ï¿½ recvï¿½Ä£ï¿½
+    //ï¿½ï¿½Òªï¿½ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Ñ¾ï¿½copyï¿½ï¿½mmsStreamInf->bufferï¿½ï¿½
+    //* ï¿½ï¿½ï¿½asfHttpDataBufferï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½bufferï¿½Ð£ï¿½È»ï¿½ï¿½ï¿½Í·ï¿½ï¿½ï¿½ï¿½Ú´ï¿½
     if(mmsStreamInf->asfHttpDataBuffer != NULL) /*mmsh*/
     {
         bufferLen = mmsStreamInf->asfHttpDataSize - mmsStreamInf->asfHttpBufPos;
@@ -1045,7 +1045,7 @@ int NopStreamingRead(int fd, char *buffer, int size, aw_mms_inf_t* mmsStreamInf)
             ret = MmsGetNetworkData(mmsStreamInf, fd, buffer+len, size-len);
             if(ret <= 0)
             {
-                CDX_LOGW("******************ret=%d, want=%d\n", ret, size-len);
+                LOGW("******************ret=%d, want=%d", ret, size-len);
                 return -1;
             }
             len += ret;
@@ -1078,12 +1078,12 @@ static int AsfStreaming(aw_asf_stream_chunck_t *streamChunck, int *dropPacket)
     }
     if(streamChunck->size<8)
     {
-        printf("****************streamChunck->size=%d\n", streamChunck->size);
+        LOGI("****************streamChunck->size=%d", streamChunck->size);
         return -1;
     }
     if(streamChunck->size != streamChunck->sizeConfirm)
     {
-        printf("****************streamChunck->size=%d, streamChunck->sizeConfirm=%d\n",
+        LOGI("****************streamChunck->size=%d, streamChunck->sizeConfirm=%d",
             streamChunck->size,streamChunck->sizeConfirm);
         return -1;
     }
@@ -1091,7 +1091,7 @@ static int AsfStreaming(aw_asf_stream_chunck_t *streamChunck, int *dropPacket)
     switch(streamChunck->type)
     {
         case ASF_STREAMING_CLEAR:    // $C    Clear ASF configuration
-            printf("=====> Clearing ASF stream configuration!\n");
+            LOGI("=====> Clearing ASF stream configuration!");
             if(dropPacket!=NULL )
             {
                 *dropPacket = 1;
@@ -1099,10 +1099,10 @@ static int AsfStreaming(aw_asf_stream_chunck_t *streamChunck, int *dropPacket)
             return streamChunck->size;
             break;
         case ASF_STREAMING_DATA:    // $D    Data follows
-            printf("=====> Data follows\n");
+            LOGI("=====> Data follows");
             break;
         case ASF_STREAMING_END_TRANS:    // $E    Transfer complete
-            printf("=====> Transfer complete\n");
+            LOGI("=====> Transfer complete");
             if(dropPacket!=NULL)
             {
                 *dropPacket = 1;
@@ -1110,10 +1110,10 @@ static int AsfStreaming(aw_asf_stream_chunck_t *streamChunck, int *dropPacket)
             return streamChunck->size;
             break;
         case ASF_STREAMING_HEADER:    // $H    ASF header chunk follows
-            printf("=====> ASF header chunk follows\n");
+            LOGI("=====> ASF header chunk follows");
             break;
         default:
-            printf("=====> Unknown stream type 0x%x\n", streamChunck->type);
+            LOGI("=====> Unknown stream type 0x%x", streamChunck->type);
     }
     return streamChunck->size+4;
 }
@@ -1137,7 +1137,7 @@ int AsfStreamingType(aw_asf_stream_chunck_t *streamChunck, int *dropPacket)
     switch(streamChunck->type)
     {
         case ASF_STREAMING_CLEAR:       // $C    Clear ASF configuration
-            CDX_LOGD("=====> Clearing ASF stream configuration!\n");
+            LOGD("=====> Clearing ASF stream configuration!");
             if(dropPacket!=NULL )
             {
                 *dropPacket = 1;
@@ -1145,11 +1145,11 @@ int AsfStreamingType(aw_asf_stream_chunck_t *streamChunck, int *dropPacket)
             ret = 1;
             break;
         case ASF_STREAMING_DATA:        // $D    Data follows
-            CDX_LOGV("=====> Data follows\n");
+            LOGV("=====> Data follows");
             ret = 0;
             break;
         case ASF_STREAMING_END_TRANS:    // $E    Transfer complete
-            CDX_LOGD("=====> Transfer complete, End of stream\n");
+            LOGD("=====> Transfer complete, End of stream");
             if(dropPacket!=NULL)
             {
                 *dropPacket = 1;
@@ -1157,11 +1157,11 @@ int AsfStreamingType(aw_asf_stream_chunck_t *streamChunck, int *dropPacket)
             ret = 3;
             break;
         case ASF_STREAMING_HEADER:       // $H    ASF header chunk follows
-            CDX_LOGD("=====> ASF header chunk follows\n");
+            LOGD("=====> ASF header chunk follows");
             ret = 2;
             break;
         default:
-            CDX_LOGW("=====> Unknown chunk type 0x%x\n", streamChunck->type);
+            LOGW("=====> Unknown chunk type 0x%x", streamChunck->type);
             ret = -1;
     }
     return ret;
@@ -1241,12 +1241,12 @@ static int AsfStreamingParseHeader(int fd, aw_mms_inf_t* mmsStreamInf)
 
         if(size < 0)
         {
-            CDX_LOGW("****************here1:MSGTR_MPDEMUX_ASF_ErrorParsingChunkHeader");
+            LOGW("****************here1:MSGTR_MPDEMUX_ASF_ErrorParsingChunkHeader");
             goto len_err_out;
         }
         if(chunk.type != ASF_STREAMING_HEADER)  // the first rquest is always the Header Object
         {
-            CDX_LOGW("***************MSGTR_MPDEMUX_ASF_NoHeaderAtFirstChunk");
+            LOGW("***************MSGTR_MPDEMUX_ASF_NoHeaderAtFirstChunk");
             goto len_err_out;
         }
 
@@ -1564,7 +1564,7 @@ int MmshStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
     asfHttpCtrl = malloc(sizeof(aw_mmsh_ctrl_t));
     if(asfHttpCtrl==NULL)
     {
-        CDX_LOGE("*******************memAlloc for asfHttpCtrl failed.\n");
+        LOGE("*******************memAlloc for asfHttpCtrl failed.");
         return -1;
     }
     asfHttpCtrl->packetSize = 0;
@@ -1602,7 +1602,7 @@ int MmshStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
         fd = Connect2Server(mmsStreamInf, url->hostname, url->port, 1);
         if (fd<0)
         {
-            CDX_LOGI("[%s:%u]connect to server failed.\n", url->hostname, url->port);
+            LOGI("[%s:%u]connect to server failed.", url->hostname, url->port);
             return fd;
         }
 
@@ -1613,7 +1613,7 @@ int MmshStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
             r = send(fd, httpHdr->buffer+i, httpHdr->bufferSize-i, DEFAULT_SEND_FLAGS);
             if(r <0)
             {
-                CDX_LOGV("**************MSGTR_MPDEMUX_ASF_SocketWriteError\n");
+                LOGV("**************MSGTR_MPDEMUX_ASF_SocketWriteError");
                 goto err_out;
             }
             i += r;
@@ -1628,7 +1628,7 @@ int MmshStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
          //recv 2K data every time
             if(i<=0)
             {
-                CDX_LOGD("*****MmsGetNetworkData error!");
+                LOGD("*****MmsGetNetworkData error!");
                 goto err_out;
             }
             CdxMmshResponseAppend(httpHdr, buffer, i);
@@ -1640,7 +1640,7 @@ int MmshStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
         ret = MmshParseResponse(asfHttpCtrl, httpHdr); //* parse the response of the request
         if(ret < 0)
         {
-            CDX_LOGD("***** mmsh parse response error!");
+            LOGD("***** mmsh parse response error!");
             goto err_out;
         }
         switch(asfHttpCtrl->streamingType)
@@ -1653,7 +1653,7 @@ int MmshStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
                 {
                     if(StreamingBufferize(mmsStreamInf, httpHdr->body, (int)httpHdr->bodySize) < 0)
                     {
-                        CDX_LOGD("***** streaming bufferize error!");
+                        LOGD("***** streaming bufferize error!");
                         goto err_out;
                     }
                 }
@@ -1673,7 +1673,7 @@ int MmshStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
                         ret = AsfStreamingParseHeader(fd,mmsStreamInf);
                         if(ret < 0)
                         {
-                            CDX_LOGD("****** streaming parse header error!");
+                            LOGD("****** streaming parse header error!");
                             goto err_out;
                         }
                         if((asfHttpCtrl->nAudio==0) && (asfHttpCtrl->nVideo==0))
@@ -1690,7 +1690,7 @@ int MmshStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
                 }
                 break;
             case ASF_TYPE_REDIRECTOR:
-                 CDX_LOGD("-- ASF_TYPE_REDIRECTOR");
+                 LOGD("-- ASF_TYPE_REDIRECTOR");
                  goto err_out;
                  break;
             case ASF_TYPE_AUTHENTICATE:
@@ -1716,7 +1716,7 @@ int MmshStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
     return 0;
 
 err_out:
-    CDX_LOGD("MmshStreamingStart  error");
+    LOGD("MmshStreamingStart  error");
     if(mmsStreamInf->sockFd > 0)
     {
         closesocket(mmsStreamInf->sockFd);
@@ -1757,7 +1757,7 @@ static int MmshStreamingRead( int fd, char *buffer, int size, aw_mms_inf_t* mmsS
 
         if(mmsStreamInf->asfHttpDataBuffer == NULL)
         {
-            CDX_LOGV("mmsStreamInf->asfHttpDataBuffer == NULL\n");
+            LOGV("mmsStreamInf->asfHttpDataBuffer == NULL");
         }
 
         memset(&chunk, 0, sizeof(aw_asf_stream_chunck_t));
@@ -1789,7 +1789,7 @@ static int MmshStreamingRead( int fd, char *buffer, int size, aw_mms_inf_t* mmsS
         ret = AsfStreamingType(&chunk,&dropChunk);
         if ((ret == 1) && (mmsStreamInf->iostate == CDX_IO_STATE_OK))
         {
-            CDX_LOGD("--- CDX_IO_STATE_CLEAR, buf_pos = %llx",
+            LOGD("--- CDX_IO_STATE_CLEAR, buf_pos = %llx",
                (long long int)mmsStreamInf->buf_pos);
             mmsStreamInf->iostate = CDX_IO_STATE_CLEAR;
 
@@ -1801,7 +1801,7 @@ static int MmshStreamingRead( int fd, char *buffer, int size, aw_mms_inf_t* mmsS
         }
         else if(ret == 2)  // restart
         {
-            CDX_LOGD("--- Header Chunk, buf_pos = %llx", (long long int)mmsStreamInf->buf_pos);
+            LOGD("--- Header Chunk, buf_pos = %llx", (long long int)mmsStreamInf->buf_pos);
             //mmsStreamInf->iostate = CDX_IO_STATE_INVALID;
         }
 
@@ -1812,7 +1812,7 @@ static int MmshStreamingRead( int fd, char *buffer, int size, aw_mms_inf_t* mmsS
         {
             if(asfHttpCtrl->packetSize < chunkSize)
             {
-                CDX_LOGD("**streamTYpe:%d, asfHttpCtrl->packetSize<%d>\
+                LOGD("**streamTYpe:%d, asfHttpCtrl->packetSize<%d>\
                      is smaller than the chunkSize<%d>, error.",
                      ret, asfHttpCtrl->packetSize, chunkSize);
                 return -1;
@@ -1822,7 +1822,7 @@ static int MmshStreamingRead( int fd, char *buffer, int size, aw_mms_inf_t* mmsS
 
         if(chunk.type == ASF_STREAMING_END_TRANS)
         {
-            CDX_LOGV("--- stream End");
+            LOGV("--- stream End");
             return STREAM_READ_END;
         }
 
@@ -1836,7 +1836,7 @@ static int MmshStreamingRead( int fd, char *buffer, int size, aw_mms_inf_t* mmsS
             {
                 break;
             }
-            //printf("**************remainSize=%d, wantSize=%d\n",
+            //LOGI("**************remainSize=%d, wantSize=%d",
             //(mmsStreamInf->stream_buf_size-mmsStreamInf->bufferDataSize), wantSize);
             usleep(40*1000);
         }
@@ -1845,13 +1845,13 @@ static int MmshStreamingRead( int fd, char *buffer, int size, aw_mms_inf_t* mmsS
 
             if(asfHttpCtrl->packetSize>=32*1024 || chunkSize>= 32*1024)
             {
-                CDX_LOGD("******asfHttpCtrl->packetSize:%d chunkSize:%d > 32*1024.",
+                LOGD("******asfHttpCtrl->packetSize:%d chunkSize:%d > 32*1024.",
                     asfHttpCtrl->packetSize, chunkSize);
                 return -1;
             }
             if(AsfReadWrapper(fd,  mmsStreamInf->asfChunkDataBuffer, chunkSize, mmsStreamInf) <= 0)
             {
-                CDX_LOGD("--- AsfReadWrapper error");
+                LOGD("--- AsfReadWrapper error");
                 return -1;
             }
             if(dropChunk == 1)
@@ -1888,7 +1888,7 @@ static int MmshStreamingRead( int fd, char *buffer, int size, aw_mms_inf_t* mmsS
         {
             if(AsfReadWrapper(fd, buffer, chunkSize, mmsStreamInf) <= 0)
             {
-                CDX_LOGD("-- 22 AsfReadWrapper error");
+                LOGD("-- 22 AsfReadWrapper error");
                 return -1;
             }
             if(dropChunk == 1)
@@ -1914,7 +1914,7 @@ static int MmshStreamingRead( int fd, char *buffer, int size, aw_mms_inf_t* mmsS
         }
         else
         {
-            CDX_LOGW("can not find File_Properties_Object");
+            LOGW("can not find File_Properties_Object");
         }
     }
     return wantSize;
@@ -2031,7 +2031,7 @@ int CdxNopStreamingSeek( aw_mms_inf_t* mmsStreamInf)
     fd = Connect2Server(mmsStreamInf, url->hostname, url->port, 1);
     if(fd <= 0)
     {
-        printf("*********************connect the stream fd=%d\n", fd);
+        LOGI("*********************connect the stream fd=%d", fd);
     }
     httpHdr = MmshRequest(mmsStreamInf,0,0, mmsStreamInf->buf_pos);
     for(i=0; i < (int)httpHdr->bufferSize; )
@@ -2039,7 +2039,7 @@ int CdxNopStreamingSeek( aw_mms_inf_t* mmsStreamInf)
         r = send(fd, httpHdr->buffer+i, httpHdr->bufferSize-i, DEFAULT_SEND_FLAGS);
         if(r <0)
         {
-            CDX_LOGV("**************MSGTR_MPDEMUX_ASF_SocketWriteError\n");
+            LOGV("**************MSGTR_MPDEMUX_ASF_SocketWriteError");
             goto err_out;
         }
         i += r;
@@ -2121,7 +2121,7 @@ int CdxMmshStreamingSeek(aw_mms_inf_t* mmsStreamInf)
     fd = Connect2Server(mmsStreamInf, url->hostname, url->port, 1);
     if(fd <= 0)
     {
-        CDX_LOGW("*********************connect the stream fd=%d\n", fd);
+        LOGW("*********************connect the stream fd=%d", fd);
     }
     httpHdr = MmshRequest(mmsStreamInf,(mmsStreamInf->buf_pos>>32)&0xffffffff,
                         mmsStreamInf->buf_pos&0xffffffff, 0);
@@ -2130,7 +2130,7 @@ int CdxMmshStreamingSeek(aw_mms_inf_t* mmsStreamInf)
         r = send(fd, httpHdr->buffer+i, httpHdr->bufferSize-i, DEFAULT_SEND_FLAGS);
         if(r <0)
         {
-            CDX_LOGV("**************MSGTR_MPDEMUX_ASF_SocketWriteError\n");
+            LOGV("**************MSGTR_MPDEMUX_ASF_SocketWriteError");
             goto err_out;
         }
         i += r;

@@ -28,7 +28,7 @@ extern "C" {
 
 static inline void LogVersionInfo(void)
 {
-    logd("\n"
+    LOGD(""
          ">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Cedar Codec <<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"
          "tag   : %s\n"
          "branch: %s\n"
@@ -45,7 +45,7 @@ static inline void LogVersionInfo(void)
     static void VersionInfo_##tag(void) __attribute__((constructor));\
     void VersionInfo_##tag(void) \
     { \
-        logd("-------library tag: %s-------", #tag);\
+        LOGD("-------library tag: %s-------", #tag);\
         LogVersionInfo(); \
     }
 

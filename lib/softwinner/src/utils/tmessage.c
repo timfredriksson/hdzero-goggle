@@ -17,7 +17,7 @@
 *******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "tmessage"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,7 +45,7 @@ static int TMessageDeepCopyMessage(message_t *pDesMsg, message_t *pSrcMsg)
         }
         else
         {
-            aloge(" fatal error! malloc MessageData fail!");
+            LOGE(" fatal error! malloc MessageData fail!");
             return -1;
         }
     }
@@ -72,7 +72,7 @@ static int TMessageIncreaseIdleMessageList(message_queue_t* pThiz)
         pMsg = (message_t*)malloc(sizeof(message_t));
         if(NULL == pMsg)
         {
-            aloge(" fatal error! malloc fail");
+            LOGE(" fatal error! malloc fail");
             ret = -1;
             break;
         }
@@ -86,7 +86,7 @@ int message_create(message_queue_t* msg_queue)
 	//int 		i;
     int         ret;
   
-	alogv("msg create\n");
+	LOGV("msg create");
     
 	ret = pthread_mutex_init(&msg_queue->mutex, NULL);
 	if (ret!=0)
@@ -101,7 +101,7 @@ int message_create(message_queue_t* msg_queue)
     ret = pthread_cond_init(&msg_queue->mCondMessageQueueChanged, &condAttr);
     if(ret!=0)
     {
-        aloge("[%s] fatal error! pthread cond init fail", strrchr(__FILE__, '/')+1);
+        LOGE("[%s] fatal error! pthread cond init fail", strrchr(__FILE__, '/')+1);
         goto _err0;
     }
     msg_queue->mWaitMessageFlag = 0;
@@ -131,7 +131,7 @@ void message_destroy(message_queue_t* msg_queue)
         message_t *pEntry, *pTmp;
         list_for_each_entry_safe(pEntry, pTmp, &msg_queue->mReadyMessageList, mList)
         {
-            alogd(" msg destroy: cmd[%x]mpData[%p]size[%d]", pEntry->command, pEntry->mpData, pEntry->mDataSize);
+            LOGD(" msg destroy: cmd[%x]mpData[%p]size[%d]", pEntry->command, pEntry->mpData, pEntry->mDataSize);
             if(pEntry->mpData)
             {
                 free(pEntry->mpData);
@@ -144,7 +144,7 @@ void message_destroy(message_queue_t* msg_queue)
     }
     if(msg_queue->message_count != 0)
     {
-        aloge(" fatal error! msg count[%d]!=0", msg_queue->message_count);
+        LOGE(" fatal error! msg count[%d]!=0", msg_queue->message_count);
     }
     int cnt = 0;
     if(!list_empty(&msg_queue->mIdleMessageList))
@@ -173,7 +173,7 @@ void flush_message(message_queue_t* msg_queue)
         message_t   *pEntry, *pTmp;
         list_for_each_entry_safe(pEntry, pTmp, &msg_queue->mReadyMessageList, mList)
         {
-            alogd(" msg destroy: cmd[%x]mpData[%p]size[%d]", pEntry->command, pEntry->mpData, pEntry->mDataSize);
+            LOGD(" msg destroy: cmd[%x]mpData[%p]size[%d]", pEntry->command, pEntry->mpData, pEntry->mDataSize);
             if(pEntry->mpData)
             {
                 free(pEntry->mpData);
@@ -186,7 +186,7 @@ void flush_message(message_queue_t* msg_queue)
     }
     if(msg_queue->message_count != 0)
     {
-        aloge(" fatal error! msg count[%d]!=0", msg_queue->message_count);
+        LOGE(" fatal error! msg count[%d]!=0", msg_queue->message_count);
     }
 	pthread_mutex_unlock(&msg_queue->mutex);
 }
@@ -237,7 +237,7 @@ int putMessageWithData(message_queue_t* msg_queue, message_t *msg_in)
 	pthread_mutex_lock(&msg_queue->mutex);
     if(list_empty(&msg_queue->mIdleMessageList))
     {
-        alogw(" idleMessageList are all used, malloc more!");
+        LOGW(" idleMessageList are all used, malloc more!");
         //dumpCallStack("TMsg");
         if(0!=TMessageIncreaseIdleMessageList(msg_queue))
         {
@@ -250,7 +250,7 @@ int putMessageWithData(message_queue_t* msg_queue, message_t *msg_in)
     {
         list_move_tail(&pMessageEntry->mList, &msg_queue->mReadyMessageList);
         msg_queue->message_count++;
-        alogv(" new msg command[%d], para[%d][%d] pData[%p]size[%d]", 
+        LOGV(" new msg command[%d], para[%d][%d] pData[%p]size[%d]", 
             pMessageEntry->command, pMessageEntry->para0, pMessageEntry->para1, pMessageEntry->mpData, pMessageEntry->mDataSize);
         if(msg_queue->mWaitMessageFlag)
         {
@@ -296,14 +296,14 @@ int TMessage_WaitQueueNotEmpty(message_queue_t* msg_queue, unsigned int timeout)
             int ret = pthread_cond_wait_timeout(&msg_queue->mCondMessageQueueChanged, &msg_queue->mutex, timeout);
             if(ETIMEDOUT == ret)
             {
-                //alogd(" pthread cond timeout np timeout[%d]", ret);
+                //LOGD(" pthread cond timeout np timeout[%d]", ret);
             }
             else if(0 == ret)
             {
             }
             else
             {
-                aloge(" fatal error! pthread cond timeout np[%d]", ret);
+                LOGE(" fatal error! pthread cond timeout np[%d]", ret);
             }
         }
     }

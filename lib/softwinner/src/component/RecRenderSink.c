@@ -17,7 +17,7 @@
 *******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "RecSink"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <unistd.h>
@@ -69,7 +69,7 @@ static ERRORTYPE RecSinkIncreaseIdleRSPacketList(RecSink* pThiz)
         pRSPacket = (RecSinkPacket*)malloc(sizeof(RecSinkPacket));
         if(NULL == pRSPacket)
         {
-            aloge("fatal error! malloc fail");
+            LOGE("fatal error! malloc fail");
             eError = ERR_MUX_NOMEM;
             break;
         }
@@ -231,18 +231,18 @@ static ERRORTYPE RecSinkWriteRSPacket(RecSink *pRecSink, RecSinkPacket *pSrcPkt)
 	{
 		pRecSink->mbTrackInit[pDesPkt->stream_index] = TRUE;
         pRecSink->mBasePts[pDesPkt->stream_index] = pSrcPkt->mPts;
-        alogd("streamIdx[%d] BasePts[%lld]us!", pDesPkt->stream_index, pSrcPkt->mPts);
+        LOGD("streamIdx[%d] BasePts[%lld]us!", pDesPkt->stream_index, pSrcPkt->mPts);
         if(-1 == pRecSink->mOrigBasePts[pDesPkt->stream_index])
         {
             pRecSink->mOrigBasePts[pDesPkt->stream_index] = pSrcPkt->mPts;
-            alogd("streamIdx[%d] OrigBasePts[%lld]us!", pDesPkt->stream_index, pSrcPkt->mPts);
+            LOGD("streamIdx[%d] OrigBasePts[%lld]us!", pDesPkt->stream_index, pSrcPkt->mPts);
         }
         //if(pRecSink->mInputPrevPts[pDesPkt->stream_index] != -1)
         //{
         //    pDesPkt->duration = (pSrcPkt->mPts - pRecSink->mInputPrevPts[pDesPkt->stream_index])/1000;
         //    if(pDesPkt->duration <= 0)
         //    {
-        //        aloge("fatal error! stream[%d], curPts[%lld]us<=prevPts[%lld]us!", pDesPkt->stream_index, pSrcPkt->mPts, pRecSink->mInputPrevPts[pDesPkt->stream_index]);
+        //        LOGE("fatal error! stream[%d], curPts[%lld]us<=prevPts[%lld]us!", pDesPkt->stream_index, pSrcPkt->mPts, pRecSink->mInputPrevPts[pDesPkt->stream_index]);
         //    }
         //}
         //if(pDesPkt->duration < 0)
@@ -259,7 +259,7 @@ static ERRORTYPE RecSinkWriteRSPacket(RecSink *pRecSink, RecSinkPacket *pSrcPkt)
         //    {
         //        pDesPkt->duration = 1000;
         //    }
-        //    alogd("first packet of stream[%d], duration[%d]ms!", pSrcPkt->mStreamType, pDesPkt->duration);
+        //    LOGD("first packet of stream[%d], duration[%d]ms!", pSrcPkt->mStreamType, pDesPkt->duration);
         //}
 	}
 //    int64_t nBasePts;
@@ -271,7 +271,7 @@ static ERRORTYPE RecSinkWriteRSPacket(RecSink *pRecSink, RecSinkPacket *pSrcPkt)
 //        }
 //        else
 //        {
-//            alogw("fatal error! videoBasePts[%lld]<0, cur stream_index[%d], check code!", pRecSink->mBasePts[CODEC_TYPE_VIDEO], pDesPkt->stream_index);
+//            LOGW("fatal error! videoBasePts[%lld]<0, cur stream_index[%d], check code!", pRecSink->mBasePts[CODEC_TYPE_VIDEO], pDesPkt->stream_index);
 //            nBasePts = pRecSink->mBasePts[pDesPkt->stream_index];
 //        }
 //    }
@@ -282,7 +282,7 @@ static ERRORTYPE RecSinkWriteRSPacket(RecSink *pRecSink, RecSinkPacket *pSrcPkt)
 //    pDesPkt->pts = pSrcPkt->mPts - nBasePts;
 //    if(pDesPkt->pts < 0)
 //    {
-//        alogw("Be careful! streamIdx[%d] pts[%lld]<0, [%lld][%lld][%lld], change to 0, check code!", 
+//        LOGW("Be careful! streamIdx[%d] pts[%lld]<0, [%lld][%lld][%lld], change to 0, check code!", 
 //            pDesPkt->stream_index, pDesPkt->pts, pSrcPkt->mPts, pRecSink->mBasePts[pDesPkt->stream_index], nBasePts);
 //        pDesPkt->pts = 0;
 //    }
@@ -338,7 +338,7 @@ static ERRORTYPE RecSinkWriteRSPacket(RecSink *pRecSink, RecSinkPacket *pSrcPkt)
             ret = pRecSink->pWriter->MuxerWritePacket(pRecSink->pMuxerCtx, pDesPkt);
             if (ret != 0)
             {
-                aloge("fatal error! muxerId[%d]muxerWritePacket FAILED", pRecSink->mMuxerId);
+                LOGE("fatal error! muxerId[%d]muxerWritePacket FAILED", pRecSink->mMuxerId);
                 pRecSink->mpCallbacks->EventHandler(
                         pRecSink, 
                         pRecSink->mpAppData,
@@ -351,12 +351,12 @@ static ERRORTYPE RecSinkWriteRSPacket(RecSink *pRecSink, RecSinkPacket *pSrcPkt)
 		} 
         else 
         {
-			alogw("pWriter=NULL, muxer not initialize");
+			LOGW("pWriter=NULL, muxer not initialize");
 		}
     }
     else
     {
-        alogw("Sdcard is not exist, skip MuxerWritePacket()!");
+        LOGW("Sdcard is not exist, skip MuxerWritePacket()!");
     }
     return SUCCESS;
 }
@@ -367,7 +367,7 @@ static ERRORTYPE RecSinkReleaseRSPacket_l(RecSink *pRecSink, RecSinkPacket *pRSP
     omxRet = pRecSink->mpCallbacks->EmptyBufferDone(pRecSink, pRecSink->mpAppData, pRSPacket);
     if(omxRet != SUCCESS)
     {
-        aloge("fatal error! emptyBufferDone fail[0x%x]", omxRet);
+        LOGE("fatal error! emptyBufferDone fail[0x%x]", omxRet);
     }
     list_add_tail(&pRSPacket->mList, &pRecSink->mIdleRSPacketList);
     return omxRet;
@@ -379,7 +379,7 @@ static ERRORTYPE RecSinkReleaseRSPacket(RecSink *pRecSink, RecSinkPacket *pRSPac
     omxRet = pRecSink->mpCallbacks->EmptyBufferDone(pRecSink, pRecSink->mpAppData, pRSPacket);
     if(omxRet != SUCCESS)
     {
-        aloge("fatal error! emptyBufferDone fail[0x%x]", omxRet);
+        LOGE("fatal error! emptyBufferDone fail[0x%x]", omxRet);
     }
     pthread_mutex_lock(&pRecSink->mRSPacketListMutex);
     list_add_tail(&pRSPacket->mList, &pRecSink->mIdleRSPacketList);
@@ -394,7 +394,7 @@ static ERRORTYPE RecSinkDrainAllRSPackets(RecSink *pRecSink, BOOL bIgnore)
     RecSinkPacket   *pEntry, *pTmp;
     RecSinkPacket   *pRSPacket;
     pthread_mutex_lock(&pRecSink->mRSPacketListMutex);
-    alogd("muxerId[%d]muxerMode[%d] begin to drain packets, bIgnore[%d]", pRecSink->mMuxerId, pRecSink->nMuxerMode, bIgnore);
+    LOGD("muxerId[%d]muxerMode[%d] begin to drain packets, bIgnore[%d]", pRecSink->mMuxerId, pRecSink->nMuxerMode, bIgnore);
     while(1)
     {
         if(bIgnore)
@@ -403,7 +403,7 @@ static ERRORTYPE RecSinkDrainAllRSPackets(RecSink *pRecSink, BOOL bIgnore)
         }
         if(!pRecSink->mbSdCardState)
         {
-            alogd("sdcard is pull out");
+            LOGD("sdcard is pull out");
             break;
         }
         pRSPacket = RecSinkGetRSPacket_l(pRecSink);
@@ -429,7 +429,7 @@ static ERRORTYPE RecSinkDrainAllRSPackets(RecSink *pRecSink, BOOL bIgnore)
                         {
                             if(RecSinkMuxerInit(pRecSink) != SUCCESS) 
                             {
-                                aloge("fatal error! muxerId[%d][%p]ValidMuxerInit Error!", pRecSink->mMuxerId, pRecSink);
+                                LOGE("fatal error! muxerId[%d][%p]ValidMuxerInit Error!", pRecSink->mMuxerId, pRecSink);
                                 pRecSink->mStatus = COMP_StateInvalid;   //OMX_StateIdle;
                                 pthread_mutex_unlock(&pRecSink->mutex_reset_writer_lock);
                                 RecSinkReleaseRSPacket_l(pRecSink, pRSPacket);
@@ -461,17 +461,17 @@ static ERRORTYPE RecSinkDrainAllRSPackets(RecSink *pRecSink, BOOL bIgnore)
             cnt++;
             sendCnt++;
         }
-        alogd("left [%d]packets to send out immediately", sendCnt);
+        LOGD("left [%d]packets to send out immediately", sendCnt);
     }
     pthread_mutex_unlock(&pRecSink->mRSPacketListMutex);
-    alogd("muxerId[%d]muxerMode[%d] drain [%d]packets, ShutDownNow[%d]", pRecSink->mMuxerId, pRecSink->nMuxerMode, cnt, pRecSink->mbShutDownNowFlag);
+    LOGD("muxerId[%d]muxerMode[%d] drain [%d]packets, ShutDownNow[%d]", pRecSink->mMuxerId, pRecSink->nMuxerMode, cnt, pRecSink->mbShutDownNowFlag);
     return SUCCESS;
 }
 
 ERRORTYPE RecSinkStreamCallback(void *hComp, int event)
 {
     RecSink *pRecSink = (RecSink*)hComp;
-    alogd("WriteDisk fail: muxerId[%d], muxerFileType[0x%x], fd[%d]", pRecSink->mMuxerId, pRecSink->nMuxerMode, pRecSink->nOutputFd);
+    LOGD("WriteDisk fail: muxerId[%d], muxerFileType[0x%x], fd[%d]", pRecSink->mMuxerId, pRecSink->nMuxerMode, pRecSink->nOutputFd);
     pRecSink->mpCallbacks->EventHandler(
                                 pRecSink,
                                 pRecSink->mpAppData, 
@@ -485,7 +485,7 @@ ERRORTYPE RecSinkStreamCallback(void *hComp, int event)
 ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
 {
     int ret = 0;
-    alogd("sinkInfo[%p]muxerId[%d],fd[%d], nCallbackOutFlag[%d]", pSinkInfo, pSinkInfo->mMuxerId, pSinkInfo->nOutputFd, pSinkInfo->nCallbackOutFlag);
+    LOGD("sinkInfo[%p]muxerId[%d],fd[%d], nCallbackOutFlag[%d]", pSinkInfo, pSinkInfo->mMuxerId, pSinkInfo->nOutputFd, pSinkInfo->nCallbackOutFlag);
     if(pSinkInfo->rec_file == FILE_NORMAL)
     {
         pSinkInfo->mCurMaxFileDuration = pSinkInfo->mMaxFileDuration;
@@ -493,35 +493,35 @@ ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
     }
 	else if (pSinkInfo->rec_file == FILE_IMPACT_RECDRDING)
 	{
-        aloge("fatal error! not care impact!");
+        LOGE("fatal error! not care impact!");
 		//pSinkInfo->mCurMaxFileDuration = pSinkInfo->mImpactFileDuration;
         //pSinkInfo->mCurFileEndTm = pSinkInfo->mLoopDuration + pSinkInfo->mCurMaxFileDuration;
 	}
     else if (pSinkInfo->rec_file == FILE_NEED_SWITCH_TO_IMPACT)
 	{
-        aloge("fatal error! not care impact!");
-//        alogd("rec file state FILE_NEED_SWITCH_TO_IMPACT, so directly impact file.");
+        LOGE("fatal error! not care impact!");
+//        LOGD("rec file state FILE_NEED_SWITCH_TO_IMPACT, so directly impact file.");
 //        pSinkInfo->rec_file = FILE_IMPACT_RECDRDING;
 //		pSinkInfo->mCurMaxFileDuration = pSinkInfo->mImpactFileDuration;
 //        pSinkInfo->mCurFileEndTm += pSinkInfo->mCurMaxFileDuration;
 	}
     else
     {
-        aloge("fatal error! wrong rec file state[%d]", pSinkInfo->rec_file);
+        LOGE("fatal error! wrong rec file state[%d]", pSinkInfo->rec_file);
         pSinkInfo->mCurMaxFileDuration = pSinkInfo->mMaxFileDuration;
     }
     if(FALSE == pSinkInfo->nCallbackOutFlag)
     {
         if(pSinkInfo->nOutputFd<0 && NULL==pSinkInfo->mPath)
         {
-            alogw("Be careful! nOutputFd<0 when call RecRender MuxerInit, have last chance to get fd!");
+            LOGW("Be careful! nOutputFd<0 when call RecRender MuxerInit, have last chance to get fd!");
             if(pSinkInfo->reset_fd_flag)
             {
                 if(pSinkInfo->nSwitchFd >= 0)
                 {
                     if(pSinkInfo->mSwitchFilePath)
                     {
-                        aloge("fatal error! fd[%d] and path[%s] only use one, check code!", pSinkInfo->nSwitchFd, pSinkInfo->mSwitchFilePath);
+                        LOGE("fatal error! fd[%d] and path[%s] only use one, check code!", pSinkInfo->nSwitchFd, pSinkInfo->mSwitchFilePath);
                     }
                     pSinkInfo->nOutputFd = pSinkInfo->nSwitchFd;
                     pSinkInfo->nSwitchFd = -1;
@@ -529,7 +529,7 @@ ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
                     pSinkInfo->nSwitchFdFallocateSize = 0;
 //                    if(pSinkInfo->mSwitchFdImpactFlag)
 //                    {
-//                        alogd("to write impact fd!");
+//                        LOGD("to write impact fd!");
 //                        pSinkInfo->mSwitchFdImpactFlag = 0;
 //                    }
                     pSinkInfo->reset_fd_flag = FALSE;
@@ -538,7 +538,7 @@ ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
                 {
                     if(pSinkInfo->mPath)
                     {
-                        aloge("fatal error! mPath[%s] should be null", pSinkInfo->mPath);
+                        LOGE("fatal error! mPath[%s] should be null", pSinkInfo->mPath);
                         free(pSinkInfo->mPath);
                         pSinkInfo->mPath = NULL;
                     }
@@ -549,31 +549,31 @@ ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
                     pSinkInfo->nSwitchFdFallocateSize = 0;
 //                    if(pSinkInfo->mSwitchFdImpactFlag)
 //                    {
-//                        alogd("to write impact fd!");
+//                        LOGD("to write impact fd!");
 //                        pSinkInfo->mSwitchFdImpactFlag = 0;
 //                    }
                     pSinkInfo->reset_fd_flag = FALSE;
                 }
                 else
                 {
-                    alogd("pSinkInfo->nSwitchFd[%d] < 0", pSinkInfo->nSwitchFd);
+                    LOGD("pSinkInfo->nSwitchFd[%d] < 0", pSinkInfo->nSwitchFd);
                 }
             }
             else
             {
-                aloge("fatal error! reset_fd flag != TRUE");
+                LOGE("fatal error! reset_fd flag != TRUE");
             }
         }
         if(pSinkInfo->nOutputFd>=0)
         {
             if(pSinkInfo->nOutputFd == 0)
             {
-                alogd("Be careful! fd == 0");
+                LOGD("Be careful! fd == 0");
             }
 //            pSinkInfo->pOutputFile = fdopen(pSinkInfo->nOutputFd, "wb");
 //            if(pSinkInfo->pOutputFile==NULL) 
 //            {
-//                aloge("fatal error! get file fd failed, test");
+//                LOGE("fatal error! get file fd failed, test");
 //            }
         }
         else if(pSinkInfo->mPath!=NULL)
@@ -581,10 +581,10 @@ ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
         }
         else
         {
-            alogd("RecSink[%p] is not set nOutputFd[%d]", pSinkInfo, pSinkInfo->nOutputFd);
+            LOGD("RecSink[%p] is not set nOutputFd[%d]", pSinkInfo, pSinkInfo->nOutputFd);
 //            if(pSinkInfo->pOutputFile!=NULL)
 //            {
-//                aloge("fatal error! RecSink[%p] pOutputFile[%p] is not NULL!", pSinkInfo, pSinkInfo->pOutputFile);
+//                LOGE("fatal error! RecSink[%p] pOutputFile[%p] is not NULL!", pSinkInfo, pSinkInfo->pOutputFile);
 //                pSinkInfo->pOutputFile = NULL;
 //            }
         }
@@ -609,18 +609,18 @@ ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
         pSinkInfo->pWriter = cedarx_record_writer_create(pSinkInfo->nMuxerMode);
         if (NULL == pSinkInfo->pWriter)
         {
-            aloge("fatal error! cedarx_record_writer_create failed");
+            LOGE("fatal error! cedarx_record_writer_create failed");
             return ERR_MUX_NOMEM;
         }
         pSinkInfo->pMuxerCtx = pSinkInfo->pWriter->MuxerOpen((int*)&ret);
         if (ret != SUCCESS) 
         {
-            aloge("fatal error! [%p]MuxerOpen failed", pSinkInfo);
+            LOGE("fatal error! [%p]MuxerOpen failed", pSinkInfo);
             goto MUXER_OPEN_ERR;
         }
         else 
         {
-            alogv("MuxerOpen OK");
+            LOGV("MuxerOpen OK");
         }
         //TODO: now, write fd and callback mode are mutex. In the future, we will improve it if necessary.
         if (FALSE == pSinkInfo->nCallbackOutFlag) 
@@ -630,7 +630,7 @@ ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
                 pSinkInfo->pWriter->MuxerIoctrl(pSinkInfo->pMuxerCtx, SETFALLOCATELEN, (unsigned int)pSinkInfo->nFallocateLen, NULL);
                 if (pSinkInfo->pWriter->MuxerIoctrl(pSinkInfo->pMuxerCtx, SETCACHEFD2, (unsigned int)pSinkInfo->nOutputFd, NULL) != 0)
                 {
-                    aloge("fatal error! SETCACHEFD2 failed");
+                    LOGE("fatal error! SETCACHEFD2 failed");
                     goto SETCACHEFD_ERR;
                 }
             }
@@ -639,15 +639,15 @@ ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
                 pSinkInfo->pWriter->MuxerIoctrl(pSinkInfo->pMuxerCtx, SETFALLOCATELEN, (unsigned int)pSinkInfo->nFallocateLen, NULL);
                 if (pSinkInfo->pWriter->MuxerIoctrl(pSinkInfo->pMuxerCtx, SETCACHEFD, 0, (void*)pSinkInfo->mPath) != 0)
                 {
-                    aloge("fatal error! SETCACHEFD failed");
+                    LOGE("fatal error! SETCACHEFD failed");
                     goto SETCACHEFD_ERR;
                 }
             }
-            //alogd("use fsWriteMode[%d], simpleCacheSize[%d]KB", pSinkInfo->mFsWriteMode, pSinkInfo->mFsSimpleCacheSize/1024);
-            alogd("(f:%s, l:%d) FileDurationPolicy[0x%x], use fsWriteMode[%d], simpleCacheSize[%ld]KB", __FUNCTION__, __LINE__, pSinkInfo->mFileDurationPolicy, pSinkInfo->mFsWriteMode, pSinkInfo->mFsSimpleCacheSize/1024);
+            //LOGD("use fsWriteMode[%d], simpleCacheSize[%d]KB", pSinkInfo->mFsWriteMode, pSinkInfo->mFsSimpleCacheSize/1024);
+            LOGD("(f:%s, l:%d) FileDurationPolicy[0x%x], use fsWriteMode[%d], simpleCacheSize[%ld]KB", __FUNCTION__, __LINE__, pSinkInfo->mFileDurationPolicy, pSinkInfo->mFsWriteMode, pSinkInfo->mFsSimpleCacheSize/1024);
             if(FSWRITEMODE_CACHETHREAD == pSinkInfo->mFsWriteMode)
             {
-                aloge("fatal error! not use cacheThread mode now!");
+                LOGE("fatal error! not use cacheThread mode now!");
             }
             pSinkInfo->pWriter->MuxerIoctrl(pSinkInfo->pMuxerCtx, SET_FS_WRITE_MODE, pSinkInfo->mFsWriteMode, NULL);
             pSinkInfo->pWriter->MuxerIoctrl(pSinkInfo->pMuxerCtx, SET_FS_SIMPLE_CACHE_SIZE, pSinkInfo->mFsSimpleCacheSize, NULL);
@@ -662,14 +662,14 @@ ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
             //pRecRenderData->writer->MuxerIoctrl(pRecRenderData->p_muxer_ctx, SETOUTURL, (unsigned int)pRecRenderData->url);
             if (pSinkInfo->pWriter->MuxerIoctrl(pSinkInfo->pMuxerCtx, REGISTER_WRITE_CALLBACK, 0, (void*)pSinkInfo->mpCallbackWriter) != 0)
             {
-                aloge("fatal error! REGISTER_WRITE_CALLBACK failed");
+                LOGE("fatal error! REGISTER_WRITE_CALLBACK failed");
                 goto SETCACHEFD_ERR;
             }
         }
 	}
     else
     {
-        aloge("fatal error! sinkInfo[%p]muxerId[%d] pWriter[%p] is not NULL!", pSinkInfo, pSinkInfo->mMuxerId, pSinkInfo->pWriter);
+        LOGE("fatal error! sinkInfo[%p]muxerId[%d] pWriter[%p] is not NULL!", pSinkInfo, pSinkInfo->mMuxerId, pSinkInfo->pWriter);
     }
 
 	// mjpeg source form camera
@@ -701,16 +701,16 @@ ERRORTYPE RecSinkMuxerInit(RecSink *pSinkInfo)
     ret = pSinkInfo->pWriter->MuxerWriteHeader(pSinkInfo->pMuxerCtx);
     if (ret != 0)
     {
-        aloge("write header failed");
+        LOGE("write header failed");
         goto SETCACHEFD_ERR;
     }
     else
     {
-        alogv("write header ok");
+        LOGV("write header ok");
     }
 //    if(FALSE==pSinkInfo->reset_fd_flag)
 //    {
-//        aloge("fatal error! why reset fd flag = 0?");
+//        LOGE("fatal error! why reset fd flag = 0?");
 //    }
 //    pSinkInfo->reset_fd_flag = FALSE;
     pSinkInfo->mbMuxerInit = TRUE;
@@ -739,7 +739,7 @@ ERRORTYPE RecSinkMuxerClose(RecSink *pSinkInfo, int clrFile)
     ERRORTYPE ret = SUCCESS;
 	if (pSinkInfo->pWriter != NULL) 
     {
-        alogw("avsync_muxer_close:%d-%d-%lld-%lld-%d",pSinkInfo->mDuration,pSinkInfo->mDurationAudio,
+        LOGW("avsync_muxer_close:%d-%d-%lld-%lld-%d",pSinkInfo->mDuration,pSinkInfo->mDurationAudio,
             pSinkInfo->mLoopDuration,pSinkInfo->mLoopDurationAudio,pSinkInfo->mpMediaInf->nWidth);
         
         if(FALSE == pSinkInfo->nCallbackOutFlag)
@@ -749,22 +749,22 @@ ERRORTYPE RecSinkMuxerClose(RecSink *pSinkInfo, int clrFile)
         		ret = pSinkInfo->pWriter->MuxerIoctrl(pSinkInfo->pMuxerCtx, SETTOTALTIME, pSinkInfo->mDuration, NULL);
                 if(ret != 0)
                 {
-                    aloge("writer->MuxerIoctrl setTOTALTIME FAILED, ret: %d", ret);
+                    LOGE("writer->MuxerIoctrl setTOTALTIME FAILED, ret: %d", ret);
                 }
         		ret = pSinkInfo->pWriter->MuxerWriteTrailer(pSinkInfo->pMuxerCtx);
                 if(ret!=0)
                 {
-                    aloge("muxerWriteTrailer ret:[%d]", ret);
+                    LOGE("muxerWriteTrailer ret:[%d]", ret);
                 }
         		ret = pSinkInfo->pWriter->MuxerClose(pSinkInfo->pMuxerCtx);
                 if (ret != 0)
                 {
-                    aloge("muxerClose failed, ret = %d", ret);
+                    LOGE("muxerClose failed, ret = %d", ret);
                 }
                 //fflush(pSinkInfo->pOutputFile);
                 if (clrFile == 1) 
                 {
-                    aloge("fatal error! clrFile[%d]!=0", clrFile);
+                    LOGE("fatal error! clrFile[%d]!=0", clrFile);
 //                    #if (CDXCFG_FILE_SYSTEM==OPTION_FILE_SYSTEM_DIRECT_FATFS)
 //                        fat_sync((int)pSinkInfo->pOutputFile);
 //                        fat_lseek((int)pSinkInfo->pOutputFile, 0);
@@ -777,24 +777,24 @@ ERRORTYPE RecSinkMuxerClose(RecSink *pSinkInfo, int clrFile)
                 }
                 else
                 {
-//                    alogd("before fflush");
+//                    LOGD("before fflush");
 //                    fflush(pSinkInfo->pOutputFile);
-//                    alogd("before fsync");
+//                    LOGD("before fsync");
 //                    fsync(pSinkInfo->nOutputFd);
-//                    alogd("after fsync");
+//                    LOGD("after fsync");
                 }
             }
             else
             {
-                alogd("mbSdCardState[%d], sdcard is pull out", pSinkInfo->mbSdCardState);
+                LOGD("mbSdCardState[%d], sdcard is pull out", pSinkInfo->mbSdCardState);
                 pSinkInfo->pWriter->MuxerIoctrl(pSinkInfo->pMuxerCtx, SETSDCARDSTATE, pSinkInfo->mbSdCardState, NULL);
                 pSinkInfo->pWriter->MuxerIoctrl(pSinkInfo->pMuxerCtx, SETTOTALTIME, pSinkInfo->mDuration, NULL);
                 pSinkInfo->pWriter->MuxerClose(pSinkInfo->pMuxerCtx);
-                alogd("mbSdCardState[%d], sdcard is pull out, muxer close done!", pSinkInfo->mbSdCardState);
+                LOGD("mbSdCardState[%d], sdcard is pull out, muxer close done!", pSinkInfo->mbSdCardState);
             }
             if(pSinkInfo->nOutputFd < 0 && NULL==pSinkInfo->mPath)
             {
-                aloge("fatal error! sinkInfo[%p]->nOutputFd[%d]<0", pSinkInfo, pSinkInfo->nOutputFd);
+                LOGE("fatal error! sinkInfo[%p]->nOutputFd[%d]<0", pSinkInfo, pSinkInfo->nOutputFd);
             }
             if(pSinkInfo->nOutputFd>=0)
             {
@@ -808,7 +808,7 @@ ERRORTYPE RecSinkMuxerClose(RecSink *pSinkInfo, int clrFile)
             }
             if(FSWRITEMODE_CACHETHREAD == pSinkInfo->mFsWriteMode)
             {
-                aloge("fatal error! not use cacheThread mode now!");
+                LOGE("fatal error! not use cacheThread mode now!");
             }
             pSinkInfo->mpCallbacks->EventHandler(pSinkInfo, pSinkInfo->mpAppData, COMP_EventRecordDone, pSinkInfo->mMuxerId, 0, NULL);
         }
@@ -827,10 +827,10 @@ ERRORTYPE RecSinkMuxerClose(RecSink *pSinkInfo, int clrFile)
     pSinkInfo->mbMuxerInit = FALSE;
     int videoStreamIndex = (int)CODEC_TYPE_VIDEO;
     int audioStreamIndex = (int)CODEC_TYPE_AUDIO;
-    alogd("TOTAL duration: %d(ms)", pSinkInfo->mDuration);
-    alogd("TOTAL duration audio: %d(ms)", pSinkInfo->mDurationAudio);
-    alogd("TOTAL duration text: %d(ms)", pSinkInfo->mDurationText);
-    alogd("LOOP duration: %lld(ms), lastPts v[%lld]-a[%lld]=[%lld]ms, curInputPts v[%lld]-a[%lld]=[%lld]ms",
+    LOGD("TOTAL duration: %d(ms)", pSinkInfo->mDuration);
+    LOGD("TOTAL duration audio: %d(ms)", pSinkInfo->mDurationAudio);
+    LOGD("TOTAL duration text: %d(ms)", pSinkInfo->mDurationText);
+    LOGD("LOOP duration: %lld(ms), lastPts v[%lld]-a[%lld]=[%lld]ms, curInputPts v[%lld]-a[%lld]=[%lld]ms",
         pSinkInfo->mLoopDuration,
         (pSinkInfo->mPrevPts[videoStreamIndex] + pSinkInfo->mBasePts[videoStreamIndex])/1000,
         (pSinkInfo->mPrevPts[audioStreamIndex] + pSinkInfo->mBasePts[audioStreamIndex])/1000,
@@ -838,7 +838,7 @@ ERRORTYPE RecSinkMuxerClose(RecSink *pSinkInfo, int clrFile)
         pSinkInfo->mDebugInputPts[videoStreamIndex]/1000,
         pSinkInfo->mDebugInputPts[audioStreamIndex]/1000,
         (pSinkInfo->mDebugInputPts[videoStreamIndex] - pSinkInfo->mDebugInputPts[audioStreamIndex])/1000);
-    alogd("MuxerId: %d, TOTAL file size: %lld(bytes)",pSinkInfo->mMuxerId, pSinkInfo->mFileSizeBytes);
+    LOGD("MuxerId: %d, TOTAL file size: %lld(bytes)",pSinkInfo->mMuxerId, pSinkInfo->mFileSizeBytes);
     return SUCCESS;
 }
 
@@ -883,7 +883,7 @@ BOOL RecSinkIfNeedSwitchFile(RecSink *pRecSink,int *need_switch_audio)
             }
             else
             {
-                aloge("(f:%s, l:%d) fatal error! unknown FileDurationPolicy[0x%x], check code!", __FUNCTION__, __LINE__, pRecSink->mFileDurationPolicy);
+                LOGE("(f:%s, l:%d) fatal error! unknown FileDurationPolicy[0x%x], check code!", __FUNCTION__, __LINE__, pRecSink->mFileDurationPolicy);
             }
 
             if(FALSE == bNeedSwitch && (pRecSink->mRecordMode & RECORDER_MODE_AUDIO))    // to check audio status
@@ -909,7 +909,7 @@ BOOL RecSinkIfNeedSwitchFile(RecSink *pRecSink,int *need_switch_audio)
                 }
                 else
                 {
-                    aloge("(f:%s, l:%d) fatal error! unknown FileDurationPolicy[0x%x], check code!", __FUNCTION__, __LINE__, pRecSink->mFileDurationPolicy);
+                    LOGE("(f:%s, l:%d) fatal error! unknown FileDurationPolicy[0x%x], check code!", __FUNCTION__, __LINE__, pRecSink->mFileDurationPolicy);
                 }
             } 
             
@@ -919,7 +919,7 @@ BOOL RecSinkIfNeedSwitchFile(RecSink *pRecSink,int *need_switch_audio)
             if(pRecSink->mFileSizeBytes >= pRecSink->mMaxFileSizeBytes)
             {
                 double fileSizeMB = (double)pRecSink->mFileSizeBytes/(1024*1024);
-                alogv("fileSize[%lld]Bytes([%7.3lf]MB) >= max[%7.3lf]MB, rec_file[%d], need switch file", pRecSink->mFileSizeBytes, fileSizeMB, (double)pRecSink->mMaxFileSizeBytes/(1024*1024), pRecSink->rec_file);
+                LOGV("fileSize[%lld]Bytes([%7.3lf]MB) >= max[%7.3lf]MB, rec_file[%d], need switch file", pRecSink->mFileSizeBytes, fileSizeMB, (double)pRecSink->mMaxFileSizeBytes/(1024*1024), pRecSink->rec_file);
                 bNeedSwitch = TRUE;
                 pRecSink->bNeedSw = TRUE;
             }
@@ -977,7 +977,7 @@ BOOL RecSinkIfNeedRequestNextFd(RecSink *pRecSink)
         }
         else
         {
-            aloge("(f:%s, l:%d) fatal error! unknown FileDurationPolicy[0x%x], check code!", __FUNCTION__, __LINE__, pRecSink->mFileDurationPolicy);
+            LOGE("(f:%s, l:%d) fatal error! unknown FileDurationPolicy[0x%x], check code!", __FUNCTION__, __LINE__, pRecSink->mFileDurationPolicy);
         }
     }
     else if(pRecSink->mMaxFileSizeBytes > 0)   //user set max file size, then segment file base on fileSize.
@@ -985,7 +985,7 @@ BOOL RecSinkIfNeedRequestNextFd(RecSink *pRecSink)
         if(pRecSink->mFileSizeBytes + pRecSink->mMaxFileSizeBytes/10 >= pRecSink->mMaxFileSizeBytes)
         {
             double fileSizeMB = (double)pRecSink->mFileSizeBytes/(1024*1024);
-            alogd("fileSize[%lld]Bytes([%7.3lf]MB) < max[%7.3lf]MB, rec_file[%d], need request next fd", pRecSink->mFileSizeBytes, fileSizeMB, (double)pRecSink->mMaxFileSizeBytes/(1024*1024), pRecSink->rec_file);
+            LOGD("fileSize[%lld]Bytes([%7.3lf]MB) < max[%7.3lf]MB, rec_file[%d], need request next fd", pRecSink->mFileSizeBytes, fileSizeMB, (double)pRecSink->mMaxFileSizeBytes/(1024*1024), pRecSink->rec_file);
             bNeedRequest = TRUE;
         }
     }
@@ -1015,7 +1015,7 @@ BOOL RecSinkGrantSwitchFileAudio(RecSink *pRecSink, RecSinkPacket *pRSPacket)
             if((pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex])/1000+AFrameDuration <= 
                 (pRecSink->mPrevPts[videoStreamIndex]+pRecSink->mBasePts[videoStreamIndex])/1000+VFrameDuration)
             {
-                alogd("RecSink[%d] can switch file. aSrcPts[%lld]ms, vSrcPts[%lld]ms, ADur[%lld]-VDur[%lld]=[%lld]ms, rec_file[%d]",
+                LOGD("RecSink[%d] can switch file. aSrcPts[%lld]ms, vSrcPts[%lld]ms, ADur[%lld]-VDur[%lld]=[%lld]ms, rec_file[%d]",
                              pRecSink->mMuxerId,
                              (pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex])/1000,
                              (pRecSink->mPrevPts[videoStreamIndex]+pRecSink->mBasePts[videoStreamIndex])/1000,
@@ -1042,7 +1042,7 @@ BOOL RecSinkGrantSwitchFileAudio(RecSink *pRecSink, RecSinkPacket *pRSPacket)
                 
                 if(CODEC_TYPE_VIDEO == pRSPacket->mStreamType)
                 {
-                    alogv("RecSink[%d] streamType[%d] wait switch file in prefetch state, prevAudioPts[%lld]ms should less than prevVideoPts[%lld]ms(total prevAudioPts[%lld]ms<[%lld]ms), rec_file[%d]",
+                    LOGV("RecSink[%d] streamType[%d] wait switch file in prefetch state, prevAudioPts[%lld]ms should less than prevVideoPts[%lld]ms(total prevAudioPts[%lld]ms<[%lld]ms), rec_file[%d]",
                         pRecSink->mMuxerId, pRSPacket->mStreamType,
                         pRecSink->mPrevPts[audioStreamIndex]/1000, pRecSink->mPrevPts[videoStreamIndex]/1000,
                         (pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex])/1000, (pRecSink->mPrevPts[videoStreamIndex]+pRecSink->mBasePts[videoStreamIndex])/1000,
@@ -1093,7 +1093,7 @@ BOOL RecSinkGrantSwitchFile(RecSink *pRecSink, RecSinkPacket *pRSPacket)
             if((pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex])/1000+AFrameDuration >= 
                 (pRecSink->mPrevPts[videoStreamIndex]+pRecSink->mBasePts[videoStreamIndex])/1000+VFrameDuration)
             {
-                alogd("RecSink[%d] can switch file. aSrcPts[%lld]ms, vSrcPts[%lld]ms, ADur[%lld]-VDur[%lld]=[%lld]ms, rec_file[%d]",
+                LOGD("RecSink[%d] can switch file. aSrcPts[%lld]ms, vSrcPts[%lld]ms, ADur[%lld]-VDur[%lld]=[%lld]ms, rec_file[%d]",
                              pRecSink->mMuxerId,
                              (pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex])/1000,
                              (pRecSink->mPrevPts[videoStreamIndex]+pRecSink->mBasePts[videoStreamIndex])/1000,
@@ -1107,7 +1107,7 @@ BOOL RecSinkGrantSwitchFile(RecSink *pRecSink, RecSinkPacket *pRSPacket)
             {
                 if(CODEC_TYPE_AUDIO == pRSPacket->mStreamType)
                 {
-                    alogv("RecSink[%d] streamType[%d] wait switch file in prefetch state, prevAudioPts[%lld]ms should less than prevVideoPts[%lld]ms(total prevAudioPts[%lld]ms<[%lld]ms), rec_file[%d]",
+                    LOGV("RecSink[%d] streamType[%d] wait switch file in prefetch state, prevAudioPts[%lld]ms should less than prevVideoPts[%lld]ms(total prevAudioPts[%lld]ms<[%lld]ms), rec_file[%d]",
                         pRecSink->mMuxerId, pRSPacket->mStreamType,
                         pRecSink->mPrevPts[audioStreamIndex]/1000, pRecSink->mPrevPts[videoStreamIndex]/1000,
                         (pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex])/1000, (pRecSink->mPrevPts[videoStreamIndex]+pRecSink->mBasePts[videoStreamIndex])/1000,
@@ -1142,11 +1142,11 @@ void RecSinkSwitchFile(RecSink *pSinkInfo, int clrFile)
 {
     if(0 == pSinkInfo->nOutputFd)
     {
-        alogd("Be careful, fd == 0, sinkInfo[%p] muxerId[%d]", pSinkInfo, pSinkInfo->mMuxerId);
+        LOGD("Be careful, fd == 0, sinkInfo[%p] muxerId[%d]", pSinkInfo, pSinkInfo->mMuxerId);
     }
-//    alogd("TOTAL duration: %d(ms)", pSinkInfo->mDuration);
-//    alogd("TOTAL duration audio: %d(ms)", pSinkInfo->mDurationAudio);
-//    alogd("TOTAL file size: %lld(bytes)", pSinkInfo->mFileSizeBytes);
+//    LOGD("TOTAL duration: %d(ms)", pSinkInfo->mDuration);
+//    LOGD("TOTAL duration audio: %d(ms)", pSinkInfo->mDurationAudio);
+//    LOGD("TOTAL file size: %lld(bytes)", pSinkInfo->mFileSizeBytes);
 
     if(TRUE==pSinkInfo->bTimeMeetAudio && 0<pSinkInfo->mVideoFrmCntWriteMore)   // more video frame was sent to file
     {
@@ -1162,14 +1162,14 @@ void RecSinkSwitchFile(RecSink *pSinkInfo, int clrFile)
         {
             cnt++;
         } 
-        alogw("avsync_a_list:%d-%d-%lld-%lld-%d",cnt,pSinkInfo->mVideoFrmCntWriteMore,
+        LOGW("avsync_a_list:%d-%d-%lld-%lld-%d",cnt,pSinkInfo->mVideoFrmCntWriteMore,
                                 pSinkInfo->mVideoPtsWriteMoreSt,pSinkInfo->mVideoPtsWriteMoreEnd,pSinkInfo->mpMediaInf->nWidth);
         
         for(int i=0;i<cnt-1;i++)
         {
             if(pSinkInfo->mVideoFrmCntWriteMore <= 2 && pSinkInfo->mpMediaInf->sample_rate<16000)  // for condition that audio sample<16000
             {
-                alogw("avsync_bk0");
+                LOGW("avsync_bk0");
                 break;
             }
             if(!list_empty(&pSinkInfo->mPrefetchRSPacketList))
@@ -1191,12 +1191,12 @@ void RecSinkSwitchFile(RecSink *pSinkInfo, int clrFile)
                 
                 if(audioLen<videoLen && videoLen-audioLen <= nErrorInterval)    
                 {
-                    alogw("avsync_bk1");
+                    LOGW("avsync_bk1");
                     break;
                 }
                 else if(audioLen>videoLen && audioLen-videoLen <= nErrorInterval)
                 {                   
-                    alogw("avsync_bk2");
+                    LOGW("avsync_bk2");
                     break;
                 }
                 
@@ -1209,7 +1209,7 @@ void RecSinkSwitchFile(RecSink *pSinkInfo, int clrFile)
     tm1 = CDX_GetSysTimeUsMonotonic();
     RecSinkMuxerClose(pSinkInfo, clrFile);
     tm2 = CDX_GetSysTimeUsMonotonic();
-    alogd("muxerId[%d]recRender_MuxerClose[%lld]MB itl[%lld]ms", pSinkInfo->mMuxerId, pSinkInfo->mFileSizeBytes/(1024*1024), (tm2-tm1)/1000);
+    LOGD("muxerId[%d]recRender_MuxerClose[%lld]MB itl[%lld]ms", pSinkInfo->mMuxerId, pSinkInfo->mFileSizeBytes/(1024*1024), (tm2-tm1)/1000);
     pSinkInfo->mDuration = 0;
     pSinkInfo->mDurationAudio = 0;
     pSinkInfo->mDurationText = 0;
@@ -1237,13 +1237,13 @@ void RecSinkSwitchFile(RecSink *pSinkInfo, int clrFile)
     }
     if(pSinkInfo->mPrefetchFlag)
     {
-        alogd("switchFile, reset prefetchFlag to false!");
+        LOGD("switchFile, reset prefetchFlag to false!");
         pSinkInfo->mPrefetchFlag = FALSE;
     }
 
     if(pSinkInfo->mPrefetchFlagAudio)
     {
-        alogd("switchFile, reset prefetchFlagAudio to false!");
+        LOGD("switchFile, reset prefetchFlagAudio to false!");
         pSinkInfo->mPrefetchFlagAudio = FALSE;
     }
 
@@ -1255,7 +1255,7 @@ void RecSinkSwitchFile(RecSink *pSinkInfo, int clrFile)
     {
         if(pSinkInfo->mSwitchFilePath)
         {
-            aloge("fatal error! fd[%d] and path[%s] only use one, check code!", pSinkInfo->nSwitchFd, pSinkInfo->mSwitchFilePath);
+            LOGE("fatal error! fd[%d] and path[%s] only use one, check code!", pSinkInfo->nSwitchFd, pSinkInfo->mSwitchFilePath);
         }
         pSinkInfo->nOutputFd = pSinkInfo->nSwitchFd;
         pSinkInfo->nSwitchFd = -1;
@@ -1263,7 +1263,7 @@ void RecSinkSwitchFile(RecSink *pSinkInfo, int clrFile)
         pSinkInfo->nSwitchFdFallocateSize = 0;
 //        if(pSinkInfo->mSwitchFdImpactFlag)
 //        {
-//            alogd("to write impact fd!");
+//            LOGD("to write impact fd!");
 //            pSinkInfo->mSwitchFdImpactFlag = 0;
 //        }
         pSinkInfo->reset_fd_flag = FALSE;
@@ -1272,7 +1272,7 @@ void RecSinkSwitchFile(RecSink *pSinkInfo, int clrFile)
     {
         if(pSinkInfo->mPath)
         {
-            aloge("fatal error! mPath[%s] should be null", pSinkInfo->mPath);
+            LOGE("fatal error! mPath[%s] should be null", pSinkInfo->mPath);
             free(pSinkInfo->mPath);
             pSinkInfo->mPath = NULL;
         }
@@ -1283,24 +1283,24 @@ void RecSinkSwitchFile(RecSink *pSinkInfo, int clrFile)
         pSinkInfo->nSwitchFdFallocateSize = 0;
 //        if(pSinkInfo->mSwitchFdImpactFlag)
 //        {
-//            alogd("to write impact fd!");
+//            LOGD("to write impact fd!");
 //            pSinkInfo->mSwitchFdImpactFlag = 0;
 //        }
         pSinkInfo->reset_fd_flag = FALSE;
     }
     else
     {
-        alogd("Be careful. pRecRenderData->nSwitchFd[%d] < 0", pSinkInfo->nSwitchFd);
+        LOGD("Be careful. pRecRenderData->nSwitchFd[%d] < 0", pSinkInfo->nSwitchFd);
     }
 
 	if (pSinkInfo->rec_file == FILE_NEED_SWITCH_TO_IMPACT)
 	{
-        aloge("fatal error! check code!");
+        LOGE("fatal error! check code!");
 		pSinkInfo->rec_file = FILE_IMPACT_RECDRDING;
 	}
 	else if (pSinkInfo->rec_file == FILE_IMPACT_RECDRDING)
 	{
-        aloge("fatal error! check code!");
+        LOGE("fatal error! check code!");
 		pSinkInfo->rec_file = FILE_NORMAL;
 	}
     else if(pSinkInfo->rec_file == FILE_NEED_SWITCH_TO_NORMAL)
@@ -1318,7 +1318,7 @@ static void* RecSinkThread(void* pThreadData)
     CompInternalMsgType cmd;
     RecSink *pRecSink = (RecSink*) pThreadData;
     message_t cmd_msg;
-    alogv("RecSink thread start run...\n");
+    LOGV("RecSink thread start run...");
     char threadName[20];
     snprintf(threadName, 20, "RecSink[%d]", pRecSink->mMuxerId);
     prctl(PR_SET_NAME, (unsigned long)threadName, 0, 0, 0);
@@ -1329,7 +1329,7 @@ PROCESS_MESSAGE:
             cmd = cmd_msg.command;
             cmddata = (unsigned int)cmd_msg.para0;
 
-            alogv("get_message cmd:%d", cmd);
+            LOGV("get_message cmd:%d", cmd);
 
             // State transition command
             if (cmd == SetState) 
@@ -1375,7 +1375,7 @@ PROCESS_MESSAGE:
                         
                         case COMP_StateLoaded:
                         {
-                            alogv("set state LOADED");
+                            LOGV("set state LOADED");
                             if (pRecSink->mStatus == COMP_StateExecuting || pRecSink->mStatus == COMP_StatePause)
                             {
                                 RecSinkMovePrefetchRSPackets(pRecSink);
@@ -1386,13 +1386,13 @@ PROCESS_MESSAGE:
                                     tm1 = CDX_GetSysTimeUsMonotonic();
                                     RecSinkMuxerClose(pRecSink, 0);
                                     tm2 = CDX_GetSysTimeUsMonotonic();
-                                    alogd("muxerId[%d] recRender_MuxerClose[%lld]MB itl[%lld]ms", pRecSink->mMuxerId, pRecSink->mFileSizeBytes/(1024*1024), (tm2-tm1)/1000);
+                                    LOGD("muxerId[%d] recRender_MuxerClose[%lld]MB itl[%lld]ms", pRecSink->mMuxerId, pRecSink->mFileSizeBytes/(1024*1024), (tm2-tm1)/1000);
                                 }
                                 pRecSink->mPrefetchFlag = FALSE;
                             }
                             else
                             {
-                                aloge("fatal error! muxerId[%d]muxerMode[%d] wrong status[%d]", pRecSink->mMuxerId, pRecSink->nMuxerMode, pRecSink->mStatus);
+                                LOGE("fatal error! muxerId[%d]muxerMode[%d] wrong status[%d]", pRecSink->mMuxerId, pRecSink->nMuxerMode, pRecSink->mStatus);
                             }
                             pRecSink->mStatus = COMP_StateLoaded;
                             pRecSink->mpCallbacks->EventHandler(
@@ -1403,7 +1403,7 @@ PROCESS_MESSAGE:
                                     pRecSink->mStatus, 
                                     NULL);
                             cdx_sem_up(&pRecSink->mSemStateComplete);
-                            alogv("RecRender set state LOADED ok");
+                            LOGV("RecRender set state LOADED ok");
                             break;
                         }
                         case COMP_StateExecuting:
@@ -1421,7 +1421,7 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                aloge("fatal error! Set wrong status[%d]->Executing", pRecSink->mStatus);
+                                LOGE("fatal error! Set wrong status[%d]->Executing", pRecSink->mStatus);
                                 pRecSink->mpCallbacks->EventHandler(
                                         pRecSink, 
                                         pRecSink->mpAppData,
@@ -1449,7 +1449,7 @@ PROCESS_MESSAGE:
                             } 
                             else
                             {
-                                aloge("fatal error! Set wrong status[%d]->Pause", pRecSink->mStatus);
+                                LOGE("fatal error! Set wrong status[%d]->Pause", pRecSink->mStatus);
                                 pRecSink->mpCallbacks->EventHandler(
                                         pRecSink, 
                                         pRecSink->mpAppData,
@@ -1462,7 +1462,7 @@ PROCESS_MESSAGE:
                         }
                         default:
                         {
-                            aloge("fatal error! wrong desStatus[%d], current status[%d]", (COMP_STATETYPE)cmddata, pRecSink->mStatus);
+                            LOGE("fatal error! wrong desStatus[%d], current status[%d]", (COMP_STATETYPE)cmddata, pRecSink->mStatus);
                             break;
                         }
                     }
@@ -1477,19 +1477,19 @@ PROCESS_MESSAGE:
             {
                 if(pRecSink->rec_file != FILE_NORMAL)
                 {
-                    aloge("fatal error! Switch file normal, but rec_file=%d", pRecSink->rec_file);
+                    LOGE("fatal error! Switch file normal, but rec_file=%d", pRecSink->rec_file);
                     goto PROCESS_MESSAGE;
                 }
                 ERRORTYPE switchRet = ERR_MUX_NOT_SUPPORT;
                 pRecSink->rec_file = FILE_NEED_SWITCH_TO_NORMAL;
                 if(FALSE == pRecSink->mbMuxerInit)
                 {
-                    alogd("not muxerInit when Switch file rec_file=%d, so close nOutputFd[%d]", pRecSink->rec_file, pRecSink->nOutputFd);
+                    LOGD("not muxerInit when Switch file rec_file=%d, so close nOutputFd[%d]", pRecSink->rec_file, pRecSink->nOutputFd);
                     if(pRecSink->nOutputFd>=0)
                     {
                         if(pRecSink->mPath)
                         {
-                            aloge("fatal error! fd and path only use one! check code!");
+                            LOGE("fatal error! fd and path only use one! check code!");
                         }
                         close(pRecSink->nOutputFd);
                         pRecSink->nOutputFd = -1;
@@ -1511,7 +1511,7 @@ PROCESS_MESSAGE:
                     {
                         if(pRecSink->nSwitchFd < 0 && NULL==pRecSink->mSwitchFilePath)
                         {
-                            aloge("fatal error! reset__fd_flag is true but switchFd[%d]<0, check code!", pRecSink->nSwitchFd);
+                            LOGE("fatal error! reset__fd_flag is true but switchFd[%d]<0, check code!", pRecSink->nSwitchFd);
                             pRecSink->reset_fd_flag = FALSE;
                         }
                     }
@@ -1530,7 +1530,7 @@ PROCESS_MESSAGE:
             
             else if (RecSink_InputPacketAvailable == cmd)
             {
-                alogv("input packet available");
+                LOGV("input packet available");
                 //pRecSink->mNoInputPacketFlag = FALSE;
             }
 
@@ -1565,7 +1565,7 @@ PROCESS_MESSAGE:
                                         pRecSink->mPrevPts[videoStreamIndex]+pRecSink->mBasePts[videoStreamIndex])
                                     {
 
-                                        alogw("avsync_ch_v:%lld-%lld-%d",pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex],
+                                        LOGW("avsync_ch_v:%lld-%lld-%d",pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex],
                                                    pRecSink->mPrevPts[videoStreamIndex]+pRecSink->mBasePts[videoStreamIndex],pRecSink->mpMediaInf->nWidth);
                                         pRecSink->mPrefetchFlag = TRUE; // to cache video pkt in order to push more audio packet
                                     }
@@ -1579,21 +1579,21 @@ PROCESS_MESSAGE:
                         if(pRecSink->nOutputFd >= 0 || pRecSink->mPath)
                         {
                             list_add_tail(&pRSPacket->mList, &pRecSink->mPrefetchRSPacketList);
-                                alogw("avsync_rc_swfv:%d-%d-%d-%lld-%lld",pRecSink->mpMediaInf->nWidth,
+                                LOGW("avsync_rc_swfv:%d-%d-%d-%lld-%lld",pRecSink->mpMediaInf->nWidth,
                                     pRecSink->mDuration,pRecSink->mDurationAudio,pRecSink->mLoopDuration,pRecSink->mCurFileEndTm);
                             pRSPacket = NULL;
                             RecSinkSwitchFile(pRecSink, 0);
                             pRSPacket = RecSinkGetRSPacket(pRecSink);
                             if(NULL == pRSPacket)
                             {
-                                aloge("fatal error! check muxerId[%d]!", pRecSink->mMuxerId);
+                                LOGE("fatal error! check muxerId[%d]!", pRecSink->mMuxerId);
                             }
                         }
                         else
                         {
                             if(FALSE == pRecSink->nCallbackOutFlag)
                             {
-                                aloge("fatal error! this muxerId[%d] has not fd, should be callback mode[%d], so don't switch file!", 
+                                LOGE("fatal error! this muxerId[%d] has not fd, should be callback mode[%d], so don't switch file!", 
                                     pRecSink->mMuxerId, pRecSink->nCallbackOutFlag);
                             }
                         }
@@ -1611,7 +1611,7 @@ PROCESS_MESSAGE:
                             if(pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex] >
                                 pRecSink->mPrevPts[videoStreamIndex]+pRecSink->mBasePts[videoStreamIndex])
                             {
-                                alogw("avsync_ch_a:%lld-%lld-%d",pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex],
+                                LOGW("avsync_ch_a:%lld-%lld-%d",pRecSink->mPrevPts[audioStreamIndex]+pRecSink->mBasePts[audioStreamIndex],
                                            pRecSink->mPrevPts[videoStreamIndex]+pRecSink->mBasePts[videoStreamIndex],pRecSink->mpMediaInf->nWidth);
                                 pRecSink->mPrefetchFlagAudio = TRUE; // to cache audio pkt in order to push more video packet
                             } 
@@ -1631,14 +1631,14 @@ PROCESS_MESSAGE:
                             pRSPacket = RecSinkGetRSPacket(pRecSink);
                             if(NULL == pRSPacket)
                             {
-                                aloge("fatal error! check muxerId[%d]!", pRecSink->mMuxerId);
+                                LOGE("fatal error! check muxerId[%d]!", pRecSink->mMuxerId);
                             }
                         }
                         else
                         {
                             if(FALSE == pRecSink->nCallbackOutFlag)
                             {
-                                aloge("fatal error! this muxerId[%d] has not fd, should be callback mode[%d], so don't switch file!", 
+                                LOGE("fatal error! this muxerId[%d] has not fd, should be callback mode[%d], so don't switch file!", 
                                     pRecSink->mMuxerId, pRecSink->nCallbackOutFlag);
                             }
                         }
@@ -1650,7 +1650,7 @@ PROCESS_MESSAGE:
                             if(pRSPacket->mStreamType==CODEC_TYPE_VIDEO)
                             {
                                 pRecSink->mVideoFrmCntWriteMore++;
-                                alogw("avsync_cal:%d-%lld-%lld-%d",pRecSink->mpMediaInf->nWidth,pRSPacket->mPts,pRecSink->mVideoPtsWriteMoreSt,pRecSink->mVideoFrmCntWriteMore);
+                                LOGW("avsync_cal:%d-%lld-%lld-%d",pRecSink->mpMediaInf->nWidth,pRSPacket->mPts,pRecSink->mVideoPtsWriteMoreSt,pRecSink->mVideoFrmCntWriteMore);
                                 if(-1 == pRecSink->mVideoPtsWriteMoreSt)    // to record the pts of video frame write more
                                 {
                                     pRecSink->mVideoPtsWriteMoreSt = pRSPacket->mPts;
@@ -1688,13 +1688,13 @@ PROCESS_MESSAGE:
                     //first packet will be video or not.
                     //first video frame may be not key frame. 
                     //we will make first packet to be video, although to do this will discard audio frames.
-//                    alogd("muxerId[%d]: first packet grant[%d]: stream_type[%d], flags[0x%x], pts[%lld]ms, videoSize[%dx%d]", 
+//                    LOGD("muxerId[%d]: first packet grant[%d]: stream_type[%d], flags[0x%x], pts[%lld]ms, videoSize[%dx%d]", 
 //                        pRecSink->mMuxerId, bGrant, pRSPacket->mStreamType, pRSPacket->mFlags, pRSPacket->mPts, pRecSink->mpMediaInf->nWidth, pRecSink->mpMediaInf->nHeight);
                     if(bGrant)
                     {
                         if(RecSinkMuxerInit(pRecSink) != SUCCESS)
                         {
-                            aloge("fatal error! muxerId[%d][%p]ValidMuxerInit Error!", pRecSink->mMuxerId, pRecSink);
+                            LOGE("fatal error! muxerId[%d][%p]ValidMuxerInit Error!", pRecSink->mMuxerId, pRecSink);
                             pRecSink->mStatus = COMP_StateInvalid;   //OMX_StateIdle;
                             pthread_mutex_unlock(&pRecSink->mutex_reset_writer_lock);
                             RecSinkReleaseRSPacket(pRecSink, pRSPacket);
@@ -1706,7 +1706,7 @@ PROCESS_MESSAGE:
                             //pRecSink->reset_fd_flag = FALSE;
                             if (pRecSink->rec_file == FILE_IMPACT_RECDRDING)
                             {
-                                alogd("Need set next fd immediately after switch to impactFile");
+                                LOGD("Need set next fd immediately after switch to impactFile");
                                 pRecSink->mpCallbacks->EventHandler(pRecSink, pRecSink->mpAppData, COMP_EventNeedNextFd, pRecSink->mMuxerId, 0, NULL);
                                 pRecSink->need_set_next_fd = FALSE;
                             }
@@ -1760,7 +1760,7 @@ PROCESS_MESSAGE:
 //                    && (pRecSink->mLoopDuration + NOTIFY_NEEDNEXTFD_IN_ADVANCE) >= pRecSink->mCurFileEndTm) 
                 if(RecSinkIfNeedRequestNextFd(pRecSink))
                 {
-                    alogd("Need set next fd. SinkInfo[0x%x], videosize[%dx%d], LoopDuration[%lld]ms, curFileEndTm[%lld]ms", 
+                    LOGD("Need set next fd. SinkInfo[0x%x], videosize[%dx%d], LoopDuration[%lld]ms, curFileEndTm[%lld]ms", 
                         pRecSink, pRecSink->mpMediaInf->nWidth, pRecSink->mpMediaInf->nHeight, pRecSink->mLoopDuration, pRecSink->mCurFileEndTm);
                     pRecSink->need_set_next_fd = FALSE;
                     pRecSink->mpCallbacks->EventHandler(pRecSink, pRecSink->mpAppData, COMP_EventNeedNextFd, pRecSink->mMuxerId, 0, NULL);
@@ -1780,7 +1780,7 @@ PROCESS_MESSAGE:
         }
     }
 EXIT:
-    alogv("RecSinkThread stopped");
+    LOGV("RecSinkThread stopped");
     return (void*) SUCCESS;
 }
 
@@ -1789,25 +1789,25 @@ static ERRORTYPE RecSinkConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Cdx
     RecSink *pRecRenderSink = (RecSink*)hComponent;
     if(pRecRenderSink->mStatus == COMP_StateExecuting)
     {
-        alogw("status already executing, cannot config again!");
+        LOGW("status already executing, cannot config again!");
         return SUCCESS;
     }
     if(pRecRenderSink->mStatus != COMP_StateLoaded)
     {
-        aloge("fatal error! call in wrong status[%d]", pRecRenderSink->mStatus);
+        LOGE("fatal error! call in wrong status[%d]", pRecRenderSink->mStatus);
         return SUCCESS;
     }
     pRecRenderSink->mMuxerId = pCdxSink->mMuxerId;
     pRecRenderSink->nMuxerMode = pCdxSink->nMuxerMode;
     if(pRecRenderSink->nOutputFd >= 0)
     {
-        aloge("fatal error! nOutputFd[%d]>=0", pRecRenderSink->nOutputFd);
+        LOGE("fatal error! nOutputFd[%d]>=0", pRecRenderSink->nOutputFd);
         close(pRecRenderSink->nOutputFd);
         pRecRenderSink->nOutputFd = -1;
     }
     if(pRecRenderSink->mPath)
     {
-        aloge("fatal error! mPath[%s] is not null", pRecRenderSink->mPath);
+        LOGE("fatal error! mPath[%s] is not null", pRecRenderSink->mPath);
         free(pRecRenderSink->mPath);
         pRecRenderSink->mPath = NULL;
     }
@@ -1818,13 +1818,13 @@ static ERRORTYPE RecSinkConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Cdx
     {
         pRecRenderSink->nOutputFd = dup(pCdxSink->nOutputFd);
         //pRecRenderSink->nOutputFd = dup2SeldomUsedFd(pCdxSink->nOutputFd);
-        alogd("dup fd[%d]->[%d]", pCdxSink->nOutputFd, pRecRenderSink->nOutputFd);
+        LOGD("dup fd[%d]->[%d]", pCdxSink->nOutputFd, pRecRenderSink->nOutputFd);
         pRecRenderSink->nFallocateLen = pCdxSink->nFallocateLen;
         //pRecRenderSink->reset_fd_flag = TRUE;
     }
     else
     {
-        alogd("fd or path both not set");
+        LOGD("fd or path both not set");
     }
     message_t   msg;
     msg.command = SetState;
@@ -1859,7 +1859,7 @@ static ERRORTYPE RecSinkEmptyThisBuffer(
     pthread_mutex_lock(&pThiz->mRSPacketListMutex);
     if(list_empty(&pThiz->mIdleRSPacketList))
     {
-        alogw("idleRSPacketList are all used, malloc more!");
+        LOGW("idleRSPacketList are all used, malloc more!");
         if(SUCCESS!=RecSinkIncreaseIdleRSPacketList(pThiz))
         {
             pthread_mutex_unlock(&pThiz->mRSPacketListMutex);
@@ -1931,13 +1931,13 @@ static ERRORTYPE RecSinkSetMaxFileDuration(
         if(pThiz->mMaxFileDuration > pThiz->mCurMaxFileDuration)
         {
             pThiz->mCurFileEndTm += pThiz->mMaxFileDuration - pThiz->mCurMaxFileDuration;
-            alogd("RecSinkSetMaxFileDuration muxid[%d] type[%d] oldDur:%lldms newDur:%lldms newFileEndTm:%lldms",
+            LOGD("RecSinkSetMaxFileDuration muxid[%d] type[%d] oldDur:%lldms newDur:%lldms newFileEndTm:%lldms",
                 pThiz->mMuxerId, pThiz->rec_file, pThiz->mCurMaxFileDuration, pThiz->mMaxFileDuration, pThiz->mCurFileEndTm);
             pThiz->mCurMaxFileDuration = pThiz->mMaxFileDuration;
         }
         else
         {
-            aloge("fatal error! new Duration[%lld]ms can't be apply to current file!", pThiz->mMaxFileDuration);
+            LOGE("fatal error! new Duration[%lld]ms can't be apply to current file!", pThiz->mMaxFileDuration);
         }
     }
     pthread_mutex_unlock(&pThiz->mutex_reset_writer_lock);
@@ -2016,26 +2016,26 @@ static ERRORTYPE RecSinkSwitchFd(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN i
     pthread_mutex_lock(&pThiz->mutex_reset_writer_lock);
     if (nIsImpact == 1 && (pThiz->rec_file == FILE_IMPACT_RECDRDING || pThiz->rec_file == FILE_NEED_SWITCH_TO_IMPACT)) 
     {
-        alogd("impact file is recording, don't accept new impact Fd[%d].", nFd);
+        LOGD("impact file is recording, don't accept new impact Fd[%d].", nFd);
         pthread_mutex_unlock(&pThiz->mutex_reset_writer_lock);
         return SUCCESS;
     }
     if(nFd < 0)
     {
-        aloge("fatal error! wrong new fd[%d]", nFd);
+        LOGE("fatal error! wrong new fd[%d]", nFd);
         pthread_mutex_unlock(&pThiz->mutex_reset_writer_lock);
         return ERR_MUX_ILLEGAL_PARAM;
     }
     if(pThiz->nSwitchFd >= 0)
     {
-        alogd("nSwithFd[%d] already exist, directly close it! maybe impact happen during new fd is setting.", pThiz->nSwitchFd);
+        LOGD("nSwithFd[%d] already exist, directly close it! maybe impact happen during new fd is setting.", pThiz->nSwitchFd);
         close(pThiz->nSwitchFd);
         pThiz->nSwitchFd = -1;
         pThiz->nSwitchFdFallocateSize = 0;
     }
     if(pThiz->mSwitchFilePath)
     {
-        alogd("switchFilePath[%s] already exist, maybe impact happen during new fd is setting.", pThiz->mSwitchFilePath);
+        LOGD("switchFilePath[%s] already exist, maybe impact happen during new fd is setting.", pThiz->mSwitchFilePath);
         free(pThiz->mSwitchFilePath);
         pThiz->mSwitchFilePath = NULL;
         pThiz->nSwitchFdFallocateSize = 0;
@@ -2045,7 +2045,7 @@ static ERRORTYPE RecSinkSwitchFd(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN i
         pThiz->nSwitchFd = dup(nFd);
         if(pThiz->nSwitchFd < 0)
         {
-            aloge("fatal error! dup fail:[%d]->[%d],(%s)", nFd, pThiz->nSwitchFd, strerror(errno));
+            LOGE("fatal error! dup fail:[%d]->[%d],(%s)", nFd, pThiz->nSwitchFd, strerror(errno));
             system("lsof");
         }
         //pThiz->nSwitchFd = dup2SeldomUsedFd(nFd);
@@ -2053,10 +2053,10 @@ static ERRORTYPE RecSinkSwitchFd(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN i
     
     pThiz->nSwitchFdFallocateSize = nFallocateLen;
     //pThiz->mSwitchFdImpactFlag = nIsImpact;
-    alogd("dup setfd[%d] to nSwitchFd[%d]", nFd, pThiz->nSwitchFd);
+    LOGD("dup setfd[%d] to nSwitchFd[%d]", nFd, pThiz->nSwitchFd);
     if(TRUE == pThiz->reset_fd_flag)
     {
-        alogd("reset__fd_flag is already true, maybe impact happen during new fd is setting");
+        LOGD("reset__fd_flag is already true, maybe impact happen during new fd is setting");
     }
     pThiz->reset_fd_flag = TRUE;
     pthread_mutex_unlock(&pThiz->mutex_reset_writer_lock);
@@ -2073,7 +2073,7 @@ static ERRORTYPE RecSinkSendCmdSwitchFile(PARAM_IN COMP_HANDLETYPE hComponent, B
     }
     else
     {
-        alogd("already impact recording, recFileState[%d]", pThiz->rec_file);
+        LOGD("already impact recording, recFileState[%d]", pThiz->rec_file);
         eError = ERR_MUX_SAMESTATE;
     }
     message_t   msg;
@@ -2093,7 +2093,7 @@ static ERRORTYPE RecSinkSendCmdSwitchFileNormal(PARAM_IN COMP_HANDLETYPE hCompon
     }
     else
     {
-        aloge("fatal error! can't switch file normal in impact recording, recFileState[%d]", pThiz->rec_file);
+        LOGE("fatal error! can't switch file normal in impact recording, recFileState[%d]", pThiz->rec_file);
         eError = ERR_MUX_NOT_PERM;
         return eError;
     }
@@ -2115,12 +2115,12 @@ static ERRORTYPE RecSinkReset(PARAM_IN COMP_HANDLETYPE hComponent)
     RecSink *pThiz = (RecSink*)hComponent;
     if(pThiz->mStatus == COMP_StateLoaded)
     {
-        alogv("status already loaded.");
+        LOGV("status already loaded.");
         return SUCCESS;
     }
     if(pThiz->mStatus != COMP_StateExecuting && pThiz->mStatus != COMP_StatePause)
     {
-        aloge("fatal error! call in wrong status[%d]", pThiz->mStatus);
+        LOGE("fatal error! call in wrong status[%d]", pThiz->mStatus);
     }
     message_t   msg;
     msg.command = SetState;
@@ -2131,15 +2131,15 @@ static ERRORTYPE RecSinkReset(PARAM_IN COMP_HANDLETYPE hComponent)
     {
         if(pThiz->mPath)
         {
-            aloge("fatal error! fd[%d] and path[%s] all exist! check code!", pThiz->nOutputFd, pThiz->mPath);
+            LOGE("fatal error! fd[%d] and path[%s] all exist! check code!", pThiz->nOutputFd, pThiz->mPath);
         }
-        aloge("maybe not muxerInit? nOutputFd[%d]>=0", pThiz->nOutputFd);
+        LOGE("maybe not muxerInit? nOutputFd[%d]>=0", pThiz->nOutputFd);
         close(pThiz->nOutputFd);
         pThiz->nOutputFd = -1;
     }
     if(pThiz->mPath)
     {
-        aloge("maybe not muxerInit? path[%s]>=0", pThiz->mPath);
+        LOGE("maybe not muxerInit? path[%s]>=0", pThiz->mPath);
         free(pThiz->mPath);
         pThiz->mPath = NULL;
     }
@@ -2148,7 +2148,7 @@ static ERRORTYPE RecSinkReset(PARAM_IN COMP_HANDLETYPE hComponent)
     {
         if(pThiz->mSwitchFilePath)
         {
-            aloge("fatal error! fd[%d] and path[%s] all exist! check code!", pThiz->nSwitchFd, pThiz->mSwitchFilePath);
+            LOGE("fatal error! fd[%d] and path[%s] all exist! check code!", pThiz->nSwitchFd, pThiz->mSwitchFilePath);
         }
         close(pThiz->nSwitchFd);
         pThiz->nSwitchFd = -1;
@@ -2177,7 +2177,7 @@ ERRORTYPE RecSinkInit(PARAM_IN RecSink *pThiz)
     RecSinkResetSomeMembers(pThiz);
     if(0!=pthread_mutex_init(&pThiz->mutex_reset_writer_lock, NULL))
     {
-        aloge("fatal error! pthread_mutex init fail");
+        LOGE("fatal error! pthread_mutex init fail");
         return ERR_MUX_NOMEM;
     }
     pThiz->ConfigByCdxSink = RecSinkConfig;
@@ -2202,25 +2202,25 @@ ERRORTYPE RecSinkInit(PARAM_IN RecSink *pThiz)
 
     if(message_create(&pThiz->mMsgQueue)<0)
     {
-        aloge("message create fail!");
+        LOGE("message create fail!");
         eError = ERR_MUX_NOMEM;
         goto _err0;
 	}
 	if(cdx_sem_init(&pThiz->mSemStateComplete, 0)<0)
 	{
-        aloge("cdx sem init fail!");
+        LOGE("cdx sem init fail!");
         eError = ERR_MUX_NOMEM;
         goto _err1;
 	}
 //    if(cdx_sem_init(&pThiz->mSemCmdComplete, 0)<0)
 //	{
-//        aloge("cdx sem init fail!");
+//        LOGE("cdx sem init fail!");
 //        eError = OMX_ErrorUndefined;
 //        goto _err2;
 //	}
     if(pthread_mutex_init(&pThiz->mRSPacketListMutex, NULL)!=0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_MUX_NOMEM;
         goto _err3;
     }
@@ -2236,7 +2236,7 @@ ERRORTYPE RecSinkInit(PARAM_IN RecSink *pThiz)
     err = pthread_create(&pThiz->mThreadId, NULL, RecSinkThread, (void*)pThiz);
 	if (err || !pThiz->mThreadId) 
     {
-        aloge("pthread create fail!");
+        LOGE("pthread create fail!");
 		eError = ERR_MUX_NOMEM;
 		goto _err5;
 	}
@@ -2273,16 +2273,16 @@ ERRORTYPE RecSinkDestroy(RecSink *pThiz)
     put_message(&pThiz->mMsgQueue, &msg);
 	// Wait for thread to exit so we can get the status into "error"
 	pthread_join(pThiz->mThreadId, (void*) &err);
-    alogv("RecSink thread exit[%d]!", err);
+    LOGV("RecSink thread exit[%d]!", err);
 
     pthread_mutex_lock(&pThiz->mRSPacketListMutex);
     if(!list_empty(&pThiz->mPrefetchRSPacketList))
     {
-        aloge("fatal error! prefetch RSPacket list is not empty! check code!");
+        LOGE("fatal error! prefetch RSPacket list is not empty! check code!");
     }
     if(!list_empty(&pThiz->mValidRSPacketList))
     {
-        aloge("fatal error! valid RSPacket list is not empty! check code!");
+        LOGE("fatal error! valid RSPacket list is not empty! check code!");
     }
     if(!list_empty(&pThiz->mIdleRSPacketList))
     {

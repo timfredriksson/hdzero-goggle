@@ -11,7 +11,7 @@
 #ifndef CDX_QUEUE_H
 #define CDX_QUEUE_H
 #include <CdxTypes.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <AwPool.h>
 
 typedef struct CdxQueueS CdxQueueT;

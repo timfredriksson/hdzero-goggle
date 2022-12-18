@@ -13,7 +13,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "audio_hw"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,12 +97,12 @@ ERRORTYPE audioHw_Construct(void)
     for (i = 0; i < AIO_DEV_MAX_NUM; ++i) {
         AudioHwDevice *pDev = &gAudioHwDev[i];
         if (TRUE == pDev->mEnableFlag) {
-            alogw("audio_hw has already been constructed!");
+            LOGW("audio_hw has already been constructed!");
             return SUCCESS;
         }
         err = alsaOpenMixer(&pDev->mMixer, SOUND_CARD_AUDIOCODEC);
         if (err != 0) {
-            aloge("AIO device %d open mixer failed!", i);
+            LOGE("AIO device %d open mixer failed!", i);
         }
         pDev->mCap.mState = AI_STATE_INVALID;
         pDev->mPlay.mState = AO_STATE_INVALID;
@@ -120,12 +120,12 @@ ERRORTYPE audioHw_Destruct(void)
     for (i = 0; i < AIO_DEV_MAX_NUM; ++i) {
         AudioHwDevice *pDev = &gAudioHwDev[i];
         if (FALSE == pDev->mEnableFlag) {
-            alogw("audio_hw has already been destructed!");
+            LOGW("audio_hw has already been destructed!");
             return SUCCESS;
         }
         if (pDev->mMixer.handle != NULL) {
             if (AI_STATE_STARTED==pDev->mCap.mState || AO_STATE_STARTED==pDev->mPlay.mState)
-                aloge("Why AIO still running? CapState:%d, PlayState:%d", pDev->mCap.mState, pDev->mPlay.mState);
+                LOGE("Why AIO still running? CapState:%d, PlayState:%d", pDev->mCap.mState, pDev->mPlay.mState);
             alsaCloseMixer(&pDev->mMixer);
         }
         
@@ -232,13 +232,13 @@ static void *audioHw_AI_CapThread(void *pThreadData)
     AudioInputDevice *pCap = (AudioInputDevice*)pThreadData;
     char *pCapBuf = (char*)malloc(pCap->mCfg.chunkBytes);
     if (pCapBuf == NULL) {
-        aloge("Failed to alloc %d bytes(%s)", pCap->mCfg.chunkBytes, strerror(errno));
+        LOGE("Failed to alloc %d bytes(%s)", pCap->mCfg.chunkBytes, strerror(errno));
     }
     int ret = SUCCESS;
 
     while (pCap->mThdRunning) {
         if (alsaReadPcm(&pCap->mCfg, pCapBuf, pCap->mCfg.chunkSize) != pCap->mCfg.chunkSize) {
-            aloge("fatal error! fail to read pcm %d bytes-%d", pCap->mCfg.chunkBytes,pCap->mState);
+            LOGE("fatal error! fail to read pcm %d bytes-%d", pCap->mCfg.chunkBytes,pCap->mState);
             usleep(10*1000);
             continue;
         }
@@ -274,7 +274,7 @@ static void *audioHw_AI_CapThread(void *pThreadData)
         pthread_mutex_unlock(&pCap->mChnListLock);
     }
 
-    alogd("AI_CapThread exit!");
+    LOGD("AI_CapThread exit!");
     free(pCapBuf);
     return NULL;
 }
@@ -285,12 +285,12 @@ ERRORTYPE audioHw_AI_SetPubAttr(AUDIO_DEV AudioDevId, const AIO_ATTR_S *pstAttr)
     
     pthread_mutex_lock(&pCap->mApiCallLock);
     if (pstAttr == NULL) {
-        aloge("pstAttr is NULL!");
+        LOGE("pstAttr is NULL!");
         pthread_mutex_unlock(&pCap->mApiCallLock);
         return ERR_AI_ILLEGAL_PARAM;
     }
     if (AI_STATE_INVALID != pCap->mState) {
-        alogw("audioHw AI PublicAttr has been set!");
+        LOGW("audioHw AI PublicAttr has been set!");
         pthread_mutex_unlock(&pCap->mApiCallLock);
         return SUCCESS;
     }
@@ -306,13 +306,13 @@ ERRORTYPE audioHw_AI_GetPubAttr(AUDIO_DEV AudioDevId, AIO_ATTR_S *pstAttr)
     
     pthread_mutex_lock(&pCap->mApiCallLock);
     if (pstAttr == NULL) {
-        aloge("pstAttr is NULL!");
+        LOGE("pstAttr is NULL!");
         pthread_mutex_unlock(&pCap->mApiCallLock);
         return ERR_AI_ILLEGAL_PARAM;
     }
 
     if (pCap->mState == AI_STATE_INVALID) {
-        aloge("get attr when attr is not set!");
+        LOGE("get attr when attr is not set!");
         pthread_mutex_unlock(&pCap->mApiCallLock);
         return ERR_AI_NOT_PERM;
     }
@@ -328,7 +328,7 @@ ERRORTYPE audioHw_AI_ClrPubAttr(AUDIO_DEV AudioDevId)
     
     pthread_mutex_lock(&pCap->mApiCallLock);
     if (pCap->mState == AI_STATE_STARTED) {
-        aloge("please clear attr after AI disable!");
+        LOGE("please clear attr after AI disable!");
         pthread_mutex_unlock(&pCap->mApiCallLock);
         return ERR_AI_NOT_PERM;
     }
@@ -623,14 +623,14 @@ BOOL audioHw_AO_IsDevStarted(AUDIO_DEV AudioDevId)
 ERRORTYPE AudioHw_AO_SetPubAttr(AUDIO_DEV AudioDevId, const AIO_ATTR_S *pstAttr)
 {
     if (pstAttr == NULL) {
-        aloge("pstAttr is NULL!");
+        LOGE("pstAttr is NULL!");
         return ERR_AO_ILLEGAL_PARAM;
     }
     AudioOutputDevice *pPlay = &gAudioHwDev[AudioDevId].mPlay;
     if (pPlay->mState == AO_STATE_CONFIGURED) {
-        alogw("Update AoAttr? cur_card:%d -> wanted_card:%d", pPlay->mAttr.mPcmCardId, pstAttr->mPcmCardId);
+        LOGW("Update AoAttr? cur_card:%d -> wanted_card:%d", pPlay->mAttr.mPcmCardId, pstAttr->mPcmCardId);
     } else if (pPlay->mState == AO_STATE_STARTED) {
-        alogw("Careful for 2 AoChns at the same time! They must have the same param!");
+        LOGW("Careful for 2 AoChns at the same time! They must have the same param!");
         return SUCCESS;
     }
     pPlay->mAttr = *pstAttr;
@@ -641,13 +641,13 @@ ERRORTYPE AudioHw_AO_SetPubAttr(AUDIO_DEV AudioDevId, const AIO_ATTR_S *pstAttr)
 ERRORTYPE AudioHw_AO_GetPubAttr(AUDIO_DEV AudioDevId, AIO_ATTR_S *pstAttr)
 {
     if (pstAttr == NULL) {
-        aloge("pstAttr is NULL!");
+        LOGE("pstAttr is NULL!");
         return ERR_AO_ILLEGAL_PARAM;
     }
 
     AudioOutputDevice *pPlay = &gAudioHwDev[AudioDevId].mPlay;
     if (pPlay->mState == AO_STATE_INVALID) {
-        aloge("get attr when attr is not set!");
+        LOGE("get attr when attr is not set!");
         return ERR_AO_NOT_PERM;
     }
 
@@ -660,7 +660,7 @@ ERRORTYPE audioHw_AO_ClrPubAttr(AUDIO_DEV AudioDevId)
     AudioOutputDevice *pPlay = &gAudioHwDev[AudioDevId].mPlay;
 
     if (pPlay->mState == AO_STATE_STARTED) {
-        aloge("please clear attr after AI disable!");
+        LOGE("please clear attr after AI disable!");
         return ERR_AO_NOT_PERM;
     }
     memset(&pPlay->mAttr, 0, sizeof(AIO_ATTR_S));
@@ -760,18 +760,18 @@ ERRORTYPE audioHw_AO_Disable(AUDIO_DEV AudioDevId)
     //pthread_join(pPlay->mThdId, (void*) &ret);
 
     if (!list_empty(&pPlay->mChnList)) {
-        alogw("When ao_disable, still exist channle in PlayChnList?! list them below:");
+        LOGW("When ao_disable, still exist channle in PlayChnList?! list them below:");
         AO_CHANNEL_S *pEntry;
         list_for_each_entry(pEntry, &pPlay->mChnList, mList)
         {
-            alogw("AoCardType[%d] AoChn[%d] still run!", pPlay->mAttr.mPcmCardId, pEntry->mId);
+            LOGW("AoCardType[%d] AoChn[%d] still run!", pPlay->mAttr.mPcmCardId, pEntry->mId);
         }
         return SUCCESS;
     }
 
     pthread_mutex_destroy(&pPlay->mChnListLock);
 
-    alogd("close pcm! current AoCardType:[%d]", pPlay->mAttr.mPcmCardId);
+    LOGD("close pcm! current AoCardType:[%d]", pPlay->mAttr.mPcmCardId);
     alsaClosePcm(&pPlay->mCfg, 1);  // 1: playback
     pPlay->mState = AO_STATE_CONFIGURED;
 
@@ -842,7 +842,7 @@ ERRORTYPE audioHw_AO_SetPA(AUDIO_DEV AudioDevId, BOOL bHighLevel)
     ret = alsaMixerSetPlayBackPA(pMixer, (int)bHighLevel);
     if(0 != ret)
     {
-        aloge("fatal error! alsaMixer SetPlayBackPA fail[0x%x]!", ret);
+        LOGE("fatal error! alsaMixer SetPlayBackPA fail[0x%x]!", ret);
     }
     return ret;
 }
@@ -861,7 +861,7 @@ ERRORTYPE audioHw_AO_GetPA(AUDIO_DEV AudioDevId, BOOL *pbHighLevel)
     }
     else
     {
-        aloge("fatal error! alsaMixer GetPlayBackPA fail[0x%x]!", ret);
+        LOGE("fatal error! alsaMixer GetPlayBackPA fail[0x%x]!", ret);
     }
 
     return ret;
@@ -879,7 +879,7 @@ ERRORTYPE audioHw_AO_FillPcmRingBuf(AUDIO_DEV AudioDevId, void* pData, int Len)
     }
     ret = alsaWritePcm(&pPlay->mCfg, pData, frame_cnt);
     if (ret != frame_cnt) {
-        aloge("alsaWritePcm error!");
+        LOGE("alsaWritePcm error!");
         return FAILURE;
     }
 
@@ -906,7 +906,7 @@ ERRORTYPE audioHw_AO_FeedPcmData(AUDIO_DEV AudioDevId, AUDIO_FRAME_S *pFrm)
 
     ret = alsaWritePcm(&pPlay->mCfg, pFrm->mpAddr, frame_cnt);
     if (ret != frame_cnt) {
-        aloge("alsaWritePcm error!");
+        LOGE("alsaWritePcm error!");
         return FAILURE;
     }
 

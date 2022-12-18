@@ -37,7 +37,7 @@
 #include <ion_memmanager.h>
 
 #include "cdx_list.h"
-#include "plat_log.h"
+#include <log/log.h>
 
 //#include "./include/ion/ion.h"
 
@@ -136,14 +136,14 @@ int ion_memOpen(void)
 
     if (g_mem_manager != NULL)
     {
-        ALOGD("ion allocator has already been created");
+        LOGD("ion allocator has already been created");
         goto SUCCEED_OUT;
     }
 
     g_mem_manager = (ION_MEM_MANAGER_S *)malloc(sizeof(ION_MEM_MANAGER_S));
     if (NULL == g_mem_manager)
     {
-        ALOGE("no mem! open fail");
+        LOGE("no mem! open fail");
         goto _err0;
         //pthread_mutex_unlock(&g_mutex_alloc);
         //return -1;
@@ -157,7 +157,7 @@ int ion_memOpen(void)
     g_mem_manager->dev_fd = open(ION_DEV_NAME, O_RDWR); 
     if (g_mem_manager->dev_fd <= 0)
     {
-        ALOGE("ion open fail");
+        LOGE("ion open fail");
         goto _err1;
 //        pthread_mutex_destroy(&g_mem_manager->mLock);
 //        free(g_mem_manager);
@@ -172,7 +172,7 @@ int ion_memOpen(void)
         g_mem_manager->cedar_fd = open(CEDAR_DEV_NAME, O_RDONLY, 0);
         if (g_mem_manager->cedar_fd < 0) 
         {
-            ALOGE("%s(%d) err: open %s dev failed", __FUNCTION__, __LINE__, CEDAR_DEV_NAME);
+            LOGE("%s(%d) err: open %s dev failed", __FUNCTION__, __LINE__, CEDAR_DEV_NAME);
             goto _err2;
 //            close(g_mem_manager->dev_fd);
 //            g_mem_manager->dev_fd = -1;
@@ -214,7 +214,7 @@ int ion_memClose(void)
 
     if (g_mem_manager == NULL)
     {
-        ALOGW("has not open, please open first!");
+        LOGW("has not open, please open first!");
         pthread_mutex_unlock(&g_mutex_alloc);
         return ret;
     }
@@ -223,14 +223,14 @@ int ion_memClose(void)
     {
         if (g_mem_manager->ref_cnt < 0)
         {
-            ALOGW("maybe close more times than open");
+            LOGW("maybe close more times than open");
         }
 
         if (g_mem_manager->dev_fd >= 0)
         {
             if (close(g_mem_manager->dev_fd) != 0)
             {
-                ALOGE("ion close fail");
+                LOGE("ion close fail");
                 //ret = -1;
             }
             g_mem_manager->dev_fd = -1;
@@ -241,7 +241,7 @@ int ion_memClose(void)
             {
                 if (close(g_mem_manager->cedar_fd ) != 0)
                 {
-                    ALOGE("ion cedar dev close fail");
+                    LOGE("ion cedar dev close fail");
                 }
                 g_mem_manager->cedar_fd  = -1;
             }
@@ -251,14 +251,14 @@ int ion_memClose(void)
         pthread_mutex_lock(&g_mem_manager->mLock);
         if (!list_empty(&g_mem_manager->mMemList))
         {
-            ALOGE("fatal error! why some ion mem still in list??? force to free!");
+            LOGE("fatal error! why some ion mem still in list??? force to free!");
             list_for_each_entry_safe(pEntry, pTmp, &g_mem_manager->mMemList, mList)
             {
                 list_del(&pEntry->mList);
 
                 if (munmap((void *)(pEntry->mem_info.vir), pEntry->mem_info.size) < 0)
                 {
-                    ALOGE("munmap 0x%p, size: %d failed", (void*)pEntry->mem_info.vir, pEntry->mem_info.size);
+                    LOGE("munmap 0x%p, size: %d failed", (void*)pEntry->mem_info.vir, pEntry->mem_info.size);
                 }
 
                 /*close dma buffer fd*/
@@ -269,7 +269,7 @@ int ion_memClose(void)
                 ret = ioctl(g_mem_manager->dev_fd, ION_IOC_FREE, &data);
                 if (ret < 0) 
                 {
-                    ALOGE("ioctl %x failed with code %d: %s\n", ION_IOC_FREE, ret, strerror(errno));
+                    LOGE("ioctl %x failed with code %d: %s", ION_IOC_FREE, ret, strerror(errno));
                 }
                 free(pEntry);
             }
@@ -283,7 +283,7 @@ int ion_memClose(void)
     }
     else
     {
-        ALOGD("still left %d in use ", g_mem_manager->ref_cnt);
+        LOGD("still left %d in use ", g_mem_manager->ref_cnt);
     }
 
     pthread_mutex_unlock(&g_mutex_alloc);
@@ -312,14 +312,14 @@ unsigned char* ion_allocMem_extend(IonAllocAttr *pAttr)
 
     if (0 == pAttr->mLen)
     {
-        ALOGE("size error!");
+        LOGE("size error!");
         return NULL;
     }
     if(IonHeapType_IOMMU == pAttr->mIonHeapType)
     {
         if(0 == g_mem_manager->mbIommuFlag)
         {
-            ALOGE("(f:%s, l:%d) fatal error! iommu is disable", __FUNCTION__, __LINE__);
+            LOGE("(f:%s, l:%d) fatal error! iommu is disable", __FUNCTION__, __LINE__);
             return NULL;
         }
     }
@@ -327,7 +327,7 @@ unsigned char* ion_allocMem_extend(IonAllocAttr *pAttr)
     pMemNode = (ION_MEM_NODE_S *)malloc(sizeof(ION_MEM_NODE_S));
     if (NULL == pMemNode)
     {
-        ALOGE("no mem! alloc fail");
+        LOGE("no mem! alloc fail");
         return NULL;
     }
     memset(pMemNode, 0, sizeof(ION_MEM_NODE_S));
@@ -350,7 +350,7 @@ unsigned char* ion_allocMem_extend(IonAllocAttr *pAttr)
         }
         default:
         {
-            ALOGE("fatal error! unknown ion heap type:%d", pAttr->mIonHeapType);
+            LOGE("fatal error! unknown ion heap type:%d", pAttr->mIonHeapType);
             allocData.heap_id_mask = ION_HEAP_CARVEOUT_MASK;
             break;
         }
@@ -366,7 +366,7 @@ unsigned char* ion_allocMem_extend(IonAllocAttr *pAttr)
     ret = ioctl(g_mem_manager->dev_fd, ION_IOC_ALLOC, &allocData);
     if (ret != 0)
     {
-        ALOGE("ion alloc fail!");
+        LOGE("ion alloc fail!");
         goto _err0;
 //        free(pMemNode);
 //        return NULL;
@@ -385,7 +385,7 @@ unsigned char* ion_allocMem_extend(IonAllocAttr *pAttr)
             vir_ptr = mmap(NULL, pAttr->mLen, PROT_READ|PROT_WRITE, MAP_SHARED, fdData.fd, 0);
             if (vir_ptr == MAP_FAILED) 
             {
-                ALOGE("mmap failed: %s", strerror(errno));
+                LOGE("mmap failed: %s", strerror(errno));
                 close(map_fd);
                 map_fd = -1;
                 ret = -errno;
@@ -393,13 +393,13 @@ unsigned char* ion_allocMem_extend(IonAllocAttr *pAttr)
         }
         else
         {
-            ALOGE("map ioctl returned negative fd\n");
+            LOGE("map ioctl returned negative fd");
             ret = -EINVAL;
         }
     }
     if ((ret !=0) || (vir_ptr==NULL))
     {
-        ALOGE("ion map fail");
+        LOGE("ion map fail");
         goto _err1;
     }
 
@@ -415,12 +415,12 @@ unsigned char* ion_allocMem_extend(IonAllocAttr *pAttr)
         ret = ioctl(g_mem_manager->dev_fd, ION_IOC_CUSTOM, &custom_data);
         if (ret < 0) 
         {
-            ALOGE("ION_IOC_CUSTOM to get phyaddr failed");
+            LOGE("ION_IOC_CUSTOM to get phyaddr failed");
             goto _err2;
 //            /* unmap */
 //            if (munmap((void *)vir_ptr, pAttr->mLen) < 0)
 //            {
-//                ALOGE("munmap 0x%p, size: %d failed", (void*)vir_ptr, pAttr->mLen);
+//                LOGE("munmap 0x%p, size: %d failed", (void*)vir_ptr, pAttr->mLen);
 //            }
 //            /*close dma buffer fd*/
 //            close(map_fd);
@@ -448,11 +448,11 @@ unsigned char* ion_allocMem_extend(IonAllocAttr *pAttr)
             ret = ioctl(g_mem_manager->cedar_fd, IOCTL_GET_IOMMU_ADDR, &stUserIommuBuf);
             if(ret != 0)
             {
-                ALOGE("get iommu addr fail! ret:[%d]", ret);
+                LOGE("get iommu addr fail! ret:[%d]", ret);
                 ret = ioctl(g_mem_manager->cedar_fd, IOCTL_ENGINE_REL, 0);
                 if(ret != 0)
                 {
-                    ALOGE("fatal error! ENGINE_REL err, ret %d", ret);
+                    LOGE("fatal error! ENGINE_REL err, ret %d", ret);
                 }
                 goto _err2;
             }
@@ -463,7 +463,7 @@ unsigned char* ion_allocMem_extend(IonAllocAttr *pAttr)
         }
         else
         {
-            ALOGE("fatal error! ENGINE_REQ err, ret %d", ret);
+            LOGE("fatal error! ENGINE_REQ err, ret %d", ret);
             goto _err2;
         }
     }
@@ -486,7 +486,7 @@ _err2:
     /* unmap */
     if (munmap((void *)vir_ptr, pAttr->mLen) < 0)
     {
-        ALOGE("munmap 0x%p, size: %d failed", (void*)vir_ptr, pAttr->mLen);
+        LOGE("munmap 0x%p, size: %d failed", (void*)vir_ptr, pAttr->mLen);
     }
     /*close dma buffer fd*/
     close(map_fd);
@@ -499,7 +499,7 @@ _err1:
     ret = ioctl(g_mem_manager->dev_fd, ION_IOC_FREE, &handleData);
     if(ret != 0)
     {
-        ALOGE("(f:%s, l:%d) fatal error! ion ioc free fail[%d]", __FUNCTION__, __LINE__, ret);
+        LOGE("(f:%s, l:%d) fatal error! ion ioc free fail[%d]", __FUNCTION__, __LINE__, ret);
     }
 }
 _err0:
@@ -527,17 +527,17 @@ int ion_freeMem(void *vir_ptr)
             ret = ioctl(g_mem_manager->cedar_fd, IOCTL_FREE_IOMMU_ADDR, &stUserIommuBuf);
             if(ret != 0)
             {
-                ALOGE("(f:%s, l:%d) fatal error! free iommu addr fail[%d]", __FUNCTION__, __LINE__, ret);
+                LOGE("(f:%s, l:%d) fatal error! free iommu addr fail[%d]", __FUNCTION__, __LINE__, ret);
             }
             ret = ioctl(g_mem_manager->cedar_fd, IOCTL_ENGINE_REL, 0);
             if(ret != 0)
             {
-                ALOGE("fatal error! ENGINE_REL err, ret %d", ret);
+                LOGE("fatal error! ENGINE_REL err, ret %d", ret);
             }
         }
         if (munmap((void *)(pEntry->mem_info.vir), pEntry->mem_info.size) < 0)
         {
-            ALOGE("munmap 0x%p, size: %d failed", (void*)pEntry->mem_info.vir, pEntry->mem_info.size);
+            LOGE("munmap 0x%p, size: %d failed", (void*)pEntry->mem_info.vir, pEntry->mem_info.size);
         }
 
         /*close dma buffer fd*/
@@ -549,14 +549,14 @@ int ion_freeMem(void *vir_ptr)
         ret = ioctl(g_mem_manager->dev_fd, ION_IOC_FREE, &handleData);
         if (ret != 0) 
         {
-            ALOGE("ioctl ION IOC FREE failed with code %d: %s\n", ret, strerror(errno));
+            LOGE("ioctl ION IOC FREE failed with code %d: %s", ret, strerror(errno));
             //return -errno;
         }
         free(pEntry);
     }
     else
     {
-        ALOGE("fatal error! vir ptr not find in memlist, free fail!");
+        LOGE("fatal error! vir ptr not find in memlist, free fail!");
     }
 
     return ret;
@@ -569,7 +569,7 @@ unsigned int ion_getMemPhyAddr(void *vir_ptr)
 
     if (vir_ptr == NULL)
     {
-        ALOGE("null ptr!");
+        LOGE("null ptr!");
         return 0;
     }
 
@@ -580,7 +580,7 @@ unsigned int ion_getMemPhyAddr(void *vir_ptr)
     }
     else
     {
-        ALOGE("vir_ptr not find int list!get phyaddr fail!");
+        LOGE("vir_ptr not find int list!get phyaddr fail!");
     }
 
     return ret;
@@ -593,7 +593,7 @@ int ion_getMemMapFd(void *vir_ptr)
 
     if (vir_ptr == NULL)
     {
-        ALOGE("null ptr!");
+        LOGE("null ptr!");
         return 0;
     }
 
@@ -604,7 +604,7 @@ int ion_getMemMapFd(void *vir_ptr)
     }
     else
     {
-        ALOGE("vir_ptr not find int list! get mem fd fail!");
+        LOGE("vir_ptr not find int list! get mem fd fail!");
     }
 
     return ret;
@@ -617,7 +617,7 @@ ion_user_handle_t ion_getMemHandle(void *vir_ptr)
 
     if (vir_ptr == NULL)
     {
-        ALOGE("null ptr!");
+        LOGE("null ptr!");
         return 0;
     }
 
@@ -628,7 +628,7 @@ ion_user_handle_t ion_getMemHandle(void *vir_ptr)
     }
     else
     {
-        ALOGE("vir_ptr not find int list!get mem handle fail!");
+        LOGE("vir_ptr not find int list!get mem handle fail!");
         return -1;
     }
 }
@@ -640,7 +640,7 @@ IonHeapType ion_getMemHeapType(void *vir_ptr)
 
     if (vir_ptr == NULL)
     {
-        ALOGE("null ptr!");
+        LOGE("null ptr!");
         return IonHeapType_UNKNOWN;
     }
 
@@ -651,7 +651,7 @@ IonHeapType ion_getMemHeapType(void *vir_ptr)
     }
     else
     {
-        ALOGE("vir_ptr not find int list! get mem heap type fail!");
+        LOGE("vir_ptr not find int list! get mem heap type fail!");
         return IonHeapType_UNKNOWN;
     }
 }
@@ -663,7 +663,7 @@ int ion_flushCache(void *vir_ptr, unsigned int size)
 
     if (vir_ptr == NULL || !size)
     {
-        ALOGE("null ptr or size=0");
+        LOGE("null ptr or size=0");
         return -1;
     }
 
@@ -676,12 +676,12 @@ int ion_flushCache(void *vir_ptr, unsigned int size)
         ret = ioctl(g_mem_manager->dev_fd, ION_IOC_SUNXI_FLUSH_RANGE, (void*)&range);
         if (ret != 0)
         {
-            ALOGE("flush cache fail");
+            LOGE("flush cache fail");
         }
     }
     else
     {
-        ALOGE("vir_ptr not find int list! flush cache fail!");
+        LOGE("vir_ptr not find int list! flush cache fail!");
     }
 
     return ret;
@@ -710,11 +710,11 @@ int ion_memGetTotalSize()
     ret = ioctl(g_mem_manager->dev_fd, ION_IOC_CUSTOM, &cdata);
     if (ret < 0)
     {
-        aloge("Failed to ioctl ion device, errno:%s\n", strerror(errno));
+        LOGE("Failed to ioctl ion device, errno:%s", strerror(errno));
         goto err;
     }
 
-    alogd(" ion dev get free pool [%d MB], [%d KB], total [%d MB]\n", binfo.free_mb, binfo.free_kb, binfo.total / 1024);
+    LOGD(" ion dev get free pool [%d MB], [%d KB], total [%d MB]", binfo.free_mb, binfo.free_kb, binfo.total / 1024);
     ret = binfo.total;
 err:
     return ret;

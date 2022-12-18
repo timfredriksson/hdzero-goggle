@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "AudioDec_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <unistd.h>
@@ -68,12 +68,12 @@ ERRORTYPE AudioDec_InputDataInit(AUDIODEC_INPUT_DATA *pInputData, AUDIODECDATATY
     int err = pthread_cond_init(&pInputData->mStateCond, &condAttr);
     if (err != 0)
     {
-        aloge("fatal error! input thread mStateCond init fail!");
+        LOGE("fatal error! input thread mStateCond init fail!");
     }
     err = pthread_cond_init(&pInputData->mAbsFullCond, &condAttr);
     if (err != 0) 
     {
-        aloge("fatal error! pthread cond init fail!");
+        LOGE("fatal error! pthread cond init fail!");
     }
 
     pInputData->mWaitAbsValidFlag = FALSE;
@@ -92,7 +92,7 @@ ERRORTYPE AudioDec_InputDataInit(AUDIODEC_INPUT_DATA *pInputData, AUDIODECDATATY
         pNode = (DMXPKT_NODE_T*)malloc(sizeof(DMXPKT_NODE_T));
         if(pNode == NULL)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             eError = ERR_ADEC_NOMEM;
             pthread_mutex_unlock(&pInputData->mAbsListLock);
             goto EXIT6;
@@ -107,7 +107,7 @@ ERRORTYPE AudioDec_InputDataInit(AUDIODEC_INPUT_DATA *pInputData, AUDIODECDATATY
 
     if (message_create(&pInputData->cmd_queue)<0)
     {
-        aloge("create input cmd queue error!");
+        LOGE("create input cmd queue error!");
         eError = ERR_ADEC_NOMEM;
         goto EXIT6;
     }
@@ -229,7 +229,7 @@ ERRORTYPE AudioDecSendCommand(
             eCmd = RestartPort;
             break;
         default:
-            alogw("impossible comp_command[0x%x]", Cmd);
+            LOGW("impossible comp_command[0x%x]", Cmd);
             eCmd = -1;
             break;
     }
@@ -426,12 +426,12 @@ ERRORTYPE AudioDecResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
     // Ensure component is in Idle state
     if (pAudioDecData->state != COMP_StateIdle) 
     {
-        aloge("fatal error! must reset channel in stateIdle!");
+        LOGE("fatal error! must reset channel in stateIdle!");
         return ERR_ADEC_NOT_PERM;
     }
     
     // wait all outFrame return.
-    alogd("wait ADec idleOutFrameList full");
+    LOGD("wait ADec idleOutFrameList full");
     struct list_head *pList;
     pthread_mutex_lock(&pAudioDecData->mOutFrameListMutex);
     pAudioDecData->mWaitOutFrameFullFlag = TRUE;
@@ -445,7 +445,7 @@ ERRORTYPE AudioDecResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
         
         if (cnt < pAudioDecData->mFrameNodeNum) 
         {
-            alogd("wait idleOutFrameList [%d]nodes to home", pAudioDecData->mFrameNodeNum - cnt);
+            LOGD("wait idleOutFrameList [%d]nodes to home", pAudioDecData->mFrameNodeNum - cnt);
             pthread_cond_wait(&pAudioDecData->mOutFrameFullCondition, &pAudioDecData->mOutFrameListMutex);
         } 
         else 
@@ -455,7 +455,7 @@ ERRORTYPE AudioDecResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     pAudioDecData->mWaitOutFrameFullFlag = FALSE;
     pthread_mutex_unlock(&pAudioDecData->mOutFrameListMutex);
-    alogd("wait ADec idleOutFrameList full done");
+    LOGD("wait ADec idleOutFrameList full done");
     return SUCCESS;
 }
 
@@ -553,7 +553,7 @@ static ERRORTYPE config_AUDIO_FRAME_S_by_ADecCompOutputFrame(AUDIO_FRAME_S *dst,
 ERRORTYPE AudioDecSetStreamEof(PARAM_IN COMP_HANDLETYPE hComponent)
 {
     AUDIODECDATATYPE *pAudioDecData = (AUDIODECDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
-    alogv("adec end flag is set");
+    LOGV("adec end flag is set");
     pAudioDecData->priv_flag |= CDX_comp_PRIV_FLAGS_STREAMEOF;
     message_t msg;
     msg.command = ADecComp_AbsAvailable;
@@ -564,7 +564,7 @@ ERRORTYPE AudioDecSetStreamEof(PARAM_IN COMP_HANDLETYPE hComponent)
 ERRORTYPE AudioDecClearStreamEof(PARAM_IN COMP_HANDLETYPE hComponent)
 {
     AUDIODECDATATYPE *pAudioDecData = (AUDIODECDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
-    alogv("adec end flag is clear");
+    LOGV("adec end flag is clear");
     pAudioDecData->priv_flag &= ~(CDX_comp_PRIV_FLAGS_STREAMEOF);
     return SUCCESS;
 }
@@ -595,7 +595,7 @@ ERRORTYPE AudioDecEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
     // Ensure component is in Executing or Pause state
     if (pAudioDecData->state != COMP_StateExecuting && pAudioDecData->state != COMP_StatePause) 
     {
-        alogw("send stream when adec state[0x%x] is not executing/pause", pInputData->state);
+        LOGW("send stream when adec state[0x%x] is not executing/pause", pInputData->state);
     }
     // pass bs buffer to Decode lib in inport tunnel-mode
     // Notes: data struct is different in tunnel and non-tunnel mode!
@@ -614,7 +614,7 @@ ERRORTYPE AudioDecEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
             {
                 pthread_mutex_unlock(&pInputData->mAbsListLock);
                 pthread_mutex_unlock(&pAudioDecData->mStateLock);
-                aloge("fatal error! Calling EmptyThisBuffer while mUsingAbsList is empty!");
+                LOGE("fatal error! Calling EmptyThisBuffer while mUsingAbsList is empty!");
                 return FAILURE;
             }
 
@@ -625,7 +625,7 @@ ERRORTYPE AudioDecEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
            {
                pthread_mutex_unlock(&pInputData->mAbsListLock);
                pthread_mutex_unlock(&pAudioDecData->mStateLock);
-               aloge("fatal error! the buffer in EmptyThisBuffer param is not same as in mUsingAbsList");
+               LOGE("fatal error! the buffer in EmptyThisBuffer param is not same as in mUsingAbsList");
                return FAILURE;
            }
             
@@ -633,7 +633,7 @@ ERRORTYPE AudioDecEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
             if (-1 == pDmxOutBuf->nFilledLen)
             {// buffer is not enough for component A
                 
-                alogv("adec lib buffer is not enough for component A (nTobeFillLen = %d)", pDmxOutBuf->nTobeFillLen);
+                LOGV("adec lib buffer is not enough for component A (nTobeFillLen = %d)", pDmxOutBuf->nTobeFillLen);
                 pInputData->nRequestLen = pDmxOutBuf->nTobeFillLen;
                 
                 // Move node from mUsingAbsList to mIdleAbsList
@@ -669,7 +669,7 @@ ERRORTYPE AudioDecEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
                 return eError;
             }
 
-            //alogd("======= nFilledLen[%d]  nTimeStamp[%lld] nOffset[%d]",pDmxOutBuf->nFilledLen,pDmxOutBuf->nTimeStamp,pBuffer->nOffset);
+            //LOGD("======= nFilledLen[%d]  nTimeStamp[%lld] nOffset[%d]",pDmxOutBuf->nFilledLen,pDmxOutBuf->nTimeStamp,pBuffer->nOffset);
             
             pthread_mutex_lock(&pAudioDecData->mAbsInputMutex);
             int adecRet = ParserUpdateBsBuffer
@@ -724,19 +724,19 @@ ERRORTYPE AudioDecEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
                 {
                     pthread_mutex_unlock(&pInputData->mAbsListLock);
                     pthread_mutex_unlock(&pAudioDecData->mStateLock);
-                    aloge("fatal error! No Using Abs node while calling EmptyThisBuffer!");
+                    LOGE("fatal error! No Using Abs node while calling EmptyThisBuffer!");
                     return FAILURE;
                 }
             }
             else
             {
-                aloge("fatal error! submit data fail, check code!");
+                LOGE("fatal error! submit data fail, check code!");
                 eError = FAILURE;
             }
         }
         else
         {
-            aloge("fatal error! PortIndex[%u][%u]! fill Abs fail!", pBuffer->nInputPortIndex, pAudioDecData->sInPortTunnelInfo.nPortIndex);
+            LOGE("fatal error! PortIndex[%u][%u]! fill Abs fail!", pBuffer->nInputPortIndex, pAudioDecData->sInPortTunnelInfo.nPortIndex);
             eError = FAILURE;
         }
 
@@ -750,7 +750,7 @@ ERRORTYPE AudioDecEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
         int nMilliSec = pInputStream->nMilliSec;
         if (0 == pStream->mLen)
         {
-            alogd("indicate EndOfStream");
+            LOGD("indicate EndOfStream");
             AudioDecSetStreamEof(hComponent);
             pthread_mutex_unlock(&pAudioDecData->mStateLock);
             return FAILURE;
@@ -765,7 +765,7 @@ _TryToRequestAbs:
         int bsValidSize = AudioStreamDataSize(pAudioDecData->pDecoder); // inport bs data_size that can be decode but have not be decoded
         int bsTotalSize = AudioStreamBufferSize();                      // inport bs space total size: 128KB
         int bsEmptySize = bsTotalSize - bsValidSize;
-        alogd("request ADecLib bs buffer. totalSz:%d, validSz:%d, emptySz:%d, requestSz:%d", bsTotalSize, bsValidSize, bsEmptySize, pStream->mLen);
+        LOGD("request ADecLib bs buffer. totalSz:%d, validSz:%d, emptySz:%d, requestSz:%d", bsTotalSize, bsValidSize, bsEmptySize, pStream->mLen);
 #endif
 
         // Request buffer from decode lib
@@ -823,7 +823,7 @@ _TryToRequestAbs:
                 int waitRet = pthread_cond_wait_timeout(&pAudioDecData->mEmptyAbsCondition, &pAudioDecData->mAbsInputMutex, nMilliSec);
                 if (ETIMEDOUT == waitRet)
                 {
-                    alogv("wait empty abs buffer timeout[%d]ms, ret[%d]", nMilliSec, waitRet);
+                    LOGV("wait empty abs buffer timeout[%d]ms, ret[%d]", nMilliSec, waitRet);
                     eError = ERR_ADEC_BUF_FULL;
                     pAudioDecData->mWaitEmptyAbsFlag = FALSE;
                 }
@@ -834,7 +834,7 @@ _TryToRequestAbs:
                 }
                 else
                 {
-                    aloge("fatal error! pthread cond wait timeout ret[%d]", waitRet);
+                    LOGE("fatal error! pthread cond wait timeout ret[%d]", waitRet);
                     eError = ERR_ADEC_BUF_FULL;
                     pAudioDecData->mWaitEmptyAbsFlag = FALSE;
                 }
@@ -867,12 +867,12 @@ ERRORTYPE AudioDecGetFrame(
        && COMP_StatePause != pAudioDecData->state
        ) 
     {
-        alogw("call getStream in wrong state[0x%x]", pAudioDecData->state);
+        LOGW("call getStream in wrong state[0x%x]", pAudioDecData->state);
         return ERR_ADEC_NOT_PERM;
     }
     if (pAudioDecData->mOutputPortTunnelFlag) 
     {
-        aloge("fatal error! can't call getStream() in tunnel mode!");
+        LOGE("fatal error! can't call getStream() in tunnel mode!");
         return ERR_ADEC_NOT_PERM;
     }
     pthread_mutex_lock(&pAudioDecData->mOutFrameListMutex);
@@ -907,7 +907,7 @@ _TryToGetOutFrame:
             ret = pthread_cond_wait_timeout(&pAudioDecData->mReadyFrameCondition, &pAudioDecData->mOutFrameListMutex, nMilliSec);
             if (ETIMEDOUT == ret) 
             {
-                alogv("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
+                LOGV("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
                 eError = ERR_ADEC_BUF_EMPTY;
                 pAudioDecData->mWaitReadyFrameFlag = FALSE;
             } 
@@ -918,7 +918,7 @@ _TryToGetOutFrame:
             } 
             else 
             {
-                aloge("fatal error! pthread cond wait timeout ret[%d]", ret);
+                LOGE("fatal error! pthread cond wait timeout ret[%d]", ret);
                 eError = ERR_ADEC_BUF_EMPTY;
                 pAudioDecData->mWaitReadyFrameFlag = FALSE;
             }
@@ -942,11 +942,11 @@ ERRORTYPE AudioDecReleaseFrame(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN AUD
     if (COMP_StateIdle != pAudioDecData->state && COMP_StateExecuting != pAudioDecData->state &&
         COMP_StatePause != pAudioDecData->state) 
     {
-        alogw("call getStream in wrong state[0x%x]", pAudioDecData->state);
+        LOGW("call getStream in wrong state[0x%x]", pAudioDecData->state);
         return ERR_ADEC_NOT_PERM;
     }
     if (pAudioDecData->mOutputPortTunnelFlag) {
-        aloge("fatal error! can't call releaseFrame() in tunnel mode!");
+        LOGE("fatal error! can't call releaseFrame() in tunnel mode!");
         return ERR_ADEC_NOT_PERM;
     }
     
@@ -963,7 +963,7 @@ ERRORTYPE AudioDecReleaseFrame(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN AUD
                 ret = PlybkUpdatePcmBuffer(pAudioDecData->pDecoder, pEntry->mSize);
                 if (ret != 0) 
                 {
-                    aloge("fatal error! return pcm fail ret[%d]", ret);
+                    LOGE("fatal error! return pcm fail ret[%d]", ret);
                 }
                 list_move_tail(&pEntry->mList, &pAudioDecData->mIdleOutFrameList);
 
@@ -981,13 +981,13 @@ ERRORTYPE AudioDecReleaseFrame(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN AUD
         }
         if (0 == nFindFlag) 
         {
-            aloge("fatal error! adec frameId[0x%x] is not match UsedOutFrameList", pFrame->mId);
+            LOGE("fatal error! adec frameId[0x%x] is not match UsedOutFrameList", pFrame->mId);
             eError = ERR_ADEC_ILLEGAL_PARAM;
         }
     } 
     else 
     {
-        aloge("fatal error! adec frameId[0x%x] is not find in UsedOutFrameList", pFrame->mId);
+        LOGE("fatal error! adec frameId[0x%x] is not find in UsedOutFrameList", pFrame->mId);
         eError = ERR_ADEC_ILLEGAL_PARAM;
     }
     pthread_mutex_unlock(&pAudioDecData->mOutFrameListMutex);
@@ -1006,7 +1006,7 @@ ERRORTYPE AudioDecReleaseFrame(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN AUD
         PARAM_IN  COMP_HANDLETYPE hComponent,
         PARAM_INOUT  COMP_BUFFERHEADERTYPE* pBuffer)
 {
-    alogw("Be careful! old method, should not use now.");
+    LOGW("Be careful! old method, should not use now.");
     ERRORTYPE eError = SUCCESS;
 
     // Get component private data
@@ -1028,7 +1028,7 @@ ERRORTYPE AudioDecReleaseFrame(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN AUD
     } 
     else 
     {
-        aloge("fatal error! portIndex[%u][%u]! RequstBsBuffer fail!", pBuffer->nInputPortIndex, pAudioDecData->sInPortDef.nPortIndex);
+        LOGE("fatal error! portIndex[%u][%u]! RequstBsBuffer fail!", pBuffer->nInputPortIndex, pAudioDecData->sInPortDef.nPortIndex);
         eError = FAILURE;
     }
 
@@ -1047,7 +1047,7 @@ ERRORTYPE AudioDecReleaseBuffer(
         PARAM_IN  COMP_HANDLETYPE hComponent,
         PARAM_IN  COMP_BUFFERHEADERTYPE* pBuffer)
 {
-    alogw("Be careful! old method, should not use now.");
+    LOGW("Be careful! old method, should not use now.");
     ERRORTYPE eError = SUCCESS;
 
     // Get component private data
@@ -1072,7 +1072,7 @@ ERRORTYPE AudioDecReleaseBuffer(
     }
     else 
     {
-        aloge("fatal error! portIndex[%u][%u]! UpdataBsBuffer fail!", pBuffer->nInputPortIndex, pAudioDecData->sInPortDef.nPortIndex);
+        LOGE("fatal error! portIndex[%u][%u]! UpdataBsBuffer fail!", pBuffer->nInputPortIndex, pAudioDecData->sInPortDef.nPortIndex);
         eError = FAILURE;
     }
 
@@ -1082,7 +1082,7 @@ ERRORTYPE AudioDecReleaseBuffer(
 ERRORTYPE AudioDecSeek(PARAM_IN COMP_HANDLETYPE hComponent)
 {
     AUDIODECDATATYPE *pAudioDecData = (AUDIODECDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
-    alogd("ADec seek. flush the bs and pcm buf!");
+    LOGD("ADec seek. flush the bs and pcm buf!");
     AudioDecoderSeek(pAudioDecData->pDecoder, 0);
     pAudioDecData->mbEof = FALSE;
     return SUCCESS;
@@ -1107,14 +1107,14 @@ static enum EAUDIOCODECFORMAT map_PAYLOAD_TYPE_E_to_EAUDIOCODECFORMAT(PAYLOAD_TY
             break;
 //        case PT_G711A:
 //        case PT_G711U:
-//            aloge("NOT support G711 by now!");
+//            LOGE("NOT support G711 by now!");
 //            break;
 //        case PT_G726:
-//            aloge("NOT support G726 by now!");
+//            LOGE("NOT support G726 by now!");
 //            break;
         default:
             dstFormat = AUDIO_CODEC_FORMAT_MPEG_AAC_LC;
-            alogw("Unsupported audio decoder format [%d]! Set AAC to it!", srcFormat);
+            LOGW("Unsupported audio decoder format [%d]! Set AAC to it!", srcFormat);
             break;
     }
 
@@ -1215,13 +1215,13 @@ ERRORTYPE AudioDecGetConfig(
         }
         case COMP_IndexVendorAdecChnPriority:
         {
-            alogw("unsupported temporary get adec chn priority!");
+            LOGW("unsupported temporary get adec chn priority!");
             eError = ERR_ADEC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorAdecChnState:
         {
-            alogw("unsupported temporary COMP_IndexVendorAdecChnState!");
+            LOGW("unsupported temporary COMP_IndexVendorAdecChnState!");
 //            eError = AudioDecGetAdecChnState(hComponent, (ADEC_CHN_STAT_S*)pComponentConfigStructure);
             break;
         }
@@ -1243,7 +1243,7 @@ ERRORTYPE AudioDecGetConfig(
         }
         default:
         {
-            aloge("fatal error! unknown getConfig Index[0x%x]", nIndex);
+            LOGE("fatal error! unknown getConfig Index[0x%x]", nIndex);
             eError = ERR_ADEC_NOT_SUPPORT;
             break;
         }
@@ -1285,7 +1285,7 @@ ERRORTYPE AudioDecSetConfig(
         }
         case COMP_IndexVendorAdecChnPriority:
         {
-            alogw("unsupported temporary set adec chn priority!");
+            LOGW("unsupported temporary set adec chn priority!");
             eError = ERR_ADEC_NOT_SUPPORT;
             break;
         }
@@ -1313,7 +1313,7 @@ ERRORTYPE AudioDecSetConfig(
         }
         case COMP_IndexVendorAdecSelectAudioOut:
         {
-            aloge("not support COMP_IndexVendorAdecSelectAudioOut");
+            LOGE("not support COMP_IndexVendorAdecSelectAudioOut");
 //            pAudioDecData->enable_resample = *(int*)pComponentConfigStructure == CDX_AUDIO_OUT_I2S;
             break;
         }
@@ -1330,7 +1330,7 @@ ERRORTYPE AudioDecSetConfig(
         case COMP_IndexVendorAdecSwitchAuioChannnel:
         {
             pAudioDecData->audio_channel = *(int*)pComponentConfigStructure;
-            alogv("audio channel %d", pAudioDecData->audio_channel);
+            LOGV("audio channel %d", pAudioDecData->audio_channel);
             break;
         }
         case COMP_IndexVendorConfigInputBuffer:
@@ -1360,7 +1360,7 @@ ERRORTYPE AudioDecSetConfig(
         }
         default:
         {
-            aloge("fatal error! unknown setConfig Index[0x%x]", nIndex);
+            LOGE("fatal error! unknown setConfig Index[0x%x]", nIndex);
             eError = ERR_ADEC_NOT_SUPPORT;
             break;
         }
@@ -1400,20 +1400,20 @@ ERRORTYPE AudioDecFillThisBuffer(
                 }
                 else
                 {
-                    aloge("fatal error! find same framePTS[%lld] again!", pEntry->mTimeStamp);
+                    LOGE("fatal error! find same framePTS[%lld] again!", pEntry->mTimeStamp);
                 }
             }
         }
         if(!bFindFlag)
         {
-            aloge("fatal error! can't find frameId[%d], pts[%llu], check code!", pAFrame->mId, pAFrame->mTimeStamp);
+            LOGE("fatal error! can't find frameId[%d], pts[%llu], check code!", pAFrame->mId, pAFrame->mTimeStamp);
             pthread_mutex_unlock(&pAudioDecData->mOutFrameListMutex);
             return ERR_ADEC_ILLEGAL_PARAM;
         }
         ret = PlybkUpdatePcmBuffer(pAudioDecData->pDecoder, pOutFrame->mSize);
         if (ret != 0)
         {
-            aloge("fatal error! return pcmBuffer fail! ret[%d]", ret);
+            LOGE("fatal error! return pcmBuffer fail! ret[%d]", ret);
             eError = FAILURE;
         }
         list_move_tail(&pOutFrame->mList, &pAudioDecData->mIdleOutFrameList);
@@ -1441,7 +1441,7 @@ ERRORTYPE AudioDecFillThisBuffer(
     }
     else
     {
-        aloge("fatal error! PortIndex[%u][%u]! Release PcmBuf fail!", pBuffer->nOutputPortIndex, pAudioDecData->sOutPortDef.nPortIndex);
+        LOGE("fatal error! PortIndex[%u][%u]! Release PcmBuf fail!", pBuffer->nOutputPortIndex, pAudioDecData->sOutPortDef.nPortIndex);
         eError = FAILURE;
     }
 
@@ -1459,11 +1459,11 @@ ERRORTYPE AudioDecComponentTunnelRequest(
     AUDIODECDATATYPE *pAudioDecData = (AUDIODECDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if (pAudioDecData->state == COMP_StateExecuting)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if(pAudioDecData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request can't be in state[0x%x]", pAudioDecData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]", pAudioDecData->state);
         eError = ERR_ADEC_INCORRECT_STATE_OPERATION;
         goto COMP_CMD_FAIL;
     }
@@ -1491,7 +1491,7 @@ ERRORTYPE AudioDecComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_ADEC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1512,7 +1512,7 @@ ERRORTYPE AudioDecComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_ADEC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1529,7 +1529,7 @@ ERRORTYPE AudioDecComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_ADEC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1539,7 +1539,7 @@ ERRORTYPE AudioDecComponentTunnelRequest(
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup)
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         if(pPortDef->eDir == COMP_DirOutput)
         {
@@ -1554,7 +1554,7 @@ ERRORTYPE AudioDecComponentTunnelRequest(
     if(pPortDef->eDir == COMP_DirOutput)
     {
         if (pAudioDecData->mOutputPortTunnelFlag) {
-            aloge("ADec_Comp outport already bind, why bind again?!");
+            LOGE("ADec_Comp outport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -1565,7 +1565,7 @@ ERRORTYPE AudioDecComponentTunnelRequest(
     else
     {
         if (pAudioDecData->mInputPortTunnelFlag) {
-            aloge("ADec_Comp inport already bind, why bind again?!");
+            LOGE("ADec_Comp inport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -1576,7 +1576,7 @@ ERRORTYPE AudioDecComponentTunnelRequest(
         ((MM_COMPONENTTYPE*)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput)
         {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_ADEC_ILLEGAL_PARAM;
             goto COMP_CMD_FAIL;
         }
@@ -1591,7 +1591,7 @@ ERRORTYPE AudioDecComponentTunnelRequest(
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
         {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -1615,7 +1615,7 @@ ERRORTYPE AudioDecLibInit(AUDIODECDATATYPE *pAudioDecData)
         // streamInfo from demux, use it directly!
         pAudioStreamInfo = (AudioStreamInfo *)(pAudioDecData->sInPortExtraDef.pVendorInfo);
         if (NULL == pAudioStreamInfo) {
-            alogw("audio stream info has not got, can't init ADecLib now.");
+            LOGW("audio stream info has not got, can't init ADecLib now.");
             return FAILURE;
         }
     }
@@ -1629,14 +1629,14 @@ ERRORTYPE AudioDecLibInit(AUDIODECDATATYPE *pAudioDecData)
     pAudioDecData->pDecoder = CreateAudioDecoder();
     if(pAudioDecData->pDecoder == NULL)
     {
-        aloge("Audiodec_Comp create Audiodecoder fail!");
+        LOGE("Audiodec_Comp create Audiodecoder fail!");
         assert(0);
         return FAILURE;
     }
     memset(&pAudioDecData->ad_cedar_info, 0, sizeof(BsInFor));
     if(InitializeAudioDecoder(pAudioDecData->pDecoder, pAudioStreamInfo, &pAudioDecData->ad_cedar_info) != 0)
     {
-        aloge("Initialize AudioDecoder fail!");
+        LOGE("Initialize AudioDecoder fail!");
         DestroyAudioDecoder(pAudioDecData->pDecoder);
         //pAudioDecData->pDecoder = NULL;
         assert(0);
@@ -1644,7 +1644,7 @@ ERRORTYPE AudioDecLibInit(AUDIODECDATATYPE *pAudioDecData)
     }
     SetRawPlayParam(pAudioDecData->pDecoder, (void*)pAudioDecData, 0);
 
-    //alogd("adec inPort and outPort share same pVendorInfo!");
+    //LOGD("adec inPort and outPort share same pVendorInfo!");
     //TODO just transfer it audio dec may update it!
     //pAudioDecData->sOutPortExtraDef.pVendorInfo = pAudioDecData->sInPortExtraDef.pVendorInfo;
 
@@ -1658,12 +1658,12 @@ ERRORTYPE AudioDecComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     CompInternalMsgType eCmd = Stop;
     message_t msg;
 
-    alogd("AudioDec Component DeInit");
+    LOGD("AudioDec Component DeInit");
     AUDIODECDATATYPE* pAudioDecData = (AUDIODECDATATYPE *)(((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
 
     msg.command = eCmd;
     put_message(&pAudioDecData->cmd_queue, &msg);
-    alogd("wait component exit!...");
+    LOGD("wait component exit!...");
     pAudioDecData->force_exit = 1;
     pthread_join(pAudioDecData->thread_id, (void*)&eError);
     AudioDec_InputDataDestroy(pAudioDecData->pInputData);
@@ -1692,7 +1692,7 @@ ERRORTYPE AudioDecComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if(nodeNum!=pAudioDecData->mFrameNodeNum)
     {
-        aloge("Fatal error! AudioDec frame_node number is not match[%d][%d]", nodeNum, pAudioDecData->mFrameNodeNum);
+        LOGE("Fatal error! AudioDec frame_node number is not match[%d][%d]", nodeNum, pAudioDecData->mFrameNodeNum);
     }
     pthread_mutex_unlock(&pAudioDecData->mOutFrameListMutex);
 
@@ -1713,7 +1713,7 @@ ERRORTYPE AudioDecComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         free(pAudioDecData);
     }
 
-    alogd("AudioDec component exited!");
+    LOGD("AudioDec component exited!");
 
     return eError;
 }
@@ -1751,7 +1751,7 @@ ERRORTYPE AudioDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         ADecCompOutputFrame *pNode = (ADecCompOutputFrame*)malloc(sizeof(ADecCompOutputFrame));
         if (NULL == pNode)
         {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             break;
         }
         list_add_tail(&pNode->mList, &pAudioDecData->mIdleOutFrameList);
@@ -1761,14 +1761,14 @@ ERRORTYPE AudioDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pAudioDecData->mAbsInputMutex, NULL);
     if(err!=0)
     {
-        aloge("fatal error! pthread mutex init fail!");
+        LOGE("fatal error! pthread mutex init fail!");
         eError = ERR_ADEC_SYS_NOTREADY;
         goto EXIT;
     }
     err = pthread_mutex_init(&pAudioDecData->mOutFrameListMutex, NULL);
     if(err!=0)
     {
-        aloge("fatal error! pthread mutex init fail!");
+        LOGE("fatal error! pthread mutex init fail!");
         eError = ERR_ADEC_SYS_NOTREADY;
         goto EXIT;
     }
@@ -1782,7 +1782,7 @@ ERRORTYPE AudioDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err += pthread_cond_init(&pAudioDecData->mEmptyAbsCondition, &condAttr);
     if (err != 0)
     {
-        aloge("fatal error! pthread mutex init fail!");
+        LOGE("fatal error! pthread mutex init fail!");
         eError = ERR_ADEC_SYS_NOTREADY;
         goto EXIT;
     }
@@ -1831,7 +1831,7 @@ ERRORTYPE AudioDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if (message_create(&pAudioDecData->cmd_queue)<0)
     {
-        aloge("create work cmd queue error!");
+        LOGE("create work cmd queue error!");
         eError = ERR_ADEC_NOMEM;
         goto EXIT;
     }
@@ -1840,7 +1840,7 @@ ERRORTYPE AudioDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     AUDIODEC_INPUT_DATA* pInputData = (AUDIODEC_INPUT_DATA*) malloc(sizeof(AUDIODEC_INPUT_DATA));
     if (pInputData == NULL)
     {
-        aloge("create input data error!");
+        LOGE("create input data error!");
         eError = ERR_ADEC_NOMEM;
         goto EXIT;
     }
@@ -1855,7 +1855,7 @@ ERRORTYPE AudioDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     
     if((eError = AudioDec_InputDataInit(pInputData, pAudioDecData)) != SUCCESS)
     {
-        aloge("fatal error! AudioDec InputData init fail");
+        LOGE("fatal error! AudioDec InputData init fail");
         goto EXIT;
     }
     pthread_condattr_destroy(&condAttr);
@@ -1880,7 +1880,7 @@ static void* ComponentThread(void* pThreadData)
     AUDIODEC_INPUT_DATA* pInputData = pAudioDecData->pInputData;
     pAudioDecData->get_audio_info_flag = 1;  // control get audio info only once
 
-    alogv("AudioDecoder ComponentThread start run...");
+    LOGV("AudioDecoder ComponentThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"ADecComp", 0, 0, 0);
 
     while (1) 
@@ -1891,7 +1891,7 @@ PROCESS_MESSAGE:
             cmd     = cmd_msg.command;
             cmddata = cmd_msg.para0;
 
-            //alogv("AudioDec ComponentThread get_message cmd:%d", cmd);
+            //LOGV("AudioDec ComponentThread get_message cmd:%d", cmd);
             
             // State transition command
             if (cmd == SetState)
@@ -1943,11 +1943,11 @@ PROCESS_MESSAGE:
                                         0,
                                         NULL);
                             }
-                            alogd("ADec_Comp StateLoaded begin");
+                            LOGD("ADec_Comp StateLoaded begin");
 
                             int cnt;
                             struct list_head *pList;
-                            alogd("wait ADec idleOutFrameList full");
+                            LOGD("wait ADec idleOutFrameList full");
                             pthread_mutex_lock(&pAudioDecData->mOutFrameListMutex);
                             pAudioDecData->mWaitOutFrameFullFlag = TRUE;
                             //wait all outFrame return.
@@ -1960,7 +1960,7 @@ PROCESS_MESSAGE:
                                 }
                                 if(cnt < pAudioDecData->mFrameNodeNum)
                                 {
-                                    alogd("Wait ADec idleOutFrameList [%d]nodes to home[%d]",
+                                    LOGD("Wait ADec idleOutFrameList [%d]nodes to home[%d]",
                                         pAudioDecData->mFrameNodeNum - cnt, pAudioDecData->mFrameNodeNum);
                                     pthread_cond_wait(&pAudioDecData->mOutFrameFullCondition, &pAudioDecData->mOutFrameListMutex);
                                 }
@@ -1971,7 +1971,7 @@ PROCESS_MESSAGE:
                             }
                             pAudioDecData->mWaitOutFrameFullFlag = FALSE;
                             pthread_mutex_unlock(&pAudioDecData->mOutFrameListMutex);
-                            alogd("Wait ADec idleOutFrameList full done");
+                            LOGD("Wait ADec idleOutFrameList full done");
 
                             // send message to input_thread
                             message_t InputThreadMsg;
@@ -1994,14 +1994,14 @@ PROCESS_MESSAGE:
                                     COMP_CommandStateSet,
                                     pAudioDecData->state,
                                     NULL);
-                            alogd("ADec_Comp StateLoaded ok");
+                            LOGD("ADec_Comp StateLoaded ok");
                             break;
                         }
                         case COMP_StateIdle:
                         {
                             if(pAudioDecData->state == COMP_StateLoaded)
                             {
-                                alogv("ADec_Comp: loaded->idle ...");
+                                LOGV("ADec_Comp: loaded->idle ...");
 
                                 pAudioDecData->state = COMP_StateIdle;
                                 pAudioDecData->pCallbacks->EventHandler(
@@ -2014,7 +2014,7 @@ PROCESS_MESSAGE:
                             }
                             else if(pAudioDecData->state == COMP_StatePause || pAudioDecData->state == COMP_StateExecuting)
                             {
-                                alogv("ADec_Comp: pause/executing[0x%x]->idle ...", pAudioDecData->state);
+                                LOGV("ADec_Comp: pause/executing[0x%x]->idle ...", pAudioDecData->state);
                                 pAudioDecData->state = COMP_StateIdle;
                                 pAudioDecData->pCallbacks->EventHandler(
                                         pAudioDecData->hSelf,
@@ -2026,7 +2026,7 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                aloge("Fatal error! current state[0x%x] can't turn to idle!", pAudioDecData->state);
+                                LOGE("Fatal error! current state[0x%x] can't turn to idle!", pAudioDecData->state);
                                 pAudioDecData->pCallbacks->EventHandler(
                                         pAudioDecData->hSelf,
                                         pAudioDecData->pAppData,
@@ -2059,7 +2059,7 @@ PROCESS_MESSAGE:
                                 {
                                     if (NULL == pAudioDecData->pDecoder) {
                                         if (AudioDecLibInit(pAudioDecData) != SUCCESS) {
-                                            aloge("Fatal error! Why AudioDecLibInit fail again?!!!");
+                                            LOGE("Fatal error! Why AudioDecLibInit fail again?!!!");
                                             goto EXIT;
                                         }
                                     }
@@ -2160,11 +2160,11 @@ PROCESS_MESSAGE:
             }
             else if(cmd == ADecComp_AbsAvailable)
             {
-                alogv("ADec abs available");
+                LOGV("ADec abs available");
             }
             else if(cmd == ADecComp_PcmBufAvailable)
             {
-                alogv("ADec PcmBuf available");
+                LOGV("ADec PcmBuf available");
             }
             
             //precede to process message
@@ -2175,7 +2175,7 @@ PROCESS_MESSAGE:
         {
             if (pAudioDecData->mbEof)
             {
-                alogd("ADec EOF!");
+                LOGD("ADec EOF!");
                 TMessage_WaitQueueNotEmpty(&pAudioDecData->cmd_queue, 0);
                 goto PROCESS_MESSAGE;
             }
@@ -2189,7 +2189,7 @@ REREQUEST_OUT_BUFFER:
             int   pcmOutSize = 0;
             if (DecRequestPcmBuffer(pAudioDecData->pDecoder, &pPcmOutBufWrPos) < 0)
             {
-                //alogv("no pcm buffer, wait.");
+                //LOGV("no pcm buffer, wait.");
                 pAudioDecData->mWaitPcmBufFlag = TRUE;
                 pthread_mutex_unlock(&pAudioDecData->mOutFrameListMutex);
                 TMessage_WaitQueueNotEmpty(&pAudioDecData->cmd_queue, 0);
@@ -2200,28 +2200,28 @@ REREQUEST_OUT_BUFFER:
             // config AudioDecoder before decode.
             if ((int)pAudioDecData->audio_channel != pAudioDecData->pDecoder->nAudioChannel) 
             {
-                alogw("wow! It is happened! audio_channel[%d]", pAudioDecData->audio_channel);
+                LOGW("wow! It is happened! audio_channel[%d]", pAudioDecData->audio_channel);
                 pAudioDecData->pDecoder->nAudioChannel = pAudioDecData->audio_channel;
             }
             if (pAudioDecData->volumegain != pAudioDecData->pDecoder->volumegain)
             {
-                alogw("wow! It is happened! volumegain[%d]", pAudioDecData->volumegain);
+                LOGW("wow! It is happened! volumegain[%d]", pAudioDecData->volumegain);
                 pAudioDecData->pDecoder->volumegain = pAudioDecData->volumegain;
             }
             if (pAudioDecData->mute != pAudioDecData->pDecoder->mute)
             {
-                alogw("wow! It is happened! mute[%d]", pAudioDecData->mute);
+                LOGW("wow! It is happened! mute[%d]", pAudioDecData->mute);
                 pAudioDecData->pDecoder->mute = pAudioDecData->mute;
             }
             if (pAudioDecData->enable_resample != pAudioDecData->pDecoder->nEnableResample)
             {
-                alogw("wow! It is happened! enable_resample[%d]", pAudioDecData->enable_resample);
+                LOGW("wow! It is happened! enable_resample[%d]", pAudioDecData->enable_resample);
                 pAudioDecData->pDecoder->nEnableResample = pAudioDecData->enable_resample;
             }
 
             // Decode audio data
             ret = DecodeAudioStream(pAudioDecData->pDecoder, pAudioStreamInfo, pPcmOutBufWrPos, &pcmOutSize);
-            //alogv("Calling decoder, ret = %d", ret);
+            //LOGV("Calling decoder, ret = %d", ret);
             if (ret == ERR_AUDIO_DEC_NO_BITSTREAM)
             {
                 pAudioDecData->mNoBitstreamCounter++;
@@ -2239,7 +2239,7 @@ REREQUEST_OUT_BUFFER:
                 {
                     pAudioDecData->ad_cedar_info.out_samplerate = pAudioStreamInfo->nSampleRate;
                     pAudioDecData->ad_cedar_info.out_channels = pAudioStreamInfo->nChannelNum;
-                    alogd("ADecode first BS! channels:%d, sample_rate:%d, bit_width:%d",
+                    LOGD("ADecode first BS! channels:%d, sample_rate:%d, bit_width:%d",
                         pAudioStreamInfo->nChannelNum, pAudioStreamInfo->nSampleRate, pAudioStreamInfo->nBitsPerSample);
                 }
                 
@@ -2250,32 +2250,32 @@ REREQUEST_OUT_BUFFER:
                     pAudioDecData->get_audio_info_flag = 0;
                     if(pAudioDecData->ad_cedar_info.bitpersample != 16)
                     {
-                        alogd("Be careful! why get bitwidth=%d after decode first bs?!", pAudioDecData->ad_cedar_info.bitpersample);
+                        LOGD("Be careful! why get bitwidth=%d after decode first bs?!", pAudioDecData->ad_cedar_info.bitpersample);
                     }
                     if(0 == pAudioDecData->ad_cedar_info.bitpersample)
                     {
                         if (as_info->nBitsPerSample == 0)//0 means pcm S16_LE, adecoder should optimize
                         {
                             pAudioDecData->ad_cedar_info.bitpersample = 16;
-                            alogd("Be careful! reset bitwidth:0->16!");
+                            LOGD("Be careful! reset bitwidth:0->16!");
                         }
                         else
                         {
                             pAudioDecData->ad_cedar_info.bitpersample = as_info->nBitsPerSample;
-                            alogd("Be careful! reset bitwidth:0->[%d]", pAudioDecData->ad_cedar_info.bitpersample);
+                            LOGD("Be careful! reset bitwidth:0->[%d]", pAudioDecData->ad_cedar_info.bitpersample);
                             //assert(0);
                         }
                     }
                     
                     if (!as_info->nChannelNum || !as_info->nSampleRate || as_info->nBitsPerSample)
                     {
-                        aloge("get audio decoder info fail!");
+                        LOGE("get audio decoder info fail!");
                     }
                     ADEC_CHN_ATTR_S *pADecAttr = &pAudioDecData->mADecChnAttr;
                     pADecAttr->sampleRate = as_info->nSampleRate;
                     pADecAttr->channels = as_info->nChannelNum;
                     pADecAttr->bitsPerSample = pAudioDecData->ad_cedar_info.bitpersample;
-                    alogd("ADecode first BS! channels:%d, sample_rate:%d, bit_width:%d, use this to init AudioRenderHal!",
+                    LOGD("ADecode first BS! channels:%d, sample_rate:%d, bit_width:%d, use this to init AudioRenderHal!",
                         pADecAttr->channels, pADecAttr->sampleRate, pADecAttr->bitsPerSample);
                 }
 
@@ -2295,7 +2295,7 @@ REREQUEST_OUT_BUFFER:
                         int bsEmptyChunkCnt = bsTotalChunkCnt - bsValidChunkCnt; // for most time, bsEmptyChunkCnt = 0
                         if ((bsEmptySize >= pAudioDecData->mRequestAbsLen) && (bsEmptyChunkCnt > 0)) 
                         {
-                            //alogv("signal abs empty_buf ready. reqBufLen:%d, emptyBufLen:%d, emptyChunkCnt:%d",
+                            //LOGV("signal abs empty_buf ready. reqBufLen:%d, emptyBufLen:%d, emptyChunkCnt:%d",
                             //    pAudioDecData->mRequestAbsLen, bsEmptySize, bsEmptyChunkCnt);
                             pthread_cond_signal(&pAudioDecData->mEmptyAbsCondition);
                         }
@@ -2309,7 +2309,7 @@ REREQUEST_OUT_BUFFER:
                     pthread_mutex_lock(&pAudioDecData->mOutFrameListMutex);
                     if (list_empty(&pAudioDecData->mIdleOutFrameList))
                     {
-                        alogw("Low probability! adecComp idle out frame list is empty, malloc more!");
+                        LOGW("Low probability! adecComp idle out frame list is empty, malloc more!");
                         ADecCompOutputFrame *pNode = (ADecCompOutputFrame*)malloc(sizeof(ADecCompOutputFrame));
                         if (pNode)
                         {
@@ -2318,7 +2318,7 @@ REREQUEST_OUT_BUFFER:
                         }
                         else
                         {
-                            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+                            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
                             pthread_mutex_unlock(&pAudioDecData->mOutFrameListMutex);
                             if (TMessage_WaitQueueNotEmpty(&pAudioDecData->cmd_queue, 200) > 0)
                             {
@@ -2366,13 +2366,13 @@ REREQUEST_OUT_BUFFER:
                             {
                                 if (ERR_AO_SYS_NOTREADY == omxRet)
                                 {
-                                    alogd("Be careful! ADec output frame fail[0x%x], maybe next component status is Loaded, return frame!", omxRet);
+                                    LOGD("Be careful! ADec output frame fail[0x%x], maybe next component status is Loaded, return frame!", omxRet);
                                 }
 
                                 int releaseRet = PlybkUpdatePcmBuffer(pAudioDecData->pDecoder, pOutFrame->mSize);
                                 if (releaseRet != 0)
                                 {
-                                    aloge("fatal error! return pcmBuffer fail ret[%d]", ret);
+                                    LOGE("fatal error! return pcmBuffer fail ret[%d]", ret);
                                 }
                                 pthread_mutex_lock(&pAudioDecData->mOutFrameListMutex);
                                 list_move(&pOutFrame->mList, &pAudioDecData->mIdleOutFrameList);
@@ -2399,7 +2399,7 @@ REREQUEST_OUT_BUFFER:
             }
             else if(ret == ERR_AUDIO_DEC_ABSEND)
             {
-                alogd("adec return abs end!");
+                LOGD("adec return abs end!");
                 pAudioDecData->pCallbacks->EventHandler(pAudioDecData->hSelf, pAudioDecData->pAppData,
                     COMP_EventBufferFlag, 0, 0, NULL);
                 //pAudioDecData->state = COMP_StateIdle;
@@ -2407,10 +2407,10 @@ REREQUEST_OUT_BUFFER:
             }
             else if(ret == ERR_AUDIO_DEC_NO_BITSTREAM)
             {
-                alogv("adec return no bitstream!");
+                LOGV("adec return no bitstream!");
                 if (pAudioDecData->priv_flag & CDX_comp_PRIV_FLAGS_STREAMEOF)
                 {
-                    alogd("audio decoder notify EOF");
+                    LOGD("audio decoder notify EOF");
                     CompSendEvent(pAudioDecData, COMP_EventBufferFlag, COMP_CommandStateSet, 0);
                     //pAudioDecData->state = COMP_StateIdle;
                     pAudioDecData->mbEof = TRUE;
@@ -2421,7 +2421,7 @@ REREQUEST_OUT_BUFFER:
                     int streamSize = AudioStreamDataSize(pAudioDecData->pDecoder);
                     if (streamSize > 0 && pAudioDecData->mNoBitstreamCounter < 2)
                     {
-                        alogw("Low probability! AudioDec Component has input abs[%d]", streamSize);
+                        LOGW("Low probability! AudioDec Component has input abs[%d]", streamSize);
                         pthread_mutex_unlock(&pAudioDecData->mAbsInputMutex);
                     }
                     else
@@ -2437,11 +2437,11 @@ REREQUEST_OUT_BUFFER:
             {
                 if (ret == ERR_AUDIO_DEC_EXIT)
                 {
-                    aloge("ret == ERR_AUDIO_DEC_EXIT");
+                    LOGE("ret == ERR_AUDIO_DEC_EXIT");
                 }
                 else
                 {
-                    aloge("ret == ERR_AUDIO_DEC_ENDINGCHKFAIL");
+                    LOGE("ret == ERR_AUDIO_DEC_ENDINGCHKFAIL");
                 }
 
                 //pAudioDecData->pCallbacks->EventHandler(pAudioDecData->hSelf, pAudioDecData->pAppData,
@@ -2450,22 +2450,22 @@ REREQUEST_OUT_BUFFER:
             }
             else if (ret == ERR_AUDIO_DEC_VIDEOJUMP)
             {
-                alogd("adec jump done[%d]!", pcmOutSize);
+                LOGD("adec jump done[%d]!", pcmOutSize);
             }
             else
             {
-                aloge("fatal error! impossible ADec decode ret[%d]!", ret);
+                LOGE("fatal error! impossible ADec decode ret[%d]!", ret);
                 // show inport buf info.
                 int bsValidSize = AudioStreamDataSize(pAudioDecData->pDecoder);     // inport bs data_size that can be decode but have not be decoded
                 int bsTotalSize = AudioStreamBufferSize();   // inport bs space total size: 128KB
                 int bsEmptySize = bsTotalSize - bsValidSize;
-                aloge("inport bs buf info: totalSize-%d, validSize-%d, emptySize-%d", bsTotalSize, bsValidSize, bsEmptySize);
+                LOGE("inport bs buf info: totalSize-%d, validSize-%d, emptySize-%d", bsTotalSize, bsValidSize, bsEmptySize);
                 // show outport buf info.
                 int pcmValidPercentage, pcmValidSize;
                 PcmQueryQuality(pAudioDecData->pDecoder, &pcmValidPercentage, &pcmValidSize);
                 //int pcmTotalSize = pcmValidSize*100/pcmValidPercentage;
                 //pcmTotalSize = AudioPCMDataSize(pAudioDecData->pDecoder);
-                aloge("outport pcm buf info: totalSize-, validPer-%d, validSize-%d", pcmValidPercentage, pcmValidSize);
+                LOGE("outport pcm buf info: totalSize-, validPer-%d, validSize-%d", pcmValidPercentage, pcmValidSize);
             }
         }
         else
@@ -2475,7 +2475,7 @@ REREQUEST_OUT_BUFFER:
     }
 
 EXIT:
-    alogv("AudioDecoder ComponentThread stopped");
+    LOGV("AudioDecoder ComponentThread stopped");
     return (void*) SUCCESS;
 }
 
@@ -2497,7 +2497,7 @@ static void* InputThread(void* pThreadData)
     AUDIODEC_INPUT_DATA* pInputData = (AUDIODEC_INPUT_DATA*)pThreadData;
     AUDIODECDATATYPE* pAudioDecData = pInputData->pAudioDecData;
    
-    alogd("AudioDecoder InputThread start run...");
+    LOGD("AudioDecoder InputThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"ADecInput", 0, 0, 0);
     
     while (1) 
@@ -2506,7 +2506,7 @@ PROCESS_MESSAGE:
         if (get_message(&pInputData->cmd_queue, &cmd_msg) == 0) 
         {// pump message from message queue
 
-            //alogd("input thread got message: cmd=%d cmddata=%d (3-Execute 4-Pause)", cmd, cmddata);
+            //LOGD("input thread got message: cmd=%d cmddata=%d (3-Execute 4-Pause)", cmd, cmddata);
             cmd     = cmd_msg.command;
             cmddata = cmd_msg.para0;
 
@@ -2519,7 +2519,7 @@ PROCESS_MESSAGE:
                     {
                         if(pInputData->state!=COMP_StateIdle)
                         {
-                            aloge("fatal error! inputThread state[0x%x] != Idle", pInputData->state);
+                            LOGE("fatal error! inputThread state[0x%x] != Idle", pInputData->state);
                         }
                         pthread_mutex_lock(&pInputData->mAbsListLock);
                         struct list_head *pList;
@@ -2530,7 +2530,7 @@ PROCESS_MESSAGE:
                             list_for_each(pList, &pInputData->mIdleAbsList) { cnt++; }
                             if (cnt < pInputData->mNodeNum) 
                             {
-                                alogd("wait input thread [%d]nodes to idleList!", pInputData->mNodeNum - cnt);
+                                LOGD("wait input thread [%d]nodes to idleList!", pInputData->mNodeNum - cnt);
                                 pthread_cond_wait(&pInputData->mAbsFullCond, &pInputData->mAbsListLock);
                             } 
                             else 
@@ -2617,7 +2617,7 @@ PROCESS_MESSAGE:
         {// no need to request buffer if Idle list is empty
             if (pInputData->mWaitAbsValidFlag == TRUE)
             {
-                alogv("waiting message forever again when mWaitAbsValidFlag is set");
+                LOGV("waiting message forever again when mWaitAbsValidFlag is set");
             }
             pInputData->mWaitAbsValidFlag = TRUE;
             pthread_mutex_unlock(&pInputData->mAbsListLock);
@@ -2630,10 +2630,10 @@ PROCESS_MESSAGE:
             bsValidSize = AudioStreamDataSize(pAudioDecData->pDecoder); // inport bs data_size that can be decode but have not be decoded
             bsTotalSize = AudioStreamBufferSize();                      // inport bs space total size: 128KB
             bsEmptySize = bsTotalSize - bsValidSize;
-            //alogd(" bsValidSize[%d] bsTotalSize[%d] bsEmptySize[%d]",bsValidSize, bsTotalSize, bsEmptySize);
+            //LOGD(" bsValidSize[%d] bsTotalSize[%d] bsEmptySize[%d]",bsValidSize, bsTotalSize, bsEmptySize);
             if (bsEmptySize < pInputData->nRequestLen)
             {// request bs buffer again after A component return bs buffer
-                //alogw("low buffer (size = %d) from decode lib", bsEmptySize);
+                //LOGW("low buffer (size = %d) from decode lib", bsEmptySize);
                 pthread_mutex_unlock(&pInputData->mAbsListLock);
                 TMessage_WaitQueueNotEmpty(&pInputData->cmd_queue, 200);
                 goto PROCESS_MESSAGE;
@@ -2672,7 +2672,7 @@ PROCESS_MESSAGE:
                 int bsTotalChunkCnt = AudioStreamBufferMaxFrameNum();
                 int bsEmptyChunkCnt = bsTotalChunkCnt - bsValidChunkCnt; // for most time, bsEmptyChunkCnt = 0
                 if (bsEmptyChunkCnt > 0)
-                    aloge("RequestBufSz(%d) > RealEmptyBsBufSz(%d)?! ret: %d", bsEmptySize, bsRealEmptyBufSize, adecRet);
+                    LOGE("RequestBufSz(%d) > RealEmptyBsBufSz(%d)?! ret: %d", bsEmptySize, bsRealEmptyBufSize, adecRet);
                 pthread_mutex_unlock(&pInputData->mAbsListLock);
                 TMessage_WaitQueueNotEmpty(&pInputData->cmd_queue, 200);
                 goto PROCESS_MESSAGE;
@@ -2700,7 +2700,7 @@ PROCESS_MESSAGE:
             }
             else
             {
-                aloge("fatal error! Low probability! Tunneled inport component FillThisBuffer fail(%d)", eError);
+                LOGE("fatal error! Low probability! Tunneled inport component FillThisBuffer fail(%d)", eError);
                 abort();
             }
         }
@@ -2708,6 +2708,6 @@ PROCESS_MESSAGE:
     }
 
 EXIT:
-    alogv("AudioDecoder InputThread stopped");
+    LOGV("AudioDecoder InputThread stopped");
     return (void*) SUCCESS;
 }

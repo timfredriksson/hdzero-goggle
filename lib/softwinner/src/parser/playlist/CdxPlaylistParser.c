@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CdxPlaylistParser"
 #include "CdxPlaylistParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 #include <string.h>
 
@@ -36,7 +36,7 @@ static int DownloadParsePlaylist(CdxPlaylistParser *playlistParser)
             playlistParser->playlistBuf + readSize, 1024);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             return -1;
         }
         if(ret == 0)
@@ -48,7 +48,7 @@ static int DownloadParsePlaylist(CdxPlaylistParser *playlistParser)
 
     if(readSize == 0)
     {
-        CDX_LOGE("download playlist fail");
+        LOGE("download playlist fail");
         return -1;
     }
 
@@ -57,7 +57,7 @@ static int DownloadParsePlaylist(CdxPlaylistParser *playlistParser)
     if ((err = PlaylistParse(playlistParser->playlistBuf, readSize, &playlist,
         playlistParser->playlistUrl)) != OK)
     {
-        CDX_LOGE("creation playlist fail, err=%d", err);
+        LOGE("creation playlist fail, err=%d", err);
         return -1;
     }
     playlistParser->mPlaylist = playlist;
@@ -66,7 +66,7 @@ static int DownloadParsePlaylist(CdxPlaylistParser *playlistParser)
 
 /*return -1:error*/
 /*return 0:playlistParser PSR_EOS*/
-/*return 1:Ñ¡Ôñµ½ÁËÐÂµÄSegment*/
+/*return 1:Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½Segment*/
 static int SelectNextSegment(CdxPlaylistParser *playlistParser)
 {
     Playlist *playlist = playlistParser->mPlaylist;
@@ -77,7 +77,7 @@ static int SelectNextSegment(CdxPlaylistParser *playlistParser)
     PlaylistItem *item = findItemBySeqNumForPlaylist(playlist, playlistParser->curSeqNum);
     if(!item)
     {
-        CDX_LOGE("findItemBySeqNum fail");
+        LOGE("findItemBySeqNum fail");
         return -1;
     }
     SetDataSouceForSegment(item, &playlistParser->cdxDataSource);
@@ -91,7 +91,7 @@ static cdx_int32 PlaylistParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *p
     CdxPlaylistParser *playlistParser = (CdxPlaylistParser*)parser;
     if(playlistParser->status < CDX_PSR_IDLE)
     {
-        CDX_LOGE("status < CDX_PSR_IDLE, PlaylistParserGetMediaInfo invaild");
+        LOGE("status < CDX_PSR_IDLE, PlaylistParserGetMediaInfo invaild");
         playlistParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -104,14 +104,14 @@ static cdx_int32 PlaylistParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     CdxPlaylistParser *playlistParser = (CdxPlaylistParser*)parser;
     if(playlistParser->status != CDX_PSR_IDLE && playlistParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGW("status != CDX_PSR_IDLE && status != CDX_PSR_PREFETCHED,"
+        LOGW("status != CDX_PSR_IDLE && status != CDX_PSR_PREFETCHED,"
             " PlaylistParserPrefetch invaild");
         playlistParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     if(playlistParser->mErrno == PSR_EOS)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         return -1;
     }
     if(playlistParser->status == CDX_PSR_PREFETCHED)
@@ -152,22 +152,22 @@ static cdx_int32 PlaylistParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             pthread_mutex_unlock(&playlistParser->statusLock);
 
             playlistParser->curSeqNum++;
-            CDX_LOGI("curSeqNum = %d", playlistParser->curSeqNum);
+            LOGI("curSeqNum = %d", playlistParser->curSeqNum);
             ret = SelectNextSegment(playlistParser);
             if(ret < 0)
             {
-                CDX_LOGE("SelectNextSegment fail");
+                LOGE("SelectNextSegment fail");
                 playlistParser->mErrno = PSR_UNKNOWN_ERR;
                 goto _exit;
             }
             else if(ret == 0)
             {
-                CDX_LOGD("playlistParser->status = PSR_EOS");
+                LOGD("playlistParser->status = PSR_EOS");
                 playlistParser->mErrno = PSR_EOS;
                 ret = -1;
                 goto _exit;
             }
-            CDX_LOGD("replace parser");
+            LOGD("replace parser");
             ret = CdxParserPrepare(&playlistParser->cdxDataSource, NO_NEED_DURATION,
                 &playlistParser->statusLock, &playlistParser->forceStop,
                 &playlistParser->child, &playlistParser->childStream, NULL, NULL);
@@ -176,7 +176,7 @@ static cdx_int32 PlaylistParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
                 playlistParser->curSeqNum = -1;
                 if(!playlistParser->forceStop)
                 {
-                    CDX_LOGE("CdxParserPrepare fail");
+                    LOGE("CdxParserPrepare fail");
                     playlistParser->mErrno = PSR_UNKNOWN_ERR;
                 }
                 goto _exit;
@@ -186,7 +186,7 @@ static cdx_int32 PlaylistParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             ret = CdxParserGetMediaInfo(playlistParser->child, &mediaInfo);
             if(ret < 0)
             {
-                CDX_LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
+                LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
                 playlistParser->mErrno = PSR_UNKNOWN_ERR;
                 goto _exit;
             }
@@ -196,7 +196,7 @@ static cdx_int32 PlaylistParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             {
                 if(!playlistParser->forceStop)
                 {
-                    CDX_LOGE(" prefetch error! ret(%d)", ret);
+                    LOGE(" prefetch error! ret(%d)", ret);
                     playlistParser->mErrno = PSR_UNKNOWN_ERR;
                 }
                 goto _exit;
@@ -205,7 +205,7 @@ static cdx_int32 PlaylistParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
         else
         {
             playlistParser->mErrno = mErrno;
-            CDX_LOGE("CdxParserPrefetch mErrno = %d", mErrno);
+            LOGE("CdxParserPrefetch mErrno = %d", mErrno);
             goto _exit;
         }
     }
@@ -216,7 +216,7 @@ static cdx_int32 PlaylistParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     playlistParser->status = CDX_PSR_PREFETCHED;
     pthread_mutex_unlock(&playlistParser->statusLock);
     pthread_cond_signal(&playlistParser->cond);
-    CDX_LOGV("CdxParserPrefetch pkt->pts=%lld, pkt->type=%d, pkt->length=%d",
+    LOGV("CdxParserPrefetch pkt->pts=%lld, pkt->type=%d, pkt->length=%d",
         pkt->pts, pkt->type, pkt->length);
     return 0;
 _exit:
@@ -232,7 +232,7 @@ static cdx_int32 PlaylistParserRead(CdxParserT *parser, CdxPacketT *pkt)
     CdxPlaylistParser *playlistParser = (CdxPlaylistParser*)parser;
     if(playlistParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
+        LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
         playlistParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -256,7 +256,7 @@ static cdx_int32 PlaylistParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
 cdx_int32 PlaylistParserForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("PlaylistParserForceStop start");
+    LOGI("PlaylistParserForceStop start");
     CdxPlaylistParser *playlistParser = (CdxPlaylistParser*)parser;
     int ret;
     pthread_mutex_lock(&playlistParser->statusLock);
@@ -266,7 +266,7 @@ cdx_int32 PlaylistParserForceStop(CdxParserT *parser)
         ret = CdxParserForceStop(playlistParser->child);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserForceStop fail, ret(%d)", ret);
+            LOGE("CdxParserForceStop fail, ret(%d)", ret);
             //playlistParser->mErrno = CdxParserGetStatus(playlistParser->child);
             //return -1;
         }
@@ -276,7 +276,7 @@ cdx_int32 PlaylistParserForceStop(CdxParserT *parser)
         ret = CdxStreamForceStop(playlistParser->childStream);
         if(ret < 0)
         {
-            CDX_LOGW("CdxStreamForceStop fail");
+            LOGW("CdxStreamForceStop fail");
             //hlsParser->mErrno = PSR_UNKNOWN_ERR;
         }
     }
@@ -286,7 +286,7 @@ cdx_int32 PlaylistParserForceStop(CdxParserT *parser)
         ret = CdxParserForceStop(playlistParser->tmpChild);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserForceStop fail, ret(%d)", ret);
+            LOGE("CdxParserForceStop fail, ret(%d)", ret);
             //playlistParser->mErrno = CdxParserGetStatus(playlistParser->child);
             //return -1;
         }
@@ -296,7 +296,7 @@ cdx_int32 PlaylistParserForceStop(CdxParserT *parser)
         ret = CdxStreamForceStop(playlistParser->tmpChildStream);
         if(ret < 0)
         {
-            CDX_LOGW("CdxStreamForceStop fail");
+            LOGW("CdxStreamForceStop fail");
             //hlsParser->mErrno = PSR_UNKNOWN_ERR;
         }
     }
@@ -307,18 +307,18 @@ cdx_int32 PlaylistParserForceStop(CdxParserT *parser)
     pthread_mutex_unlock(&playlistParser->statusLock);
     playlistParser->mErrno = PSR_USER_CANCEL;
     playlistParser->status = CDX_PSR_IDLE;
-    CDX_LOGD("PlaylistParserForceStop end");
+    LOGD("PlaylistParserForceStop end");
     return 0;
 
 }
 
 cdx_int32 PlaylistParserClrForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("PlaylistParserClrForceStop start");
+    LOGI("PlaylistParserClrForceStop start");
     CdxPlaylistParser *playlistParser = (CdxPlaylistParser*)parser;
     if(playlistParser->status != CDX_PSR_IDLE)
     {
-        CDX_LOGW("status != CDX_PSR_IDLE");
+        LOGW("status != CDX_PSR_IDLE");
         playlistParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -328,11 +328,11 @@ cdx_int32 PlaylistParserClrForceStop(CdxParserT *parser)
         int ret = CdxParserClrForceStop(playlistParser->child);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserClrForceStop fail, ret(%d)", ret);
+            LOGE("CdxParserClrForceStop fail, ret(%d)", ret);
             return ret;
         }
     }
-    CDX_LOGI("PlaylistParserClrForceStop end");
+    LOGI("PlaylistParserClrForceStop end");
     return 0;
 
 }
@@ -347,7 +347,7 @@ static int PlaylistParserControl(CdxParserT *parser, int cmd, void *param)
     {
         case CDX_PSR_CMD_SWITCH_AUDIO:
         case CDX_PSR_CMD_SWITCH_SUBTITLE:
-            CDX_LOGI(" playlist parser is not support switch stream yet!!!");
+            LOGI(" playlist parser is not support switch stream yet!!!");
             break;
         case CDX_PSR_CMD_SET_FORCESTOP:
             return PlaylistParserForceStop(parser);
@@ -366,18 +366,18 @@ cdx_int32 PlaylistParserGetStatus(CdxParserT *parser)
 }
 cdx_int32 PlaylistParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType seekModeType)
 {
-    CDX_LOGI("PlaylistParserSeekTo start, timeUs = %lld", timeUs);
+    LOGI("PlaylistParserSeekTo start, timeUs = %lld", timeUs);
     CdxPlaylistParser *playlistParser = (CdxPlaylistParser *)parser;
     playlistParser->mErrno = PSR_OK;
     if(timeUs < 0)
     {
-        CDX_LOGE("timeUs invalid");
+        LOGE("timeUs invalid");
         playlistParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     else if(timeUs >= playlistParser->mPlaylist->durationUs)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         playlistParser->mErrno = PSR_EOS;
         return 0;
     }
@@ -386,7 +386,7 @@ cdx_int32 PlaylistParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeTyp
     if(playlistParser->forceStop)
     {
         playlistParser->mErrno = PSR_USER_CANCEL;
-        CDX_LOGE("PSR_USER_CANCEL");
+        LOGE("PSR_USER_CANCEL");
         pthread_mutex_unlock(&playlistParser->statusLock);
         return -1;
     }
@@ -406,7 +406,7 @@ cdx_int32 PlaylistParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeTyp
     }
     if(!item)
     {
-        CDX_LOGE("unknown error");
+        LOGE("unknown error");
         playlistParser->mErrno = PSR_UNKNOWN_ERR;
         ret = -1;
         goto _exit;
@@ -440,7 +440,7 @@ cdx_int32 PlaylistParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeTyp
             playlistParser->curSeqNum = -1;
             if(!playlistParser->forceStop)
             {
-                CDX_LOGE("CdxParserPrepare fail");
+                LOGE("CdxParserPrepare fail");
                 playlistParser->mErrno = PSR_UNKNOWN_ERR;
             }
             ret = -1;
@@ -450,14 +450,14 @@ cdx_int32 PlaylistParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeTyp
         ret = CdxParserGetMediaInfo(playlistParser->child, &mediaInfo);
         if(ret < 0)
         {
-            CDX_LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
+            LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
             playlistParser->mErrno = PSR_UNKNOWN_ERR;
             goto _exit;
         }
         playlistParser->baseTimeUs = item->baseTimeUs;
         playlistParser->curSeqNum = item->seqNum;
     }
-    CDX_LOGI("mDurationUs = %lld", mDurationUs);
+    LOGI("mDurationUs = %lld", mDurationUs);
 #if 1
     ret = CdxParserSeekTo(playlistParser->child, timeUs - mDurationUs, seekModeType);
 #endif
@@ -467,18 +467,18 @@ _exit:
     playlistParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&playlistParser->statusLock);
     pthread_cond_signal(&playlistParser->cond);
-    CDX_LOGI("PlaylistParserSeekTo end, ret = %d", ret);
+    LOGI("PlaylistParserSeekTo end, ret = %d", ret);
     return ret;
 }
 
 static cdx_int32 PlaylistParserClose(CdxParserT *parser)
 {
-    CDX_LOGI("PlaylistParserClose start");
+    LOGI("PlaylistParserClose start");
     CdxPlaylistParser *playlistParser = (CdxPlaylistParser *)parser;
     int ret = PlaylistParserForceStop(parser);
     if(ret < 0)
     {
-        CDX_LOGW("HlsParserForceStop fail");
+        LOGW("HlsParserForceStop fail");
     }
 
     if(playlistParser->child)
@@ -518,7 +518,7 @@ static cdx_int32 PlaylistParserClose(CdxParserT *parser)
     pthread_mutex_destroy(&playlistParser->statusLock);
     pthread_cond_destroy(&playlistParser->cond);
     free(playlistParser);
-    CDX_LOGI("PlaylistParserClose end");
+    LOGI("PlaylistParserClose end");
     return 0;
 }
 
@@ -530,12 +530,12 @@ cdx_uint32 PlaylistParserAttribute(CdxParserT *parser) /*return falgs define as 
 
 int PlaylistParserInit(CdxParserT *parser)
 {
-    CDX_LOGI("CdxPlaylistOpenThread start");
+    LOGI("CdxPlaylistOpenThread start");
     CdxPlaylistParser *playlistParser = (CdxPlaylistParser*)parser;
 
     if(DownloadParsePlaylist(playlistParser) < 0)
     {
-        CDX_LOGE("DownloadParsePlaylist fail");
+        LOGE("DownloadParsePlaylist fail");
         goto _exit;
     }
 
@@ -559,14 +559,14 @@ int PlaylistParserInit(CdxParserT *parser)
                 &playlistParser->child, &playlistParser->childStream, NULL, NULL);
             if(ret < 0)
             {
-                CDX_LOGE("CreatMediaParser fail");
+                LOGE("CreatMediaParser fail");
                 goto _exit;
             }
             pMediaInfo = &playlistParser->mediaInfo;
             ret = CdxParserGetMediaInfo(playlistParser->child, pMediaInfo);
             if(ret < 0)
             {
-                CDX_LOGE("playlistParser->child getMediaInfo error!");
+                LOGE("playlistParser->child getMediaInfo error!");
                 goto _exit;
             }
         }
@@ -577,21 +577,21 @@ int PlaylistParserInit(CdxParserT *parser)
                 &playlistParser->tmpChild, &playlistParser->tmpChildStream, NULL, NULL);
             if(ret < 0)
             {
-                CDX_LOGE("CreatMediaParser fail");
+                LOGE("CreatMediaParser fail");
                 goto _exit;
             }
             pMediaInfo = &mediaInfo;
             ret = CdxParserGetMediaInfo(playlistParser->tmpChild, pMediaInfo);
             if(ret < 0)
             {
-                CDX_LOGE("playlistParser->child getMediaInfo error!");
+                LOGE("playlistParser->child getMediaInfo error!");
             }
             ret = CdxParserClose(playlistParser->tmpChild);
             playlistParser->tmpChild = NULL;
             playlistParser->tmpChildStream = NULL;
             if(ret < 0)
             {
-                CDX_LOGE("CdxParserClose fail!");
+                LOGE("CdxParserClose fail!");
                 goto _exit;
             }
         }
@@ -615,7 +615,7 @@ int PlaylistParserInit(CdxParserT *parser)
     playlistParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&playlistParser->statusLock);
     pthread_cond_signal(&playlistParser->cond);
-    CDX_LOGI("CdxPlaylistOpenThread success");
+    LOGI("CdxPlaylistOpenThread success");
     return 0;
 
 _exit:
@@ -624,7 +624,7 @@ _exit:
     playlistParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&playlistParser->statusLock);
     pthread_cond_signal(&playlistParser->cond);
-    CDX_LOGE("CdxPlaylistOpenThread fail");
+    LOGE("CdxPlaylistOpenThread fail");
     return -1;
 }
 static struct CdxParserOpsS playlistParserOps =
@@ -645,7 +645,7 @@ CdxParserT *PlaylistParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     CdxPlaylistParser *playlistParser = CdxMalloc(sizeof(CdxPlaylistParser));
     if(!playlistParser)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         CdxStreamClose(stream);
         return NULL;
     }
@@ -661,7 +661,7 @@ CdxParserT *PlaylistParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     ret = CdxStreamGetMetaData(stream, "uri", (void **)&tmpUrl);
     if(ret < 0)
     {
-        CDX_LOGE("get the uri of the stream error!");
+        LOGE("get the uri of the stream error!");
         goto open_error;
     }
     playlistParser->cdxStream = stream;
@@ -669,7 +669,7 @@ CdxParserT *PlaylistParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     playlistParser->playlistUrl = malloc(urlLen);
     if(!playlistParser->playlistUrl)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         goto open_error;
     }
     memcpy(playlistParser->playlistUrl, tmpUrl, urlLen);
@@ -678,11 +678,11 @@ CdxParserT *PlaylistParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     playlistParser->playlistBuf = malloc(playlistParser->playlistBufSize);
     if (!playlistParser->playlistBuf)
     {
-        CDX_LOGE("allocate memory fail for m3u8 file");
+        LOGE("allocate memory fail for m3u8 file");
         goto open_error;
     }
     //memset(playlistParser->playlistBuf, 0, playlistParser->playlistBufSize);
-    //ÓÉÃ¿´ÎÏÂÔØm3u9ÎÄ¼þÊ±ÖØÖÃ
+    //ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½m3u9ï¿½Ä¼ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
 
     playlistParser->base.ops = &playlistParserOps;
     playlistParser->base.type = CDX_PARSER_PLAYLIST;
@@ -708,15 +708,15 @@ open_error:
 
 cdx_uint32 PlaylistParserProbe(CdxStreamProbeDataT *probeData)
 {
-    CDX_LOGD("PlaylistParserProbe");
+    LOGD("PlaylistParserProbe");
 
     if(probeData->len < 7)
     {
-        CDX_LOGE("Probe data is not enough.");
+        LOGE("Probe data is not enough.");
         return 0;
     }
     int ret = PlaylistProbe((const char *)probeData->buf, probeData->len);
-    CDX_LOGD("PlaylistParserProbe = %d", ret);
+    LOGD("PlaylistParserProbe = %d", ret);
     return ret*100;
 
 }

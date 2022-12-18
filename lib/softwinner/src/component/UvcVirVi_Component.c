@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "UvcVirVi_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/prctl.h>
@@ -90,7 +90,7 @@ ERRORTYPE UvcSendCommand(
             eCmd = Flush;
             break;
         default:
-            alogw("impossible comp_command[0x%x]", Cmd);
+            LOGW("impossible comp_command[0x%x]", Cmd);
             break;        
     }
     msg.command = eCmd;
@@ -270,7 +270,7 @@ ERRORTYPE UvcGetPortExtraDef(
         VideoStreamInfo *ptr = malloc(sizeof(VideoStreamInfo));
         if(!ptr)
         {
-            aloge("can not malloc the VideoStreamInfo!!");
+            LOGE("can not malloc the VideoStreamInfo!!");
             return ERR_UVC_NOMEM;
         }
         memset(ptr, 0, sizeof(VideoStreamInfo));
@@ -325,11 +325,11 @@ ERRORTYPE UvcComponentTunnelRequest(
     UVCDATATYPE *pUvcInputData = (UVCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(COMP_StateExecuting == pUvcInputData->state)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if(pUvcInputData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request process_thread_state can't be in state[0x%x]", pUvcInputData->state);
+        LOGE("fatal error! tunnel request process_thread_state can't be in state[0x%x]", pUvcInputData->state);
         eError = ERR_UVC_INCORRECT_STATE_OPERATION;
         return eError;
     }
@@ -351,7 +351,7 @@ ERRORTYPE UvcComponentTunnelRequest(
     }
     if(!bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_UVC_ILLEGAL_PARAM;
         return eError;
     }
@@ -368,7 +368,7 @@ ERRORTYPE UvcComponentTunnelRequest(
     }
     if(!bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_UVC_ILLEGAL_PARAM;
         return eError;
     }
@@ -386,7 +386,7 @@ ERRORTYPE UvcComponentTunnelRequest(
     
     if(!bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AI_ILLEGAL_PARAM;
         return eError;
     }
@@ -397,7 +397,7 @@ ERRORTYPE UvcComponentTunnelRequest(
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther)?TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL == hTunneledComp && 0 == nTunneledPort && NULL == pTunnelSetup)
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         if(pPortDef->eDir == COMP_DirOutput)
         {
@@ -423,7 +423,7 @@ ERRORTYPE UvcComponentTunnelRequest(
         ((MM_COMPONENTTYPE *)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput)
         {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_UVC_ILLEGAL_PARAM;
             return eError;
         }
@@ -431,7 +431,7 @@ ERRORTYPE UvcComponentTunnelRequest(
         pPortDef->format = out_port_def.format;
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
         {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;   
         }
 
@@ -490,7 +490,7 @@ static ERRORTYPE UvcReleaseFrame(UVCDATATYPE *pUvcInputData, VIDEO_FRAME_INFO_S 
     }
     else
     {
-        aloge("Unknown video virvi frame, frame id[%d]!", pFrame->mId);
+        LOGE("Unknown video virvi frame, frame id[%d]!", pFrame->mId);
         pthread_mutex_unlock(&pUvcInputData->mOutFrameLock);
         return FAILURE;
     }
@@ -505,7 +505,7 @@ ERRORTYPE UvcGetData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT UvcStream *p
 
     if(pUvcInputData->state != COMP_StateIdle && pUvcInputData->state != COMP_StateExecuting)
     {
-        alogw("call getStream in wrong state[0x%x]", pUvcInputData->state);
+        LOGW("call getStream in wrong state[0x%x]", pUvcInputData->state);
         return ERR_UVC_NOT_PERM;
     }
 
@@ -573,7 +573,7 @@ static ERRORTYPE UvcReleaseData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Uv
 
     if(pUvcInputData->state != COMP_StateIdle && pUvcInputData->state != COMP_StateExecuting)
     {
-        alogw("call getStream in wrong state[0x%x]", pUvcInputData->state);
+        LOGW("call getStream in wrong state[0x%x]", pUvcInputData->state);
         return ERR_UVC_NOT_PERM;
     }
 
@@ -603,7 +603,7 @@ static ERRORTYPE UvcEmptyThisBuffer(
     pthread_mutex_lock(&pUvcInputData->mStateLock);
     if(pUvcInputData->state != COMP_StateExecuting)
     {
-        aloge("send frame when uvc state[0x%x], is not executing", pUvcInputData->state);
+        LOGE("send frame when uvc state[0x%x], is not executing", pUvcInputData->state);
         eError = FAILURE;
         goto err_state;
     }
@@ -616,7 +616,7 @@ static ERRORTYPE UvcEmptyThisBuffer(
         if(list_empty(&pUvcInputData->mIdleOutFrameList))
         {
             pthread_mutex_unlock(&pUvcInputData->mOutFrameLock);
-            aloge("the IdleOutFrameList is empty!");
+            LOGE("the IdleOutFrameList is empty!");
             eError = FAILURE;
             goto err_mem;
         }
@@ -644,7 +644,7 @@ static ERRORTYPE UvcEmptyThisBuffer(
     }
     else
     {
-        aloge("fatal error! the portindex can not fit!!");
+        LOGE("fatal error! the portindex can not fit!!");
     }
 err_mem:
     
@@ -683,7 +683,7 @@ ERRORTYPE UvcFillThisBuffer(
                     nFindFlag++;
                     if(nFindFlag > 1)
                     {
-                        aloge("fatal error! why find [%d]frames? frameId[%d]", nFindFlag, pEncodedFrame->nID);
+                        LOGE("fatal error! why find [%d]frames? frameId[%d]", nFindFlag, pEncodedFrame->nID);
                     }
                     //break;
                 }
@@ -691,7 +691,7 @@ ERRORTYPE UvcFillThisBuffer(
             pthread_mutex_unlock(&pUvcInputData->mOutFrameLock);
             if(NULL == pDstFrame)
             {
-                aloge("fatal error! can't find frameId[%d], check code!", pEncodedFrame->nID);
+                LOGE("fatal error! can't find frameId[%d], check code!", pEncodedFrame->nID);
             }
         }
         else
@@ -706,12 +706,12 @@ ERRORTYPE UvcFillThisBuffer(
         }
         else
         {
-            aloge("fatal error! frame is null! check code!");
+            LOGE("fatal error! frame is null! check code!");
         }
     }
     else
     {
-        aloge("fatal error! outputPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pUvcInputData->sPortDef[UVC_CHN_PORT_INDEX_DATA_OUT].nPortIndex);
+        LOGE("fatal error! outputPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pUvcInputData->sPortDef[UVC_CHN_PORT_INDEX_DATA_OUT].nPortIndex);
     }
 
     return eError;
@@ -752,7 +752,7 @@ ERRORTYPE UvcSetConfig(
         
         default :
             eError = FAILURE;
-            aloge("fatal error! check the nIndex[0x%x] !", nIndex);
+            LOGE("fatal error! check the nIndex[0x%x] !", nIndex);
             break;
             
     }
@@ -789,7 +789,7 @@ ERRORTYPE UvcGetConfig(
             break;
         default :
             eError = FAILURE;
-            aloge("fatal error! check the nIndex[0x%x] !", nIndex);
+            LOGE("fatal error! check the nIndex[0x%x] !", nIndex);
             break;      
     }
     return eError;    
@@ -817,7 +817,7 @@ ERRORTYPE UvcComponentDeInit(void *hComponent)
     pthread_mutex_lock(&pUvcInputData->mOutFrameLock);
     if(!list_empty(&pUvcInputData->mReadyOutFrameList))
     {
-        aloge("fatal error! why readyOutFramelist is not empty?");
+        LOGE("fatal error! why readyOutFramelist is not empty?");
     }
     if(!list_empty(&pUvcInputData->mIdleOutFrameList))
     {
@@ -888,7 +888,7 @@ ERRORTYPE UvcComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         UvcFrameInfo *pUvcFrameInfo = (UvcFrameInfo *)malloc(sizeof(UvcFrameInfo));
         if(!pUvcFrameInfo)
         {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             eError = ERR_UVC_NOMEM;
             return eError;
         }
@@ -963,18 +963,18 @@ ERRORTYPE UvcComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if(message_create(&pUvcInputData->cmd_queue) < 0)
     {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_UVC_NOMEM;
         return eError;
     }
 
     if(pthread_create(&pUvcInputData->thread_id, NULL, Uvc_ComponentThread, pUvcInputData) || !pUvcInputData->thread_id)
     {
-        aloge("creat Uvc_ComponentThread fail!");
+        LOGE("creat Uvc_ComponentThread fail!");
         eError = ERR_UVC_NOMEM;
         return eError;
     }
-    alogw("UvcVirvi_Component had Init!!!");
+    LOGW("UvcVirvi_Component had Init!!!");
     
     return eError;
 }
@@ -986,7 +986,7 @@ static void *Uvc_ComponentThread(void *pThreadData)
     UVCDATATYPE *pUvcInputData = (UVCDATATYPE *)pThreadData;
     message_t   cmd_msg;
 
-    alogd("UVC ComponentThread start run!");
+    LOGD("UVC ComponentThread start run!");
     prctl(PR_SET_NAME, "UvcComponentThread", 0, 0, 0);
 
     while(1)
@@ -1029,11 +1029,11 @@ static void *Uvc_ComponentThread(void *pThreadData)
                                 pthread_mutex_lock(&pUvcInputData->mOutFrameLock);
                                 if(!list_empty(&pUvcInputData->mReadyOutFrameList))
                                 {
-                                    aloge("fatal error! ready frame list is not empty!");
+                                    LOGE("fatal error! ready frame list is not empty!");
                                 }
                                 while(!list_empty(&pUvcInputData->mUsedOutFrameList))
                                 {
-                                    alogd("wait all Using frame return");
+                                    LOGD("wait all Using frame return");
                                     pthread_cond_wait(&pUvcInputData->mWaiteUsedFrmeEmpty, &pUvcInputData->mOutFrameLock);
                                 }
                                 pthread_mutex_unlock(&pUvcInputData->mOutFrameLock);
@@ -1065,14 +1065,14 @@ static void *Uvc_ComponentThread(void *pThreadData)
                                         list_move_tail(&pEntry->mList, &pUvcInputData->mIdleOutFrameList);
                                         num++;
                                     }
-                                    alogd("There are [%d] ready frames to be return!", num);
+                                    LOGD("There are [%d] ready frames to be return!", num);
                                 }
                                 if(!list_empty(&pUvcInputData->mUsedOutFrameList))
                                 {
                                     int cnt = 0;
                                     struct list_head *pList;
                                     list_for_each(pList, &pUvcInputData->mUsedOutFrameList) { cnt++; }
-                                    alogd("Be careful! [%d]used out frame not return, need wait when in convertion to loaded", cnt);
+                                    LOGD("Be careful! [%d]used out frame not return, need wait when in convertion to loaded", cnt);
                                 }
                                 pthread_mutex_unlock(&pUvcInputData->mOutFrameLock);
                                 pUvcInputData->state = COMP_StateIdle;
@@ -1082,7 +1082,7 @@ static void *Uvc_ComponentThread(void *pThreadData)
                             }
                             else
                             {
-                                aloge("fatal error! current state[0x%x] can't turn to idle!", pUvcInputData->state);
+                                LOGE("fatal error! current state[0x%x] can't turn to idle!", pUvcInputData->state);
                                 pUvcInputData->pCallbacks->EventHandler(pUvcInputData->hSelf, pUvcInputData->pAppData,
                                                                         COMP_EventError, ERR_UVC_INCORRECT_STATE_TRANSITION, 0, NULL);
                             }
@@ -1189,7 +1189,7 @@ static void *Uvc_ComponentThread(void *pThreadData)
                     eError = pOutTunnelComp->EmptyThisBuffer(pOutTunnelComp, &obh);
                     if(eError != SUCCESS)
                     {
-                        alogw("Loop UvcVirVi_ComponentThread OutTunnelComp EmptyThisBuffer failed %x, return this frame", eError);
+                        LOGW("Loop UvcVirVi_ComponentThread OutTunnelComp EmptyThisBuffer failed %x, return this frame", eError);
                         uvcInput_RefsReduceAndRleaseData2(pUvcInputData->pUvcChnManager,pFrm);
                         UvcReleaseFrame(pUvcInputData, pFrm);
                     }                       
@@ -1212,7 +1212,7 @@ static void *Uvc_ComponentThread(void *pThreadData)
         }       
     }
 EXIT:
-    alogv("UVC ComponentThread stopeed!");
+    LOGV("UVC ComponentThread stopeed!");
     return (void *)SUCCESS;
 }
 

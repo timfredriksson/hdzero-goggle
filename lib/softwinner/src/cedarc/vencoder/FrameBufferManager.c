@@ -15,7 +15,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include "log.h"
+#include <log/log.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,7 +75,7 @@ FrameBufferManager* FrameBufferManagerCreate(int num, struct ScMemOpsS *memops,
     context = (FrameBufferManager*)malloc(sizeof(FrameBufferManager));
     if (!context)
     {
-        loge("malloc FrameBufferManager fail!");
+        LOGE("malloc FrameBufferManager fail!");
         return NULL;
     }
 
@@ -88,7 +88,7 @@ FrameBufferManager* FrameBufferManagerCreate(int num, struct ScMemOpsS *memops,
 
     if (!context->inputbuffer_list.buffer_quene)
     {
-        loge("inputbuffer alloc quene buffer failed");
+        LOGE("inputbuffer alloc quene buffer failed");
         free(context);
         return NULL;
     }
@@ -155,7 +155,7 @@ int AddInputBuffer(FrameBufferManager* fbm, VencInputBuffer *inputbuffer)
 
     if (!fbm)
     {
-        loge("fbm is NULL, please check\n");
+        LOGE("fbm is NULL, please check");
         return -1;
     }
 
@@ -174,7 +174,7 @@ int AddInputBuffer(FrameBufferManager* fbm, VencInputBuffer *inputbuffer)
     }
     else
     {
-        logw("AddInputBuffer fail, all input buffer is used by encoder\n");
+        LOGW("AddInputBuffer fail, all input buffer is used by encoder");
         return -1;
     }
 
@@ -223,7 +223,7 @@ int AddUsedInputBuffer(FrameBufferManager* fbm, VencInputBuffer *inputbuffer)
 
         if (inputbuffer->nID != input_buffer_info->inputbuffer.nID)
         {
-            loge("AddUsedInputBuffer failed");
+            LOGE("AddUsedInputBuffer failed");
             pthread_mutex_unlock(&fbm->inputbuffer_list.mutex);
             return -1;
         }
@@ -286,7 +286,7 @@ int AllocateInputBuffer(FrameBufferManager* fbm, VencAllocateBufferParam *buffer
 
     if (!fbm->ABM_inputbuffer.allocate_buffer)
     {
-        loge("allocate_buffer error");
+        LOGE("allocate_buffer error");
         return -1;
     }
 
@@ -304,7 +304,7 @@ int AllocateInputBuffer(FrameBufferManager* fbm, VencAllocateBufferParam *buffer
                                 (unsigned char *)EncAdapterMemPalloc(fbm->size_y);
         if (!fbm->ABM_inputbuffer.allocate_buffer[i].inputbuffer.pAddrVirY)
         {
-            loge("ABM_inputbuffer Y alloc error");
+            LOGE("ABM_inputbuffer Y alloc error");
             break;
         }
 
@@ -321,7 +321,7 @@ int AllocateInputBuffer(FrameBufferManager* fbm, VencAllocateBufferParam *buffer
                 (unsigned char *)EncAdapterMemPalloc((int)fbm->size_c);
             if (!fbm->ABM_inputbuffer.allocate_buffer[i].inputbuffer.pAddrVirC)
             {
-                loge("ABM_inputbuffer C alloc error");
+                LOGE("ABM_inputbuffer C alloc error");
                 break;
             }
 
@@ -370,13 +370,13 @@ int GetOneAllocateInputBuffer(FrameBufferManager* fbm, VencInputBuffer* inputbuf
 
     if (!fbm)
     {
-        loge("fbm is NULL\n");
+        LOGE("fbm is NULL");
         return VENC_RESULT_NULL_PTR;
     }
 
     if (!fbm->ABM_inputbuffer.allocate_buffer)
     {
-        loge("input allocate_buffer have not been allcated");
+        LOGE("input allocate_buffer have not been allcated");
         return VENC_RESULT_NO_RESOURCE;
     }
 
@@ -391,7 +391,7 @@ int GetOneAllocateInputBuffer(FrameBufferManager* fbm, VencInputBuffer* inputbuf
     }
     else
     {
-        loge("there is no empty AllocateInputBuffer");
+        LOGE("there is no empty AllocateInputBuffer");
         return VENC_RESULT_NO_FRAME_BUFFER;
     }
 
@@ -417,7 +417,7 @@ int ReturnOneAllocateInputBuffer(FrameBufferManager* fbm, VencInputBuffer *input
 
     if (inputbuffer->nID >= (unsigned long)fbm->ABM_inputbuffer.buffer_num)
     {
-        loge("this buffer isn't allocate buffer,can't return");
+        LOGE("this buffer isn't allocate buffer,can't return");
         return VENC_RESULT_ILLEGAL_PARAM;
     }
 
@@ -438,7 +438,7 @@ int ResetFrameBuffer(FrameBufferManager* fbm)
 
     if (!fbm)
     {
-        loge("ResetFrameBuffer error, the fbm pointer is null\n");
+        LOGE("ResetFrameBuffer error, the fbm pointer is null");
         return -1;
     }
 

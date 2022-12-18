@@ -1,6 +1,6 @@
 // #include <CDX_LogNDebug.h>
 #define LOG_TAG "Mp4MuxerDrv.c"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,7 +50,7 @@ int Mp4MuxerWriteHeader(void *handle)
     unsigned int nCacheSize = 0;
     if(Mp4MuxerCtx->mpFsWriter)
     {
-        aloge("fatal error! why mov->mpFsWriter[%p]!=NULL", Mp4MuxerCtx->mpFsWriter);
+        LOGE("fatal error! why mov->mpFsWriter[%p]!=NULL", Mp4MuxerCtx->mpFsWriter);
         return -1;
     }
     if(Mp4MuxerCtx->pb_cache)
@@ -66,7 +66,7 @@ int Mp4MuxerWriteHeader(void *handle)
     		}
     		else
     		{
-                aloge("fatal error! not set cacheMemory but set mode FSWRITEMODE_CACHETHREAD! use FSWRITEMODE_DIRECT.");
+                LOGE("fatal error! not set cacheMemory but set mode FSWRITEMODE_CACHETHREAD! use FSWRITEMODE_DIRECT.");
                 mode = FSWRITEMODE_DIRECT;
     		}
         }
@@ -78,7 +78,7 @@ int Mp4MuxerWriteHeader(void *handle)
         Mp4MuxerCtx->mpFsWriter = createFsWriter(mode, Mp4MuxerCtx->pb_cache, pCache, nCacheSize, Mp4MuxerCtx->streams[0]->codec.codec_id);
         if(NULL == Mp4MuxerCtx->mpFsWriter)
         {
-            aloge("fatal error! create FsWriter() fail!");
+            LOGE("fatal error! create FsWriter() fail!");
             return -1;
         }
     }
@@ -140,7 +140,7 @@ int Mp4MuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
                 Mp4MuxerCtx->streams[0]->codec.codec_id = CODEC_ID_H265;
                 break;
             default:
-                aloge("fatal error! unknown video encode type[0x%x]", pMediaInf->mVideoEncodeType);
+                LOGE("fatal error! unknown video encode type[0x%x]", pMediaInf->mVideoEncodeType);
                 Mp4MuxerCtx->streams[0]->codec.codec_id = CODEC_ID_H264;
                 break;
         }
@@ -166,7 +166,7 @@ int Mp4MuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
                 Mp4MuxerCtx->streams[1]->codec.codec_id = CODEC_ID_AAC;
                 break;
             default:
-                aloge("fatal error! unknown audio encode type[0x%x]", pMediaInf->audio_encode_type);
+                LOGE("fatal error! unknown audio encode type[0x%x]", pMediaInf->audio_encode_type);
                 Mp4MuxerCtx->streams[1]->codec.codec_id = CODEC_ID_AAC;
                 break;
         }
@@ -183,12 +183,12 @@ int Mp4MuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
         { 
             if(mov->gps_entry_buff)
             {
-                alogw("Be careful! free gps_entry_buff[%p] first.", mov->gps_entry_buff);
+                LOGW("Be careful! free gps_entry_buff[%p] first.", mov->gps_entry_buff);
                 free(mov->gps_entry_buff);
                 mov->gps_entry_buff = NULL;
             }
             mov->gps_entry_buff = (GPS_ENTRY *)malloc(sizeof(GPS_ENTRY)*MOV_GPS_MAX_ENTRY_NUM);
-            //alogd("sizeof(GPS_ENTRY)=%d, total=%d", sizeof(GPS_ENTRY), sizeof(GPS_ENTRY)*MOV_GPS_MAX_ENTRY_NUM);
+            //LOGD("sizeof(GPS_ENTRY)=%d, total=%d", sizeof(GPS_ENTRY), sizeof(GPS_ENTRY)*MOV_GPS_MAX_ENTRY_NUM);
             if(NULL == mov->gps_entry_buff)
             {
                 mov->geo_available = 0;     // no reource to store gps info
@@ -245,7 +245,7 @@ int Mp4MuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
         Mp4MuxerCtx->pb_cache = create_outstream_handle(&datasourceDesc);
         if(NULL == Mp4MuxerCtx->pb_cache)
         {
-            aloge("fatal error! create mp4 outstream fail.");
+            LOGE("fatal error! create mp4 outstream fail.");
             return -1;
         }
 		break;
@@ -260,14 +260,14 @@ int Mp4MuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
         Mp4MuxerCtx->pb_cache = create_outstream_handle(&datasourceDesc);
         if(NULL == Mp4MuxerCtx->pb_cache)
         {
-            aloge("fatal error! create aac outstream fail.");
+            LOGE("fatal error! create aac outstream fail.");
             return -1;
         }
         if(Mp4MuxerCtx->mFallocateLen > 0)
         {
             if(Mp4MuxerCtx->pb_cache->fallocate(Mp4MuxerCtx->pb_cache, 0x01, 0, Mp4MuxerCtx->mFallocateLen) < 0) 
             {
-                aloge("fatal error! Failed to fallocate size %d, fd[%d](%s)", Mp4MuxerCtx->mFallocateLen, Mp4MuxerCtx->pb_cache->fd_desc.fd, strerror(errno));
+                LOGE("fatal error! Failed to fallocate size %d, fd[%d](%s)", Mp4MuxerCtx->mFallocateLen, Mp4MuxerCtx->pb_cache->fd_desc.fd, strerror(errno));
             }
         }
 		break;
@@ -279,18 +279,18 @@ int Mp4MuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
 			Mp4MuxerCtx->OutStreamHandle = create_outstream_handle(&Mp4MuxerCtx->datasource_desc);
             if (NULL == Mp4MuxerCtx->OutStreamHandle)
             {
-                aloge("fatal error! create callback outstream fail.");
+                LOGE("fatal error! create callback outstream fail.");
                 return -1;
             }
 		}
 		else {
-			aloge("RawMuxerCtx->OutStreamHandle not NULL");
+			LOGE("RawMuxerCtx->OutStreamHandle not NULL");
 		}
 		break;
 
     case SETSDCARDSTATE:
         Mp4MuxerCtx->mbSdcardDisappear = !uParam;
-        alogd("SETSDCARDSTATE, Mp4MuxerCtx->mbSdcardDisappear[%d]", Mp4MuxerCtx->mbSdcardDisappear);
+        LOGD("SETSDCARDSTATE, Mp4MuxerCtx->mbSdcardDisappear[%d]", Mp4MuxerCtx->mbSdcardDisappear);
         break;
     case SETCACHEMEM:
         Mp4MuxerCtx->mCacheMemInfo = *(FsCacheMemInfo*)pParam2;
@@ -308,7 +308,7 @@ int Mp4MuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
             Mp4MuxerCtx->pb_cache->callback.hComp = callback->hComp;
             Mp4MuxerCtx->pb_cache->callback.cb = callback->cb;
         } else {
-            alogw("Mp4MuxerCtx->pb_cache not initialize!!");
+            LOGW("Mp4MuxerCtx->pb_cache not initialize!!");
         }
         break;
     }
@@ -354,7 +354,7 @@ void *Mp4MuxerOpen(int *ret)
 		st = (AVStream *)malloc(sizeof(AVStream));
 		if(!st) 
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
 			*ret = -1;
             return (void*)Mp4MuxerCtx;
 		}
@@ -366,7 +366,7 @@ void *Mp4MuxerOpen(int *ret)
 	}
     Mp4MuxerCtx->mov_inf_cache  = (unsigned char*)malloc(TOTAL_CACHE_SIZE*4);//(unsigned char*)PHYMALLOC(MAX_MOV_INFO_CACHE_SIZE, 1024); 
 
-	//printf("Mp4MuxerCtx->mov_inf_cache: %p\n",Mp4MuxerCtx->mov_inf_cache);
+	//LOGI("Mp4MuxerCtx->mov_inf_cache: %p",Mp4MuxerCtx->mov_inf_cache);
 
 	if(!Mp4MuxerCtx->mov_inf_cache)
     {
@@ -449,7 +449,7 @@ void *Mp4MuxerOpen(int *ret)
 //
 //	if(mov->payload_buffer_cache_start == NULL)
 //	{	
-//		aloge("malloc mov->payload_buffer_cache_start error");
+//		LOGE("malloc mov->payload_buffer_cache_start error");
 //		*ret = -1;
 //	}
 	return (void*)Mp4MuxerCtx;
@@ -485,7 +485,7 @@ int Mp4MuxerClose(void *handle)
             {
                 //esFSYS_remove(mov->FilePath_stts[i]);
                 stream_remove_file(mov->FilePath_stts[i]);
-                alogd("remove fd_stts[%d]name[%s]", i, mov->FilePath_stts[i]);
+                LOGD("remove fd_stts[%d]name[%s]", i, mov->FilePath_stts[i]);
             }
         }
 
@@ -498,7 +498,7 @@ int Mp4MuxerClose(void *handle)
             {
                 //esFSYS_remove(mov->FilePath_stsz[i]);
                 stream_remove_file(mov->FilePath_stsz[i]);
-                alogd("remove fd_stsz[%d]name[%s]", i, mov->FilePath_stsz[i]);
+                LOGD("remove fd_stsz[%d]name[%s]", i, mov->FilePath_stsz[i]);
             }
         }
 
@@ -511,7 +511,7 @@ int Mp4MuxerClose(void *handle)
             {
                 //esFSYS_remove(mov->FilePath_stco[i]);
                 stream_remove_file(mov->FilePath_stco[i]);
-                alogd("remove fd_stco[%d]name[%s]", i, mov->FilePath_stco[i]);
+                LOGD("remove fd_stco[%d]name[%s]", i, mov->FilePath_stco[i]);
             }
         }
 
@@ -524,7 +524,7 @@ int Mp4MuxerClose(void *handle)
             {
                 //esFSYS_remove(mov->FilePath_stsc[i]);
                 stream_remove_file(mov->FilePath_stsc[i]);
-                alogd("remove fd_stsc[%d]name[%s]", i, mov->FilePath_stsc[i]);
+                LOGD("remove fd_stsc[%d]name[%s]", i, mov->FilePath_stsc[i]);
             }
         }
     }

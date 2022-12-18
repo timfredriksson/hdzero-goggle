@@ -64,7 +64,7 @@ static int __BdmvStreamOpenDir(void *hdr, const char *name, void **pDirHdr)
     uintptr_t nTmpDirId = dirId;
     *pDirHdr = (void *)nTmpDirId;
 
-    CDX_LOGD("__BdmvStreamOpenDir name[%s] ret[%d]", name,ret);
+    LOGD("__BdmvStreamOpenDir name[%s] ret[%d]", name,ret);
     return ret;
 }
 
@@ -92,7 +92,7 @@ static int __BdmvStreamReadDir(void *hdr, void *dirHdr, char *dname, int dnameLe
         }
     }
 
-    CDX_LOGV("__BdmvStreamReadDir ret[%d]",ret);
+    LOGV("__BdmvStreamReadDir ret[%d]",ret);
     return ret;
 }
 
@@ -107,7 +107,7 @@ static int __BdmvStreamCloseDir(void *hdr, void *dirHdr)
         impl->mAWExtendDp = NULL;
     }
 
-    CDX_LOGV("__BdmvStreamCloseDir");
+    LOGV("__BdmvStreamCloseDir");
     return 0;
 }
 
@@ -116,7 +116,7 @@ static int __BdmvStreamOpen(void *hdr, const char *pathname, int flags)
     CEDARX_UNUSE(hdr);
     CEDARX_UNUSE(flags);
 
-    CDX_LOGV("__BdmvStreamOpen pathname[%s] ",pathname);
+    LOGV("__BdmvStreamOpen pathname[%s] ",pathname);
     return open(pathname, O_RDONLY);
 }
 
@@ -125,7 +125,7 @@ static int __BdmvStreamAccess(void *hdr, const char *pathname, int mode)
     CEDARX_UNUSE(hdr);
     CEDARX_UNUSE(mode);
 
-    CDX_LOGV("__BdmvStreamAccess pathname[%s] ",pathname);
+    LOGV("__BdmvStreamAccess pathname[%s] ",pathname);
     return access((const char *)pathname, R_OK);
 }
 
@@ -192,7 +192,7 @@ int onExtIoOperation(struct BdmvStreamImplS *impl, struct ExtIoctlParamS *param)
         param->outHdr = (void *)(uintptr_t)fd;
         if (ret != 0)
         {
-            CDX_LOGE("open file failure, '%s'", fullPath);
+            LOGE("open file failure, '%s'", fullPath);
         }
         break;
     }
@@ -278,7 +278,7 @@ static cdx_int32 __BdmvStreamControl(CdxStreamT *stream, cdx_int32 cmd, void *pa
         ret = onExtIoOperation(impl, param);
         break;
     default:
-        CDX_LOGW("not support cmd(%d), who call me:", cmd);
+        LOGW("not support cmd(%d), who call me:", cmd);
 //        CdxDumpThreadStack(gettid());
         ret = 0;
         break;
@@ -353,7 +353,7 @@ static CdxStreamT *__BdmvStreamCreate(CdxDataSourceT *source)
     struct BdmvStreamImplS *impl;
     //cdx_int32 ret;
 
-    CDX_LOGI("bdmv stream...");
+    LOGI("bdmv stream...");
     impl = malloc(sizeof(*impl));
     CDX_FORCE_CHECK(impl);
     memset(impl, 0x00, sizeof(*impl));

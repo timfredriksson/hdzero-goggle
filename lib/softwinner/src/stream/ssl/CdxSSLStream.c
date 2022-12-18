@@ -110,7 +110,7 @@ cdx_int32  CdxSSLConnect(cdx_int32 sockfd, SSL *ssl,
         {
             if (pForceStop && *pForceStop)
             {
-                CDX_LOGE("<%s,%d>force stop.", __FUNCTION__, __LINE__);
+                LOGE("<%s,%d>force stop.", __FUNCTION__, __LINE__);
                 return -2;
             }
 
@@ -125,7 +125,7 @@ cdx_int32  CdxSSLConnect(cdx_int32 sockfd, SSL *ssl,
                   controlled and by the specifications of the TLS/SSL protocol.
                   Call SSL_get_error() with the return value ret to find out the reason.*/
             {
-                CDX_LOGE("xxx ret(%d), %s", ret, ERR_error_string(ERR_get_error(), NULL));
+                LOGE("xxx ret(%d), %s", ret, ERR_error_string(ERR_get_error(), NULL));
                 return -1;
             }
             else
@@ -138,7 +138,7 @@ cdx_int32  CdxSSLConnect(cdx_int32 sockfd, SSL *ssl,
                 }
                 else
                 {
-                    CDX_LOGE("write error, %s", ERR_error_string(ERR_get_error(), NULL));
+                    LOGE("write error, %s", ERR_error_string(ERR_get_error(), NULL));
                     return -1;
                 }
             }
@@ -168,7 +168,7 @@ cdx_int32  CdxSSLConnect(cdx_int32 sockfd, SSL *ssl,
               controlled and by the specifications of the TLS/SSL protocol.
               Call SSL_get_error() with the return value ret to find out the reason.*/
         {
-            CDX_LOGE("xxx ret(%d), %s", ret, ERR_error_string(ERR_get_error(), NULL));
+            LOGE("xxx ret(%d), %s", ret, ERR_error_string(ERR_get_error(), NULL));
             return -1;
         }
         else
@@ -180,7 +180,7 @@ cdx_int32  CdxSSLConnect(cdx_int32 sockfd, SSL *ssl,
                 {
                     if (pForceStop && *pForceStop)
                     {
-                        CDX_LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
+                        LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
                         return -2;
                     }
                     FD_ZERO(&ws);
@@ -203,14 +203,14 @@ cdx_int32  CdxSSLConnect(cdx_int32 sockfd, SSL *ssl,
                         {
                             continue;
                         }
-                        CDX_LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, errno);
+                        LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, errno);
                         return -1;
                     }
                 }
             }
             else
             {
-                CDX_LOGE("xxx ret(%d), %s", ret, ERR_error_string(ERR_get_error(), NULL));
+                LOGE("xxx ret(%d), %s", ret, ERR_error_string(ERR_get_error(), NULL));
                 return -1;
             }
         }
@@ -239,7 +239,7 @@ cdx_ssize CdxSSLRecv(cdx_int32 sockfd, SSL *ssl, void *buf, cdx_size len,
         {
             if (pForceStop && *pForceStop)
             {
-                CDX_LOGE("<%s,%d>force stop.recvSize(%ld)", __FUNCTION__, __LINE__, recvSize);
+                LOGE("<%s,%d>force stop.recvSize(%ld)", __FUNCTION__, __LINE__, recvSize);
                 return recvSize>0 ? recvSize : -2;
             }
             ret = SSL_read(ssl, ((char *)buf) + recvSize, len - recvSize);
@@ -253,13 +253,13 @@ cdx_ssize CdxSSLRecv(cdx_int32 sockfd, SSL *ssl, void *buf, cdx_size len,
                 }
                 else
                 {
-                    CDX_LOGE("read error, %s", ERR_error_string(ERR_get_error(), NULL));
+                    LOGE("read error, %s", ERR_error_string(ERR_get_error(), NULL));
                     return -1;
                 }
             }
             else if(ret == 0)
             {
-                CDX_LOGD("xxx recvSize(%ld),sockfd(%d), want to read(%lu), errno(%d),"
+                LOGD("xxx recvSize(%ld),sockfd(%d), want to read(%lu), errno(%d),"
                     " shut down by peer?", recvSize, sockfd, len, errno);
                 return recvSize;
             }
@@ -288,7 +288,7 @@ cdx_ssize CdxSSLRecv(cdx_int32 sockfd, SSL *ssl, void *buf, cdx_size len,
     {
         if (pForceStop && *pForceStop)
         {
-            CDX_LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
+            LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
             return recvSize>0 ? recvSize : -2;
         }
 
@@ -306,13 +306,13 @@ cdx_ssize CdxSSLRecv(cdx_int32 sockfd, SSL *ssl, void *buf, cdx_size len,
             {
                 continue;
             }
-            CDX_LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, ioErr);
+            LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, ioErr);
             return -1;
         }
         else if (ret == 0)
         {
             //("timeout\n");
-            //CDX_LOGV("xxx timeout, select again...");
+            //LOGV("xxx timeout, select again...");
             continue;
         }
 
@@ -320,17 +320,17 @@ cdx_ssize CdxSSLRecv(cdx_int32 sockfd, SSL *ssl, void *buf, cdx_size len,
         {
             if (pForceStop && *pForceStop)
             {
-                CDX_LOGE("<%s,%d>force stop.recvSize(%ld)", __FUNCTION__, __LINE__, recvSize);
+                LOGE("<%s,%d>force stop.recvSize(%ld)", __FUNCTION__, __LINE__, recvSize);
                 return recvSize>0 ? recvSize : -2;
             }
             if(FD_ISSET(sockfd,&errs))
             {
-                CDX_LOGE("<%s,%d>errs ", __FUNCTION__, __LINE__);
+                LOGE("<%s,%d>errs ", __FUNCTION__, __LINE__);
                 break;
             }
             if(!FD_ISSET(sockfd, &rs))
             {
-                CDX_LOGV("select > 0, but sockfd is not ready?");
+                LOGV("select > 0, but sockfd is not ready?");
                 break;
             }
 
@@ -344,7 +344,7 @@ cdx_ssize CdxSSLRecv(cdx_int32 sockfd, SSL *ssl, void *buf, cdx_size len,
                 }
                 else
                 {
-                    CDX_LOGE("ret(%ld), read error, %s", ret,
+                    LOGE("ret(%ld), read error, %s", ret,
                         ERR_error_string(ERR_get_error(), NULL));
                     ERR_print_errors_fp(stderr);
                     return -1;
@@ -352,7 +352,7 @@ cdx_ssize CdxSSLRecv(cdx_int32 sockfd, SSL *ssl, void *buf, cdx_size len,
             }
             else if (ret == 0)//socket is close by peer?
             {
-                CDX_LOGD("xxx recvSize(%ld),sockfd(%d), want to read(%lu), errno(%d),"
+                LOGD("xxx recvSize(%ld),sockfd(%d), want to read(%lu), errno(%d),"
                     " shut down by peer?", recvSize, sockfd, len, errno);
                 return recvSize;
             }
@@ -386,7 +386,7 @@ cdx_ssize CdxSSLSend(cdx_int32 sockfd, SSL *ssl, const void *buf, cdx_size len,
         {
             if (pForceStop && *pForceStop)
             {
-                CDX_LOGE("<%s,%d>force stop. sendSize(%ld)", __FUNCTION__, __LINE__, sendSize);
+                LOGE("<%s,%d>force stop. sendSize(%ld)", __FUNCTION__, __LINE__, sendSize);
                 return sendSize>0 ? sendSize : -2;
             }
             ret = SSL_write(ssl, ((char *)buf) + sendSize, len - sendSize);
@@ -400,14 +400,14 @@ cdx_ssize CdxSSLSend(cdx_int32 sockfd, SSL *ssl, const void *buf, cdx_size len,
                 }
                 else
                 {
-                    CDX_LOGE("ret(%ld), write error, %s", ret,
+                    LOGE("ret(%ld), write error, %s", ret,
                         ERR_error_string(ERR_get_error(), NULL));
                     return -1;
                 }
             }
             else if(ret == 0)
             {
-                CDX_LOGD("xxx sendSize(%ld),sockfd(%d), want to read(%lu), errno(%d),"
+                LOGD("xxx sendSize(%ld),sockfd(%d), want to read(%lu), errno(%d),"
                     " shut down by peer?", sendSize, sockfd, len, errno);
                 return sendSize;
             }
@@ -436,7 +436,7 @@ cdx_ssize CdxSSLSend(cdx_int32 sockfd, SSL *ssl, const void *buf, cdx_size len,
     {
         if (pForceStop && *pForceStop)
         {
-            CDX_LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
+            LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
             return sendSize>0 ? sendSize : -2;
         }
 
@@ -452,7 +452,7 @@ cdx_ssize CdxSSLSend(cdx_int32 sockfd, SSL *ssl, const void *buf, cdx_size len,
             {
                 continue;
             }
-            CDX_LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, errno);
+            LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, errno);
             return -1;
         }
         else if (ret == 0)
@@ -465,7 +465,7 @@ cdx_ssize CdxSSLSend(cdx_int32 sockfd, SSL *ssl, const void *buf, cdx_size len,
         {
             if (pForceStop && *pForceStop)
             {
-                CDX_LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
+                LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
                 return sendSize>0 ? sendSize : -2;
             }
 
@@ -479,7 +479,7 @@ cdx_ssize CdxSSLSend(cdx_int32 sockfd, SSL *ssl, const void *buf, cdx_size len,
                 }
                 else
                 {
-                    CDX_LOGE("xxx ret(%ld)", ret);
+                    LOGE("xxx ret(%ld)", ret);
                     ERR_print_errors_fp(stderr);
                     return -1;
                 }
@@ -516,7 +516,7 @@ static cdx_int32 __CdxSSLStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 le
 
     if(stream == NULL || buf == NULL || len <= 0)
     {
-        CDX_LOGW("check parameter.");
+        LOGW("check parameter.");
         return -1;
     }
 
@@ -534,7 +534,7 @@ static cdx_int32 __CdxSSLStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 le
     {
         if(impl->forceStopFlag)
         {
-            //CDX_LOGV("__CdxTcpStreamRead forceStop.");
+            //LOGV("__CdxTcpStreamRead forceStop.");
             ret = -2;
             goto __exit0;
         }
@@ -549,19 +549,19 @@ static cdx_int32 __CdxSSLStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 le
             }
             else
             {
-                CDX_LOGE("<%s,%d>recv err(%d), ret(%d)", __FUNCTION__, __LINE__, errno, ret);
+                LOGE("<%s,%d>recv err(%d), ret(%d)", __FUNCTION__, __LINE__, errno, ret);
                 ret = SSL_get_error(impl->ssl, ret);
                 if(ret == SSL_ERROR_WANT_READ)
                 {
-                    CDX_LOGD("SSL_ERROR_WANT_READ");
+                    LOGD("SSL_ERROR_WANT_READ");
                 }
                 else if(ret == SSL_ERROR_WANT_WRITE)
                 {
-                    CDX_LOGD("SSL_ERROR_WANT_WRITE");
+                    LOGD("SSL_ERROR_WANT_WRITE");
                 }
                 else
                 {
-                    CDX_LOGE("xxx %s", ERR_error_string(ERR_get_error(), NULL));
+                    LOGE("xxx %s", ERR_error_string(ERR_get_error(), NULL));
                 }
                 impl->ioState = CDX_IO_STATE_ERROR;
                 impl->notBlockFlag = 0;
@@ -584,7 +584,7 @@ __exit0:
     {
         if(impl->forceStopFlag)
         {
-            CDX_LOGV("__CdxSSLStreamRead forceStop.");
+            LOGV("__CdxSSLStreamRead forceStop.");
             if(recvSize > 0)
                 break;
             else
@@ -603,7 +603,7 @@ __exit0:
                 goto __exit1;
             }
             impl->ioState = CDX_IO_STATE_ERROR;
-            CDX_LOGE("__CdxSSLStreamRead error(%d).", errno);
+            LOGE("__CdxSSLStreamRead error(%d).", errno);
             recvSize = -1;
             goto __exit1;
         }
@@ -660,7 +660,7 @@ static cdx_int32 __CdxSSLStreamWrite(CdxStreamT *stream, void *buf, cdx_uint32 l
                                                         0, &impl->forceStopFlag);
         if(ret < 0)
         {
-            CDX_LOGE("send failed.");
+            LOGE("send failed.");
             break;
         }
         else if(ret == 0)
@@ -685,7 +685,7 @@ static cdx_int32 CdxSSLStreamForceStop(CdxStreamT *stream)
     CDX_CHECK(stream);
     impl = CdxContainerOf(stream, CdxSSLStreamImplT, base);
 
-    CDX_LOGV("begin SSL force stop");
+    LOGV("begin SSL force stop");
     pthread_mutex_lock(&impl->stateLock);
     CdxAtomicInc(&impl->ref);
     impl->forceStopFlag = 1;
@@ -694,14 +694,14 @@ static cdx_int32 CdxSSLStreamForceStop(CdxStreamT *stream)
     while(((ref = CdxAtomicRead(&impl->state)) != SSL_STREAM_IDLE) &&
         ((ref = CdxAtomicRead(&impl->state)) != SSL_STREAM_CONNECTING))
     {
-        CDX_LOGV("xxx state(%ld)", ref);
+        LOGV("xxx state(%ld)", ref);
         usleep(10*1000);
     }
 
     pthread_mutex_lock(&impl->stateLock);
     pthread_mutex_unlock(&impl->stateLock);
     CdxSSLStreamDecRef(stream);
-    CDX_LOGV("finish SSL force stop");
+    LOGV("finish SSL force stop");
     return 0;
 }
 static cdx_int32 CdxSSLStreamClrForceStop(CdxStreamT *stream)
@@ -747,7 +747,7 @@ static cdx_int32 __CdxSSLStreamControl(CdxStreamT *stream, cdx_int32 cmd, void *
         }
         default:
         {
-            CDX_LOGE("should not be here. CMD(%d)", cmd);
+            LOGE("should not be here. CMD(%d)", cmd);
             break;
         }
     }
@@ -760,14 +760,14 @@ static cdx_int32 __CdxSSLStreamClose(CdxStreamT *stream)
 
     CDX_CHECK(stream);
     impl = CdxContainerOf(stream, CdxSSLStreamImplT, base);
-    CDX_LOGV("xxx SSL close begin.");
+    LOGV("xxx SSL close begin.");
     CdxAtomicInc(&impl->ref);
 
     CdxSSLStreamForceStop(stream);
 
     CdxSSLStreamDecRef(stream);
     CdxSSLStreamDecRef(stream);
-    CDX_LOGV("xxx SSL close finish.");
+    LOGV("xxx SSL close finish.");
 
     return 0;
 }
@@ -811,7 +811,7 @@ static void DnsResponeHook(void *userhdr, int ret, struct addrinfo *ai)
     if (ret == SDS_OK)
     {
         impl->dnsAI = ai;
-        /*CDX_LOGD("%x%x%x", ai->ai_addr->sa_data[0],
+        /*LOGD("%x%x%x", ai->ai_addr->sa_data[0],
                                                   ai->ai_addr->sa_data[1],
                                                   ai->ai_addr->sa_data[2]);*/
     }
@@ -904,26 +904,26 @@ static int StartSSLStreamConnect(CdxStreamT *stream)
         }
         else if(ret < 0)
         {
-            CDX_LOGE("connect failed. error(%d): %s.",
+            LOGE("connect failed. error(%d): %s.",
                      errno, strerror(errno));
             goto err_out;
         }
 
         if(impl->forceStopFlag == 1)
         {
-            CDX_LOGV("force stop connect.");
+            LOGV("force stop connect.");
             goto err_out;
         }
     } while ((ai = ai->ai_next) != NULL);
 
     if (ai == NULL)
     {
-        CDX_LOGE("connect failed.");
+        LOGE("connect failed.");
         goto err_out;
     }
 
     end = GetNowUs();
-    //CDX_LOGV("Start tcp time(%lld)", end-start);
+    //LOGV("Start tcp time(%lld)", end-start);
 
     //SSL initial
     SSL_library_init();
@@ -932,14 +932,14 @@ static int StartSSLStreamConnect(CdxStreamT *stream)
     // downward compatibility? SSLv3_client_method()/SSLv23_client_method()
     if(impl->ctx == NULL)
     {
-        CDX_LOGE("xxx %s", ERR_error_string(ERR_get_error(), NULL));
+        LOGE("xxx %s", ERR_error_string(ERR_get_error(), NULL));
         //ERR_print_errors_fp(stderr);
         goto err_out;
     }
     impl->ssl = SSL_new(impl->ctx);
     if(impl->ssl == NULL)
     {
-        CDX_LOGE("xxx %s", ERR_error_string(ERR_get_error(), NULL));
+        LOGE("xxx %s", ERR_error_string(ERR_get_error(), NULL));
         //ERR_print_errors_fp(stderr);
         goto err_out;
     }
@@ -956,14 +956,14 @@ static int StartSSLStreamConnect(CdxStreamT *stream)
     ret = CdxSSLConnect(impl->sockFd,impl->ssl, 0, &impl->forceStopFlag);
     if(ret < 0)
     {
-        CDX_LOGE("ssl connect failed.");
+        LOGE("ssl connect failed.");
         goto err_out;
     }
     return 0;
 
 err_out:
     end = GetNowUs();
-    //CDX_LOGV("Start tcp time(%lld)", end-start);
+    //LOGV("Start tcp time(%lld)", end-start);
 
     return -1;
 }
@@ -989,7 +989,7 @@ static cdx_int32 __CdxSSLStreamConnect(CdxStreamT *stream)
     result = StartSSLStreamConnect(stream);
     if (result < 0)
     {
-        CDX_LOGE("StartTcpStreamConnect failed!");
+        LOGE("StartTcpStreamConnect failed!");
         pthread_mutex_lock(&impl->stateLock);
         impl->ioState = CDX_IO_STATE_ERROR;
         pthread_mutex_unlock(&impl->stateLock);
@@ -1028,7 +1028,7 @@ static CdxStreamT *__CdxSSLStreamCreate(CdxDataSourceT *source)
     impl = (CdxSSLStreamImplT *)malloc(sizeof(CdxSSLStreamImplT));
     if(NULL == impl)
     {
-        CDX_LOGE("malloc failed");
+        LOGE("malloc failed");
         return NULL;
     }
     memset(impl, 0x00, sizeof(CdxSSLStreamImplT));
@@ -1040,21 +1040,21 @@ static CdxStreamT *__CdxSSLStreamCreate(CdxDataSourceT *source)
     if(fd < 0)
     {
         impl->ioState = CDX_IO_STATE_ERROR;
-        CDX_LOGE("create socket failed.");
+        LOGE("create socket failed.");
         goto err_out;
     }
     impl->sockFd = fd;
     impl->sockRecvBufLen = sockRecvLen;
     impl->port = *(cdx_int32 *)((CdxHttpSendBufferT *)source->extraData)->size;
     impl->hostname = (char *)((CdxHttpSendBufferT *)source->extraData)->buf;
-    //CDX_LOGV("port (%d), hostname(%s)", impl->port, impl->hostname);
+    //LOGV("port (%d), hostname(%s)", impl->port, impl->hostname);
     CdxAtomicSet(&impl->ref, 1);
     pthread_mutex_init(&impl->stateLock, NULL);
 
     impl->dnsMutex = (pthread_mutex_t*)calloc(1,sizeof(pthread_mutex_t));
     if (impl->dnsMutex == NULL)
     {
-        CDX_LOGE("malloc failed");
+        LOGE("malloc failed");
         return NULL;
     }
 

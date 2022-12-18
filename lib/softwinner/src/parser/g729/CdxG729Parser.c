@@ -52,7 +52,7 @@ static int G729Init(CdxParserT *g729_impl)
       }
    }
     impl->ulDuration   = duration;
-   CDX_LOGV("ulDuration:%lld",impl->ulDuration);
+   LOGV("ulDuration:%lld",impl->ulDuration);
 
    CdxStreamSeek(cdxStream,0,SEEK_SET);
    impl->mErrno = PSR_OK;
@@ -60,7 +60,7 @@ static int G729Init(CdxParserT *g729_impl)
    return 0;
 
 OPENFAILURE:
-    CDX_LOGE("G729OpenThread fail!!!");
+    LOGE("G729OpenThread fail!!!");
     impl->mErrno = PSR_OPEN_FAIL;
     pthread_cond_signal(&impl->cond);
    return -1;
@@ -85,7 +85,7 @@ static cdx_int32 __G729ParserControl(CdxParserT *parser, cdx_int32 cmd, void *pa
           CdxStreamClrForceStop(impl->stream);
           break;
        default :
-           CDX_LOGW("not implement...(%d)", cmd);
+           LOGW("not implement...(%d)", cmd);
            break;
     }
     impl->flags = cmd;
@@ -127,13 +127,13 @@ static cdx_int32 __G729ParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
    if(read_length < 0)
    {
-       CDX_LOGE("CdxStreamRead fail");
+       LOGE("CdxStreamRead fail");
        impl->mErrno = PSR_IO_ERR;
        return CDX_FAILURE;
    }
    else if(read_length == 0)
    {
-      CDX_LOGD("CdxStream EOS");
+      LOGD("CdxStream EOS");
       impl->mErrno = PSR_EOS;
       return CDX_FAILURE;
    }
@@ -156,7 +156,7 @@ static cdx_int32 __G729ParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *med
 
     if(impl->mErrno != PSR_OK)
     {
-        CDX_LOGE("audio parse status no PSR_OK");
+        LOGE("audio parse status no PSR_OK");
         return CDX_FAILURE;
     }
 
@@ -199,21 +199,21 @@ static cdx_int32 __G729ParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMo
    //offset = (cdx_int64)frames*sizeof(short)*SERIAL_SIZE;
    if(CdxStreamSeek(impl->stream,0,SEEK_SET))
    {
-      CDX_LOGE("CdxStreamSeek to 0 fail");
+      LOGE("CdxStreamSeek to 0 fail");
       return CDX_FAILURE;
    }
    while(frames)
    {
       if(CdxStreamRead(impl->stream, tembuf, sizeof(short)*2) != sizeof(short)*2)
       {
-         CDX_LOGE("CdxStreamSeek read 2 bytes fail");
+         LOGE("CdxStreamSeek read 2 bytes fail");
          return CDX_FAILURE;
       }
       if(tembuf[1] != 0)
       {
          if(CdxStreamSeek(impl->stream,sizeof(short)*tembuf[1],SEEK_CUR))
          {
-            CDX_LOGE("CdxStreamSeek to frames fail");
+            LOGE("CdxStreamSeek to frames fail");
             return CDX_FAILURE;
          }
          frames--;
@@ -221,7 +221,7 @@ static cdx_int32 __G729ParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMo
 
    }
    impl->seektime = timeUs;
-   CDX_LOGV("Seek to time:%lld,to position:%lld,fliesize:%lld",
+   LOGV("Seek to time:%lld,to position:%lld,fliesize:%lld",
               timeUs,impl->file_offset,impl->fileSize);
    return CDX_SUCCESS;
 }
@@ -284,19 +284,19 @@ static cdx_uint32 __G729ParserProbe(CdxStreamProbeDataT *probeData)
    buf = (short*)probeData->buf;
     if(probeData->len < 4)
     {
-        CDX_LOGE("Probe G729_header data is not enough.");
+        LOGE("Probe G729_header data is not enough.");
         return 0;
     }
 
     if(buf[0] != SYNC_WORD)
     {
-        CDX_LOGE("g729 SYNC_WORD probe failed.");
+        LOGE("g729 SYNC_WORD probe failed.");
         return 0;
     }
    else
    {
       if(0){//buf[1] != SIZE_WORD){
-         CDX_LOGE("g729 SIZE_WORD probe failed.");
+         LOGE("g729 SIZE_WORD probe failed.");
          return 0;
       }
    }
@@ -309,7 +309,7 @@ static CdxParserT *__G729ParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     struct G729ParserImplS *impl;
     impl = CdxMalloc(sizeof(*impl));
     if (impl == NULL) {
-        CDX_LOGE("G729ParserOpen Failed");
+        LOGE("G729ParserOpen Failed");
       CdxStreamClose(stream);
         return NULL;
     }

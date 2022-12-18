@@ -67,7 +67,7 @@ CedarXNativeWindowRenderer::CedarXNativeWindowRenderer(
     int32_t nVdecInitRotation;  //clock wise.
     int32_t rotationDegrees;    //command gpu transform frame buffer clock wise degree.
     if (!meta->findInt32(kKeyRotation, &nVdecInitRotation)) {
-        ALOGD("(f:%s, l:%d) find fail nVdecInitRotation[%d]", __FUNCTION__, __LINE__, nVdecInitRotation);
+        LOGD("(f:%s, l:%d) find fail nVdecInitRotation[%d]", __FUNCTION__, __LINE__, nVdecInitRotation);
         rotationDegrees = 0;
     }
     else
@@ -96,7 +96,7 @@ CedarXNativeWindowRenderer::CedarXNativeWindowRenderer(
             }
             default:
             {
-                ALOGE("(f:%s, l:%d) fatal error! nInitRotation=%d", __FUNCTION__, __LINE__, nVdecInitRotation);
+                LOGE("(f:%s, l:%d) fatal error! nInitRotation=%d", __FUNCTION__, __LINE__, nVdecInitRotation);
                 rotationDegrees = 0;
                 break;
             }
@@ -111,7 +111,7 @@ CedarXNativeWindowRenderer::CedarXNativeWindowRenderer(
     int usage = 0;
     meta->findInt32(kKeyIsDRM, &usage);
     if(usage) {
-    	ALOGD("(f:%s, l:%d) Be careful! protected video", __FUNCTION__, __LINE__);
+    	LOGD("(f:%s, l:%d) Be careful! protected video", __FUNCTION__, __LINE__);
     	usage = GRALLOC_USAGE_PROTECTED;
     }
     usage |= GRALLOC_USAGE_SW_READ_NEVER /*| GRALLOC_USAGE_SW_WRITE_OFTEN*/
@@ -138,7 +138,7 @@ CedarXNativeWindowRenderer::CedarXNativeWindowRenderer(
 
     if(mCropWidth>=0 && mCropHeight>=0 && (nGpuBufWidth!=mCropWidth || nGpuBufHeight!=mCropHeight))
     {
-        ALOGD("(f:%s, l:%d) Be careful! need crop gpuFrame![%dx%d], crop[%dx%d]", __FUNCTION__, __LINE__, nGpuBufWidth, nGpuBufHeight, mCropWidth, mCropHeight);
+        LOGD("(f:%s, l:%d) Be careful! need crop gpuFrame![%dx%d], crop[%dx%d]", __FUNCTION__, __LINE__, nGpuBufWidth, nGpuBufHeight, mCropWidth, mCropHeight);
         //Rect crop;
         android_native_rect_t crop;
         crop.left = 0;
@@ -155,29 +155,29 @@ CedarXNativeWindowRenderer::CedarXNativeWindowRenderer(
             (int *)&mNumUndequeuedBuffers);
     if (err != 0) 
     {
-        ALOGE("(f:%s, l:%d) fatal error! NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS query failed: %s (%d)", __FUNCTION__, __LINE__, strerror(-err), -err);
+        LOGE("(f:%s, l:%d) fatal error! NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS query failed: %s (%d)", __FUNCTION__, __LINE__, strerror(-err), -err);
         //return err;
     }
     if(mNumUndequeuedBuffers < 2)
     {
-        ALOGW("(f:%s, l:%d) Be careful! min undequeued buffers number[%d] must >= 2!", __FUNCTION__, __LINE__, mNumUndequeuedBuffers);
+        LOGW("(f:%s, l:%d) Be careful! min undequeued buffers number[%d] must >= 2!", __FUNCTION__, __LINE__, mNumUndequeuedBuffers);
         mNumUndequeuedBuffers = 2;
     }
     if(mNumUndequeuedBuffers > NUM_OF_PICTURES_KEEP_IN_LIST - 1)
     {
-        ALOGE("(f:%s, l:%d) fatal error! GUI Undequeued Buffers[%d] > vdeclib preference[%d - 1]", __FUNCTION__, __LINE__, mNumUndequeuedBuffers, NUM_OF_PICTURES_KEEP_IN_LIST);
+        LOGE("(f:%s, l:%d) fatal error! GUI Undequeued Buffers[%d] > vdeclib preference[%d - 1]", __FUNCTION__, __LINE__, mNumUndequeuedBuffers, NUM_OF_PICTURES_KEEP_IN_LIST);
     }
     CHECK(meta->findInt32(kCedarXKeyFrameCount, &mFrameCount));
     if(mFrameCount <= mNumUndequeuedBuffers)
     {
-        ALOGE("(f:%s, l:%d) fatal error! gpu buffer num[%d][%d]", __FUNCTION__, __LINE__, mFrameCount, mNumUndequeuedBuffers);
+        LOGE("(f:%s, l:%d) fatal error! gpu buffer num[%d][%d]", __FUNCTION__, __LINE__, mFrameCount, mNumUndequeuedBuffers);
     }
     //mFrameCount += mNumUndequeuedBuffers;
-    ALOGD("(f:%s, l:%d) set gpu frame count[%d], undequeuedNum[%d]", __FUNCTION__, __LINE__, mFrameCount, mNumUndequeuedBuffers);
+    LOGD("(f:%s, l:%d) set gpu frame count[%d], undequeuedNum[%d]", __FUNCTION__, __LINE__, mFrameCount, mNumUndequeuedBuffers);
     err = native_window_set_buffer_count(mNativeWindow.get(), mFrameCount);
     if (err != 0) 
     {
-        ALOGE("(f:%s, l:%d) fatal error! native_window_set_buffer_count failed: %s (%d)", __FUNCTION__, __LINE__, strerror(-err), -err);
+        LOGE("(f:%s, l:%d) fatal error! native_window_set_buffer_count failed: %s (%d)", __FUNCTION__, __LINE__, strerror(-err), -err);
         //return err;
     }
 }
@@ -206,7 +206,7 @@ int CedarXNativeWindowRenderer::control(int cmd, int para, void *pData)
                     }
                     else
                     {
-                        ALOGE("(f:%s, l:%d) fatal error! Failed to set scaling mode: %d", __FUNCTION__, __LINE__, ret);
+                        LOGE("(f:%s, l:%d) fatal error! Failed to set scaling mode: %d", __FUNCTION__, __LINE__, ret);
                     }
                 }
             }
@@ -225,7 +225,7 @@ int CedarXNativeWindowRenderer::control(int cmd, int para, void *pData)
                 err = native_window_dequeue_buffer_and_wait(mNativeWindow.get(), &buf);
                 if (err != 0) 
                 {
-                    ALOGE("(f:%s, l:%d) dequeueBuffer failed: %s (%d)", __FUNCTION__, __LINE__, strerror(-err), -err);
+                    LOGE("(f:%s, l:%d) dequeueBuffer failed: %s (%d)", __FUNCTION__, __LINE__, strerror(-err), -err);
                     break;
                 }
                 CHECK_EQ(0, mNativeWindow->lockBuffer_DEPRECATED(mNativeWindow.get(), buf));
@@ -256,7 +256,7 @@ int CedarXNativeWindowRenderer::control(int cmd, int para, void *pData)
                 }
                 else
                 {
-                    ALOGE("(f:%s, l:%d) fatal error! the hnd is wrong : hnd = %p", __FUNCTION__, __LINE__, hnd);
+                    LOGE("(f:%s, l:%d) fatal error! the hnd is wrong : hnd = %p", __FUNCTION__, __LINE__, hnd);
                     return UNKNOWN_ERROR;
                 }
                 dstPhyAddr = (uintptr_t)ion_getphyadr(mIonFd, handle_ion);
@@ -304,7 +304,7 @@ int CedarXNativeWindowRenderer::control(int cmd, int para, void *pData)
                 GraphicBufferMapper &mapper = GraphicBufferMapper::get();
                 mapper.unlock(buf->handle);
                 err = mNativeWindow->cancelBuffer(mNativeWindow.get(), buf, -1);
-                ALOGE_IF(err != 0, "(f:%s, l:%d) fatal error! can not return buffer[%p][%p][%p] to native window",
+                LOGE_IF(err != 0, "(f:%s, l:%d) fatal error! can not return buffer[%p][%p][%p] to native window",
                         __FUNCTION__, __LINE__, buf, pAnwBuffersInfo->mANWBuffers[i].dst, pAnwBuffersInfo->mANWBuffers[i].dstPhy);
                 pAnwBuffersInfo->mANWBuffers[i].mbOccupyFlag = 0;
             }
@@ -315,7 +315,7 @@ int CedarXNativeWindowRenderer::control(int cmd, int para, void *pData)
             CdxVRFrameInfo *pFrameInfo = (CdxVRFrameInfo*)pData;
             if(pFrameInfo->mnDisplayWidth != mCropWidth || pFrameInfo->mnDisplayHeight != mCropHeight)
             {
-                ALOGD("(f:%s, l:%d) need update crop gpuFrame[%dx%d], crop[%dx%d]->[%dx%d]", __FUNCTION__, __LINE__, 
+                LOGD("(f:%s, l:%d) need update crop gpuFrame[%dx%d], crop[%dx%d]->[%dx%d]", __FUNCTION__, __LINE__, 
                     mWidth, mHeight, mCropWidth, mCropHeight, pFrameInfo->mnDisplayWidth, pFrameInfo->mnDisplayHeight);
                 mCropWidth = pFrameInfo->mnDisplayWidth;
                 mCropHeight = pFrameInfo->mnDisplayHeight;
@@ -332,7 +332,7 @@ int CedarXNativeWindowRenderer::control(int cmd, int para, void *pData)
         }
         default:
         {
-            ALOGW("undefined command[0x%x]!", cmd);
+            LOGW("undefined command[0x%x]!", cmd);
             ret = UNKNOWN_ERROR;
             break;
         }
@@ -341,7 +341,7 @@ int CedarXNativeWindowRenderer::control(int cmd, int para, void *pData)
 }
 void CedarXNativeWindowRenderer::render(const void *data, size_t size) 
 {
-    ALOGE("(f:%s, l:%d) fatal error! why call here?", __FUNCTION__, __LINE__);
+    LOGE("(f:%s, l:%d) fatal error! why call here?", __FUNCTION__, __LINE__);
 }
 
 int CedarXNativeWindowRenderer::dequeueFrame(ANativeWindowBufferCedarXWrapper *pObject)
@@ -353,7 +353,7 @@ int CedarXNativeWindowRenderer::dequeueFrame(ANativeWindowBufferCedarXWrapper *p
 #if (CEDARX_ANDROID_VERSION >=8)
     if ((err = mNativeWindow->dequeueBuffer_DEPRECATED(mNativeWindow.get(), &buf)) != 0) 
     {
-        ALOGW("(f:%s, l:%d) Surface::dequeueBuffer returned error %d", __FUNCTION__, __LINE__, err);
+        LOGW("(f:%s, l:%d) Surface::dequeueBuffer returned error %d", __FUNCTION__, __LINE__, err);
         return -1;
     }
     CHECK_EQ(0, mNativeWindow->lockBuffer_DEPRECATED(mNativeWindow.get(), buf));
@@ -420,12 +420,12 @@ int CedarXNativeWindowRenderer::cancelFrame(ANativeWindowBufferCedarXWrapper *pO
 
 #if (CEDARX_ANDROID_VERSION >=8)
     if ((err = mNativeWindow->cancelBuffer_DEPRECATED(mNativeWindow.get(), buf)) != 0) {
-        ALOGW("Surface::cancelBuffer returned error %d", err);
+        LOGW("Surface::cancelBuffer returned error %d", err);
     }
     buf = NULL;
 #else 
     if ((err = mNativeWindow->cancelBuffer(mNativeWindow.get(), buf)) != 0) {
-        ALOGW("Surface::cancelBuffer returned error %d", err);
+        LOGW("Surface::cancelBuffer returned error %d", err);
     }
     buf = NULL;
 #endif

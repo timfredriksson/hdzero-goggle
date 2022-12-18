@@ -105,13 +105,13 @@ static int asfOnPrefetch(struct AsfParserImplS *impl, CdxPacketT *pkt)
         if (result == PSR_EOS)
         {
             impl->mErrno = PSR_EOS;
-            CDX_LOGW("Try to read sample failed! EOS!");
+            LOGW("Try to read sample failed! EOS!");
             return -1;
         }
         else
         {
             impl->mErrno = PSR_IO_ERR;
-            CDX_LOGW("Try to read sample failed! IO_ERROR!");
+            LOGW("Try to read sample failed! IO_ERROR!");
             return -1;
         }
     }
@@ -190,7 +190,7 @@ static cdx_int32 __AsfPsrPrefetch(CdxParserT *psr, CdxPacketT *pkt)
     impl = CdxContainerOf(psr, struct AsfParserImplS, base);
     if (impl->mErrno == PSR_EOS)
     {
-        CDX_LOGW("eos...");
+        LOGW("eos...");
         return -1;
     }
     if(impl->status == CDX_PSR_PREFETCHED)
@@ -206,7 +206,7 @@ doPrefetch:
         ret = asfOnPrefetch(impl, pkt);
         if (ret != 0)
         {
-            CDX_LOGE("prefetch failure.");
+            LOGE("prefetch failure.");
             break;
         }
     } while (pkt->length == 0);
@@ -231,7 +231,7 @@ doPrefetch:
         memcpy(&impl->pkt, pkt, sizeof(CdxPacketT));
         impl->status = CDX_PSR_PREFETCHED;
     }
-//    CDX_LOGD("pts(%.3f) type(%d) index(%d) length(%d)",
+//    LOGD("pts(%.3f) type(%d) index(%d) length(%d)",
 //            (double)pkt->pts/1000000.0, pkt->type, pkt->streamIndex, pkt->length);
 
     pthread_mutex_unlock(&impl->mutex);
@@ -271,7 +271,7 @@ static cdx_int32 __AsfPsrRead(CdxParserT *psr, CdxPacketT *pkt)
     {
         if ((impl->videoHeartIndex++ & 0x3fU) == 0x0U)
         {
-           // CDX_LOGD("[video]: pts(%.3f) length(%d)", (double)pkt->pts/1000000.0, pkt->length);
+           // LOGD("[video]: pts(%.3f) length(%d)", (double)pkt->pts/1000000.0, pkt->length);
         }
 
     }
@@ -279,7 +279,7 @@ static cdx_int32 __AsfPsrRead(CdxParserT *psr, CdxPacketT *pkt)
     {
         if ((impl->audioHeartIndex++ & 0x3fU) == 0x0U)
         {
-           // CDX_LOGD("[audio]: pts(%.3f) length(%d)", (double)pkt->pts/1000000.0, pkt->length);
+           // LOGD("[audio]: pts(%.3f) length(%d)", (double)pkt->pts/1000000.0, pkt->length);
         }
     }
     impl->status = CDX_PSR_IDLE;
@@ -301,7 +301,7 @@ static cdx_int32 __AsfPsrGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *mediaIn
     if((!impl->ctx->index_ptr) && (impl->ctx->nb_packets == 0
     || impl->ctx->nb_packets == 0xffffffff) && (impl->ctx->totalBitRate == 0))
     {
-       CDX_LOGD("cannot seek");
+       LOGD("cannot seek");
        mediaInfo->bSeekable = 0;
     }*/
 
@@ -353,7 +353,7 @@ static cdx_int32 __AsfPsrGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *mediaIn
     mediaInfo->program[0].subtitleNum = 0; /*container not support subtitle*/
 
     /*select audio stream*/
-    CDX_LOGI("open flags(0x%x)", impl->flags);
+    LOGI("open flags(0x%x)", impl->flags);
     if (MutilAudioStream(impl->flags))
     {
         for (streamIndex = 0; streamIndex < impl->ctx->nb_streams; streamIndex++)
@@ -363,7 +363,7 @@ static cdx_int32 __AsfPsrGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *mediaIn
                 impl->ctx->streams[streamIndex]->active = 1;
             }
         }
-        CDX_LOGI("mutil audio...");
+        LOGI("mutil audio...");
         mediaInfo->program[0].audioIndex = 0;
     }
     else
@@ -410,7 +410,7 @@ static cdx_int32 onForceStop(struct AsfParserImplS *impl)
     ret = CdxStreamForceStop(impl->stream);
     if (ret != CDX_SUCCESS)
     {
-        CDX_LOGE("stop stream failure... err(%d)", ret);
+        LOGE("stop stream failure... err(%d)", ret);
     }
     return ret;
 }
@@ -422,7 +422,7 @@ static cdx_int32 onClrForceStop(struct AsfParserImplS *impl)
     ret = CdxStreamClrForceStop(impl->stream);
     if (ret != CDX_SUCCESS)
     {
-        CDX_LOGE("stop stream failure... err(%d)", ret);
+        LOGE("stop stream failure... err(%d)", ret);
     }
     impl->ctx->forceStop = 0;
     impl->mErrno = PSR_OK;
@@ -442,7 +442,7 @@ static int __AsfPsrControl(CdxParserT *psr, cdx_int32 cmd, void *param)
         case CDX_PSR_CMD_CLR_FORCESTOP:
             return onClrForceStop(impl);
         default:
-            CDX_LOGW("not support cmd(%d)", cmd);
+            LOGW("not support cmd(%d)", cmd);
            break;
     }
 
@@ -456,7 +456,7 @@ static cdx_int32 __AsfPsrSeekTo(CdxParserT *psr, cdx_int64 timeUs, SeekModeType 
     int ret = 0;
     int i;
     impl = CdxContainerOf(psr, struct AsfParserImplS, base);
-    CDX_LOGI("-------seekTo (%.3f)--------", (double)timeUs/1000000.0);
+    LOGI("-------seekTo (%.3f)--------", (double)timeUs/1000000.0);
 
     pthread_mutex_lock(&impl->mutex);
     for (i = 0; i < 2; i++)
@@ -475,14 +475,14 @@ static cdx_int32 __AsfPsrSeekTo(CdxParserT *psr, cdx_int64 timeUs, SeekModeType 
     //3.seek
     if (timeUs >= impl->ctx->durationMs * 1000)
     {
-        CDX_LOGW("seekTo (%lld/%lld) ms", timeUs/1000, impl->ctx->durationMs);
+        LOGW("seekTo (%lld/%lld) ms", timeUs/1000, impl->ctx->durationMs);
         impl->mErrno = PSR_EOS;
         pthread_mutex_unlock(&impl->mutex);
         return 0;
     }
 
     ret = AsfPsrCoreIoctrl(impl->ctx, CDX_MEDIA_STATUS_JUMP, (uintptr_t)&timeUs);
-    CDX_LOGI("-------seekTo done--------");
+    LOGI("-------seekTo done--------");
     pthread_mutex_unlock(&impl->mutex);
     return ret;
 }
@@ -511,14 +511,14 @@ static int __AsfPsrInit(CdxParserT *psr)
 
     impl = CdxContainerOf(psr, struct AsfParserImplS, base);
 
-    CDX_LOGI("asf parser init begin...");
+    LOGI("asf parser init begin...");
 
     pthread_mutex_init(&impl->mutex, NULL);
     //init asf parser lib module
     impl->ctx = AsfPsrCoreInit();
     if (!impl->ctx)
     {
-        CDX_LOGW("Initiate asf file parser lib module failed!");
+        LOGW("Initiate asf file parser lib module failed!");
         goto failure;
     }
 
@@ -526,7 +526,7 @@ static int __AsfPsrInit(CdxParserT *psr)
 
    if(result < 0)
    {
-      CDX_LOGW("open asf/wmv reader failed");
+      LOGW("open asf/wmv reader failed");
       goto failure;
    }
 
@@ -536,7 +536,7 @@ static int __AsfPsrInit(CdxParserT *psr)
     impl->audioHeartIndex = 0;
     impl->videoHeartIndex = 0;
     impl->status = CDX_PSR_IDLE;
-    CDX_LOGI("asf parser init success...");
+    LOGI("asf parser init success...");
 
     AsfPsrCoreIoctrl(impl->ctx, CDX_MEDIA_STATUS_PLAY, 0);
 

@@ -104,7 +104,7 @@ enum EAUDIOCODECFORMAT
 #define WAVE_FORMAT_G723_ADPCM              0x0014  /* G.723 ADPCM */
 #define WAVE_FORMAT_DIGISTD                 0x0015  /* DSP Solution's DIGISTD */
 #define WAVE_FORMAT_DIGIFIX                 0x0016  /* DSP Solution's DIGIFIX */
-#define WAVE_FORMAT_DIALOGIC_OKI_ADPCM      0x0017  /* Dialogic OKI ADPCM */
+#define WAVE_FORMAT_DILOGIC_OKI_ADPCM      0x0017  /* DiLOGIc OKI ADPCM */
 #define WAVE_FORMAT_MEDIAVISION_ADPCM       0x0018  /* MediaVision ADPCM */
 #define WAVE_FORMAT_CU_CODEC                0x0019  /* HP CU */
 #define WAVE_FORMAT_YAMAHA_ADPCM            0x0020  /* Yamaha ADPCM */

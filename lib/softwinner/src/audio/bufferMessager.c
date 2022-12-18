@@ -15,7 +15,7 @@
 #define LOG_TAG "bufferMessager"
 #include "BufferManager.h"
 
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,7 +29,7 @@ static ssize_t bufferMgr_WriteData(BufferManager *pMgr, char *pInBuf, size_t inS
 	pthread_mutex_lock(&pMgr->mLock);
     if (inSize > pMgr->mFreeSize) {
     	pthread_mutex_unlock(&pMgr->mLock);
-        alogw("Not enough buffer to write! freeSize[%d]<inSize[%d]", pMgr->mFreeSize, inSize);
+        LOGW("Not enough buffer to write! freeSize[%d]<inSize[%d]", pMgr->mFreeSize, inSize);
         return -1;
     }
     int endSize = pMgr->mpStart + pMgr->mTotalSize - pMgr->mpWrite;
@@ -53,7 +53,7 @@ static ssize_t bufferMgr_ReadData(BufferManager *pMgr, char *pOutBuf, size_t req
 	pthread_mutex_lock(&pMgr->mLock);
     if (pMgr->mDataSize < reqSize) {
         pthread_mutex_unlock(&pMgr->mLock);
-        alogw("Not enough buffer to read! dataSize[%d]<reqSize[%d]", pMgr->mDataSize, reqSize);
+        LOGW("Not enough buffer to read! dataSize[%d]<reqSize[%d]", pMgr->mDataSize, reqSize);
         return -1;
     }
     int endSize = pMgr->mpStart + pMgr->mTotalSize - pMgr->mpRead;
@@ -92,13 +92,13 @@ BufferManager *bufferMgr_Create(size_t size)
 {
     BufferManager *pMgr = (BufferManager*)malloc(sizeof(BufferManager));
     if (pMgr == NULL) {
-        aloge("alloc BufferManager error!");
+        LOGE("alloc BufferManager error!");
         return NULL;
     }
 
     pMgr->mpStart = (char*)malloc(size);
     if (pMgr->mpStart == NULL) {
-        aloge("buffer manager alloc size %d error!", size);
+        LOGE("buffer manager alloc size %d error!", size);
         free(pMgr);
         return NULL;
     }

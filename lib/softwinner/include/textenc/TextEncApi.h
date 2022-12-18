@@ -5,7 +5,7 @@ extern "C" {
 #ifndef __TEXT_ENC_API_H__
 #define __TEXT_ENC_API_H__
 
-#include <log/log_wrapper.h>
+#include <log/log.h>
 #include <pthread.h>
 
 #define TEXTENC_PACKET_SIZE   (0x10+sizeof(RMCINFO)) //(0xc0 + sizeof(GSENSOR_t)*60 + 2)

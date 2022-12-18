@@ -1,6 +1,6 @@
 // #include <CDX_LogNDebug.h>
 #define LOG_TAG "AacMuxer.c"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,7 +124,7 @@ int generateAdtsHeader(AacContext *s, unsigned int length)
 
 int AacWriteExtraData(void *handle, unsigned char *vosData, unsigned int vosLen, unsigned int idx)
 {
-    //alogd("AacWriteExtraData");
+    //LOGD("AacWriteExtraData");
     return 0;
 }
 
@@ -133,7 +133,7 @@ int AacMuxerWriteHeader(void *handle)
     AacContext *s = (AacContext *)handle;
     char *pCache = NULL;
     unsigned int nCacheSize = 0;
-    alogv("AacMuxerWriteHeader");
+    LOGV("AacMuxerWriteHeader");
     if(s->pb)
     {
         FSWRITEMODE mode = s->mFsWriteMode;
@@ -147,7 +147,7 @@ int AacMuxerWriteHeader(void *handle)
     		}
     		else
     		{
-                aloge("fatal error! not set cacheMemory but set mode FSWRITEMODE_CACHETHREAD! use FSWRITEMODE_DIRECT.");
+                LOGE("fatal error! not set cacheMemory but set mode FSWRITEMODE_CACHETHREAD! use FSWRITEMODE_DIRECT.");
                 mode = FSWRITEMODE_DIRECT;
     		}
         }
@@ -159,7 +159,7 @@ int AacMuxerWriteHeader(void *handle)
         s->mpFsWriter = createFsWriter(mode, s->pb, pCache, nCacheSize, 0);
         if(NULL == s->mpFsWriter)
         {
-            aloge("fatal error! create FsWriter() fail!");
+            LOGE("fatal error! create FsWriter() fail!");
             return -1;
         }
     }
@@ -209,7 +209,7 @@ int AacMuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
         s->pb = create_outstream_handle(&datasourceDesc);
         if(NULL == s->pb)
         {
-            aloge("fatal error! create aac outstream fail.");
+            LOGE("fatal error! create aac outstream fail.");
             return -1;
         }
 		break;
@@ -224,32 +224,32 @@ int AacMuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
         s->pb = create_outstream_handle(&datasourceDesc);
         if(NULL == s->pb)
         {
-            aloge("fatal error! create aac outstream fail.");
+            LOGE("fatal error! create aac outstream fail.");
             return -1;
         }
         if(s->mFallocateLen > 0)
         {
             if(s->pb->fallocate(s->pb, 0x01, 0, s->mFallocateLen) < 0)
             {
-                aloge("fatal error! Failed to fallocate size %d, fd[%d](%s)", s->mFallocateLen, s->pb->fd_desc.fd, strerror(errno));
+                LOGE("fatal error! Failed to fallocate size %d, fd[%d](%s)", s->mFallocateLen, s->pb->fd_desc.fd, strerror(errno));
             }
         }
 		break;
     }
     case SETOUTURL:
-        aloge("DO not support set URL");
+        LOGE("DO not support set URL");
         break;
     case SETAVPARA:
 		pMediaInf = (_media_file_inf_t *)pParam2;
 		s->channels = pMediaInf->channels;
 		s->sample_rate = pMediaInf->sample_rate;
-        alogd("SETAVPARA: pMediaInf->sample_rate(%d), pMediaInf->channels(%d)",
+        LOGD("SETAVPARA: pMediaInf->sample_rate(%d), pMediaInf->channels(%d)",
             pMediaInf->sample_rate, pMediaInf->channels);
         initADTSHeader(s, s->sample_rate, s->channels);
         break;
     case SETSDCARDSTATE:
         s->mbSdcardDisappear = !uParam;
-        alogd("SETSDCARDSTATE, mbSdcardDisappear[%d]", s->mbSdcardDisappear);
+        LOGD("SETSDCARDSTATE, mbSdcardDisappear[%d]", s->mbSdcardDisappear);
         break;
     case SETCACHEMEM:
         s->mCacheMemInfo = *(FsCacheMemInfo*)pParam2;
@@ -272,7 +272,7 @@ void *AacMuxerOpen(int *ret)
     AacContext *s;
     //int i;
 
-    alogd("AacMuxerOpen");
+    LOGD("AacMuxerOpen");
 
     *ret = 0;
 

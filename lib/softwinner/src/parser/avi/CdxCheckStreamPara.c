@@ -103,7 +103,7 @@ AVI_FILE_IN *avi_in, struct FILE_PARSER *p)
         }
         default:
         {
-            LOGV("TAG[%x] is not mp3\n", pAudStrmInfo->avi_audio_tag);
+            LOGV("TAG[%x] is not mp3", pAudStrmInfo->avi_audio_tag);
             return AVI_ERR_IGNORE;
         }
     }
@@ -112,20 +112,20 @@ AVI_FILE_IN *avi_in, struct FILE_PARSER *p)
     cur_pos = cdx_tell(avi_in->fp);   //���浱ǰ��fp��ֵ���������Ļָ���
     if(cdx_seek(avi_in->fp, avi_in->movi_start, CEDARLIB_SEEK_SET))
     {
-        LOGV("Seek file failed!\n");
+        LOGV("Seek file failed!");
         ret = AVI_ERR_READ_FILE_FAIL;
         goto __err0;
     }
     pAudBuf = (CDX_U8*)malloc(MP3_DATA_LENGTH);  //�����ڴ�
     if(NULL == pAudBuf)
     {
-        LOGV("malloc fail\n");
+        LOGV("malloc fail");
         ret = AVI_ERR_REQMEM_FAIL;
         goto __err0;
     }
     while(1)    //��ʼ��audio chunk,4096�ֽڻ�2��chunk�͹���
     {
-        LOGV("read audio chunk for []times\n");
+        LOGV("read audio chunk for []times");
         ret = get_next_chunk_head(avi_in->fp, &avi_in->data_chunk, &length);
         if(ret == AVI_SUCCESS)
         {
@@ -134,18 +134,18 @@ AVI_FILE_IN *avi_in, struct FILE_PARSER *p)
             {
                 if(nAudBufLen + avi_in->data_chunk.length> MP3_DATA_LENGTH)
                 {   //����4096�ֽ�
-                    LOGV("memory[4096] not enough,[%d],[%d]\n", nAudBufLen,
+                    LOGV("memory[4096] not enough,[%d],[%d]", nAudBufLen,
                         avi_in->data_chunk.length);
                     if(nAudBufLen >= MP3_DATA_LENGTH)
                     {
-                        LOGV("fatal error!impossible!\n");
+                        LOGV("fatal error!impossible!");
                         ret = AVI_ERR_READ_FILE_FAIL;
                         goto __err0;
                     }
                     if(cdx_read(pAudBuf+nAudBufLen, MP3_DATA_LENGTH - nAudBufLen,
                         1, avi_in->fp) != 1)
                     {
-                        LOGV("read file fail\n");
+                        LOGV("read file fail");
                         ret = AVI_ERR_READ_FILE_FAIL;
                         goto __err0;
                     }
@@ -252,7 +252,7 @@ AVI_FILE_IN *avi_in, struct FILE_PARSER *p)
             }
             default:
             {
-                LOGV("other audio tag[%x], not correct\n", pAudStrmInfo->avi_audio_tag);
+                LOGV("other audio tag[%x], not correct", pAudStrmInfo->avi_audio_tag);
                 return ret;
             }
         }

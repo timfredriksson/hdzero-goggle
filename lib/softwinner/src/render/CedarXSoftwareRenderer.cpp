@@ -63,7 +63,7 @@ CedarXSoftwareRenderer::CedarXSoftwareRenderer(
     int32_t nVdecInitRotation;  //clock wise.
     int32_t rotationDegrees;    //command gpu transform frame buffer clock wise degree.
     if (!meta->findInt32(kKeyRotation, &nVdecInitRotation)) {
-        ALOGD("(f:%s, l:%d) find fail nVdecInitRotation[%d]", __FUNCTION__, __LINE__, nVdecInitRotation);
+        LOGD("(f:%s, l:%d) find fail nVdecInitRotation[%d]", __FUNCTION__, __LINE__, nVdecInitRotation);
         rotationDegrees = 0;
     }
     else
@@ -92,7 +92,7 @@ CedarXSoftwareRenderer::CedarXSoftwareRenderer(
             }
             default:
             {
-                ALOGE("(f:%s, l:%d) fatal error! nInitRotation=%d", __FUNCTION__, __LINE__, nVdecInitRotation);
+                LOGE("(f:%s, l:%d) fatal error! nInitRotation=%d", __FUNCTION__, __LINE__, nVdecInitRotation);
                 rotationDegrees = 0;
                 break;
             }
@@ -107,7 +107,7 @@ CedarXSoftwareRenderer::CedarXSoftwareRenderer(
     int usage = 0;
     meta->findInt32(kKeyIsDRM, &usage);
     if(usage) {
-    	ALOGD("(f:%s, l:%d) Be careful! protected video", __FUNCTION__, __LINE__);
+    	LOGD("(f:%s, l:%d) Be careful! protected video", __FUNCTION__, __LINE__);
     	usage = GRALLOC_USAGE_PROTECTED;
     }
     usage |= GRALLOC_USAGE_SW_READ_NEVER /*| GRALLOC_USAGE_SW_WRITE_OFTEN*/
@@ -144,7 +144,7 @@ CedarXSoftwareRenderer::CedarXSoftwareRenderer(
     }
     if(nGpuBufWidth!=mCropWidth || nGpuBufHeight!=mCropHeight)
     {
-        ALOGD("(f:%s, l:%d) Be careful! need crop gpuFrame![%dx%d], crop[%dx%d]", __FUNCTION__, __LINE__, nGpuBufWidth, nGpuBufHeight, mCropWidth, mCropHeight);
+        LOGD("(f:%s, l:%d) Be careful! need crop gpuFrame![%dx%d], crop[%dx%d]", __FUNCTION__, __LINE__, nGpuBufWidth, nGpuBufHeight, mCropWidth, mCropHeight);
         //Rect crop;
         android_native_rect_t crop;
         crop.left = 0;
@@ -189,14 +189,14 @@ int CedarXSoftwareRenderer::control(int cmd, int para, void *pData)
                     }
                     else
                     {
-                        ALOGE("(f:%s, l:%d) fatal error! Failed to set scaling mode: %d", __FUNCTION__, __LINE__, ret);
+                        LOGE("(f:%s, l:%d) fatal error! Failed to set scaling mode: %d", __FUNCTION__, __LINE__, ret);
                     }
                 }
             }
             break;
         }
         default:
-            ALOGW("undefined command[0x%x]!", cmd);
+            LOGW("undefined command[0x%x]!", cmd);
             ret = UNKNOWN_ERROR;
             break;
     }
@@ -204,7 +204,7 @@ int CedarXSoftwareRenderer::control(int cmd, int para, void *pData)
 }
 void CedarXSoftwareRenderer::render(const void *pObject, size_t size, void *platformPrivate)
 {
-    ALOGE("(f:%s, l:%d) fatal error! why call here?", __FUNCTION__, __LINE__);
+    LOGE("(f:%s, l:%d) fatal error! why call here?", __FUNCTION__, __LINE__);
 }
 
 int CedarXSoftwareRenderer::dequeueFrame(ANativeWindowBufferCedarXWrapper *pObject)
@@ -218,7 +218,7 @@ int CedarXSoftwareRenderer::dequeueFrame(ANativeWindowBufferCedarXWrapper *pObje
 #if (CEDARX_ANDROID_VERSION >=8)
     if ((err = mNativeWindow->dequeueBuffer_DEPRECATED(mNativeWindow.get(), &buf)) != 0) 
     {
-        ALOGW("(f:%s, l:%d) Surface::dequeueBuffer returned error %d", __FUNCTION__, __LINE__, err);
+        LOGW("(f:%s, l:%d) Surface::dequeueBuffer returned error %d", __FUNCTION__, __LINE__, err);
         return -1;
     }
     CHECK_EQ(0, mNativeWindow->lockBuffer_DEPRECATED(mNativeWindow.get(), buf));
@@ -286,12 +286,12 @@ int CedarXSoftwareRenderer::cancelFrame(ANativeWindowBufferCedarXWrapper *pObjec
 
 #if (CEDARX_ANDROID_VERSION >=8)
     if ((err = mNativeWindow->cancelBuffer_DEPRECATED(mNativeWindow.get(), buf)) != 0) {
-        ALOGW("Surface::cancelBuffer returned error %d", err);
+        LOGW("Surface::cancelBuffer returned error %d", err);
     }
     buf = NULL;
 #else 
     if ((err = mNativeWindow->cancelBuffer(mNativeWindow.get(), buf)) != 0) {
-        ALOGW("Surface::cancelBuffer returned error %d", err);
+        LOGW("Surface::cancelBuffer returned error %d", err);
     }
     buf = NULL;
 #endif
@@ -323,7 +323,7 @@ void* CedarXSoftwareRenderer::getPhysicalAddress(ANativeWindowBuffer *pANWB, int
     }
     else
     {
-        ALOGE("(f:%s, l:%d) fatal error! ANWB->handle[%p]", __FUNCTION__, __LINE__, hnd);
+        LOGE("(f:%s, l:%d) fatal error! ANWB->handle[%p]", __FUNCTION__, __LINE__, hnd);
         return NULL;
     }
 #else 
@@ -335,7 +335,7 @@ void* CedarXSoftwareRenderer::getPhysicalAddress(ANativeWindowBuffer *pANWB, int
     }
     else
     {
-        ALOGE("(f:%s, l:%d) fatal error! ANWB->handle[%p]", __FUNCTION__, __LINE__, hnd);
+        LOGE("(f:%s, l:%d) fatal error! ANWB->handle[%p]", __FUNCTION__, __LINE__, hnd);
         return NULL;
     }
 #endif

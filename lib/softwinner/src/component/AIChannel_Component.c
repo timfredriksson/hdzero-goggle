@@ -13,7 +13,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "AIChannel_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,12 +58,12 @@ static ERRORTYPE AIChannel_GetFrame(
 
     if (COMP_StateIdle != pChnData->state && COMP_StateExecuting != pChnData->state)
     {
-        alogw("call GetFrame() in wrong state[0x%x]", pChnData->state);
+        LOGW("call GetFrame() in wrong state[0x%x]", pChnData->state);
         return ERR_AI_NOT_PERM;
     }
     if (pChnData->mOutputPortTunnelFlag[AI_OUTPORT_SUFFIX_AENC] || pChnData->mOutputPortTunnelFlag[AI_OUTPORT_SUFFIX_AO])
     {
-        aloge("fatal error! can't call GetFrame() in tunnel mode!");
+        LOGE("fatal error! can't call GetFrame() in tunnel mode!");
         return ERR_AI_NOT_PERM;
     }
 
@@ -94,7 +94,7 @@ _TryToGetOutFrame:
             ret = cdx_sem_down_timedwait(&pChnData->mWaitOutFrameSem, nMilliSec);
             if (ETIMEDOUT == ret)
             {
-                alogv("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
+                LOGV("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
                 eError = ERR_AI_BUF_EMPTY;
                 //pChnData->mWaitingOutFrameFlag = FALSE;
             }
@@ -105,7 +105,7 @@ _TryToGetOutFrame:
             }
             else
             {
-                aloge("fatal error! AI pthread cond wait timeout ret[%d]", ret);
+                LOGE("fatal error! AI pthread cond wait timeout ret[%d]", ret);
                 eError = ERR_AI_BUF_EMPTY;
                 //pChnData->mWaitingOutFrameFlag = FALSE;
             }
@@ -133,12 +133,12 @@ static ERRORTYPE AIChannel_ReleaseFrame(
 
     if (COMP_StateIdle != pChnData->state && COMP_StateExecuting != pChnData->state)
     {
-        alogw("call ReleaseFrame in wrong state[0x%x]", pChnData->state);
+        LOGW("call ReleaseFrame in wrong state[0x%x]", pChnData->state);
         return ERR_AI_SYS_NOTREADY;
     }
     if (pChnData->mOutputPortTunnelFlag[AI_OUTPORT_SUFFIX_AENC] || pChnData->mOutputPortTunnelFlag[AI_OUTPORT_SUFFIX_AO])
     {
-        aloge("fatal error! can't call ReleaseFrame in tunnel mode!");
+        LOGE("fatal error! can't call ReleaseFrame in tunnel mode!");
         return ERR_AI_NOT_PERM;
     }
 
@@ -151,7 +151,7 @@ static ERRORTYPE AIChannel_ReleaseFrame(
     }
     else
     {
-        alogw("Be careful! AI frame[%p][%u] is not find, maybe reset channel before call this function?",
+        LOGW("Be careful! AI frame[%p][%u] is not find, maybe reset channel before call this function?",
             pAudioFrame->mpAddr, pAudioFrame->mLen);
         eError = ERR_AI_ILLEGAL_PARAM;
     }
@@ -167,7 +167,7 @@ static ERRORTYPE AIChannel_SetSaveFileInfo(
 
     if (COMP_StateIdle != pChnData->state && COMP_StateExecuting != pChnData->state)
     {
-        aloge("call SetSaveFileInfo in wrong state[0x%x]!", pChnData->state);
+        LOGE("call SetSaveFileInfo in wrong state[0x%x]!", pChnData->state);
         return ERR_AI_NOT_PERM;
     }
 
@@ -175,7 +175,7 @@ static ERRORTYPE AIChannel_SetSaveFileInfo(
     pChnData->mpSaveFileFullPath = (char*)malloc(nPathLen);
     if (NULL == pChnData->mpSaveFileFullPath)
     {
-        aloge("malloc %d fail! FilePath:[%s], FileName:[%s]", nPathLen, pFileInfo->mFilePath, pFileInfo->mFileName);
+        LOGE("malloc %d fail! FilePath:[%s], FileName:[%s]", nPathLen, pFileInfo->mFilePath, pFileInfo->mFileName);
         return ERR_AI_NOMEM;
     }
 
@@ -185,13 +185,13 @@ static ERRORTYPE AIChannel_SetSaveFileInfo(
     pChnData->mFpSaveFile = fopen(pChnData->mpSaveFileFullPath, "wb+");
     if (pChnData->mFpSaveFile)
     {
-        alogd("create file(%s) to save pcm file", pChnData->mpSaveFileFullPath);
+        LOGD("create file(%s) to save pcm file", pChnData->mpSaveFileFullPath);
         pChnData->mSaveFileFlag = TRUE;
         pChnData->mSaveFileSize = 0;
     }
     else
     {
-        aloge("create file(%s) failed!", pChnData->mpSaveFileFullPath);
+        LOGE("create file(%s) failed!", pChnData->mpSaveFileFullPath);
         pChnData->mSaveFileFlag = FALSE;
     }
 
@@ -206,7 +206,7 @@ static ERRORTYPE AIChannel_QueryFileStatus(
 
     if (COMP_StateIdle != pChnData->state && COMP_StateExecuting != pChnData->state)
     {
-        aloge("call SetSaveFileInfo in wrong state[0x%x]!", pChnData->state);
+        LOGE("call SetSaveFileInfo in wrong state[0x%x]!", pChnData->state);
         return ERR_AI_NOT_PERM;
     }
 
@@ -222,7 +222,7 @@ static ERRORTYPE AIChannel_QueryFileStatus(
     }
     else
     {
-        alogw("AI NOT in save file status!");
+        LOGW("AI NOT in save file status!");
     }
     return SUCCESS;
 }
@@ -253,7 +253,7 @@ static ERRORTYPE AIChannel_SendCommand(PARAM_IN COMP_HANDLETYPE hComponent,
     ERRORTYPE eError = SUCCESS;
     message_t msg;
 
-    //alogv("Command: %d", Cmd);
+    //LOGV("Command: %d", Cmd);
     if (NULL == pChnData) {
         eError = ERR_AI_ILLEGAL_PARAM;
         goto COMP_CONF_CMD_BAIL;
@@ -332,7 +332,7 @@ static ERRORTYPE AIChannel_SetCallbacks(PARAM_IN COMP_HANDLETYPE hComponent,
     ERRORTYPE eError = SUCCESS;
 
     if (NULL == pChnData || NULL == pCallbacks || NULL == pAppData) {
-        aloge("pChnData=%p, pCallbacks=%p, pAppData=%p", pChnData, pCallbacks, pAppData);
+        LOGE("pChnData=%p, pCallbacks=%p, pAppData=%p", pChnData, pCallbacks, pAppData);
         eError = ERR_AI_ILLEGAL_PARAM;
         goto COMP_CONF_CMD_BAIL;
     }
@@ -557,11 +557,11 @@ static ERRORTYPE AIChannel_ComponentTunnelRequest(
 
     if (pChnData->state == COMP_StateExecuting)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if(pChnData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request can't be in state[0x%x]", pChnData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]", pChnData->state);
         eError = ERR_AI_INCORRECT_STATE_OPERATION;
         goto COMP_CMD_FAIL;
     }
@@ -573,7 +573,7 @@ static ERRORTYPE AIChannel_ComponentTunnelRequest(
         }
     }
     if (i == AI_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AI_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -585,7 +585,7 @@ static ERRORTYPE AIChannel_ComponentTunnelRequest(
         }
     }
     if (i == AI_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AI_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -597,7 +597,7 @@ static ERRORTYPE AIChannel_ComponentTunnelRequest(
         }
     }
     if (i == AI_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AI_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -607,13 +607,13 @@ static ERRORTYPE AIChannel_ComponentTunnelRequest(
     pPortTunnelInfo->nTunnelPortIndex = nTunneledPort;
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup) {
-        alogd("Cancel setup tunnel on port[%d]", nPort);
+        LOGD("Cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         goto COMP_CMD_FAIL;
     }
     if(pPortDef->eDir == COMP_DirOutput) {
         if (pChnData->mOutputPortTunnelFlag[AI_OUTPORT_SUFFIX_AENC] || pChnData->mOutputPortTunnelFlag[AI_OUTPORT_SUFFIX_AO]) {
-            aloge("AI_Comp outport already bind, why bind again?!");
+            LOGE("AI_Comp outport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -627,7 +627,7 @@ static ERRORTYPE AIChannel_ComponentTunnelRequest(
         else if (pChnData->sPortDef[AI_CHN_PORT_INDEX_OUT_AO].nPortIndex == nPort)
             pChnData->mOutputPortTunnelFlag[AI_OUTPORT_SUFFIX_AO] = TRUE;
         else
-            aloge("fatal error! ao bind with portIndex(%d, %d)", nPort, nTunneledPort);
+            LOGE("fatal error! ao bind with portIndex(%d, %d)", nPort, nTunneledPort);
 
     } else {
         //Check the data compatibility between the ports using one or more GetParameter calls.
@@ -636,7 +636,7 @@ static ERRORTYPE AIChannel_ComponentTunnelRequest(
         out_port_def.nPortIndex = nTunneledPort;
         ((MM_COMPONENTTYPE*)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput) {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_AI_ILLEGAL_PARAM;
             goto COMP_CMD_FAIL;
         }
@@ -644,7 +644,7 @@ static ERRORTYPE AIChannel_ComponentTunnelRequest(
 
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier) {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -666,7 +666,7 @@ static ERRORTYPE AIChannel_EmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, 
     //pthread_mutex_lock(&pChnData->mStateLock);
     if (pChnData->state != COMP_StateExecuting)
     {
-        //aloge("send frame when AI channel state[0x%x] is not executing", pChnData->state);
+        //LOGE("send frame when AI channel state[0x%x] is not executing", pChnData->state);
         eError = ERR_AI_SYS_NOTREADY;
         goto EIXT;
     }
@@ -691,9 +691,9 @@ static ERRORTYPE AIChannel_EmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, 
         }
         else
         {
-            aloge("no node in FreeFrameList!");
+            LOGE("no node in FreeFrameList!");
             PcmBufferManager *pBufMgr = pChnData->mpCapMgr;
-            aloge("PcmBufMgrFrmCntInfo >> FillingList:%d, ValidList:%d, UsingList:%d", pBufMgr->fillingFrmCnt(pBufMgr),
+            LOGE("PcmBufMgrFrmCntInfo >> FillingList:%d, ValidList:%d, UsingList:%d", pBufMgr->fillingFrmCnt(pBufMgr),
                 pBufMgr->validFrmCnt(pBufMgr), pBufMgr->usingFrmCnt(pBufMgr));
             eError = ERR_AI_BUF_FULL;
             goto EIXT;
@@ -725,7 +725,7 @@ static ERRORTYPE AIChannel_EmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, 
             cdx_sem_up_unique(&pChnData->mWaitOutFrameSem);
         }
     } else {
-        aloge("fatal error! inputPortIndex[%d] match nothing!", pBuffer->nOutputPortIndex);
+        LOGE("fatal error! inputPortIndex[%d] match nothing!", pBuffer->nOutputPortIndex);
     }
 
 EIXT:
@@ -749,7 +749,7 @@ static ERRORTYPE AIChannel_FillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, P
     if (pBuffer->nOutputPortIndex == pChnData->sPortDef[AI_CHN_PORT_INDEX_OUT_AENC].nPortIndex)
     {
         AUDIO_FRAME_S *pFrm = (AUDIO_FRAME_S*)pBuffer->pOutputPortPrivate;
-        alogw("AEnc not need return frame to AI!");
+        LOGW("AEnc not need return frame to AI!");
         pChnData->mpCapMgr->releaseFrame(pChnData->mpCapMgr, pFrm);
     }
     else if (pBuffer->nOutputPortIndex == pChnData->sPortDef[AI_CHN_PORT_INDEX_OUT_AO].nPortIndex)
@@ -759,7 +759,7 @@ static ERRORTYPE AIChannel_FillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, P
     }
     else
     {
-        aloge("fatal error! return frame with portIndex(%d, %d)", pBuffer->nOutputPortIndex, pBuffer->nInputPortIndex);
+        LOGE("fatal error! return frame with portIndex(%d, %d)", pBuffer->nOutputPortIndex, pBuffer->nInputPortIndex);
     }
     return eError;
 }
@@ -773,7 +773,7 @@ static ERRORTYPE AIChannel_ComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     msg.command = eCmd;
     put_message(&pChnData->mCmdQueue, &msg);
-    alogv("wait AI channel component exit!...");
+    LOGV("wait AI channel component exit!...");
 
     // Wait for thread to exit so we can get the status into "error"
     pthread_join(pChnData->mThreadId, (void*) &eError);
@@ -797,7 +797,7 @@ static ERRORTYPE AIChannel_ComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
 #ifdef AI_SAVE_AUDIO_PCM
     fclose(pChnData->pcm_fp);
-    alogd("AI_Comp pcm_file size: %d", pChnData->pcm_sz);
+    LOGD("AI_Comp pcm_file size: %d", pChnData->pcm_sz);
 #endif
     if (pChnData->mSaveFileFlag)
     {
@@ -837,7 +837,7 @@ static ERRORTYPE AIChannel_ComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
 #endif
 
     free(pChnData);
-    alogd("Ai component exited!");
+    LOGD("Ai component exited!");
     return eError;
 }
 
@@ -910,19 +910,19 @@ static ERRORTYPE audioAecProcess(AI_CHN_DATA_S *pChnData, AUDIO_FRAME_S *pFrm, A
 
     if (((sampleRate!=8000) && (sampleRate!=16000)) || (trackCnt!=1))
     {
-        aloge("error rec sampleRate(%u) or trackCnt(%d)", sampleRate, trackCnt);
+        LOGE("error rec sampleRate(%u) or trackCnt(%d)", sampleRate, trackCnt);
         return FAILURE;
     }
 
     if (!pRefFrm->bValid)
     {
-        aloge("error frame invalid");
+        LOGE("error frame invalid");
         return FAILURE;
     }
 
     if (pChnData->ec == NULL)
     {
-        alogd("create ec");
+        LOGD("create ec");
 #if 0
         memcpy(&pChnData->ec_prms, &pChnData->mVqeCfg.stAecCfg.prms, sizeof(ec_prms_t));
         pChnData->ec_prms.aec_prms.sampling_rate = sampleRate;
@@ -939,7 +939,7 @@ static ERRORTYPE audioAecProcess(AI_CHN_DATA_S *pChnData, AUDIO_FRAME_S *pFrm, A
         pChnData->ec = ec_create(&pChnData->ec_prms);
         if (pChnData->ec == NULL)
         {
-            aloge("aec_create fail!");
+            LOGE("aec_create fail!");
             return FAILURE;
         }
     }
@@ -1002,7 +1002,7 @@ static ERRORTYPE audioRnrProcess(AI_CHN_DATA_S *pChnData, AUDIO_FRAME_S *pFrm)
         pChnData->nosc = NOSCinit(&prms);
         if (pChnData->nosc == NULL)
         {
-            aloge("rnr init fail!");
+            LOGE("rnr init fail!");
             return FAILURE;
         }
     }
@@ -1036,7 +1036,7 @@ static ERRORTYPE audioDrcProcess(AI_CHN_DATA_S *pChnData, AUDIO_FRAME_S *pFrm)
 
         if (pChnData->drc == NULL)
         {
-            aloge("drc create fail!");
+            LOGE("drc create fail!");
             return FAILURE;
         }
     }
@@ -1055,7 +1055,7 @@ static int audioEQHandle(AI_CHN_DATA_S *pChnData, AUDIO_FRAME_S *pInFrm)
 
     if (AUDIO_BIT_WIDTH_16 != pInFrm->mBitwidth)
     {
-        aloge("audio pcm format error! bitwidth=%d", pInFrm->mBitwidth);
+        LOGE("audio pcm format error! bitwidth=%d", pInFrm->mBitwidth);
         return FAILURE;
     }
 
@@ -1072,7 +1072,7 @@ static int audioEQHandle(AI_CHN_DATA_S *pChnData, AUDIO_FRAME_S *pInFrm)
         pChnData->equalizer = eq_create(&prms[0], sizeof(prms)/sizeof(prms[0]));
         if (pChnData->equalizer == NULL)
         {
-            aloge("eq create fail!");
+            LOGE("eq create fail!");
             return FAILURE;
         }
     }
@@ -1147,7 +1147,7 @@ ERRORTYPE AIChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     // Create private data
     pChnData = (AI_CHN_DATA_S*)malloc(sizeof(AI_CHN_DATA_S));
     if (pChnData == NULL) {
-        aloge("alloc AI_CHN_DATA_S error!");
+        LOGE("alloc AI_CHN_DATA_S error!");
         return FAILURE;
     }
     memset(pChnData, 0x0, sizeof(AI_CHN_DATA_S));
@@ -1211,26 +1211,26 @@ ERRORTYPE AIChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pChnData->sPortParam.nPorts++;
 
     if (audioHw_AI_GetPcmConfig(pChnData->mMppChnInfo.mDevId, &pChnData->mpPcmCfg) != SUCCESS) {
-        aloge("audioHw_AI_GetPcmConfig error!");
+        LOGE("audioHw_AI_GetPcmConfig error!");
         eError = FAILURE;
         goto ERR_EXIT0;
     }
     if (audioHw_AI_GetAIOAttr(pChnData->mMppChnInfo.mDevId, &pChnData->mpAioAttr) != SUCCESS) {
-        aloge("audioHw_AI_GetAIOAttr error!");
+        LOGE("audioHw_AI_GetAIOAttr error!");
         eError = FAILURE;
         goto ERR_EXIT0;
     }
 
     pChnData->mpCapMgr = pcmBufMgrCreate(AI_CHN_MAX_CACHE_FRAME, pChnData->mpPcmCfg->chunkBytes);
     if (pChnData->mpCapMgr == NULL) {
-        aloge("pcmBufMgrCreate error!");
+        LOGE("pcmBufMgrCreate error!");
         eError = FAILURE;
         goto ERR_EXIT0;
     }
 
     pChnData->mpPlayMgr = pcmBufMgrCreate(AI_CHN_MAX_CACHE_FRAME, pChnData->mpPcmCfg->chunkBytes);
     if (pChnData->mpPlayMgr == NULL) {
-        aloge("play pcmBufMgrCreate error!");
+        LOGE("play pcmBufMgrCreate error!");
         eError = FAILURE;
         goto ERR_EXIT1;
     }
@@ -1239,7 +1239,7 @@ ERRORTYPE AIChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pChnData->tmpBuf = (short *)malloc(pChnData->tmpBufLen);
     if(pChnData->tmpBuf == NULL)
     {
-        aloge("alloc aec tmpbuffer fail!");
+        LOGE("alloc aec tmpbuffer fail!");
         eError = FAILURE;
         goto ERR_EXIT2;
     }
@@ -1247,36 +1247,36 @@ ERRORTYPE AIChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pChnData->mStateLock, NULL);
     if(err != 0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = FAILURE;
         goto ERR_EXIT3;
     }
     err = pthread_mutex_init(&pChnData->mCapMgrLock, NULL);
     if(err != 0)
     {
-        aloge("fatal error! pthread mutex init fail!");
+        LOGE("fatal error! pthread mutex init fail!");
     }
     if (message_create(&pChnData->mCmdQueue) < 0){
-        aloge("message_create error!");
+        LOGE("message_create error!");
         eError = FAILURE;
         goto ERR_EXIT4;
     }
 
     err = cdx_sem_init(&pChnData->mAllFrameRelSem, 0);
     if (err != 0) {
-        aloge("cdx_sem_init AllFrameRelSem error!");
+        LOGE("cdx_sem_init AllFrameRelSem error!");
         goto ERR_EXIT5;
     }
 
     err = cdx_sem_init(&pChnData->mWaitOutFrameSem, 0);
     if (err != 0) {
-        aloge("cdx_sem_init mWaitOutFrameSem error!");
+        LOGE("cdx_sem_init mWaitOutFrameSem error!");
         goto ERR_EXIT6;
     }
 
 //    err = cdx_sem_init(&pChnData->mWaitGetAllOutFrameSem, 0);
 //    if (err != 0) {
-//        aloge("cdx_sem_init mWaitGetAllOutFrameSem error!");
+//        LOGE("cdx_sem_init mWaitGetAllOutFrameSem error!");
 //        goto ERR_EXIT7;
 //    }
 
@@ -1286,7 +1286,7 @@ ERRORTYPE AIChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     err = pthread_create(&pChnData->mThreadId, NULL, AIChannel_ComponentThread, pChnData);
     if (err || !pChnData->mThreadId) {
-        aloge("pthread_create error!");
+        LOGE("pthread_create error!");
         eError = FAILURE;
         goto ERR_EXIT8;
     }
@@ -1323,7 +1323,7 @@ static void *AIChannel_ComponentThread(void *pThreadData)
     AI_CHN_DATA_S *pChnData = (AI_CHN_DATA_S*)pThreadData;
     ERRORTYPE eError;
 
-    alogv("AI channel ComponentThread start run...");
+    LOGV("AI channel ComponentThread start run...");
 
     while (1) {
 PROCESS_MESSAGE:
@@ -1333,7 +1333,7 @@ PROCESS_MESSAGE:
             cmddata = (unsigned int)cmd_msg.para0;
             if (cmd == SetState)
             {
-                //alogv("cmd=SetState, cmddata=%d", cmddata);
+                //LOGV("cmd=SetState, cmddata=%d", cmddata);
                 //pthread_mutex_lock(&pChnData->mStateLock);
                 if (pChnData->state == (COMP_STATETYPE) (cmddata))
                 {
@@ -1357,7 +1357,7 @@ PROCESS_MESSAGE:
                             {
                                 CompSendEvent(pChnData, COMP_EventError, ERR_AI_INCORRECT_STATE_TRANSITION, 0);
                             }
-                            alogv("AI_Comp: idle->loaded. StateLoaded begin...");
+                            LOGV("AI_Comp: idle->loaded. StateLoaded begin...");
 
                             pChnData->mWaitAllFrameReleaseFlag = 1;
                             while (!pChnData->mpCapMgr->usingFrmEmpty(pChnData->mpCapMgr)) {
@@ -1375,12 +1375,12 @@ PROCESS_MESSAGE:
                         {
                             if (pChnData->state == COMP_StateLoaded)
                             {
-                                alogv("AI_Comp: loaded->idle ...");
+                                LOGV("AI_Comp: loaded->idle ...");
                                 pChnData->state = COMP_StateIdle;
                             }
                             else if (pChnData->state == COMP_StatePause || pChnData->state == COMP_StateExecuting)
                             {
-                                alogv("AI_Comp: pause/executing[0x%x]->idle ...", pChnData->state);
+                                LOGV("AI_Comp: pause/executing[0x%x]->idle ...", pChnData->state);
                                 pChnData->state = COMP_StateIdle;
                             }
                             else
@@ -1394,7 +1394,7 @@ PROCESS_MESSAGE:
                         {
                             if (pChnData->state == COMP_StateIdle || pChnData->state == COMP_StatePause)
                             {
-                                alogv("AI_Comp: idle/pause[0x%x]->executing ...", pChnData->state);
+                                LOGV("AI_Comp: idle/pause[0x%x]->executing ...", pChnData->state);
                                 pChnData->state = COMP_StateExecuting;
                             }
                             else
@@ -1481,7 +1481,7 @@ PROCESS_MESSAGE:
                     eError = pOutTunnelComp->EmptyThisBuffer(pOutTunnelComp, &obh);
                     if(SUCCESS != eError)
                     {
-                        alogv("[AI->AEnc] send pcm failed!");
+                        LOGV("[AI->AEnc] send pcm failed!");
                     }
                     CompSendEvent(pChnData, COMP_EventBufferPrefilled, pFrm->mLen, 0);
                     // AEnc copy pcm to AEncLib InputBuf, so release pcm directly by this AI thread
@@ -1505,7 +1505,7 @@ PROCESS_MESSAGE:
                     eError = pOutTunnelComp->EmptyThisBuffer(pOutTunnelComp, &obh);
                     if(SUCCESS != eError)
                     {
-                        alogw("[AI->AO] send pcm failed!");
+                        LOGW("[AI->AO] send pcm failed!");
                     }
                 }
                 else
@@ -1523,13 +1523,13 @@ PROCESS_MESSAGE:
         }
         else
         {
-            alogv("AI_Comp not StateExecuting");
+            LOGV("AI_Comp not StateExecuting");
             TMessage_WaitQueueNotEmpty(&pChnData->mCmdQueue, 0);
         }
     }
 
 EXIT:
-    alogv("AI channel ComponentThread stopped!");
+    LOGV("AI channel ComponentThread stopped!");
     return NULL;
 }
 

@@ -1,7 +1,7 @@
 //#include <CDX_LogNDebug.h>
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Mpeg2tstsMuxer"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <unistd.h>
 #include <stdint.h>
@@ -270,7 +270,7 @@ static void put_buffer(FILE *s, uint8_t *buf, int32_t size)
     size_file = fwrite(buf,1,size,s);
     if((unsigned int)size_file!=(unsigned int)size)
     {
-        aloge("write the bytes is error!\n");
+        LOGE("write the bytes is error!");
     }
 }
 static void put_buffer_cache(FsWriter *pFsWriter, char *buf, int size)
@@ -286,12 +286,12 @@ static void put_buffer_cache(FsWriter *pFsWriter, char *buf, int size)
     {
         if(mov->tracks[0].enc)
         {
-            alogd("[%dx%d]Be careful, forbid to appear this case: fwrite [%d]kByte, [%lld]ms >40ms", 
+            LOGD("[%dx%d]Be careful, forbid to appear this case: fwrite [%d]kByte, [%lld]ms >40ms", 
                 __FUNCTION__, __LINE__, mov->tracks[0].enc->width, mov->tracks[0].enc->height, size/1024, (tm2-tm1)/1000);
         }
         else
         {
-            alogd("Be careful, forbid to appear this case: fwrite [%d]kByte, [%lld]ms >40ms", 
+            LOGD("Be careful, forbid to appear this case: fwrite [%d]kByte, [%lld]ms >40ms", 
                 __FUNCTION__, __LINE__, size/1024, (tm2-tm1)/1000);
         }
         
@@ -305,7 +305,7 @@ static void flush_payload_cache(FsWriter *pFsWriter)
 //    tm1 = CDX_GetNowUs();
     pFsWriter->fsFlush(pFsWriter);
 //    tm2 = CDX_GetNowUs();
-//    alogd("[%dx%d] flush, [%lld]ms", mov->tracks[0].enc->width, mov->tracks[0].enc->height, (tm2-tm1)/1000);
+//    LOGD("[%dx%d] flush, [%lld]ms", mov->tracks[0].enc->width, mov->tracks[0].enc->height, (tm2-tm1)/1000);
 }
 
 
@@ -375,7 +375,7 @@ static uint32_t *av_crc_get_table(AVCRCId crc_id)
 
 #if !CONFIG_HARDCODED_TABLES
 
-		//alogd("shuzu: %d", FF_ARRAY_ELEMS(ts_crc_table[crc_id])-1);
+		//LOGD("shuzu: %d", FF_ARRAY_ELEMS(ts_crc_table[crc_id])-1);
 		if (!ts_crc_table[crc_id][FF_ARRAY_ELEMS(ts_crc_table[crc_id])-1]) {
 			if (av_crc_init(ts_crc_table[crc_id],
 							ts_crc_table_params[crc_id].le,
@@ -413,7 +413,7 @@ static void put_bits(PutBitContext *s, int n, unsigned int value)
 
     if(!(n <= 31 && value < (1U << n)))
     {
-        printf("the n and value is error!\n");
+        LOGI("the n and value is error!");
     }
 
     bit_buf = s->bit_buf;
@@ -720,7 +720,7 @@ static void mpegts_write_pmt(AVFormatContext *s, MpegTSService *service)
                 stream_type = STREAM_TYPE_PRIVATE_DATA;
                 break;
 			default:
-				aloge("error type");
+				LOGE("error type");
         }
         *q++ = stream_type;
         put16(&q, 0xe000 | ts_st->pid);
@@ -745,7 +745,7 @@ static void mpegts_write_pmt(AVFormatContext *s, MpegTSService *service)
 //		}
 //		else if(stream_type == STREAM_TYPE_AUDIO_AAC)
 //		{
-//			alogd("fixed it later");
+//			LOGD("fixed it later");
 //		}
 
         val = 0xf000 | (q - desc_length_ptr - 2);
@@ -894,12 +894,12 @@ static void mpegts_write_pes(AVFormatContext *s, AVStream *st,
         if (ts_st->pid == ts_st->service->pcr_pid)
         {
         
-			//alogd("ts_st->service->pcr_pid: %d\n", ts_st->service->pcr_pid);
+			//LOGD("ts_st->service->pcr_pid: %d", ts_st->service->pcr_pid);
 			ts_st->service->pcr_packet_count++;
             if (ts_st->service->pcr_packet_count >=
                 ts_st->service->pcr_packet_period) {
 
-				//alogd("ts_st->service->pcr_packet_count: %d", ts_st->service->pcr_packet_count);
+				//LOGD("ts_st->service->pcr_packet_count: %d", ts_st->service->pcr_packet_count);
                 ts_st->service->pcr_packet_count = 0;
                 write_pcr = 1;
                 /* XXX: this is incorrect, but at least we have a PCR
@@ -1137,7 +1137,7 @@ static void mpegts_write_pes(AVFormatContext *s, AVStream *st,
 
         ret = cdx_write2(&bs_info, s->OutStreamHandle);
         if(ret < 0) {
-            aloge("mpeg2ts write error");
+            LOGE("mpeg2ts write error");
         }
 #else
         cdx_write(ts->ts_read_ptr, 1, ts->cache_size, s->OutStreamHandle);
@@ -1190,7 +1190,7 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
 				ret = ts_write_trailer(s);
                 if(ret != 0)
                 {
-                    aloge("fatal error! ts write trailer fail!");
+                    LOGE("fatal error! ts write trailer fail!");
                 }
 				
 				//close file
@@ -1216,7 +1216,7 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
                 datasourceDesc.ext_fd_desc.fd = -1;
 				//s->pb_cache = fopen(s->filename, "wb");
 				if(s->pb_cache == NULL) {
-					aloge("pRecRenderData->fd == NULL" );
+					LOGE("pRecRenderData->fd == NULL" );
 				}
                 char *pCache = NULL;
                 uint32_t nCacheSize = 0;
@@ -1230,7 +1230,7 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
             		}
             		else
             		{
-                        aloge("fatal error! not set cacheMemory but set mode FSWRITEMODE_CACHETHREAD! use FSWRITEMODE_DIRECT.");
+                        LOGE("fatal error! not set cacheMemory but set mode FSWRITEMODE_CACHETHREAD! use FSWRITEMODE_DIRECT.");
                         mode = FSWRITEMODE_DIRECT;
             		}
                 }
@@ -1258,14 +1258,14 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
 					//s->fd_m3u8 = fopen(s->filename, "wb");
 
 					if(s->fd_m3u8 == NULL) {
-						aloge("pRecRenderData->fd_m3u8 == NULL" );
+						LOGE("pRecRenderData->fd_m3u8 == NULL" );
 					} else {
-						alogv("save m3u8 ok, path: %s", s->filename);
+						LOGV("save m3u8 ok, path: %s", s->filename);
 					}
 					snprintf(m3u8_writebuf, 1024, "#EXTM3U\n#EXT-X-TARGETDURATION:%u\n#EXT-X-MEDIA-SEQUENCE:%u\n", MAX_KEY_FRAME_NUM, s->first_segment);	
                     if (cdx_write(m3u8_writebuf, strlen(m3u8_writebuf), 1, s->fd_m3u8) != 1) {
 							//fclose(pRecRenderData->fd_m3u8);
-							aloge("write m3u8 file failed");
+							LOGE("write m3u8 file failed");
 					}
 
 					tem_segment = s->first_segment;
@@ -1274,7 +1274,7 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
 						snprintf(m3u8_writebuf, 1024, "#EXTINF:%u,\n%u.ts\n", MAX_KEY_FRAME_NUM, tem_segment);
 						if (cdx_write(m3u8_writebuf, strlen(m3u8_writebuf), 1, s->fd_m3u8) != 1) {
 
-							aloge("write m3u8 file failed");
+							LOGE("write m3u8 file failed");
 						}
 						tem_segment ++;
 					}
@@ -1322,10 +1322,10 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
         total_size = buf_tmp - s->pes_buffer + pkt->size0 + pkt->size1;
         if (s->pes_bufsize < total_size) {
             int offset = buf_tmp - s->pes_buffer;
-            alogd("realloc pes_buffer [%d]->[%d]", s->pes_bufsize, total_size+32*1024);
+            LOGD("realloc pes_buffer [%d]->[%d]", s->pes_bufsize, total_size+32*1024);
             s->pes_buffer = (uint8_t*)realloc(s->pes_buffer, total_size+32*1024);
             if (s->pes_buffer == NULL) {
-                aloge("realloc pes_buffer error!!");
+                LOGE("realloc pes_buffer error!!");
                 return 0;
             }
             s->pes_bufsize = total_size+32*1024;
@@ -1347,10 +1347,10 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
 		if(s->first_video_pts == 1) {
 			s->first_video_pts = 0;
 			s->base_video_pts = pkt->pts;
-			//alogd("s->base_video_pts: %lld", s->base_video_pts);
+			//LOGD("s->base_video_pts: %lld", s->base_video_pts);
 		}
 
-		//alogd("pkt->pts - s->base_video_pts: %lld", pkt->pts - s->base_video_pts);
+		//LOGD("pkt->pts - s->base_video_pts: %lld", pkt->pts - s->base_video_pts);
 		pkt->pts = (pkt->pts - s->base_video_pts) * 90;
 	} 
     else if(st->codec.codec_id == CODEC_ID_H265)
@@ -1385,10 +1385,10 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
         total_size = buf_tmp - s->pes_buffer + pkt->size0 + pkt->size1;
         if (s->pes_bufsize < total_size) {
             int offset = buf_tmp - s->pes_buffer;
-            alogd("realloc pes_buffer [%d]->[%d]", s->pes_bufsize, total_size+32*1024);
+            LOGD("realloc pes_buffer [%d]->[%d]", s->pes_bufsize, total_size+32*1024);
             s->pes_buffer = (uint8_t*)realloc(s->pes_buffer, total_size+32*1024);
             if (s->pes_buffer == NULL) {
-                aloge("realloc pes_buffer error!!");
+                LOGE("realloc pes_buffer error!!");
                 return 0;
             }
             s->pes_bufsize = total_size+32*1024;
@@ -1410,10 +1410,10 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
 		if(s->first_video_pts == 1) {
 			s->first_video_pts = 0;
 			s->base_video_pts = pkt->pts;
-			//alogd("s->base_video_pts: %lld", s->base_video_pts);
+			//LOGD("s->base_video_pts: %lld", s->base_video_pts);
 		}
 
-		//alogd("pkt->pts - s->base_video_pts: %lld", pkt->pts - s->base_video_pts);
+		//LOGD("pkt->pts - s->base_video_pts: %lld", pkt->pts - s->base_video_pts);
 		pkt->pts = (pkt->pts - s->base_video_pts) * 90; 
         
     }
@@ -1427,10 +1427,10 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
         int total_size = ADTS_HEADER_LENGTH + pkt->size0 + pkt->size1;
 
         if (s->pes_bufsize < total_size) {
-            alogd("realloc pes_buffer [%d]->[%d]", s->pes_bufsize, total_size+32*1024);
+            LOGD("realloc pes_buffer [%d]->[%d]", s->pes_bufsize, total_size+32*1024);
             s->pes_buffer = (uint8_t*)realloc(s->pes_buffer, total_size+32*1024);
             if (s->pes_buffer == NULL) {
-                aloge("realloc pes_buffer error!!");
+                LOGE("realloc pes_buffer error!!");
                 return 0;
             }
             s->pes_bufsize = total_size+32*1024;
@@ -1441,7 +1441,7 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
 	    channels = st->codec.channels;
         if(pkt->size1!=0 || pkt->data1 != NULL)
         {
-            alogd("Be careful! audioPkt has two data buf: [%p][%d],[%p][%d]", pkt->data0, pkt->size0, pkt->data1, pkt->size1);
+            LOGD("Be careful! audioPkt has two data buf: [%p][%d],[%p][%d]", pkt->data0, pkt->size0, pkt->data1, pkt->size1);
         }
 	    frame_length = pkt->size0 + pkt->size1 + ADTS_HEADER_LENGTH;
 	    num_data_block = frame_length / 1024;
@@ -1505,10 +1505,10 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
         int total_size = pkt->size0;
 
         if (s->pes_bufsize < total_size) {
-            alogd("realloc pes_buffer [%d]->[%d]", s->pes_bufsize, total_size+32*1024);
+            LOGD("realloc pes_buffer [%d]->[%d]", s->pes_bufsize, total_size+32*1024);
             s->pes_buffer = (uint8_t*)realloc(s->pes_buffer, total_size+32*1024);
             if (s->pes_buffer == NULL) {
-                aloge("realloc pes_buffer error!!");
+                LOGE("realloc pes_buffer error!!");
                 return 0;
             }
             s->pes_bufsize = total_size+32*1024;
@@ -1517,7 +1517,7 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
 		memcpy(buf_tmp, pkt->data0, pkt->size0);
 		size = pkt->size0;
 		
-		//alogd("pcm pts: %lld\n", pkt->pts);
+		//LOGD("pcm pts: %lld", pkt->pts);
 		pkt->pts = pkt->pts*90;
 		s->audio_frame_num ++;
 	}
@@ -1525,10 +1525,10 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
     {
         int total_size = pkt->size0;
         if (s->pes_bufsize < total_size) {
-            alogd("realloc pes_buffer [%d]->[%d]", s->pes_bufsize, total_size+32*1024);
+            LOGD("realloc pes_buffer [%d]->[%d]", s->pes_bufsize, total_size+32*1024);
             s->pes_buffer = (uint8_t*)realloc(s->pes_buffer, total_size+32*1024);
             if (s->pes_buffer == NULL) {
-                aloge("realloc pes_buffer error!!");
+                LOGE("realloc pes_buffer error!!");
                 return 0;
             }
             s->pes_bufsize = total_size+32*1024;
@@ -1539,7 +1539,7 @@ int32_t ts_write_packet(AVFormatContext *s, AVPacket *pkt)
     }
 	else
 	{
-		aloge("unsupport codec");
+		LOGE("unsupport codec");
 		return 0;
 	}
 

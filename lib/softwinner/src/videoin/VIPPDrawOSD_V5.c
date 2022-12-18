@@ -17,7 +17,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "VIPPDrawOsd_V5"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <errno.h>
 #include <memory.h>
@@ -45,7 +45,7 @@
 #define IF_MALLOC_FAIL(ptr) \
     if(NULL == ptr) \
     { \
-        aloge("fatal error! malloc fail!"); \
+        LOGE("fatal error! malloc fail!"); \
         return ERR_VI_NOMEM; \
     }
     
@@ -68,7 +68,7 @@ int calcBitmapSize(int nPixelFormat, RECT_S *pRect)
             size = pRect->Width*pRect->Height*2;
             break;
         default:
-            aloge("fatal error! unsupport pixel format[0x%x]?", nPixelFormat);
+            LOGE("fatal error! unsupport pixel format[0x%x]?", nPixelFormat);
             break;
     }
     return size;
@@ -82,7 +82,7 @@ static ERRORTYPE mallocBmpBufForOsdRegion(OsdRegion *pRegion, int eV4L2PixFmt)
     int nSize;
     if(pRegion->mType != OVERLAY_RGN)
     {
-        aloge("fatal error! rgnType[0x%x] is wrong!", pRegion->mType);
+        LOGE("fatal error! rgnType[0x%x] is wrong!", pRegion->mType);
         return ERR_VI_INVALID_PARA;
     }
     nSize = calcBitmapSize(eV4L2PixFmt, &pRegion->mRect);
@@ -91,7 +91,7 @@ static ERRORTYPE mallocBmpBufForOsdRegion(OsdRegion *pRegion, int eV4L2PixFmt)
         pRegion->mInfo.mOverlay.mBitmap = malloc(nSize);
         if(NULL == pRegion->mInfo.mOverlay.mBitmap)
         {
-            aloge("fatal error! malloc [%d]bytes fail", nSize);
+            LOGE("fatal error! malloc [%d]bytes fail", nSize);
             return ERR_VI_NOMEM;
         }
         memset(pRegion->mInfo.mOverlay.mBitmap, 0xFF, nSize);
@@ -99,7 +99,7 @@ static ERRORTYPE mallocBmpBufForOsdRegion(OsdRegion *pRegion, int eV4L2PixFmt)
     }
     else
     {
-        aloge("fatal error! rgn size[%dx%d]", pRegion->mRect.Width, pRegion->mRect.Height);
+        LOGE("fatal error! rgn size[%dx%d]", pRegion->mRect.Width, pRegion->mRect.Height);
         return ERR_VI_INVALID_PARA;
     }
 }
@@ -153,7 +153,7 @@ OsdGroups* OsdGroupsConstruct()
     OsdGroups *pGroups = (OsdGroups*)malloc(sizeof(OsdGroups));
     if(NULL == pGroups)
     {
-        aloge("fatal error! malloc fail!");
+        LOGE("fatal error! malloc fail!");
         return NULL;
     }
     memset(pGroups, 0, sizeof(OsdGroups));
@@ -208,7 +208,7 @@ static int compareOsdRegionPriority(const OsdRegion *pFirst, const OsdRegion *pS
         }
         else
         {
-            aloge("fatal error! unsupport rgnType[0x%x][0x%x]", pFirst->mType, pSecond->mType);
+            LOGE("fatal error! unsupport rgnType[0x%x][0x%x]", pFirst->mType, pSecond->mType);
             return 0;
         }
     }
@@ -246,7 +246,7 @@ static int compareOsdRegionPriority(const OsdRegion *pFirst, const OsdRegion *pS
     }
     else
     {
-        aloge("fatal error! unsupport rgnType[0x%x]", pFirst->mType);
+        LOGE("fatal error! unsupport rgnType[0x%x]", pFirst->mType);
         return 0;
     }
 }
@@ -300,7 +300,7 @@ static ERRORTYPE ShallowCopyOsdRegionList(struct list_head *pDstHead, struct lis
 {
     if(!list_empty(pDstHead))
     {
-        aloge("fatal error! dst list is not empty!");
+        LOGE("fatal error! dst list is not empty!");
     }
     OsdRegion *pNewEntry;
     OsdRegion *pSrcEntry;
@@ -309,7 +309,7 @@ static ERRORTYPE ShallowCopyOsdRegionList(struct list_head *pDstHead, struct lis
         pNewEntry = (OsdRegion*)malloc(sizeof(OsdRegion));
         if(NULL == pNewEntry)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
         }
         memcpy(pNewEntry, pSrcEntry, sizeof(OsdRegion));
         list_add_tail(&pNewEntry->mList, pDstHead);
@@ -363,7 +363,7 @@ ERRORTYPE DrawRegionByOriginRegions(OsdRegion *pDstRegion, struct list_head *pOr
 {
     if(pDstRegion->mType != OVERLAY_RGN)
     {
-        aloge("fatal error! rgnType[0x%x] is wrong", pDstRegion->mType);
+        LOGE("fatal error! rgnType[0x%x] is wrong", pDstRegion->mType);
         return ERR_VI_INVALID_PARA;
     }
     BOOL bCoverExist = FALSE;
@@ -396,7 +396,7 @@ ERRORTYPE DrawRegionByOriginRegions(OsdRegion *pDstRegion, struct list_head *pOr
                     pPtRgb1555 = (unsigned short*)pDstRegion->mInfo.mOverlay.mBitmap + pDstRegion->mRect.Width*nLineIndex + nColumnIndex;
                     break;
                 default:
-                    aloge("fatal error!");
+                    LOGE("fatal error!");
                     break;
             }
             BOOL bFillDone = FALSE;   //this point is filled by one region.
@@ -421,7 +421,7 @@ ERRORTYPE DrawRegionByOriginRegions(OsdRegion *pDstRegion, struct list_head *pOr
                                 *pPtRgb1555 = *((unsigned short*)pRegionEntry->mInfo.mOverlay.mBitmap + pRegionEntry->mRect.Width*RelativePos.Y + RelativePos.X);
                                 break;
                             default:
-                                aloge("fatal error!");
+                                LOGE("fatal error!");
                                 break;
                         }
                         bFillDone = TRUE;
@@ -457,7 +457,7 @@ ERRORTYPE DrawRegionByOriginRegions(OsdRegion *pDstRegion, struct list_head *pOr
                                     *pPtRgb1555 |= 0x8000;
                                     break;
                                 default:
-                                    aloge("fatal error!");
+                                    LOGE("fatal error!");
                                     break;
                             }
                         }
@@ -473,7 +473,7 @@ ERRORTYPE DrawRegionByOriginRegions(OsdRegion *pDstRegion, struct list_head *pOr
                                     *pPtRgb1555 = convertRGB32ToRGB1555(pRegionEntry->mInfo.mCover.mChromaKey | 0xFF000000);
                                     break;
                                 default:
-                                    aloge("fatal error!");
+                                    LOGE("fatal error!");
                                     break;
                             }
                             bFillDone = TRUE;
@@ -488,7 +488,7 @@ ERRORTYPE DrawRegionByOriginRegions(OsdRegion *pDstRegion, struct list_head *pOr
                 }
                 else
                 {
-                    aloge("fatal error!");
+                    LOGE("fatal error!");
                 }
             }
         }
@@ -593,7 +593,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
     ERRORTYPE ret = SUCCESS;
     if(!list_empty(pDividedList))
     {
-        aloge("fatal error! why divided list is not empty?");
+        LOGE("fatal error! why divided list is not empty?");
         return ERR_VI_INVALID_PARA;
     }
     PointsArray stRectPoints;
@@ -611,7 +611,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             //case (1.1): region is on top of rect.
             if(pRect->Y <= pRegion->mRect.Y)
             {
-                aloge("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
+                LOGE("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
                     pRect->X, pRect->Y, pRect->Width, pRect->Height, 
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height);
             }
@@ -622,7 +622,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             //case (1.2): region is under bottom of rect.
             if(pRect->Y + pRect->Height <= pRegion->mRect.Y || pRect->Y + pRect->Height >= pRegion->mRect.Y + pRegion->mRect.Height)
             {
-                aloge("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
+                LOGE("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
                     pRect->X, pRect->Y, pRect->Width, pRect->Height, 
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height);
             }
@@ -634,7 +634,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             //case (1.3): region is at left of rect.
             if(pRect->X <= pRegion->mRect.X)
             {
-                aloge("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
+                LOGE("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
                     pRect->X, pRect->Y, pRect->Width, pRect->Height, 
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height);
             }
@@ -645,7 +645,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             //case (1.4): region is at right of rect.
             if(pRect->X + pRect->Width <= pRegion->mRect.X || pRect->X + pRect->Width >= pRegion->mRect.X + pRegion->mRect.Width)
             {
-                aloge("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
+                LOGE("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
                     pRect->X, pRect->Y, pRect->Width, pRect->Height, 
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height);
             }
@@ -654,7 +654,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
         }
         else
         {
-            aloge("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
+            LOGE("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
                     pRect->X, pRect->Y, pRect->Width, pRect->Height, 
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height);
         }
@@ -671,7 +671,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             POINT_S PtLeftTop = stRectPoints.mPtArray[0];
             if(!(PtLeftTop.X == pRect->X && PtLeftTop.Y == pRect->Y))
             {
-                aloge("fatal error! point error [%d,%d]!=[%d,%d]", PtLeftTop.X, PtLeftTop.Y, pRect->X, pRect->Y);
+                LOGE("fatal error! point error [%d,%d]!=[%d,%d]", PtLeftTop.X, PtLeftTop.Y, pRect->X, pRect->Y);
             }
             //case (2.1) point is leftTop in Region
             if(PtLeftTop.Y == pRegion->mRect.Y)
@@ -686,7 +686,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
                 }
                 else
                 {
-                    aloge("fatal error! X");
+                    LOGE("fatal error! X");
                     bError = TRUE;
                 }
             }
@@ -719,19 +719,19 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
                     }
                     else
                     {
-                        aloge("fatal error! X");
+                        LOGE("fatal error! X");
                         bError = TRUE;
                     }
                 }
                 else
                 {
-                    aloge("fatal error! Height");
+                    LOGE("fatal error! Height");
                     bError = TRUE;
                 }
             }
             else
             {
-                aloge("fatal error! Y");
+                LOGE("fatal error! Y");
                 bError = TRUE;
             }
         }
@@ -741,13 +741,13 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             POINT_S PtRightTop = stRectPoints.mPtArray[0];
             if(!(PtRightTop.X == pRect->X+pRect->Width-1 && PtRightTop.Y == pRect->Y))
             {
-                aloge("fatal error! point error [%d,%d]!=[%d,%d, %dx%d]", PtRightTop.X, PtRightTop.Y, pRect->X, pRect->Y, pRect->Width, pRect->Height);
+                LOGE("fatal error! point error [%d,%d]!=[%d,%d, %dx%d]", PtRightTop.X, PtRightTop.Y, pRect->X, pRect->Y, pRect->Width, pRect->Height);
             }
             if(PtRightTop.Y == pRegion->mRect.Y)
             {
                 if(PtRightTop.X >= pRegion->mRect.X + pRegion->mRect.Width - 1)
                 {
-                    aloge("fatal error! X");
+                    LOGE("fatal error! X");
                     bError = TRUE;
                 }
                 //cut one region is enough.
@@ -761,7 +761,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(PtRightTop.Y >= pRegion->mRect.Y + pRegion->mRect.Height)
                 {
-                    aloge("fatal error! Height");
+                    LOGE("fatal error! Height");
                     bError = TRUE;
                 }
                 if(PtRightTop.X == pRegion->mRect.X + pRegion->mRect.Width - 1)
@@ -790,13 +790,13 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
                 }
                 else
                 {
-                    aloge("fatal error! X");
+                    LOGE("fatal error! X");
                     bError = TRUE;
                 }
             }
             else
             {
-                aloge("fatal error! Y");
+                LOGE("fatal error! Y");
                 bError = TRUE;
             }
         }
@@ -806,13 +806,13 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             POINT_S PtLeftBottom = stRectPoints.mPtArray[0];
             if(!(PtLeftBottom.X == pRect->X && PtLeftBottom.Y == pRect->Y + pRect->Height - 1))
             {
-                aloge("fatal error! point error [%d,%d]!=[%d,%d, %dx%d]", PtLeftBottom.X, PtLeftBottom.Y, pRect->X, pRect->Y, pRect->Width, pRect->Height);
+                LOGE("fatal error! point error [%d,%d]!=[%d,%d, %dx%d]", PtLeftBottom.X, PtLeftBottom.Y, pRect->X, pRect->Y, pRect->Width, pRect->Height);
             }
             if(PtLeftBottom.Y == pRegion->mRect.Y + pRegion->mRect.Height - 1)
             {
                 if(PtLeftBottom.X <= pRegion->mRect.X)
                 {
-                    aloge("fatal error! X");
+                    LOGE("fatal error! X");
                     bError = TRUE;
                 }
                 //cut one region is enough.
@@ -825,7 +825,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(PtLeftBottom.Y < pRegion->mRect.Y)
                 {
-                    aloge("fatal error! Y");
+                    LOGE("fatal error! Y");
                     bError = TRUE;
                 }
                 if(PtLeftBottom.X == pRegion->mRect.X)
@@ -854,13 +854,13 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
                 }
                 else
                 {
-                    aloge("fatal error! X");
+                    LOGE("fatal error! X");
                     bError = TRUE;
                 }
             }
             else
             {
-                aloge("fatal error! Y");
+                LOGE("fatal error! Y");
                 bError = TRUE;
             }
         }
@@ -870,13 +870,13 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             POINT_S PtRightBottom = stRectPoints.mPtArray[0];
             if(!(PtRightBottom.X == pRect->X + pRect->Width - 1 && PtRightBottom.Y == pRect->Y + pRect->Height - 1))
             {
-                aloge("fatal error! point error [%d,%d]!=[%d,%d, %dx%d]", PtRightBottom.X, PtRightBottom.Y, pRect->X, pRect->Y, pRect->Width, pRect->Height);
+                LOGE("fatal error! point error [%d,%d]!=[%d,%d, %dx%d]", PtRightBottom.X, PtRightBottom.Y, pRect->X, pRect->Y, pRect->Width, pRect->Height);
             }
             if(PtRightBottom.Y == pRegion->mRect.Y + pRegion->mRect.Height - 1)
             {
                 if(PtRightBottom.X < pRegion->mRect.X || PtRightBottom.X >= pRegion->mRect.X + pRegion->mRect.Width - 1)
                 {
-                    aloge("fatal error! X");
+                    LOGE("fatal error! X");
                     bError = TRUE;
                 }
                 //cut one region is enough.
@@ -890,7 +890,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(PtRightBottom.Y < pRegion->mRect.Y)
                 {
-                    aloge("fatal error! Y");
+                    LOGE("fatal error! Y");
                     bError = TRUE;
                 }
                 if(PtRightBottom.X == pRegion->mRect.X + pRegion->mRect.Width - 1)
@@ -906,7 +906,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
                 {
                     if(PtRightBottom.X < pRegion->mRect.X)
                     {
-                        aloge("fatal error! X");
+                        LOGE("fatal error! X");
                         bError = TRUE;
                     }
                     //cut two region.
@@ -925,24 +925,24 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
                 }
                 else
                 {
-                    aloge("fatal error! X");
+                    LOGE("fatal error! X");
                     bError = TRUE;
                 }
             }
             else
             {
-                aloge("fatal error! Y");
+                LOGE("fatal error! Y");
                 bError = TRUE;
             }
         }
         else
         {
-            aloge("fatal error! unknown point pos is[0x%x]?", stRectPoints.mPointIndexArray[0]);
+            LOGE("fatal error! unknown point pos is[0x%x]?", stRectPoints.mPointIndexArray[0]);
         }
 
         if(bError)
         {
-            aloge("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
+            LOGE("fatal error! check rect [%d,%d, %dx%d],[%d,%d, %dx%d]", 
                     pRect->X, pRect->Y, pRect->Width, pRect->Height, 
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height);
             ret = ERR_VI_INVALID_PARA;
@@ -995,7 +995,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(PtLeftBottom.Y != pRegion->mRect.Y + pRegion->mRect.Height - 1)
                 {
-                    aloge("fatal error! cut region exception!");
+                    LOGE("fatal error! cut region exception!");
                     bError = TRUE;
                 }
             }
@@ -1003,13 +1003,13 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(rgnNum != 2)
                 {
-                    aloge("fatal error! cut region exception2!");
+                    LOGE("fatal error! cut region exception2!");
                     bError = TRUE;
                 }
             }
             if(bError)
             {
-                aloge("fatal error! region[%d,%d,%dx%d], rect[%d,%d,%dx%d], ptLeftBottom[%d,%d], ptRightBottom[%d,%d]",
+                LOGE("fatal error! region[%d,%d,%dx%d], rect[%d,%d,%dx%d], ptLeftBottom[%d,%d], ptRightBottom[%d,%d]",
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height,
                     pRect->X, pRect->Y, pRect->Width, pRect->Height,
                     PtLeftBottom.X, PtLeftBottom.Y, PtRightBottom.X, PtRightBottom.Y);
@@ -1059,7 +1059,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(PtLeftTop.Y != pRegion->mRect.Y)
                 {
-                    aloge("fatal error! cut region exception!");
+                    LOGE("fatal error! cut region exception!");
                     bError = TRUE;
                 }
             }
@@ -1067,13 +1067,13 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(rgnNum != 2)
                 {
-                    aloge("fatal error! cut region exception2!");
+                    LOGE("fatal error! cut region exception2!");
                     bError = TRUE;
                 }
             }
             if(bError)
             {
-                aloge("fatal error! region[%d,%d,%dx%d], rect[%d,%d,%dx%d], ptLeftTop[%d,%d], ptRightTop[%d,%d]",
+                LOGE("fatal error! region[%d,%d,%dx%d], rect[%d,%d,%dx%d], ptLeftTop[%d,%d], ptRightTop[%d,%d]",
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height,
                     pRect->X, pRect->Y, pRect->Width, pRect->Height,
                     PtLeftTop.X, PtLeftTop.Y, PtRightTop.X, PtRightTop.Y);
@@ -1122,7 +1122,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(PtRightTop.X != pRegion->mRect.X + pRegion->mRect.Width - 1)
                 {
-                    aloge("fatal error! cut region exception!");
+                    LOGE("fatal error! cut region exception!");
                     bError = TRUE;
                 }
             }
@@ -1130,13 +1130,13 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(rgnNum != 2)
                 {
-                    aloge("fatal error! cut region exception2!");
+                    LOGE("fatal error! cut region exception2!");
                     bError = TRUE;
                 }
             }
             if(bError)
             {
-                aloge("fatal error! region[%d,%d,%dx%d], rect[%d,%d,%dx%d], ptRightTop[%d,%d], ptRightBottom[%d,%d]",
+                LOGE("fatal error! region[%d,%d,%dx%d], rect[%d,%d,%dx%d], ptRightTop[%d,%d], ptRightBottom[%d,%d]",
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height,
                     pRect->X, pRect->Y, pRect->Width, pRect->Height,
                     PtRightTop.X, PtRightTop.Y, PtRightBottom.X, PtRightBottom.Y);
@@ -1184,7 +1184,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(PtLeftTop.X != pRegion->mRect.X)
                 {
-                    aloge("fatal error! cut region exception!");
+                    LOGE("fatal error! cut region exception!");
                     bError = TRUE;
                 }
             }
@@ -1192,13 +1192,13 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
             {
                 if(rgnNum != 2)
                 {
-                    aloge("fatal error! cut region exception2!");
+                    LOGE("fatal error! cut region exception2!");
                     bError = TRUE;
                 }
             }
             if(bError)
             {
-                aloge("fatal error! region[%d,%d,%dx%d], rect[%d,%d,%dx%d], ptLeftTop[%d,%d], ptLeftBottom[%d,%d]",
+                LOGE("fatal error! region[%d,%d,%dx%d], rect[%d,%d,%dx%d], ptLeftTop[%d,%d], ptLeftBottom[%d,%d]",
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height,
                     pRect->X, pRect->Y, pRect->Width, pRect->Height,
                     PtLeftTop.X, PtLeftTop.Y, PtLeftBottom.X, PtLeftBottom.Y);
@@ -1207,7 +1207,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
         }
         else
         {
-            aloge("fatal error! check region[%d,%d,%dx%d], rect[%d,%d,%dx%d]",
+            LOGE("fatal error! check region[%d,%d,%dx%d], rect[%d,%d,%dx%d]",
                     pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height,
                     pRect->X, pRect->Y, pRect->Width, pRect->Height);
             ret = ERR_VI_INVALID_PARA;
@@ -1269,7 +1269,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
         }
         else
         {
-            aloge("fatal error! region must overlap here!");
+            LOGE("fatal error! region must overlap here!");
             ret = ERR_VI_INVALID_PARA;
         }
         return ret;
@@ -1280,7 +1280,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
         //case(5) involve.
         if(!(stRegionPoints.mNum>=0 && stRegionPoints.mNum<=2))
         {
-            aloge("fatal error! region points number[%d] wrong!", stRegionPoints.mNum);
+            LOGE("fatal error! region points number[%d] wrong!", stRegionPoints.mNum);
             return ERR_VI_INVALID_PARA;
         }
         int rgnNum = 0;
@@ -1349,7 +1349,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
         {
             if(rgnNum != 4)
             {
-                aloge("fatal error! sideNum[%d], rgnNum[%d]!=4", nSideNum, rgnNum);
+                LOGE("fatal error! sideNum[%d], rgnNum[%d]!=4", nSideNum, rgnNum);
                 bError = TRUE;
             }
         }
@@ -1357,7 +1357,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
         {
             if(rgnNum != 3)
             {
-                aloge("fatal error! sideNum[%d], rgnNum[%d]!=3", nSideNum, rgnNum);
+                LOGE("fatal error! sideNum[%d], rgnNum[%d]!=3", nSideNum, rgnNum);
                 bError = TRUE;
             }
         }
@@ -1365,7 +1365,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
         {
             if(rgnNum != 2)
             {
-                aloge("fatal error! sideNum[%d], rgnNum[%d]!=2", nSideNum, rgnNum);
+                LOGE("fatal error! sideNum[%d], rgnNum[%d]!=2", nSideNum, rgnNum);
                 bError = TRUE;
             }
         }
@@ -1373,18 +1373,18 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
         {
             if(rgnNum != 1)
             {
-                aloge("fatal error! sideNum[%d], rgnNum[%d]!=1", nSideNum, rgnNum);
+                LOGE("fatal error! sideNum[%d], rgnNum[%d]!=1", nSideNum, rgnNum);
                 bError = TRUE;
             }
         }
         else
         {
-            aloge("fatal error! sideNum[%d], rgnNum[%d]!=1", nSideNum, rgnNum);
+            LOGE("fatal error! sideNum[%d], rgnNum[%d]!=1", nSideNum, rgnNum);
             bError = TRUE;
         }
         if(bError)
         {
-            aloge("fatal error! region[%d,%d,%dx%d], rect[%d,%d,%dx%d]",
+            LOGE("fatal error! region[%d,%d,%dx%d], rect[%d,%d,%dx%d]",
                 pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height,
                 pRect->X, pRect->Y, pRect->Width, pRect->Height);
             ret = ERR_VI_INVALID_PARA;
@@ -1393,7 +1393,7 @@ ERRORTYPE CutRegionByRect(const OsdRegion *pRegion, const RECT_S *pRect, struct 
     }
     else
     {
-        aloge("fatal error! stRectPoints[%d], stRegionPoints[%d], rect[%d,%d,%dx%d], regionRect[%d,%d,%dx%d]", 
+        LOGE("fatal error! stRectPoints[%d], stRegionPoints[%d], rect[%d,%d,%dx%d], regionRect[%d,%d,%dx%d]", 
             stRectPoints.mNum, stRegionPoints.mNum, 
             pRect->X, pRect->Y, pRect->Width, pRect->Height,
             pRegion->mRect.X, pRegion->mRect.Y, pRegion->mRect.Width, pRegion->mRect.Height);
@@ -1521,7 +1521,7 @@ OsdOverlapAreaType IfOsdRegionOverlap(RECT_S *pDst, RECT_S *pSrc)
     }
     else
     {
-        aloge("fatal error! region overlap wrong. nDstInNum[%d], nSrcInNum[%d], dstRgn[%d,%d,%dx%d], srcRgn[%d,%d,%dx%d]", 
+        LOGE("fatal error! region overlap wrong. nDstInNum[%d], nSrcInNum[%d], dstRgn[%d,%d,%dx%d], srcRgn[%d,%d,%dx%d]", 
             nDstInNum, nSrcInNum, pDst->X, pDst->Y, pDst->Width, pDst->Height,
             pSrc->X, pSrc->Y, pSrc->Width, pSrc->Height);
         return OsdOverlapArea_None;
@@ -1546,7 +1546,7 @@ OsdOverlapType IfOverlayCoverOverlap(OsdGroup *pGroup)
         }
         else
         {
-            aloge("fatal error!");
+            LOGE("fatal error!");
         }
     }
     if(bOverlayExist && bCoverExist)
@@ -1563,7 +1563,7 @@ OsdOverlapType IfOverlayCoverOverlap(OsdGroup *pGroup)
     }
     else
     {
-        aloge("fatal error!");
+        LOGE("fatal error!");
         return OsdOverlap_None;
     }
 }
@@ -1675,7 +1675,7 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
                                     LIST_HEAD(regionCuttedList);
                                     if(SUCCESS!=CutRegionByRect(pRegionDividedEntry, &pEntry->mRect, &regionCuttedList))
                                     {
-                                        aloge("fatal error! why rect is not cut?cutRgn[%d,%d,%dx%d], refRgn[%d,%d,%dx%d]", 
+                                        LOGE("fatal error! why rect is not cut?cutRgn[%d,%d,%dx%d], refRgn[%d,%d,%dx%d]", 
                                             pRegionDividedEntry->mRect.X, pRegionDividedEntry->mRect.Y, pRegionDividedEntry->mRect.Width, pRegionDividedEntry->mRect.Height,
                                             pEntry->mRect.X, pEntry->mRect.Y, pEntry->mRect.Width, pEntry->mRect.Height);
                                     }
@@ -1685,7 +1685,7 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
                                 }
                                 else
                                 {
-                                    aloge("fatal error! check code!");
+                                    LOGE("fatal error! check code!");
                                 }
                             }
                             else if(1 == stPoints.mNum)
@@ -1693,7 +1693,7 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
                                 LIST_HEAD(regionCuttedList);
                                 if(SUCCESS!=CutRegionByRect(pRegionDividedEntry, &pEntry->mRect, &regionCuttedList))
                                 {
-                                    aloge("fatal error! why rect is not cut?cutRgn[%d,%d,%dx%d], refRgn[%d,%d,%dx%d]", 
+                                    LOGE("fatal error! why rect is not cut?cutRgn[%d,%d,%dx%d], refRgn[%d,%d,%dx%d]", 
                                         pRegionDividedEntry->mRect.X, pRegionDividedEntry->mRect.Y, pRegionDividedEntry->mRect.Width, pRegionDividedEntry->mRect.Height,
                                         pEntry->mRect.X, pEntry->mRect.Y, pEntry->mRect.Width, pEntry->mRect.Height);
                                 }
@@ -1706,7 +1706,7 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
                                 LIST_HEAD(regionCuttedList);
                                 if(SUCCESS!=CutRegionByRect(pRegionDividedEntry, &pEntry->mRect, &regionCuttedList))
                                 {
-                                    aloge("fatal error! why rect is not cut?cutRgn[%d,%d,%dx%d], refRgn[%d,%d,%dx%d]", 
+                                    LOGE("fatal error! why rect is not cut?cutRgn[%d,%d,%dx%d], refRgn[%d,%d,%dx%d]", 
                                         pRegionDividedEntry->mRect.X, pRegionDividedEntry->mRect.Y, pRegionDividedEntry->mRect.Width, pRegionDividedEntry->mRect.Height,
                                         pEntry->mRect.X, pEntry->mRect.Y, pEntry->mRect.Width, pEntry->mRect.Height);
                                 }
@@ -1716,7 +1716,7 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
                             }
                             else
                             {
-                                aloge("fatal error! overlay area type is part, check code!");
+                                LOGE("fatal error! overlay area type is part, check code!");
                             }
                         }
                         else if(OsdOverlapArea_WholeInvolved == eOverlapAreaType)
@@ -1724,7 +1724,7 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
                             LIST_HEAD(regionCuttedList);
                             if(SUCCESS!=CutRegionByRect(pRegionDividedEntry, &pEntry->mRect, &regionCuttedList))
                             {
-                                aloge("fatal error! why rect is not cut? cutRgn[%d,%d,%dx%d], refRgn[%d,%d,%dx%d]", 
+                                LOGE("fatal error! why rect is not cut? cutRgn[%d,%d,%dx%d], refRgn[%d,%d,%dx%d]", 
                                     pRegionDividedEntry->mRect.X, pRegionDividedEntry->mRect.Y, pRegionDividedEntry->mRect.Width, pRegionDividedEntry->mRect.Height,
                                     pEntry->mRect.X, pEntry->mRect.Y, pEntry->mRect.Width, pEntry->mRect.Height);
                             }
@@ -1734,7 +1734,7 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
                         }
                         else
                         {
-                            aloge("fatal error! overlapAreaType[0x%x]?", eOverlapAreaType);
+                            LOGE("fatal error! overlapAreaType[0x%x]?", eOverlapAreaType);
                         }
                     }
                     //add new divided regions to regionDividedList
@@ -1753,11 +1753,11 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
                 if(cnt <= MAX_COVER_NUM)
                 {
                     nLeftCoverNum = MAX_COVER_NUM - cnt;
-                    alogd("left [%d]covers can use", nLeftCoverNum);
+                    LOGD("left [%d]covers can use", nLeftCoverNum);
                 }
                 else
                 {
-                    aloge("fatal error! cover number[%d] is exceed!", cnt);
+                    LOGE("fatal error! cover number[%d] is exceed!", cnt);
                     nLeftCoverNum = 0;
                 }
             }
@@ -1777,7 +1777,7 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
                     }
                     else
                     {
-                        alogd("Be careful! cover region will be translate to overlay region.");
+                        LOGD("Be careful! cover region will be translate to overlay region.");
                         pEntry->mType = OVERLAY_RGN;
                         pEntry->mInfo.mOverlay.mBitmap = NULL;
                         pEntry->mInfo.mOverlay.mbInvColEn = FALSE;
@@ -1787,9 +1787,9 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
                 }
                 else
                 {
-                    aloge("fatal error! rgnType[0x%x] is wrong!", pEntry->mType);
+                    LOGE("fatal error! rgnType[0x%x] is wrong!", pEntry->mType);
                 }
-                //alogd("for debug: redraw rect[%d,%d, %dx%d]", pEntry->mRect.X, pEntry->mRect.Y, pEntry->mRect.Width, pEntry->mRect.Height);
+                //LOGD("for debug: redraw rect[%d,%d, %dx%d]", pEntry->mRect.X, pEntry->mRect.Y, pEntry->mRect.Width, pEntry->mRect.Height);
             }
             //fill these bmpBufs of redrawList.
             ERRORTYPE ret = SUCCESS;
@@ -1810,7 +1810,7 @@ ERRORTYPE RedrawOsdGroup_V5(OsdGroup *pGroup, int nPixelFormat, OsdGroup *pCover
     }
     else
     {
-        aloge("fatal error!");
+        LOGE("fatal error!");
         return ERR_VI_INVALID_PARA;
     }
 }
@@ -1837,12 +1837,12 @@ ERRORTYPE AddRegionToOsdGroup_V5(OsdGroup *pGroup, ChannelRegionInfo *pRegion)
         }
         else
         {
-            aloge("fatal error! cover type[0x%x] is not rect!", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType);
+            LOGE("fatal error! cover type[0x%x] is not rect!", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType);
         }
     }
     else
     {
-        aloge("fatal error!");
+        LOGE("fatal error!");
     }
     if(OVERLAY_RGN == pOsdRegion->mType)
     {
@@ -1857,7 +1857,7 @@ ERRORTYPE AddRegionToOsdGroup_V5(OsdGroup *pGroup, ChannelRegionInfo *pRegion)
     }
     else
     {
-        aloge("fatal error! unknown osd type[0x%x]", pOsdRegion->mType);
+        LOGE("fatal error! unknown osd type[0x%x]", pOsdRegion->mType);
     }
     list_add_tail(&pOsdRegion->mList, &pGroup->mOsdList);
     return SUCCESS;
@@ -1896,12 +1896,12 @@ BOOL IfOsdRegionOverlapRegion_V5(OsdRegion *pDst, ChannelRegionInfo *pSrc)
         }
         else
         {
-            aloge("fatal error! cover type[0x%x] is not rect!", pSrc->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType);
+            LOGE("fatal error! cover type[0x%x] is not rect!", pSrc->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType);
         }
     }
     else
     {
-        aloge("fatal error!");
+        LOGE("fatal error!");
     }
     POINT_S ptSrc[4] = 
         {
@@ -2008,7 +2008,7 @@ ERRORTYPE ConfigOsdGroups_V5(OsdGroups *pOsdGroups, viChnManager *pVipp)
             }
             else
             {
-                aloge("fatal error! unkown pix fmt [0x%x]->[0x%x]", pRegionEntry->mRgnAttr.unAttr.stOverlay.mPixelFmt, pOsdGroups->mPixFmt);
+                LOGE("fatal error! unkown pix fmt [0x%x]->[0x%x]", pRegionEntry->mRgnAttr.unAttr.stOverlay.mPixelFmt, pOsdGroups->mPixFmt);
             }
             bFlag = TRUE;
         }
@@ -2083,7 +2083,7 @@ ERRORTYPE ConfigOsdGroups_V5(OsdGroups *pOsdGroups, viChnManager *pVipp)
     BOOL bCoverGroupExist = FALSE;
     if(nCoverGroupNum > 0)
     {
-        alogd("merge [%d] cover groups into one, and move it to first node", nCoverGroupNum);
+        LOGD("merge [%d] cover groups into one, and move it to first node", nCoverGroupNum);
         list_move(&pDstCoverGroup->mList, &pOsdGroups->mGroupList);
         bCoverGroupExist = TRUE;
     }
@@ -2119,7 +2119,7 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
     //convert to OsdGroups *mpOsdGroups;
     if(pVipp->mpOsdGroups)
     {
-        aloge("fatal error! why OsdGroups not destruct?");
+        LOGE("fatal error! why OsdGroups not destruct?");
         OsdGroupsDestruct(pVipp->mpOsdGroups);
         pVipp->mpOsdGroups = NULL;
     }
@@ -2143,7 +2143,7 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
             }
             else
             {
-                aloge("fatal error! osdList in OsdGroup can't be empty!");
+                LOGE("fatal error! osdList in OsdGroup can't be empty!");
             }
         }
     }
@@ -2166,24 +2166,24 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
                 stOsdFmt.clipcount++;
                 if(stOsdFmt.clipcount > MAX_COVER_NUM)
                 {
-                    aloge("fatal error! clipcount[%d] exceed!", stOsdFmt.clipcount);
+                    LOGE("fatal error! clipcount[%d] exceed!", stOsdFmt.clipcount);
                 }
             }
             else
             {
-                aloge("fatal error! region type[0x%x] is not cover!", pEntry->mType);
+                LOGE("fatal error! region type[0x%x] is not cover!", pEntry->mType);
             }
         }
         int ret1 = overlay_set_fmt(video, &stOsdFmt);
         int ret2 = overlay_update(video, 1);
         if(ret1 != 0)
         {
-            aloge("fatal error! set cover fail[%d]", ret1);
+            LOGE("fatal error! set cover fail[%d]", ret1);
             ret = ERR_VI_NOT_SUPPORT;
         }
         if(ret2 != 0)
         {
-            aloge("fatal error! cover update fail[%d]", ret2);
+            LOGE("fatal error! cover update fail[%d]", ret2);
             ret = ERR_VI_NOT_SUPPORT;
         }
     }
@@ -2197,12 +2197,12 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
         int ret2 = overlay_update(video, 1);
         if(ret1 != 0)
         {
-            aloge("fatal error! set cover fail[%d]", ret1);
+            LOGE("fatal error! set cover fail[%d]", ret1);
             ret = ERR_VI_NOT_SUPPORT;
         }
         if(ret2 != 0)
         {
-            aloge("fatal error! cover update fail[%d]", ret2);
+            LOGE("fatal error! cover update fail[%d]", ret2);
             ret = ERR_VI_NOT_SUPPORT;
         }
     }
@@ -2221,7 +2221,7 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
             }
             else
             {
-                aloge("fatal error! redrawOsdList must be overlay!");
+                LOGE("fatal error! redrawOsdList must be overlay!");
             }
         }
         else
@@ -2238,13 +2238,13 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
                     }
                     else
                     {
-                        aloge("fatal error! when not redraw, overlay in OsdList must be single!");
+                        LOGE("fatal error! when not redraw, overlay in OsdList must be single!");
                     }
                 }
             }
             else
             {
-                aloge("fatal error! osdList in OsdGroup can't be empty!");
+                LOGE("fatal error! osdList in OsdGroup can't be empty!");
             }
         }
     }
@@ -2264,11 +2264,11 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
                 {
                     if(pEntryRegion->mType != OVERLAY_RGN)
                     {
-                        aloge("fatal error! region type[0x%x] is not overlay!", pEntryRegion->mType);
+                        LOGE("fatal error! region type[0x%x] is not overlay!", pEntryRegion->mType);
                     }
                     if(NULL == pEntryRegion->mInfo.mOverlay.mBitmap)
                     {
-                        aloge("fatal error! bmpData is not set");
+                        LOGE("fatal error! bmpData is not set");
                     }
                     stOsdFmt.reverse_close[stOsdFmt.clipcount] = pEntryRegion->mInfo.mOverlay.mbInvColEn?0:1;
                     stOsdFmt.bitmap[stOsdFmt.clipcount] = pEntryRegion->mInfo.mOverlay.mBitmap;
@@ -2279,7 +2279,7 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
                     stOsdFmt.clipcount++;
                     if(stOsdFmt.clipcount > MAX_OVERLAY_NUM)
                     {
-                        aloge("fatal error! clipcount[%d] exceed!", stOsdFmt.clipcount);
+                        LOGE("fatal error! clipcount[%d] exceed!", stOsdFmt.clipcount);
                         bCountExceed = TRUE;
                         break;
                     }
@@ -2296,11 +2296,11 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
                     OsdRegion *pEntryRegion = list_first_entry(&pEntryGroup->mOsdList, OsdRegion, mList);
                     if(pEntryRegion->mType != OVERLAY_RGN)
                     {
-                        aloge("fatal error! region type[0x%x] is not overlay!", pEntryRegion->mType);
+                        LOGE("fatal error! region type[0x%x] is not overlay!", pEntryRegion->mType);
                     }
                     if(NULL == pEntryRegion->mInfo.mOverlay.mBitmap)
                     {
-                        aloge("fatal error! bmpData is not set");
+                        LOGE("fatal error! bmpData is not set");
                     }
                     stOsdFmt.reverse_close[stOsdFmt.clipcount] = pEntryRegion->mInfo.mOverlay.mbInvColEn?0:1;
                     stOsdFmt.bitmap[stOsdFmt.clipcount] = pEntryRegion->mInfo.mOverlay.mBitmap;
@@ -2311,14 +2311,14 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
                     stOsdFmt.clipcount++;
                     if(stOsdFmt.clipcount > MAX_OVERLAY_NUM)
                     {
-                        aloge("fatal error! clipcount[%d] exceed!", stOsdFmt.clipcount);
+                        LOGE("fatal error! clipcount[%d] exceed!", stOsdFmt.clipcount);
                         bCountExceed = TRUE;
                         break;
                     }
                 }
                 else
                 {
-                    aloge("fatal error! This overlay group must be single!");
+                    LOGE("fatal error! This overlay group must be single!");
                 }
             }
         }
@@ -2332,12 +2332,12 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
         int ret2 = overlay_update(video, 1);
         if(ret1 != 0)
         {
-            aloge("fatal error! set overlay fail[%d]", ret1);
+            LOGE("fatal error! set overlay fail[%d]", ret1);
             ret = ERR_VI_NOT_SUPPORT;
         }
         if(ret2 != 0)
         {
-            aloge("fatal error! overlay update fail[%d]", ret2);
+            LOGE("fatal error! overlay update fail[%d]", ret2);
             ret = ERR_VI_NOT_SUPPORT;
         }
     }
@@ -2353,12 +2353,12 @@ ERRORTYPE videoInputHw_DrawOSD_V5(VI_DEV vipp_id)
         int ret2 = overlay_update(video, 1);
         if(ret1 != 0)
         {
-            aloge("fatal error! set overlay fail[%d]", ret1);
+            LOGE("fatal error! set overlay fail[%d]", ret1);
             ret = ERR_VI_NOT_SUPPORT;
         }
         if(ret2 != 0)
         {
-            aloge("fatal error! overlay update fail[%d]", ret2);
+            LOGE("fatal error! overlay update fail[%d]", ret2);
             ret = ERR_VI_NOT_SUPPORT;
         }
     }

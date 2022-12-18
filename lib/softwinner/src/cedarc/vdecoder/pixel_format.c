@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "vdecoder.h"
-#include "log.h"
+#include <log/log.h>
 
 /*******************************************************************************
 Function name: map32x32_to_yuv_Y
@@ -833,7 +833,7 @@ int RotatePicture0Degree(VideoPicture* pPictureIn,
                 }
                 else
                 {
-                    loge("the nGpuYAlign[%d] and nGpuCAlign[%d] is not surpport!", \
+                    LOGE("the nGpuYAlign[%d] and nGpuCAlign[%d] is not surpport!", \
                         nGpuYAlign,nGpuCAlign);
                     return -1;
                 }
@@ -866,7 +866,7 @@ int RotatePicture0Degree(VideoPicture* pPictureIn,
             break;
 
         default:
-            loge("pixel format incorrect, ePixelFormat=%d", ePixelFormat);
+            LOGE("pixel format incorrect, ePixelFormat=%d", ePixelFormat);
             return -1;
     }
     return 0;

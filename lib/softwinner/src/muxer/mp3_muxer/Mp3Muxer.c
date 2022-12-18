@@ -1,6 +1,6 @@
 // #include <CDX_LogNDebug.h>
 #define LOG_TAG "Mp3Muxer.c"
-#include <utils/plat_log.h>
+#include <log/log.h>
 //#include <CDX_Recorder.h>
 
 #include <stdio.h>
@@ -23,7 +23,7 @@
 
 int Mp3WriteExtraData(void *handle, unsigned char *vosData, unsigned int vosLen, unsigned int idx)
 {
-    //alogd("Mp3WriteExtraData");
+    //LOGD("Mp3WriteExtraData");
     return 0;
 }
 
@@ -32,7 +32,7 @@ int Mp3MuxerWriteHeader(void *handle)
     AVFormatContext *s = (AVFormatContext *)handle;
     char *pCache = NULL;
     unsigned int nCacheSize = 0;
-    alogv("Mp3MuxerWriteHeader");
+    LOGV("Mp3MuxerWriteHeader");
     if(s->pb)
     {
         FSWRITEMODE mode = s->mFsWriteMode;
@@ -46,7 +46,7 @@ int Mp3MuxerWriteHeader(void *handle)
     		}
     		else
     		{
-                aloge("fatal error! not set cacheMemory but set mode FSWRITEMODE_CACHETHREAD! use FSWRITEMODE_DIRECT.");
+                LOGE("fatal error! not set cacheMemory but set mode FSWRITEMODE_CACHETHREAD! use FSWRITEMODE_DIRECT.");
                 mode = FSWRITEMODE_DIRECT;
     		}
         }
@@ -58,7 +58,7 @@ int Mp3MuxerWriteHeader(void *handle)
         s->mpFsWriter = createFsWriter(mode, s->pb, pCache, nCacheSize, 0);
         if(NULL == s->mpFsWriter)
         {
-            aloge("fatal error! create FsWriter() fail!");
+            LOGE("fatal error! create FsWriter() fail!");
             return -1;
         }
     }
@@ -110,7 +110,7 @@ int Mp3MuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
         s->pb = create_outstream_handle(&datasourceDesc);
         if(NULL == s->pb)
         {
-            aloge("fatal error! create aac outstream fail.");
+            LOGE("fatal error! create aac outstream fail.");
             return -1;
         }
         break;
@@ -125,24 +125,24 @@ int Mp3MuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
         s->pb = create_outstream_handle(&datasourceDesc);
         if(NULL == s->pb)
         {
-            aloge("fatal error! create aac outstream fail.");
+            LOGE("fatal error! create aac outstream fail.");
             return -1;
         }
         if(s->mFallocateLen > 0)
         {
             if(s->pb->fallocate(s->pb, 0x01, 0, s->mFallocateLen) < 0)
             {
-                aloge("fatal error! Failed to fallocate size %d, fd[%d](%s)", s->mFallocateLen, s->pb->fd_desc.fd, strerror(errno));
+                LOGE("fatal error! Failed to fallocate size %d, fd[%d](%s)", s->mFallocateLen, s->pb->fd_desc.fd, strerror(errno));
             }
         }
 		break;
     }
     case SETOUTURL:
-        aloge("DO not support set URL");
+        LOGE("DO not support set URL");
         break;
     case SETSDCARDSTATE:
         s->mbSdcardDisappear = !uParam;
-        alogd("SETSDCARDSTATE, mbSdcardDisappear[%d]", s->mbSdcardDisappear);
+        LOGD("SETSDCARDSTATE, mbSdcardDisappear[%d]", s->mbSdcardDisappear);
         break;
     case SETCACHEMEM:
         s->mCacheMemInfo = *(FsCacheMemInfo*)pParam2;
@@ -165,7 +165,7 @@ void *Mp3MuxerOpen(int *ret)
     AVFormatContext *s;
     //int i;
 
-    alogv("Mp3MuxerOpen");
+    LOGV("Mp3MuxerOpen");
 
     *ret = 0;
 

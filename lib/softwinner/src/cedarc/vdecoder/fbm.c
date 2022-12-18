@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include "fbm.h"
-#include "log.h"
+#include <log/log.h>
 
 #include "CdcUtil.h"
 
@@ -47,7 +47,7 @@ void FbmDebugPrintStatus(Fbm* pFbm)
         return;
     for(i=0; i<pFbm->nMaxFrameNum; i++)
     {
-        logd("i=%d, picture=%p, displed=%d, valid=%d, decode=%d, render=%d\n", \
+        LOGD("i=%d, picture=%p, displed=%d, valid=%d, decode=%d, render=%d", \
             i, &pFbm->pFrames[i].vpicture, pFbm->pFrames[i].Flag.bAlreadyDisplayed, \
             pFbm->pFrames[i].Flag.bInValidPictureQueue,  pFbm->pFrames[i].Flag.bUsedByDecoder, \
             pFbm->pFrames[i].Flag.bUsedByRender);
@@ -124,25 +124,25 @@ Fbm* FbmCreateBuffer(FbmCreateInfo* pFbmCreateInfo, VideoFbmInfo* pFbmInfo)
         if(pFbmCreateInfo->nFrameNum > 20)
         {
             pFbmCreateInfo->nFrameNum = 20;
-            logw("the nFrameNum excess 20,decrease to 20");
+            LOGW("the nFrameNum excess 20,decrease to 20");
         }
     }
 
-    logd("FbmCreate, total fbm number: %d, decoder needed: %d,  \
+    LOGD("FbmCreate, total fbm number: %d, decoder needed: %d,  \
 nWidth=%d, nHeight=%d nAlignStride = %d",
            pFbmCreateInfo->nFrameNum,
            pFbmCreateInfo->nDecoderNeededMiniFrameNum,
            nWidth, nHeight, nAlignStride);
     if(nWidth >= 7680 || nHeight >= 4320)
     {
-        loge("width or height too large , can not create fbm buffer.");
+        LOGE("width or height too large , can not create fbm buffer.");
         return NULL;
     }
 
     p = (Fbm*)malloc(sizeof(Fbm));
     if(p == NULL)
     {
-        loge("memory alloc fail.");
+        LOGE("memory alloc fail.");
         return NULL;
     }
     memset(p, 0, sizeof(Fbm));
@@ -171,7 +171,7 @@ nWidth=%d, nHeight=%d nAlignStride = %d",
     pFrameNode = (FrameNode*)malloc(p->nMaxFrameNum*sizeof(FrameNode));
     if(pFrameNode == NULL)
     {
-        loge("memory alloc fail, alloc %d bytes.", (int)(p->nMaxFrameNum*sizeof(FrameNode)));
+        LOGE("memory alloc fail, alloc %d bytes.", (int)(p->nMaxFrameNum*sizeof(FrameNode)));
         free(p);
         return NULL;
     }
@@ -230,7 +230,7 @@ nWidth=%d, nHeight=%d nAlignStride = %d",
         {
             if(!pFbmCreateInfo->bThumbnailMode || i==0)
             {
-                logd("** call allocate pic buf, i = %d, maxNum = %d",i,p->nMaxFrameNum);
+                LOGD("** call allocate pic buf, i = %d, maxNum = %d",i,p->nMaxFrameNum);
                 if(FbmAllocatePictureBuffer(p, \
                     &pFrameNode->vpicture, &nAlignStride, nWidth, nHeight) != 0)
                     break;
@@ -283,7 +283,7 @@ nWidth=%d, nHeight=%d nAlignStride = %d",
                     pFrameNode->vpicture.nAfbcSize = nAfbcBufSize;
                 }
             }
-            logd("*** calcute nLower2BitBufOffset = %d(%0.2f), stride = %d",
+            LOGD("*** calcute nLower2BitBufOffset = %d(%0.2f), stride = %d",
                  nLower2BitBufOffset, (float)nLower2BitBufOffset/1024/1024, nLower2BitBufStride);
             pFrameNode->vpicture.nLower2BitBufOffset = nLower2BitBufOffset;
             pFrameNode->vpicture.nLower2BitBufStride = nLower2BitBufStride;
@@ -297,7 +297,7 @@ nWidth=%d, nHeight=%d nAlignStride = %d",
     {
         //* not all picture buffer allocated, abort the Fbm creating.
         int j;
-        loge("memory alloc fail, only %d frames allocated, \
+        LOGE("memory alloc fail, only %d frames allocated, \
             we need %d frames.", i, pFbmCreateInfo->nFrameNum);
         for(j = 0; j < i; j++)
             FbmFreePictureBuffer(p, &p->pFrames[j].vpicture);
@@ -383,7 +383,7 @@ nWidth=%d, nHeight=%d nAlignStride = %d",
         p->pFbmInfo = (void*)pFbmInfo;
     }
 
-    logd("*** finish fbmCreateBuffer");
+    LOGD("*** finish fbmCreateBuffer");
     return p;
 }
 
@@ -404,7 +404,7 @@ Fbm* FbmCreate(FbmCreateInfo* pFbmCreateInfo, VideoFbmInfo* pFbmInfo)
                 pFbmInfo->pFbmSecond = (void*)FbmCreateBuffer(pFbmCreateInfo, pFbmInfo);
                 if(pFbmInfo->pFbmSecond == NULL)
                 {
-                    loge("pFbmInfo->pFbmSecond=NULL\n");
+                    LOGE("pFbmInfo->pFbmSecond=NULL");
                 }
                 GetBufferSize(pFbmInfo->pFbmBufInfo.ePixelFormat, \
                         pFbmInfo->pFbmBufInfo.nBufWidth, pFbmInfo->pFbmBufInfo.nBufHeight, \
@@ -440,7 +440,7 @@ Fbm* FbmCreate(FbmCreateInfo* pFbmCreateInfo, VideoFbmInfo* pFbmInfo)
 
 void FbmDestroy(Fbm* pFbm)
 {
-    logv("FbmDestroy");
+    LOGV("FbmDestroy");
     if(pFbm == NULL)
         return;
     pthread_mutex_destroy(&pFbm->mutex);
@@ -487,7 +487,7 @@ VideoPicture* FbmRequestBuffer(Fbm* pFbm)
     VideoFbmInfo*  pFbmInfo = NULL;
     struct ScMemOpsS *_memops = NULL;
 
-    logi("FbmRequestBuffer");
+    LOGI("FbmRequestBuffer");
     if(pFbm == NULL)
         return NULL;
 
@@ -522,7 +522,7 @@ VideoPicture* FbmRequestBuffer(Fbm* pFbm)
         {
             //* the picture is in the pEmptyBufferQueue, these four flags
             //* shouldn't be set.
-            loge("invalid frame status, a picture is just pick out from the pEmptyBufferQueue, \
+            LOGE("invalid frame status, a picture is just pick out from the pEmptyBufferQueue, \
                     but bUsedByDecoder=%d, bInValidPictureQueue=%d, bUsedByRender=%d,\
                     bAlreadyDisplayed=%d.",
                     pFrameNode->Flag.bUsedByDecoder, pFrameNode->Flag.bInValidPictureQueue,
@@ -572,7 +572,7 @@ void FbmReturnBuffer(Fbm* pFbm, VideoPicture* pVPicture, int bValidPicture)
     {
         return;
     }
-    logv("FbmReturnBuffer pVPicture=%p, bValidPicture=%d, id=%d", \
+    LOGV("FbmReturnBuffer pVPicture=%p, bValidPicture=%d, id=%d", \
         pVPicture, bValidPicture, pVPicture->nID);
 
     //* 3d -- newDisplay case
@@ -606,7 +606,7 @@ void FbmReturnBuffer(Fbm* pFbm, VideoPicture* pVPicture, int bValidPicture)
     //* check the index is valid.
     if(index < 0 || index >= pFbm->nMaxFrameNum)
     {
-        loge("FbmReturnBuffer: the picture id is invalid, pVPicture=%p, pVPicture->nID=%d",
+        LOGE("FbmReturnBuffer: the picture id is invalid, pVPicture=%p, pVPicture->nID=%d",
                 pVPicture, pVPicture->nID);
         return;
     }
@@ -614,7 +614,7 @@ void FbmReturnBuffer(Fbm* pFbm, VideoPicture* pVPicture, int bValidPicture)
     {
         if(pVPicture != &pFbm->pFrames[index].vpicture)
         {
-            loge("FbmReturnBuffer: the picture id is invalid, pVPicture=%p, pVPicture->nID=%d",
+            LOGE("FbmReturnBuffer: the picture id is invalid, pVPicture=%p, pVPicture->nID=%d",
                     pVPicture, pVPicture->nID);
             return;
         }
@@ -626,7 +626,7 @@ void FbmReturnBuffer(Fbm* pFbm, VideoPicture* pVPicture, int bValidPicture)
 
     if(pFrameNode->Flag.bUsedByDecoder == 0)
     {
-        loge("invalid picture status, bUsedByDecoder=0 when picture buffer is returned.");
+        LOGE("invalid picture status, bUsedByDecoder=0 when picture buffer is returned.");
         //abort();
         pthread_mutex_unlock(&pFbm->mutex);
         return;
@@ -640,7 +640,7 @@ void FbmReturnBuffer(Fbm* pFbm, VideoPicture* pVPicture, int bValidPicture)
         pFrameNode->Flag.bAlreadyDisplayed = 0;
         pFrameNode->Flag.bInValidPictureQueue = 0;
         pthread_mutex_unlock(&pFbm->mutex);
-        logv("return buffer end\n");
+        LOGV("return buffer end");
         return;
     }
 
@@ -650,7 +650,7 @@ void FbmReturnBuffer(Fbm* pFbm, VideoPicture* pVPicture, int bValidPicture)
         //* check status.
         if(pFrameNode->Flag.bUsedByRender || pFrameNode->Flag.bAlreadyDisplayed)
         {
-            loge("invalid frame status, a picture in pValidPictureQueue, \
+            LOGE("invalid frame status, a picture in pValidPictureQueue, \
                     but bUsedByRender=%d and Flag.bAlreadyDisplayed=%d",
                     pFrameNode->Flag.bUsedByRender, pFrameNode->Flag.bAlreadyDisplayed);
             //abort();
@@ -691,7 +691,7 @@ void FbmReturnBuffer(Fbm* pFbm, VideoPicture* pVPicture, int bValidPicture)
 
     pFbm->nDecoderHoldingNum--;
     pthread_mutex_unlock(&pFbm->mutex);
-    logv("return buffer end\n");
+    LOGV("return buffer end");
     return;
 }
 
@@ -718,14 +718,14 @@ void FbmShareBuffer(Fbm* pFbm, VideoPicture* pVPicture)
         return;
     }
 
-    logv("FbmShareBuffer pVPicture=%p", pVPicture);
+    LOGV("FbmShareBuffer pVPicture=%p", pVPicture);
 
     index = pVPicture->nID;
 
     //* check the index is valid.
     if(index < 0 || index >= pFbm->nMaxFrameNum)
     {
-        loge("FbmShareBuffer: the picture id is invalid, \
+        LOGE("FbmShareBuffer: the picture id is invalid, \
             pVPicture=%p, pVPicture->nID=%d, pFbm->nMaxFrameNum=%d",
                 pVPicture, pVPicture->nID, pFbm->nMaxFrameNum);
         return;
@@ -734,7 +734,7 @@ void FbmShareBuffer(Fbm* pFbm, VideoPicture* pVPicture)
     {
         if(pVPicture != &pFbm->pFrames[index].vpicture)
         {
-            loge("FbmShareBuffer: the picture id is invalid, pVPicture=%p, pVPicture->nID=%d",
+            LOGE("FbmShareBuffer: the picture id is invalid, pVPicture=%p, pVPicture->nID=%d",
                     pVPicture, pVPicture->nID);
             return;
         }
@@ -743,7 +743,7 @@ void FbmShareBuffer(Fbm* pFbm, VideoPicture* pVPicture)
     pFrameNode = &pFbm->pFrames[index];
     if(pFrameNode->Flag.bNeedRelease == 1)
     {
-        logv("the buffer need release\n");
+        LOGV("the buffer need release");
         return;
     }
 
@@ -754,7 +754,7 @@ void FbmShareBuffer(Fbm* pFbm, VideoPicture* pVPicture)
         pFrameNode->Flag.bInValidPictureQueue == 1 ||
         pFrameNode->Flag.bAlreadyDisplayed == 1)
     {
-        loge("invalid frame status, a picture is shared but bUsedByDecoder=%d, \
+        LOGE("invalid frame status, a picture is shared but bUsedByDecoder=%d, \
                 bInValidPictureQueue=%d, bUsedByDecoder=%d, bAlreadyDisplayed=%d.",
                 pFrameNode->Flag.bUsedByDecoder, pFrameNode->Flag.bInValidPictureQueue,
                 pFrameNode->Flag.bUsedByDecoder, pFrameNode->Flag.bAlreadyDisplayed);
@@ -770,7 +770,7 @@ void FbmShareBuffer(Fbm* pFbm, VideoPicture* pVPicture)
     pFbm->nWaitForDispNum++;
 
     pthread_mutex_unlock(&pFbm->mutex);
-    logv("end sharebuffer\n");
+    LOGV("end sharebuffer");
     return;
 }
 
@@ -780,7 +780,7 @@ VideoPicture* FbmRequestPicture(Fbm* pFbm)
     FrameNode*    pFrameNode;
     VideoFbmInfo*  pFbmInfo = NULL;
 
-    logv("FbmRequestPicture, bDynamicShowLogFlag = %d",bDynamicShowLogFlag);
+    LOGV("FbmRequestPicture, bDynamicShowLogFlag = %d",bDynamicShowLogFlag);
     if(bDynamicShowLogFlag == 1)
         FbmDebugPrintStatus(pFbm);
 
@@ -793,14 +793,14 @@ VideoPicture* FbmRequestPicture(Fbm* pFbm)
     if((pFbmInfo->bTwoStreamShareOneFbm  == 1) && (pFbm ==pFbmInfo->pFbmSecond))
     {
         pFbmInfo->pMajorDispFrame->nBufStatus |= MINOR_DISP_USE_FLAG;
-        logv("**************here7:  pVPicture->nBufStatus =%x\n",
+        LOGV("**************here7:  pVPicture->nBufStatus =%x",
             pFbmInfo->pMajorDispFrame->nBufStatus);
         return pFbmInfo->pMajorDispFrame;
     }
 
     pthread_mutex_lock(&pFbm->mutex);
 
-   // logi("FbmRequestPicture");
+   // LOGI("FbmRequestPicture");
 
     pVPicture  = NULL;
     pFbmInfo->pMajorDispFrame = NULL;
@@ -813,7 +813,7 @@ VideoPicture* FbmRequestPicture(Fbm* pFbm)
             pFrameNode->Flag.bAlreadyDisplayed == 1)
         {
             //* the picture is in the pValidPictureQueue, one of these three flags is invalid.
-            loge("invalid frame status, a picture is just pick out from the pValidPictureQueue, \
+            LOGE("invalid frame status, a picture is just pick out from the pValidPictureQueue, \
                     but bInValidPictureQueue=%d, bUsedByRender=%d, bAlreadyDisplayed=%d.",
                     pFrameNode->Flag.bInValidPictureQueue,
                     pFrameNode->Flag.bUsedByRender,
@@ -831,7 +831,7 @@ VideoPicture* FbmRequestPicture(Fbm* pFbm)
         pFrameNode->Flag.bUsedByRender = 1;
         pFbmInfo->pMajorDispFrame = pVPicture;
         pVPicture->nBufStatus |= MAJOR_DISP_USE_FLAG;
-        logv("**************here8:  pVPicture->nBufStatus =%x\n",   pVPicture->nBufStatus);
+        LOGV("**************here8:  pVPicture->nBufStatus =%x",   pVPicture->nBufStatus);
     }
 
     pthread_mutex_unlock(&pFbm->mutex);
@@ -854,7 +854,7 @@ int FbmReturnPicture(Fbm* pFbm, VideoPicture* pVPicture)
     {
         return 0;
     }
-    logi("**************FbmReturnPicture pVPicture=%p", pVPicture,pVPicture->nID);
+    LOGI("**************FbmReturnPicture pVPicture=%p", pVPicture,pVPicture->nID);
     if(pFbmInfo->bTwoStreamShareOneFbm == 1)
     {
         if(pFbm == pFbmInfo->pFbmFirst)
@@ -897,7 +897,7 @@ int FbmReturnPicture(Fbm* pFbm, VideoPicture* pVPicture)
 
     if(i == pFbm->nMaxFrameNum)
     {
-        loge("FbmReturnPicture: cannot find this picture");
+        LOGE("FbmReturnPicture: cannot find this picture");
         return -1;
     }
     index = pFbm->pFrames[i].vpicture.nID;
@@ -913,7 +913,7 @@ int FbmReturnPicture(Fbm* pFbm, VideoPicture* pVPicture)
                 pFrameNode->Flag.bInValidPictureQueue != 0 ||
                 pFrameNode->Flag.bAlreadyDisplayed != 0)
              {
-                 loge(" check index valid error. bUsedByRender: \
+                 LOGE(" check index valid error. bUsedByRender: \
                          %d, bInValidPictureQueue: %d, bAlreadyDisplayed: %d ", \
                          pFrameNode->Flag.bUsedByRender, pFrameNode->Flag.bInValidPictureQueue, \
                          pFrameNode->Flag.bAlreadyDisplayed);
@@ -931,7 +931,7 @@ int FbmReturnPicture(Fbm* pFbm, VideoPicture* pVPicture)
              pthread_mutex_unlock(&pFbm->mutex);
              return 0;
         }
-        logw("FbmReturnPicture: the picture id is invalid, pVPicture=%p, pVPicture->nID=%d",\
+        LOGW("FbmReturnPicture: the picture id is invalid, pVPicture=%p, pVPicture->nID=%d",\
                 pVPicture, pVPicture->nID);
         return -1;
     }
@@ -945,12 +945,12 @@ int FbmReturnPicture(Fbm* pFbm, VideoPicture* pVPicture)
         pFrameNode->Flag.bAlreadyDisplayed == 1)
     {
         //* the picture is being returned, but one of these three flags is invalid.
-        loge("invalid frame status, a picture being returned, \
+        LOGE("invalid frame status, a picture being returned, \
                 but bUsedByRender=%d, bInValidPictureQueue=%d, bAlreadyDisplayed=%d.",
                     pFrameNode->Flag.bUsedByRender,
                     pFrameNode->Flag.bInValidPictureQueue,
                     pFrameNode->Flag.bAlreadyDisplayed);
-        loge("**picture[%p],id[%d]",&pFrameNode->vpicture,pFrameNode->vpicture.nID);
+        LOGE("**picture[%p],id[%d]",&pFrameNode->vpicture,pFrameNode->vpicture.nID);
         //abort();
         pthread_mutex_unlock(&pFbm->mutex);
         return -1;
@@ -983,7 +983,7 @@ VideoPicture* FbmNextPictureInfo(Fbm* pFbm)
 {
     FrameNode* pFrameNode;
 
-   // logi("FbmNextPictureInfo");
+   // LOGI("FbmNextPictureInfo");
     VideoFbmInfo*  pFbmInfo = NULL;
     Fbm* ppFbm = NULL;
 
@@ -1034,7 +1034,7 @@ void FbmFlush(Fbm* pFbm)
 
     pthread_mutex_lock(&pFbm->mutex);
 
-    logv("FbmFlush");
+    LOGV("FbmFlush");
 
     while((pFrameNode = FbmDequeue(&pFbm->pValidPictureQueue)) != NULL)
     {
@@ -1046,7 +1046,7 @@ void FbmFlush(Fbm* pFbm)
         {
             //* the picture is in the pValidPictureQueue, these two flags
             //* shouldn't be set.
-            loge("invalid frame status, a picture is just pick out from the pValidPictureQueue, \
+            LOGE("invalid frame status, a picture is just pick out from the pValidPictureQueue, \
                     but bUsedByRender=%d and bAlreadyDisplayed=%d.",
                     pFrameNode->Flag.bUsedByRender, pFrameNode->Flag.bAlreadyDisplayed);
             //abort();
@@ -1099,7 +1099,7 @@ int FbmGetBufferInfo(Fbm* pFbm, VideoPicture* pVPicture)
         ppFbm = pFbm;
     }
 
-    logi("FbmGetBufferInfo");
+    LOGI("FbmGetBufferInfo");
 
     //* give the general information of the video pictures.
     pFrameNode = &ppFbm->pFrames[0];
@@ -1118,7 +1118,7 @@ int FbmGetBufferInfo(Fbm* pFbm, VideoPicture* pVPicture)
 
 int FbmTotalBufferNum(Fbm* pFbm)
 {
-    logi("FbmTotalBufferNum");
+    LOGI("FbmTotalBufferNum");
     VideoFbmInfo*  pFbmInfo = NULL;
     Fbm* ppFbm = NULL;
 
@@ -1329,7 +1329,7 @@ int FbmAllocatePictureBuffer(Fbm* pFbm, VideoPicture* pPicture,
                    pFbm->sVeops, pFbm->pVeOpsSelf);
             if(pMem == NULL)
             {
-                loge("memory alloc fail, require %d bytes for picture buffer.", \
+                LOGE("memory alloc fail, require %d bytes for picture buffer.", \
                     nMemSizeY + nMemSizeC*2);
                 return -1;
             }
@@ -1389,14 +1389,14 @@ int FbmAllocatePictureBuffer(Fbm* pFbm, VideoPicture* pPicture,
             nLower2BitBufSize = ((((nWidth+3)>>2) + 31) & 0xffffffe0) * nHeight * 3/2;
             //int PriChromaStride = ((nWidth/2) + 31)&0xffffffe0;
             //frmbuf_c_size = 2 * (PriChromaStride * (((nHeight/2)+15)&0xfffffff0)/4);
-            //logd("frmbuf_c_size : %d(%0.2f)",frmbuf_c_size,(float)frmbuf_c_size/1024/1024);
+            //LOGD("frmbuf_c_size : %d(%0.2f)",frmbuf_c_size,(float)frmbuf_c_size/1024/1024);
             if(pPicture->b10BitPicFlag)
             {
                 if(pPicture->bEnableAfbcFlag == 1)
                 {
                     nAfbcBufSize = ((nWidth+15)>>4) * ((nHeight+4+15)>>4) * (512 + 16) + 32 + 1024;
                     nTotalPicPhyBufSize = nAfbcBufSize + nLower2BitBufSize /*+ frmbuf_c_size*/;
-                    logd("TotalSize: %d(%0.2f MB),AfbcSize: %d(%0.2f MB),Low2Size: %d(%0.2f MB)",
+                    LOGD("TotalSize: %d(%0.2f MB),AfbcSize: %d(%0.2f MB),Low2Size: %d(%0.2f MB)",
                            nTotalPicPhyBufSize,(float)nTotalPicPhyBufSize/1024/1024,
                            nAfbcBufSize,(float)nAfbcBufSize/1024/1024,
                            nLower2BitBufSize,(float)nLower2BitBufSize/1024/1024);
@@ -1423,11 +1423,11 @@ int FbmAllocatePictureBuffer(Fbm* pFbm, VideoPicture* pPicture,
                                        pFbm->sVeops, pFbm->pVeOpsSelf);
             if(pMem == NULL)
             {
-                loge("memory alloc fail, require %d bytes for picture buffer.", \
+                LOGE("memory alloc fail, require %d bytes for picture buffer.", \
                     nMemSizeY + nMemSizeC*2);
                 return -1;
             }
-            logd("pPicture->bEnableAfbcFlag = %d",pPicture->bEnableAfbcFlag);
+            LOGD("pPicture->bEnableAfbcFlag = %d",pPicture->bEnableAfbcFlag);
             if(pPicture->bEnableAfbcFlag == 1)
             {
                 memset(pMem, 0, nTotalPicPhyBufSize);
@@ -1477,7 +1477,7 @@ int FbmAllocatePictureBuffer(Fbm* pFbm, VideoPicture* pPicture,
             pMem = (char*)malloc(4*1024);
             if(pMem == NULL)
             {
-                loge("memory alloc fail, require %d bytes for picture metadata buffer", 4*1024);
+                LOGE("memory alloc fail, require %d bytes for picture metadata buffer", 4*1024);
                 return -1;
             }
             pPicture->pMetaData = (void*)pMem;
@@ -1532,7 +1532,7 @@ int FbmAllocatePictureBuffer(Fbm* pFbm, VideoPicture* pPicture,
 
             if(pMem == NULL)
             {
-                loge("memory alloc fail, require %d bytes for picture buffer.", nMemSizeY);
+                LOGE("memory alloc fail, require %d bytes for picture buffer.", nMemSizeY);
                 return -1;
             }
             pPicture->pData0 = pMem;
@@ -1541,7 +1541,7 @@ int FbmAllocatePictureBuffer(Fbm* pFbm, VideoPicture* pPicture,
                      pFbm->sVeops, pFbm->pVeOpsSelf);    //* UV is combined.
             if(pMem == NULL)
             {
-                loge("memory alloc fail, require %d bytes for picture buffer.", nMemSizeC*2);
+                LOGE("memory alloc fail, require %d bytes for picture buffer.", nMemSizeC*2);
                 CdcMemPfree(pFbm->memops, pPicture->pData0,
                             pFbm->sVeops, pFbm->pVeOpsSelf);
                 pPicture->pData0 = NULL;
@@ -1566,7 +1566,7 @@ int FbmAllocatePictureBuffer(Fbm* pFbm, VideoPicture* pPicture,
                            pFbm->sVeops, pFbm->pVeOpsSelf);
             if(pMem == NULL)
             {
-                loge("memory alloc fail, require %d bytes for picture buffer.", nMemSizeY);
+                LOGE("memory alloc fail, require %d bytes for picture buffer.", nMemSizeY);
                 return -1;
             }
             // must memset pixels to oxFF, or jpeg_test in skia will failed
@@ -1580,7 +1580,7 @@ int FbmAllocatePictureBuffer(Fbm* pFbm, VideoPicture* pPicture,
             break;
         }
         default:
-            loge("pixel format incorrect, ePixelFormat=%d", ePixelFormat);
+            LOGE("pixel format incorrect, ePixelFormat=%d", ePixelFormat);
             return -1;
     }
 
@@ -1687,7 +1687,7 @@ VideoPicture* FbmSetFbmBufAddress(VideoFbmInfo* pFbmInfo,
 
     if(pFbm == NULL)
     {
-        loge("the handle is error:pFbm=%p\n",pFbm);
+        LOGE("the handle is error:pFbm=%p",pFbm);
         return 0;
     }
     pthread_mutex_lock(&pFbm->mutex);
@@ -1748,7 +1748,7 @@ int FbmNewDispRelease(Fbm* pFbm)
             {
                 //* the picture is in the pEmptyBufferQueue, these four flags
                 //* shouldn't be set.
-                loge("invalid frame status, \
+                LOGE("invalid frame status, \
                        a picture is just pick out from the pEmptyBufferQueue, \
                        but bUsedByDecoder=%d, bInValidPictureQueue=%d, bUsedByRender=%d,\
                        bAlreadyDisplayed=%d.",
@@ -1819,7 +1819,7 @@ VideoPicture* FbmRequestReleasePicture(VideoFbmInfo* pFbmInfo)
     }
     if(pFbm == NULL)
     {
-        loge("the handle is error:pFbm=%p\n", pFbm);
+        LOGE("the handle is error:pFbm=%p", pFbm);
         return NULL;
     }
 
@@ -1853,7 +1853,7 @@ VideoPicture* FbmReturnReleasePicture(VideoFbmInfo* pFbmInfo,
     }
     if(pFbm == NULL)
     {
-        loge("the handle is error:pFbm=%p\n", pFbm);
+        LOGE("the handle is error:pFbm=%p", pFbm);
         return NULL;
     }
     pthread_mutex_lock(&pFbm->mutex);
@@ -1893,7 +1893,7 @@ VideoPicture* FbmReturnReleasePicture(VideoFbmInfo* pFbmInfo,
 
     if(index >= pFbm->nMaxFrameNum)
     {
-        logw("return release picture failed, as no frameNode");
+        LOGW("return release picture failed, as no frameNode");
         pPic = NULL;
     }
 

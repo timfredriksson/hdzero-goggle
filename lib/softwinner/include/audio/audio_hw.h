@@ -49,7 +49,7 @@ typedef enum AO_CHANNEL_PORT_DEFINE_E
 #define CHECK_AI_DEV_ID(id)                         \
     do {                                            \
         if (id < 0 || id > (AIO_DEV_MAX_NUM - 1)) { \
-            aloge("Invalid AudioDevId %d!", id);    \
+            LOGE("Invalid AudioDevId %d!", id);    \
             return ERR_AI_INVALID_DEVID;            \
         }                                           \
     } while (0)
@@ -57,7 +57,7 @@ typedef enum AO_CHANNEL_PORT_DEFINE_E
 #define CHECK_AI_CHN_ID(id)                         \
     do {                                            \
         if (id < 0 || id > (AIO_MAX_CHN_NUM - 1)) { \
-            aloge("Invalid AI channel ID %d!", id); \
+            LOGE("Invalid AI channel ID %d!", id); \
             return ERR_AI_INVALID_CHNID;            \
         }                                           \
     } while (0)
@@ -65,7 +65,7 @@ typedef enum AO_CHANNEL_PORT_DEFINE_E
 #define CHECK_AO_DEV_ID(id)                         \
     do {                                            \
         if (id < 0 || id > (AIO_DEV_MAX_NUM - 1)) { \
-            aloge("Invalid AudioDevId %d!", id);    \
+            LOGE("Invalid AudioDevId %d!", id);    \
             return ERR_AO_INVALID_DEVID;            \
         }                                           \
     } while (0)
@@ -73,7 +73,7 @@ typedef enum AO_CHANNEL_PORT_DEFINE_E
 #define CHECK_AO_CHN_ID(id)                         \
     do {                                            \
         if (id < 0 || id > (AIO_MAX_CHN_NUM - 1)) { \
-            aloge("Invalid AI channel ID %d!", id); \
+            LOGE("Invalid AI channel ID %d!", id); \
             return ERR_AO_INVALID_CHNID;            \
         }                                           \
     } while (0)

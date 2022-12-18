@@ -22,7 +22,7 @@ static CDX_U32 readStsc(MOVContext *c, MOVStreamContext *st, cdx_uint32 idx)
 #if 0
     if(idx >= st->stsc_size*12)
     {
-        CDX_LOGW("index<%d> is large than stsc_size<%d>, maybe error", idx/12, st->stsc_size);
+        LOGW("index<%d> is large than stsc_size<%d>, maybe error", idx/12, st->stsc_size);
         //return INT_MAX;
     }
 #endif
@@ -44,7 +44,7 @@ static CDX_U32 readStsz(MOVContext *c, MOVStreamContext *st, cdx_uint32 idx)
     #if 0
     if(idx >= st->stsz_size*4)
     {
-        CDX_LOGW("index<%d> is large than stsz_size<%d>, maybe error", idx, st->stsz_size);
+        LOGW("index<%d> is large than stsz_size<%d>, maybe error", idx, st->stsz_size);
         //return INT_MAX;
     }
     #endif
@@ -71,7 +71,7 @@ CDX_U32 ReadStss(MOVContext *c, MOVStreamContext *st, cdx_uint32 idx)
     #if 0
     if(idx >= st->stss_size*4)
     {
-        CDX_LOGW("index<%d> is large than stss_size<%d>, maybe error", idx/4, st->stss_size);
+        LOGW("index<%d> is large than stss_size<%d>, maybe error", idx/4, st->stss_size);
         //return INT_MAX;
     }
     #endif
@@ -114,7 +114,7 @@ static CDX_U32 readStts(MOVContext *c, MOVStreamContext *st, cdx_uint32 idx)
     #if 0
     if(idx >= st->stts_size*8)
     {
-        CDX_LOGW("index<%d> is large than stts_size<%d>, maybe error", idx, st->stts_size);
+        LOGW("index<%d> is large than stts_size<%d>, maybe error", idx, st->stts_size);
         return INT_MAX;
     }
     #endif
@@ -136,7 +136,7 @@ static CDX_U64 readStco(MOVContext *c, MOVStreamContext *st, cdx_uint32 idx)
     #if 0
     if(idx >= st->stco_size)
     {
-        CDX_LOGW("index<%d> is large than stco_size<%d>, maybe error", idx, st->stco_size);
+        LOGW("index<%d> is large than stco_size<%d>, maybe error", idx, st->stco_size);
         //return 0;
     }
     #endif
@@ -293,7 +293,7 @@ static CDX_S32 movReadSampleList(struct CdxMovParser *p)
     {
         //the first moof will goes here
         offset = CdxStreamTell(pb);
-        //CDX_LOGD("xxxxx offset=%llu", offset);
+        //LOGD("xxxxx offset=%llu", offset);
     }
 
     // find the moof , if no, the file is end
@@ -303,7 +303,7 @@ static CDX_S32 movReadSampleList(struct CdxMovParser *p)
         ret = CdxStreamRead(pb, buf, 8);
         if(ret < 8)
         {
-            CDX_LOGD("end of file? reslut(%d)", ret);
+            LOGD("end of file? reslut(%d)", ret);
             break;
         }
 
@@ -326,7 +326,7 @@ static CDX_S32 movReadSampleList(struct CdxMovParser *p)
             //offset and duration of the chunk in segment
             s->moof_end_offset = a.offset+a.size;
             s->nSmsMdatOffset = CdxStreamTell(pb); //* for sms
-            //CDX_LOGD("xxx s->nSmsMdatOffset=%llu", s->nSmsMdatOffset);
+            //LOGD("xxx s->nSmsMdatOffset=%llu", s->nSmsMdatOffset);
             return 0;
         }
         else if (a.type == MKTAG( 's', 'i', 'd', 'x' ))
@@ -408,7 +408,7 @@ static CDX_S32 movTimeToSample(struct CdxMovParser *p, cdx_int64 seconds)
     }
     else
     {
-        CDX_LOGI("Be careful: sample_duration is zero, set sample_idx to zero!");
+        LOGI("Be careful: sample_duration is zero, set sample_idx to zero!");
         sample_idx = 0;
     }
 
@@ -433,14 +433,14 @@ static CDX_S32 movTimeToSampleSidx(struct CdxMovParser *p, int seconds, int stre
 
     if(s->bSmsSegment) //* for sms
     {
-        //CDX_LOGD("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+        //LOGD("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
         s->streams[stream_index]->mov_idx_curr.current_dts = time;
         return 0;
     }
 
     if(!sidx)
     {
-        CDX_LOGW("--- sidx is NULL, cannot seek");
+        LOGW("--- sidx is NULL, cannot seek");
         return 0;
     }
     for(i=0; i<s->sidx_count; i++)
@@ -593,7 +593,7 @@ static CDX_S32 movFindKeyframe(struct CdxMovParser *p, CDX_U32 curr_sample_num,
 
             keyframe_num = ReadStss(c, st, st->mov_idx_curr.stss_idx<<2);
 
-            //CDX_LOGD("2.keyframe_num=%d, curr_sample_num = %d",  keyframe_num, curr_sample_num);
+            //LOGD("2.keyframe_num=%d, curr_sample_num = %d",  keyframe_num, curr_sample_num);
             if(keyframe_num < curr_sample_num)
             {
                 if(cmpflag == 2)
@@ -1236,7 +1236,7 @@ static CDX_S32 seekAudioSample(struct CdxMovParser *p,MOVStreamContext* st,MOVCo
             st->mov_idx_curr.sample_idx = calc_sample_parameter.stsz_acc +
                 calc_sample_parameter.stsc_samples;
             //st->mov_idx_curr.sample_idx = st->mov_idx_curr.stts_samples_acc-1;
-            CDX_LOGD("--- sample_idx=%d", st->mov_idx_curr.sample_idx);
+            LOGD("--- sample_idx=%d", st->mov_idx_curr.sample_idx);
 
             st->mov_idx_curr.stco_idx++;
             st->mov_idx_curr.stsz_idx = st->mov_idx_curr.sample_idx;
@@ -1452,7 +1452,7 @@ static CDX_S16 movSeekKeySample(struct CdxMovParser *p, CDX_U32 sample_num, CDX_
             }
         }
     }
-    CDX_LOGD("--- +++++video_time:%lld audio_time:%lld\n",video_time,audio_time);
+    LOGD("--- +++++video_time:%lld audio_time:%lld",video_time,audio_time);
 
     return 0;
 }
@@ -1475,7 +1475,7 @@ static CDX_S32 loadNewStsc(MOVContext *c,MOVStreamContext* st)
         {
             c->chunk_sample_idx_assgin_by_seek = 0;//assigned by seek
             // maybe should      st->chunk_sample_idx_assgin_by_seek = 0;
-            CDX_LOGE("***** maybe error here");
+            LOGE("***** maybe error here");
         }
 
         st->mov_idx_curr.stsc_idx++;
@@ -1768,7 +1768,7 @@ CDX_S16 MovReadSampleFragment(struct CdxMovParser *p)
     CDX_U64 voffset = 0xFFFFFFFF;
     CDX_U64 aoffset = 0xFFFFFFFF;
     CDX_U64 vNum = aw_list_count(Vsamples);
-    //CDX_LOGD("lin vNum = %llu, s->video_stream_idx = %d", vNum, s->video_stream_idx);
+    //LOGD("lin vNum = %llu, s->video_stream_idx = %d", vNum, s->video_stream_idx);
     if(s->has_video && vNum)
     {
         // get the video sample
@@ -1781,10 +1781,10 @@ CDX_S16 MovReadSampleFragment(struct CdxMovParser *p)
         {
             if(s->bSmsSegment && s->nSmsMdatOffset && !s->nDataOffsetDelta) //* for sms
             {
-                //CDX_LOGD("000 s->nSmsMdatOffset = %lld, s->fp=%p, Vsample->offset=%llu",
+                //LOGD("000 s->nSmsMdatOffset = %lld, s->fp=%p, Vsample->offset=%llu",
                 //s->nSmsMdatOffset, s->fp, Vsample->offset);
                 Vsample->offset += s->nSmsMdatOffset;
-                //CDX_LOGD("111 s->nSmsMdatOffset = %lld, s->fp=%p, Vsample->offset=%llu",
+                //LOGD("111 s->nSmsMdatOffset = %lld, s->fp=%p, Vsample->offset=%llu",
                 //s->nSmsMdatOffset, s->fp, Vsample->offset);
             }
             voffset = Vsample->offset;
@@ -1792,7 +1792,7 @@ CDX_S16 MovReadSampleFragment(struct CdxMovParser *p)
         vpts = (CDX_S64)s->streams[s->video_stream_idx]->mov_idx_curr.current_dts * 1000 * 1000
                                 / s->streams[s->video_stream_idx]->time_scale +
                                 s->basetime[0]*1000*1000;
-        CDX_LOGV("xxx vpts=%lld, current dts=%llu, s->video_stream_idx=%d,"
+        LOGV("xxx vpts=%lld, current dts=%llu, s->video_stream_idx=%d,"
             " s->streams[s->video_stream_idx]->time_scale=%d, s->basetime[0]=%d, voffset=%llu",
            vpts, (CDX_S64)s->streams[s->video_stream_idx]->mov_idx_curr.current_dts,
            s->video_stream_idx, s->streams[s->video_stream_idx]->time_scale,
@@ -1815,7 +1815,7 @@ CDX_S16 MovReadSampleFragment(struct CdxMovParser *p)
                             / s->streams[s->audio_stream_idx]->time_scale +
                             s->basetime[1]*1000*1000;
     }
-//    CDX_LOGD("has_video = %d, has_audio = %d", s->has_video, s->has_audio);
+//    LOGD("has_video = %d, has_audio = %d", s->has_video, s->has_audio);
 
     // how to select the sample( audio or video ) to show, there were two methods to deal with it
     // @ 1.compare with their pts, the sample with the smaller pts would be show in first
@@ -1887,14 +1887,14 @@ CDX_S16 MovReadSample(struct CdxMovParser *p)
 
     if (c->isReadEnd == 1)
     {
-        CDX_LOGW("return read finish\n");
+        LOGW("return read finish");
         return READ_FINISH;
     }
 
     int i;
     for(i=0; i<c->nb_streams; i++)
     {
-        //CDX_LOGD("+++++ stsd = %d, c->streams[%d]->read_va_end = %d",
+        //LOGD("+++++ stsd = %d, c->streams[%d]->read_va_end = %d",
         //c->streams[i]->stsd_type, i, c->streams[i]->read_va_end);
         vas_chunk_ost[i] = (CDX_U64)-1LL;
         vas_time[i] = (CDX_U64)-1LL;
@@ -1950,7 +1950,7 @@ CDX_S16 MovReadSample(struct CdxMovParser *p)
 
     for(i=0; i<c->nb_streams; i++)
     {
-        //CDX_LOGD("stsd = %d, c->streams[%d]->read_va_end = %d", c->streams[i]->stsd_type,
+        //LOGD("stsd = %d, c->streams[%d]->read_va_end = %d", c->streams[i]->stsd_type,
         //i, c->streams[i]->read_va_end);
         if((c->streams[i]->read_va_end == 0) && c->streams[i]->stsd_type)
         {
@@ -1960,7 +1960,7 @@ CDX_S16 MovReadSample(struct CdxMovParser *p)
 
     if(i==c->nb_streams)
     {
-        CDX_LOGW("read finish\n");
+        LOGW("read finish");
         c->isReadEnd = 1;
     }
 
@@ -2061,17 +2061,17 @@ CDX_S32 MovSeekSample(struct CdxMovParser *p,MOVContext *c,cdx_int64 seekTime,
         frmidx = movTimeToSample(p, seekTime);
         if(frmidx < 0)
         {
-            CDX_LOGW("TimeToSample failed!\n");
+            LOGW("TimeToSample failed!");
             return -1;
         }
-        //CDX_LOGV("---- seek_time = %lld", timeUs);
-        CDX_LOGD("############## sfrmidx = [%d]", frmidx);
+        //LOGV("---- seek_time = %lld", timeUs);
+        LOGD("############## sfrmidx = [%d]", frmidx);
         frmidx = movFindKeyframe(p, (unsigned int)frmidx, seekModeType,
                              seekTime);
-        CDX_LOGD("--- key frame = %d", frmidx);
+        LOGD("--- key frame = %d", frmidx);
         if(frmidx < 0)
         {
-            CDX_LOGW("look for key frame failed!\n");
+            LOGW("look for key frame failed!");
             return -1;
         }
 
@@ -2099,7 +2099,7 @@ CDX_S32 MovSeekSample(struct CdxMovParser *p,MOVContext *c,cdx_int64 seekTime,
     result = movSeekKeySample(p, frmidx, seekTime);
     if(result < 0)
     {
-        CDX_LOGW("Seek sample failed!\n");
+        LOGW("Seek sample failed!");
         return -1;
     }
 
@@ -2137,7 +2137,7 @@ CDX_S32 MovSeekSample(struct CdxMovParser *p,MOVContext *c,cdx_int64 seekTime,
 
         if(vas_chunk_ost[va_sel] != (CDX_U64)-1LL)
         {
-            //CDX_LOGD("--- stream seek: %llx", vas_chunk_ost[va_sel]);
+            //LOGD("--- stream seek: %llx", vas_chunk_ost[va_sel]);
             result = CdxStreamSeek(c->fp, vas_chunk_ost[va_sel], SEEK_SET);
             if(result < 0)
             {

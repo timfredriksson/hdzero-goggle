@@ -471,13 +471,13 @@ static int DsdInit(CdxParserT *dsd_impl)
     impl->mTotalSamps = impl->dsd->sample_stop;
     impl->mDuration   = impl->mTotalSamps * 8000/impl->mOriSampleRate;
     impl->mBitsSample = 16;
-    CDX_LOGD("CK-----  impl->mChannels:%d,impl->mSampleRate:%d,impl->mOriSampleRate:%d,\
+    LOGD("CK-----  impl->mChannels:%d,impl->mSampleRate:%d,impl->mOriSampleRate:%d,\
               impl->mTotalSamps:%lld,impl->mDuration:%lld",impl->mChannels,impl->mSampleRate,
               impl->mOriSampleRate,impl->mTotalSamps,impl->mDuration);
     impl->mErrno = PSR_OK;
     return 0;
 OPENFAILURE:
-    CDX_LOGE("DsdOpenThread fail!!!");
+    LOGE("DsdOpenThread fail!!!");
     impl->mErrno = PSR_OPEN_FAIL;
     return -1;
 }
@@ -501,7 +501,7 @@ static cdx_int32 __DsdParserControl(CdxParserT *parser, cdx_int32 cmd, void *par
             CdxStreamClrForceStop(impl->stream);
             break;
         default :
-            CDX_LOGW("not implement...(%d)", cmd);
+            LOGW("not implement...(%d)", cmd);
             break;
     }
     impl->flags = cmd;
@@ -524,7 +524,7 @@ static cdx_int32 __DsdParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
 
     pkt->type = CDX_MEDIA_AUDIO;
     pkt->pts = impl->mCurSamps*8000000ll/(impl->mOriSampleRate);//one frame pts;
-    CDX_LOGV("pkt->pts:%lld",pkt->pts);
+    LOGV("pkt->pts:%lld",pkt->pts);
     pkt->flags |= (FIRST_PART|LAST_PART);
     return ret;
 FAIL:
@@ -555,13 +555,13 @@ static cdx_int32 __DsdParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
     if(read_length < 0)
     {
-        CDX_LOGE("CdxStreamRead fail");
+        LOGE("CdxStreamRead fail");
         impl->mErrno = PSR_IO_ERR;
         return CDX_FAILURE;
     }
     else if(read_length == 0)
     {
-       CDX_LOGD("CdxStream EOS");
+       LOGD("CdxStream EOS");
        impl->mErrno = PSR_EOS;
        return CDX_FAILURE;
     }
@@ -582,7 +582,7 @@ static cdx_int32 __DsdParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *medi
 
     if(impl->mErrno != PSR_OK)
     {
-        CDX_LOGE("audio parse status no PSR_OK");
+        LOGE("audio parse status no PSR_OK");
         return CDX_FAILURE;
     }
 
@@ -621,7 +621,7 @@ static cdx_int32 __DsdParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
     struct DsdParserImplS *impl = NULL;
     impl = CdxContainerOf(parser, struct DsdParserImplS, base);
     cdx_uint32 mseconds = (cdx_uint32)(timeUs/1000);
-    CDX_LOGD("SEEK TO timeUs:%lld",timeUs);
+    LOGD("SEEK TO timeUs:%lld",timeUs);
     file = impl->dsd;
     if (file->type == DSF)
         if(aw_dsf_set_pos(file,mseconds,&off))
@@ -700,17 +700,17 @@ static cdx_uint32 __DsdParserProbe(CdxStreamProbeDataT *probeData)
     CDX_CHECK(probeData);
     if(probeData->len < 10)
     {
-        CDX_LOGE("Probe data is not enough.");
+        LOGE("Probe data is not enough.");
         return ret;
     }
     if (DSD_MATCH(probeData->buf, "DSD "))
     {
-        CDX_LOGD("YES,IT'S IS DSD");
+        LOGD("YES,IT'S IS DSD");
         ret = 100;
     }
     else if (DSD_MATCH(probeData->buf, "FRM8"))
     {
-        CDX_LOGD("YES,IT'S IS DSDIFF");
+        LOGD("YES,IT'S IS DSDIFF");
         ret = 100;
     }
     return ret;

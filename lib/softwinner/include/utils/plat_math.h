@@ -206,7 +206,7 @@ __inline static void GetYCFromRGB(unsigned int rgb, unsigned int * pY, unsigned 
 **  InitFps(&g_stFpsCtrl, 25, 12);
 **
 **  {
-**       if(FpsControl(&g_stFpsCtrl)) printf("Yes, this frmae should be token");
+**       if(FpsControl(&g_stFpsCtrl)) LOGI("Yes, this frmae should be token");
 **  }
 **
 *******************************************************************************/

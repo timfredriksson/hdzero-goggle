@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <CdxTypes.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxStream.h>
 #include <vdecoder.h>
 #include <adecoder.h>
@@ -463,10 +463,10 @@ static inline cdx_int32 CdxParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
 static void PrintMediaInfo(CdxMediaInfoT *mediaInfo)
 {
-    CDX_LOGD("*********PrintMediaInfo begin*********");
+    LOGD("*********PrintMediaInfo begin*********");
     struct CdxProgramS *program = &mediaInfo->program[0];
 
-    CDX_LOGD("fileSize = %lld, "
+    LOGD("fileSize = %lld, "
             "bSeekable = %d, "
             "duration = %d, "
             "audioNum = %d, "
@@ -482,7 +482,7 @@ static void PrintMediaInfo(CdxMediaInfoT *mediaInfo)
     for (i = 0; i < VIDEO_STREAM_LIMIT && i < program->videoNum; i++)
     {
         VideoStreamInfo *video = program->video + i;
-        CDX_LOGD("***Video[%d]*** "
+        LOGD("***Video[%d]*** "
                 "eCodecFormat = 0x%x, "
                 "nWidth = %d, "
                 "nHeight = %d, "
@@ -502,7 +502,7 @@ static void PrintMediaInfo(CdxMediaInfoT *mediaInfo)
     for (i = 0; i < AUDIO_STREAM_LIMIT && i < program->audioNum; i++)
     {
         AudioStreamInfo *audio = program->audio + i;
-        CDX_LOGD("***Audio[%d]*** "
+        LOGD("***Audio[%d]*** "
                 "eCodecFormat = 0x%x, "
                 "eSubCodecFormat = 0x%x, "
                 "nChannelNum = %d, "
@@ -521,7 +521,7 @@ static void PrintMediaInfo(CdxMediaInfoT *mediaInfo)
     {
         SubtitleStreamInfo *subtitle = program->subtitle + i;
 
-        CDX_LOGD("***Subtitle[%d]*** "
+        LOGD("***Subtitle[%d]*** "
                 "eCodecFormat = 0x%x, "
                 "strLang = (%s) ",
                 i,
@@ -529,7 +529,7 @@ static void PrintMediaInfo(CdxMediaInfoT *mediaInfo)
                 subtitle->strLang);
     }
 
-    CDX_LOGD("*********PrintMediaInfo end*********");
+    LOGD("*********PrintMediaInfo end*********");
 }
 
 #ifdef __ANDROID__
@@ -604,7 +604,7 @@ static int FilterForbiddenStream(CdxMediaInfoT *mediaInfo)
         VideoStreamInfo *video = program->video + i;
         if (VideoCodecIsForbidden(video->eCodecFormat))
         {
-            logw("video codec %d is forbidden", video->eCodecFormat);
+            LOGW("video codec %d is forbidden", video->eCodecFormat);
             program->videoIndexMask |= 1 << i;
         }
     }
@@ -616,7 +616,7 @@ static int FilterForbiddenStream(CdxMediaInfoT *mediaInfo)
         AudioStreamInfo *audio = program->audio + i;
         if (AudioCodecIsForbidden(audio->eCodecFormat))
         {
-            logw("audio codec %d is forbidden", audio->eCodecFormat);
+            LOGW("audio codec %d is forbidden", audio->eCodecFormat);
             /* Todo: forbidden the evil one, not anyone */
             program->audioIndexMask |= 1 << i;
         }

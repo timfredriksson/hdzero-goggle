@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "VideoVirVi_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <errno.h>
@@ -105,11 +105,11 @@ static ERRORTYPE DoVideoViSendBackInputFrame(VIDEOVIDATATYPE *pVideoViData, VIDE
     if (FALSE == pVideoViData->mInputPortTunnelFlag) {
         pVideoViData->pCallbacks->EmptyBufferDone(pVideoViData->hSelf, pVideoViData->pAppData, &BufferHeader);
     } else {
-        alogw("unsupported temporary: vda return input frame in tunnel mode!");
+        LOGW("unsupported temporary: vda return input frame in tunnel mode!");
         MM_COMPONENTTYPE *pTunnelComp = (MM_COMPONENTTYPE *)pVideoViData->sPortTunnelInfo[VI_CHN_PORT_INDEX_CAP_IN].hTunnel;
         pTunnelComp->FillThisBuffer(pTunnelComp, &BufferHeader);
     }
-    alogd("release input FrameId[%d]", pFrameInfo->mId);
+    LOGD("release input FrameId[%d]", pFrameInfo->mId);
     return SUCCESS;
 }
 
@@ -222,7 +222,7 @@ ERRORTYPE DoVideoViGetData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT VI_Par
     ERRORTYPE eError = SUCCESS;
     VIDEOVIDATATYPE *pVideoViData = (VIDEOVIDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (COMP_StateIdle != pVideoViData->state && COMP_StateExecuting != pVideoViData->state) {
-        alogw("call getStream in wrong state[0x%x]", pVideoViData->state);
+        LOGW("call getStream in wrong state[0x%x]", pVideoViData->state);
         return ERR_VI_NOT_PERM;
     }
     int ret;
@@ -261,14 +261,14 @@ _TryToGetFrame:
         } else {
             ret = cdx_sem_down_timedwait(&pVideoViData->mSemWaitInputFrame, nMilliSec);
             if(ETIMEDOUT == ret) {
-                alogv("wait input frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
+                LOGV("wait input frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
                 pVideoViData->mWaitingCapDataFlag = FALSE;
                 return FAILURE;
             } else if(0 == ret) {
                 pVideoViData->mWaitingCapDataFlag = FALSE;
                 goto _TryToGetFrame;
             } else {
-                aloge("fatal error! pthread cond wait timeout ret[%d]", ret);
+                LOGE("fatal error! pthread cond wait timeout ret[%d]", ret);
                 pVideoViData->mWaitingCapDataFlag = FALSE;
                 return FAILURE;
             }
@@ -282,7 +282,7 @@ GetFrmSuccess:
     pstFrameInfo->VFrame.mOffsetBottom = pstFrameInfo->VFrame.mHeight;
     pstFrameInfo->VFrame.mOffsetLeft = 0;
     pstFrameInfo->VFrame.mOffsetRight = pstFrameInfo->VFrame.mWidth;
-    alogv("DoVideoViGetData addr = %p.\r\n", pstFrameInfo->VFrame.mpVirAddr[0]);
+    LOGV("DoVideoViGetData addr = %p.", pstFrameInfo->VFrame.mpVirAddr[0]);
     if(pVideoViData->mbStoreFrame) {
         char strPixFmt[16];
         if(MM_PIXEL_FORMAT_YVU_SEMIPLANAR_420 == pstFrameInfo->VFrame.mPixelFormat) {
@@ -311,12 +311,12 @@ GetFrmSuccess:
         for(int i=0; i<3; i++) {
             if(tmp->VFrame.mpVirAddr[i] != NULL) {
                 fwrite(tmp->VFrame.mpVirAddr[i], 1, yuvSize[i], dbgFp);
-                alogd("virAddr[%d]=[%p], length=[%d]", i, tmp->VFrame.mpVirAddr[i], yuvSize[i]);
+                LOGD("virAddr[%d]=[%p], length=[%d]", i, tmp->VFrame.mpVirAddr[i], yuvSize[i]);
             }
         }
         fclose(dbgFp);
         pVideoViData->mbStoreFrame = FALSE;
-        alogd("store VI frame in file[%s], non-tunnel mode", pVideoViData->mDbgStoreFrameFilePath);
+        LOGD("store VI frame in file[%s], non-tunnel mode", pVideoViData->mDbgStoreFrameFilePath);
     }
 
     return SUCCESS;
@@ -326,7 +326,7 @@ ERRORTYPE DoVideoViReleaseData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN VI_
 {
     VIDEOVIDATATYPE *pVideoViData = (VIDEOVIDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (COMP_StateIdle != pVideoViData->state && COMP_StateExecuting != pVideoViData->state) {
-        alogw("call getStream in wrong state[0x%x]", pVideoViData->state);
+        LOGW("call getStream in wrong state[0x%x]", pVideoViData->state);
         return ERR_VI_NOT_PERM;
     }
     if (TRUE == pVideoViData->mOutputPortTunnelFlag) { /* Tunnel mode */
@@ -337,7 +337,7 @@ ERRORTYPE DoVideoViReleaseData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN VI_
     VIDEO_FRAME_INFO_S *pstFrameInfo = pstParams->pstFrameInfo;
     videoInputHw_RefsReduceAndRleaseData(vipp_id, pstFrameInfo);
     VideoBufMgrReleaseFrame(pVideoViData->mpCapMgr, pstFrameInfo);
-    alogv("DoVideoViReleaseData addr = %p.\r\n", pstFrameInfo->VFrame.mpVirAddr[0]);
+    LOGV("DoVideoViReleaseData addr = %p.", pstFrameInfo->VFrame.mpVirAddr[0]);
 
     return SUCCESS;
 }
@@ -357,7 +357,7 @@ static ERRORTYPE DoVideoViReturnAllValidFrames(PARAM_IN VIDEOVIDATATYPE *pVideoV
             break;
         }
     }
-    alogd("release [%d]validFrames", nFrameNum);
+    LOGD("release [%d]validFrames", nFrameNum);
     return SUCCESS;
 }
 /**
@@ -368,7 +368,7 @@ ERRORTYPE VideoViStoreFrame(PARAM_IN COMP_HANDLETYPE hComponent, const char* pDi
     VIDEOVIDATATYPE *pVideoViData = (VIDEOVIDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
 
     if (!pVideoViData->mOutputPortTunnelFlag) {
-        alogw("in non-tunnel mode, you should store frame by your self, we don't do it\n");
+        LOGW("in non-tunnel mode, you should store frame by your self, we don't do it");
         return FAILURE;
     }
 
@@ -393,30 +393,30 @@ ERRORTYPE VideoViSetLongExpMode(PARAM_IN COMP_HANDLETYPE hComponent, VI_SHUTTIME
     switch (pstViShutter->eShutterMode) {
         case VI_SHUTTIME_MODE_AUTO: break;
         case VI_SHUTTIME_MODE_PREVIEW: {
-            aloge("not support this value until now, eShutterMode[%d]", pstViShutter->eShutterMode);
+            LOGE("not support this value until now, eShutterMode[%d]", pstViShutter->eShutterMode);
             eErr = ERR_VI_INVALID_PARA;
             goto exit;
         } break;
         case VI_SHUTTIME_MODE_NIGHT_VIEW: {
             if (pstViShutter->iTime > 0) {
-                aloge("not support this value until now, iTime[%d]", pstViShutter->iTime);
+                LOGE("not support this value until now, iTime[%d]", pstViShutter->iTime);
                 eErr = ERR_VI_INVALID_PARA;
                 goto exit;
             }
         } break;
         default: {
-            aloge("not support this value until now, eShutterMode[%d]", pstViShutter->eShutterMode);
+            LOGE("not support this value until now, eShutterMode[%d]", pstViShutter->eShutterMode);
             eErr = ERR_VI_INVALID_PARA;
             goto exit;
         } break;
     }
 
     if (pVideoViData->mSetLongExpCnt >= 1) {
-        aloge("the long exposure mode has been set, do not set it again before returns normal.");
+        LOGE("the long exposure mode has been set, do not set it again before returns normal.");
         eErr = ERR_VI_INVALID_PARA;
         goto exit;
     } else if (pstViShutter->eShutterMode == VI_SHUTTIME_MODE_AUTO) {
-        alogd("The shutter mode now is auto already, return.");
+        LOGD("The shutter mode now is auto already, return.");
         eErr = SUCCESS;
         goto exit;
     }
@@ -468,7 +468,7 @@ ERRORTYPE VideoViSetViDevAttr(PARAM_IN COMP_HANDLETYPE hComponent, VI_ATTR_S *ps
     VIDEOVIDATATYPE *pVideoViData = (VIDEOVIDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
 
     memcpy(&pVideoViData->mViAttr, pstViAttr, sizeof(VI_ATTR_S));
-    aloge("fps %d nbufs %d", pVideoViData->mViAttr.fps, pVideoViData->mViAttr.nbufs);
+    LOGE("fps %d nbufs %d", pVideoViData->mViAttr.fps, pVideoViData->mViAttr.nbufs);
 
     return SUCCESS;
 }
@@ -481,7 +481,7 @@ ERRORTYPE VideoViSendCommand(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_
     ERRORTYPE eError = SUCCESS;
     message_t msg;
 
-    alogv("VideoViSendCommand: %d", Cmd);
+    LOGV("VideoViSendCommand: %d", Cmd);
 
     pVideoViData = (VIDEOVIDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (!pVideoViData) {
@@ -503,7 +503,7 @@ ERRORTYPE VideoViSendCommand(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_
             break;
 
         default:
-            alogw("impossible comp_command[0x%x]", Cmd);
+            LOGW("impossible comp_command[0x%x]", Cmd);
             eCmd = -1;
             break;
     }
@@ -573,7 +573,7 @@ ERRORTYPE VideoViGetConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_IN
             eError = VideoViGetViDevAttr(hComponent, (VI_ATTR_S *)pComponentConfigStructure);
         } break;
         default: {
-            aloge("fatal error! unknown getConfig Index[0x%x]", nIndex);
+            LOGE("fatal error! unknown getConfig Index[0x%x]", nIndex);
             eError = ERR_VI_NOT_SUPPORT;
         } break;
     }
@@ -610,7 +610,7 @@ ERRORTYPE VideoViSetConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_IN
             eError = VideoViSetViDevAttr(hComponent, (VI_ATTR_S *)pComponentConfigStructure);
         } break;
         default: {
-            aloge("(f:%s, l:%d) unknown Index[0x%x]", __FUNCTION__, __LINE__, nIndex);
+            LOGE("(f:%s, l:%d) unknown Index[0x%x]", __FUNCTION__, __LINE__, nIndex);
             eError = ERR_VI_INVALID_PARA;
         } break;
     }
@@ -630,9 +630,9 @@ ERRORTYPE VideoViComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PAR
     int i;
 
     if (pVideoViData->state == COMP_StateExecuting) {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     } else if (pVideoViData->state != COMP_StateIdle) {
-        aloge("fatal error! tunnel request can't be in state[0x%x]",pVideoViData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]",pVideoViData->state);
         eError = ERR_VI_INCORRECT_STATE_OPERATION;
         goto COMP_CMD_FAIL;
     }
@@ -644,7 +644,7 @@ ERRORTYPE VideoViComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PAR
         }
     }
     if (i == VI_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AI_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -656,7 +656,7 @@ ERRORTYPE VideoViComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PAR
         }
     }
     if (i == VI_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AI_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -668,7 +668,7 @@ ERRORTYPE VideoViComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PAR
         }
     }
     if (i == VI_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AI_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -680,7 +680,7 @@ ERRORTYPE VideoViComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PAR
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup)
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         if(pPortDef->eDir == COMP_DirOutput)
         {
@@ -695,7 +695,7 @@ ERRORTYPE VideoViComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PAR
     if(pPortDef->eDir == COMP_DirOutput)
     {
         if (pVideoViData->mOutputPortTunnelFlag) {
-            aloge("VirVi_Comp outport already bind, why bind again?!");
+            LOGE("VirVi_Comp outport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -706,7 +706,7 @@ ERRORTYPE VideoViComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PAR
     else
     {
         if (pVideoViData->mInputPortTunnelFlag) {
-            aloge("VirVi_Comp inport already bind, why bind again?!");
+            LOGE("VirVi_Comp inport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -717,7 +717,7 @@ ERRORTYPE VideoViComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PAR
         ((MM_COMPONENTTYPE*)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput)
         {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_VI_INVALID_PARA;
             goto COMP_CMD_FAIL;
         }
@@ -726,7 +726,7 @@ ERRORTYPE VideoViComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PAR
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
         {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -761,7 +761,7 @@ ERRORTYPE VideoViEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
         pFrm->VFrame.mFrmFlag = FrmIntervalMs<<16 | FF_LONGEXP;
         pFrm->VFrame.mWhoSetFlag = (pVideoViData->mMppChnInfo.mModId<<16) | (pVideoViData->mMppChnInfo.mDevId<<8)
                                     | (pVideoViData->mMppChnInfo.mChnId);
-        alogw("Find one long exposure frame, exp-time(%x %x), cnt_lost(%d)\r\n",
+        LOGW("Find one long exposure frame, exp-time(%x %x), cnt_lost(%d)",
             pFrm->VFrame.mFrmFlag, pFrm->VFrame.mWhoSetFlag, FrmCntInterval);
 #endif
         iGetLongExpFlag = 1;
@@ -771,7 +771,7 @@ ERRORTYPE VideoViEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
 
     pthread_mutex_lock(&pVideoViData->mStateLock);
     if (pVideoViData->state != COMP_StateExecuting) {
-        alogw("send frame when vi state[0x%x] isn not executing", pVideoViData->state);
+        LOGW("send frame when vi state[0x%x] isn not executing", pVideoViData->state);
         eError = FAILURE;
         goto err_state;
     }
@@ -786,7 +786,7 @@ ERRORTYPE VideoViEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
         } else {
             pthread_mutex_unlock(&pVideoViData->mLongExpLock);
             eError = FAILURE;
-            aloge("FrmIntervalMs %llu, not a long exposure video frame", FrmIntervalMs);
+            LOGE("FrmIntervalMs %llu, not a long exposure video frame", FrmIntervalMs);
             goto err_state;
         }
     } else if (pVideoViData->mLongExp.eShutterMode == VI_SHUTTIME_MODE_NIGHT_VIEW) {
@@ -804,7 +804,7 @@ ERRORTYPE VideoViEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
                 msg.para1 = FF_LONGEXP;
                 put_message(&pVideoViData->cmd_queue, &msg);
             }
-            aloge("FrmIntervalMs %llu, mode %d, cnt %d", FrmIntervalMs, pVideoViData->mLongExp.eShutterMode, pVideoViData->mSetLongExpCnt);
+            LOGE("FrmIntervalMs %llu, mode %d, cnt %d", FrmIntervalMs, pVideoViData->mLongExp.eShutterMode, pVideoViData->mSetLongExpCnt);
         }
 
         if (pFrm->VFrame.mFramecnt >= pVideoViData->mLongExpFrameCnt) {
@@ -812,8 +812,8 @@ ERRORTYPE VideoViEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
         } else {
             pthread_mutex_unlock(&pVideoViData->mLongExpLock);
             eError = FAILURE;
-            aloge("FrmIntervalMs %llu, not a long exposure video frame", FrmIntervalMs);
-            aloge("Real long exposure frame count %d, this frame count %d", pVideoViData->mLongExpFrameCnt, pFrm->VFrame.mFramecnt);
+            LOGE("FrmIntervalMs %llu, not a long exposure video frame", FrmIntervalMs);
+            LOGE("Real long exposure frame count %d, this frame count %d", pVideoViData->mLongExpFrameCnt, pFrm->VFrame.mFramecnt);
             goto err_state;
         }
     }
@@ -824,12 +824,12 @@ ERRORTYPE VideoViEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
     if (pBuffer->nInputPortIndex == pVideoViData->sPortDef[VI_CHN_PORT_INDEX_CAP_IN].nPortIndex) {
         eError = VideoBufMgrPushFrame(pVideoViData->mpCapMgr, pFrm);
         if (eError != SUCCESS) {
-            aloge("failed to push this frame, it will be droped\n");
+            LOGE("failed to push this frame, it will be droped");
             eError =  FAILURE;
             goto push_fail;
         }
 
-        alogv("VideoViEmptyThisBuffer pushFrame process, %p.\r\n", pFrm->VFrame.mpVirAddr[0]);
+        LOGV("VideoViEmptyThisBuffer pushFrame process, %p.", pFrm->VFrame.mpVirAddr[0]);
         if (pVideoViData->mWaitingCapDataFlag) {
             if (pVideoViData->mOutputPortTunnelFlag) {
                 message_t msg;
@@ -841,7 +841,7 @@ ERRORTYPE VideoViEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
         }
     } else if (pBuffer->nOutputPortIndex == pVideoViData->sPortDef[VI_CHN_PORT_INDEX_FILE_IN].nPortIndex) {
     } else {
-        aloge("fatal error! inputPortIndex[%d] match nothing!", pBuffer->nOutputPortIndex);
+        LOGE("fatal error! inputPortIndex[%d] match nothing!", pBuffer->nOutputPortIndex);
     }
 
 push_fail:
@@ -865,7 +865,7 @@ ERRORTYPE VideoViFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN CO
         VideoBufMgrReleaseFrame(pVideoViData->mpCapMgr, pFrm);
     }
     else {
-        aloge("fatal error! outputPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pVideoViData->sPortDef[VI_CHN_PORT_INDEX_OUT].nPortIndex);
+        LOGE("fatal error! outputPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pVideoViData->sPortDef[VI_CHN_PORT_INDEX_OUT].nPortIndex);
     }
 
     return 0;
@@ -895,7 +895,7 @@ ERRORTYPE VideoViComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         free(pVideoViData);
         pVideoViData = NULL;
     }
-    alogv("VideoVirvi component exited!");
+    LOGV("VideoVirvi component exited!");
     return eError;
 }
 
@@ -917,7 +917,7 @@ ERRORTYPE VideoViComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     cdx_sem_init(&pVideoViData->mSemWaitInputFrame, 0);
     pVideoViData->mpCapMgr = VideoBufMgrCreate(VI_FIFO_LEVEL, 0);
     if (pVideoViData->mpCapMgr == NULL) {
-        aloge("videoInputBufMgrCreate error!");
+        LOGE("videoInputBufMgrCreate error!");
         return FAILURE;
     }
     // Fill in function pointers
@@ -981,18 +981,18 @@ ERRORTYPE VideoViComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pVideoViData->sPortParam.nPorts++;
 
     if (message_create(&pVideoViData->cmd_queue) < 0) {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_VI_NOMEM;
         goto EXIT;
     }
 
     // Create the component thread
     if (pthread_create(&pVideoViData->thread_id, NULL, Vi_ComponentThread, pVideoViData) || !pVideoViData->thread_id) {
-        aloge("(f:%s, l:%d) create Vi_ComponentThread fail!\r\n", __FUNCTION__, __LINE__);
+        LOGE("(f:%s, l:%d) create Vi_ComponentThread fail!", __FUNCTION__, __LINE__);
         eError = ERR_VI_NOMEM;
         goto EXIT;
     }
-    alogv("VideoVirvi component Init!");
+    LOGV("VideoVirvi component Init!");
 EXIT:
     return eError;
 }
@@ -1004,7 +1004,7 @@ static void *Vi_ComponentThread(void *pThreadData)
     VIDEOVIDATATYPE *pVideoViData = (VIDEOVIDATATYPE *)pThreadData;
     message_t cmd_msg;
 
-    alogv("VideoVi ComponentThread start run...");
+    LOGV("VideoVi ComponentThread start run...");
     prctl(PR_SET_NAME, "ViComponentThread", 0, 0, 0);
 
     while (1) {
@@ -1012,7 +1012,7 @@ static void *Vi_ComponentThread(void *pThreadData)
         if (get_message(&pVideoViData->cmd_queue, &cmd_msg) == 0) {
             cmd = cmd_msg.command;
             cmddata = (unsigned int)cmd_msg.para0;
-            // alogv("VideoVi ComponentThread get_message cmd:%d", cmd);
+            // LOGV("VideoVi ComponentThread get_message cmd:%d", cmd);
             if (cmd == SetState) {
                 pthread_mutex_lock(&pVideoViData->mStateLock);
                 if (pVideoViData->state == (COMP_STATETYPE)(cmddata)) {
@@ -1039,11 +1039,11 @@ static void *Vi_ComponentThread(void *pThreadData)
                             pVideoViData->mWaitAllFrameReleaseFlag = 1;
 
                             VideoBufMgrWaitUsingEmpty(pVideoViData->mpCapMgr);
-                            alogd("wait using frame return done");
+                            LOGD("wait using frame return done");
 
                             pVideoViData->mWaitAllFrameReleaseFlag = 0;
                             pVideoViData->state = COMP_StateLoaded;
-                            alogv("Set Virvi OMX_StateLoaded OK");
+                            LOGV("Set Virvi OMX_StateLoaded OK");
                             pVideoViData->pCallbacks->EventHandler(pVideoViData->hSelf, pVideoViData->pAppData,
                                                                    COMP_EventCmdComplete, COMP_CommandStateSet,
                                                                    pVideoViData->state, NULL);
@@ -1051,7 +1051,7 @@ static void *Vi_ComponentThread(void *pThreadData)
                         }
                         case COMP_StateIdle: {
                             if (pVideoViData->state == COMP_StateLoaded) {
-                                alogv("video VI: loaded->idle ...");
+                                LOGV("video VI: loaded->idle ...");
                                 pVideoViData->state = COMP_StateIdle;
                                 // callback sem++
                                 pVideoViData->pCallbacks->EventHandler(pVideoViData->hSelf, pVideoViData->pAppData,
@@ -1059,22 +1059,22 @@ static void *Vi_ComponentThread(void *pThreadData)
                                                                        pVideoViData->state, NULL);
                             } else if (pVideoViData->state == COMP_StatePause ||
                             pVideoViData->state == COMP_StateExecuting) {
-                                alogv("video vi: pause/executing[0x%x]->idle ...", pVideoViData->state);
+                                LOGV("video vi: pause/executing[0x%x]->idle ...", pVideoViData->state);
                                 //release all frames to video input.
                                 if(!VideoBufMgrUsingEmpty(pVideoViData->mpCapMgr))
                                 {
-                                    // aloge("fatal error! using frame is not empty! check code!");
-                                    alogw("fatal warning! using frame is not empty! check code!");
+                                    // LOGE("fatal error! using frame is not empty! check code!");
+                                    LOGW("fatal warning! using frame is not empty! check code!");
                                 }
                                 //return all valid frames to videoInput
                                 DoVideoViReturnAllValidFrames(pVideoViData);
                                 pVideoViData->state = COMP_StateIdle;
-                                alogv("Set Virvi COMP_StateIdle OK");
+                                LOGV("Set Virvi COMP_StateIdle OK");
                                 pVideoViData->pCallbacks->EventHandler(pVideoViData->hSelf, pVideoViData->pAppData,
                                                                        COMP_EventCmdComplete, COMP_CommandStateSet,
                                                                        pVideoViData->state, NULL);
                             } else {
-                                aloge("fatal error! current state[0x%x] can't turn to idle!", pVideoViData->state);
+                                LOGE("fatal error! current state[0x%x] can't turn to idle!", pVideoViData->state);
                                 pVideoViData->pCallbacks->EventHandler(pVideoViData->hSelf, pVideoViData->pAppData,
                                                                        COMP_EventError,
                                                                        ERR_VI_INCORRECT_STATE_TRANSITION, 0, NULL);
@@ -1084,7 +1084,7 @@ static void *Vi_ComponentThread(void *pThreadData)
                         case COMP_StateExecuting: {  // Transition can only happen from pause or idle state
                             if (pVideoViData->state == COMP_StateIdle || pVideoViData->state == COMP_StatePause) {
                                 pVideoViData->state = COMP_StateExecuting;
-                                alogv("Set Virvi COMP_StateExecuting OK");
+                                LOGV("Set Virvi COMP_StateExecuting OK");
                                 pVideoViData->pCallbacks->EventHandler(pVideoViData->hSelf, pVideoViData->pAppData,
                                                                        COMP_EventCmdComplete, COMP_CommandStateSet,
                                                                        pVideoViData->state, NULL);
@@ -1116,11 +1116,11 @@ static void *Vi_ComponentThread(void *pThreadData)
                 }
                 pthread_mutex_unlock(&pVideoViData->mStateLock);
             } else if (cmd == Flush) {
-                alogv("Receive command Flush.");
+                LOGV("Receive command Flush.");
             } else if (cmd == Stop) {
                 goto EXIT; /* Kill thread */
             } else if (cmd == VViComp_InputFrameAvailable) {
-                alogv("(f:%s, l:%d) frame input", __FUNCTION__, __LINE__);
+                LOGV("(f:%s, l:%d) frame input", __FUNCTION__, __LINE__);
             } else if (cmd == VViComp_LongExpEvent) {
                 if (E_VI_LONGEXP_SET == cmd_msg.para0) {
                     pVideoViData->pCallbacks->EventHandler(pVideoViData->hSelf, pVideoViData->pAppData,
@@ -1147,7 +1147,7 @@ static void *Vi_ComponentThread(void *pThreadData)
         int eError;
         if (pVideoViData->state == COMP_StateExecuting) {
             if (TRUE == pVideoViData->mOutputPortTunnelFlag) { /* Tunnel */
-                //alogw("Tunnel virvi debug.\r\n");
+                //LOGW("Tunnel virvi debug.");
                 COMP_INTERNAL_TUNNELINFOTYPE *pPortTunnelInfo = &pVideoViData->sPortTunnelInfo[VI_CHN_PORT_INDEX_OUT];
                 MM_COMPONENTTYPE *pOutTunnelComp = (MM_COMPONENTTYPE*)pPortTunnelInfo->hTunnel;
                 if (pOutTunnelComp != NULL) {
@@ -1211,12 +1211,12 @@ static void *Vi_ComponentThread(void *pThreadData)
                             if(pFrm->VFrame.mpVirAddr[i] != NULL)
                             {
                                 fwrite(pFrm->VFrame.mpVirAddr[i], 1, yuvSize[i], dbgFp);
-                                alogd("virAddr[%d]=[%p], length=[%d]", i, pFrm->VFrame.mpVirAddr[i], yuvSize[i]);
+                                LOGD("virAddr[%d]=[%p], length=[%d]", i, pFrm->VFrame.mpVirAddr[i], yuvSize[i]);
                             }
                         }
                         fclose(dbgFp);
                         pVideoViData->mbStoreFrame = FALSE;
-                        alogd("store VI frame in file[%s]", pVideoViData->mDbgStoreFrameFilePath);
+                        LOGD("store VI frame in file[%s]", pVideoViData->mDbgStoreFrameFilePath);
                     }
 
                     obh.nOutputPortIndex = pPortTunnelInfo->nPortIndex;
@@ -1225,7 +1225,7 @@ static void *Vi_ComponentThread(void *pThreadData)
                     obh.pOutputPortPrivate = pFrm;
                     eError = pOutTunnelComp->EmptyThisBuffer(pOutTunnelComp, &obh);
                     if(SUCCESS != eError) {
-                        alogw("Loop Vi_ComponentThread OutTunnelComp EmptyThisBuffer failed %x, return this frame", eError);
+                        LOGW("Loop Vi_ComponentThread OutTunnelComp EmptyThisBuffer failed %x, return this frame", eError);
                         videoInputHw_RefsReduceAndRleaseData(pVideoViData->mMppChnInfo.mDevId, pFrm);
                         VideoBufMgrReleaseFrame(pVideoViData->mpCapMgr, pFrm);
                     }
@@ -1239,13 +1239,13 @@ static void *Vi_ComponentThread(void *pThreadData)
         }
         else
         {
-            alogv("VI ComponentThread not OMX_StateExecuting\n");
+            LOGV("VI ComponentThread not OMX_StateExecuting");
             TMessage_WaitQueueNotEmpty(&pVideoViData->cmd_queue, 0);
         }
     }
 
 EXIT:
-    alogv("VideoVirvi ComponentThread stopped");
+    LOGV("VideoVirvi ComponentThread stopped");
     return (void *)SUCCESS;
 }
 

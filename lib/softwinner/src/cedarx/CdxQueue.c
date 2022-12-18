@@ -12,7 +12,7 @@
 #include <CdxAtomic.h>
 #include <CdxMemory.h>
 //#include <CdxBaseErrno.h>
-#include <cdx_log.h>
+#include <log/log.h>
 
 #include <CdxQueue.h>
 
@@ -78,13 +78,13 @@ static CdxQueueDataT __CdxQueuePop(CdxQueueT *queue)
         }
         data = entity->next->data;
         /*
-              *ÏÈ°ÑÊý¾Ý±£´æÏÂÀ´£¬
-              *±ÜÃâÈ¡µ½entityÖ®ºó£¬ËüµÄnext±»ÊÍ·ÅÁË
+              *ï¿½È°ï¿½ï¿½ï¿½ï¿½Ý±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+              *ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½entityÖ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½nextï¿½ï¿½ï¿½Í·ï¿½ï¿½ï¿½
               */
     }
     while (!CdxAtomicBoolCAS(&impl->front, entity, entity->next));
-    QueueNodeEntityDecRef(impl->pool, entity); /*¶ÔÓ¦ÉÏÃæÈ¡entityµÄÊ±ºò+1*/
-    QueueNodeEntityDecRef(impl->pool, entity); /*ÔÙ-1 ²ÅÄÜÊÍ·ÅÄÚ´æ*/
+    QueueNodeEntityDecRef(impl->pool, entity); /*ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½È¡entityï¿½ï¿½Ê±ï¿½ï¿½+1*/
+    QueueNodeEntityDecRef(impl->pool, entity); /*ï¿½ï¿½-1 ï¿½ï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½Ú´ï¿½*/
 
     return data;
 }
@@ -104,7 +104,7 @@ static cdx_err __CdxQueuePush(CdxQueueT *queue, CdxQueueDataT data)
     }
     entity = Palloc(impl->pool, sizeof(*entity));
     CDX_FORCE_CHECK(entity);
-    CDX_CHECK(data);/*²»Ï£ÍûÓÐÎª0µÄdata*/
+    CDX_CHECK(data);/*ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½data*/
     entity->data = data;
     entity->next = NULL;
     CdxAtomicSet(&entity->ref, 1);

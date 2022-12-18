@@ -42,7 +42,7 @@ struct CdxDTMBStreamImplS
 
 static CdxStreamProbeDataT *__DTMBStreamGetProbeData(CdxStreamT *stream)
 {
-    CDX_LOGD("enter:%s %d\n",__FUNCTION__,__LINE__);
+    LOGD("enter:%s %d",__FUNCTION__,__LINE__);
 
     struct CdxDTMBStreamImplS *impl;
 
@@ -70,7 +70,7 @@ cdx_ssize CdxPipeAsynRecv(cdx_int32 pipefd, void *buf, cdx_size len,
 
     if (CdxPipeIsBlocking(pipefd))
     {
-        CDX_LOGE("<%s,%d>err, blocking pipe", __FUNCTION__, __LINE__);
+        LOGE("<%s,%d>err, blocking pipe", __FUNCTION__, __LINE__);
         return -1;
     }
     
@@ -87,7 +87,7 @@ cdx_ssize CdxPipeAsynRecv(cdx_int32 pipefd, void *buf, cdx_size len,
     {
         if (pForceStop && *pForceStop)
         {
-            CDX_LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
+            LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
             return recvSize>0 ? recvSize : -2;
         }
 
@@ -105,13 +105,13 @@ cdx_ssize CdxPipeAsynRecv(cdx_int32 pipefd, void *buf, cdx_size len,
             {
                 continue;
             }
-            CDX_LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, ioErr);
+            LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, ioErr);
             return -1;
         }
         else if (ret == 0)
         {
             //("timeout\n");
-            CDX_LOGD("xxx timeout, select again...");
+            LOGD("xxx timeout, select again...");
             continue;
         }
 
@@ -119,17 +119,17 @@ cdx_ssize CdxPipeAsynRecv(cdx_int32 pipefd, void *buf, cdx_size len,
         {
             if (pForceStop && *pForceStop)
             {
-                CDX_LOGE("<%s,%d>force stop.recvSize(%ld)", __FUNCTION__, __LINE__, recvSize);
+                LOGE("<%s,%d>force stop.recvSize(%ld)", __FUNCTION__, __LINE__, recvSize);
                 return recvSize>0 ? recvSize : -2;
             }
             if(FD_ISSET(pipefd,&errs))
             {
-                CDX_LOGE("<%s,%d>errs ", __FUNCTION__, __LINE__);
+                LOGE("<%s,%d>errs ", __FUNCTION__, __LINE__);
                 break;
             }
             if(!FD_ISSET(pipefd, &rs))
             {
-                CDX_LOGV("select > 0, but sockfd is not ready?");
+                LOGV("select > 0, but sockfd is not ready?");
                 break;
             }
 
@@ -143,7 +143,7 @@ cdx_ssize CdxPipeAsynRecv(cdx_int32 pipefd, void *buf, cdx_size len,
                 }
                 else
                 {
-                    CDX_LOGE("<%s,%d>pipe read err(%d)", __FUNCTION__, __LINE__, errno);
+                    LOGE("<%s,%d>pipe read err(%d)", __FUNCTION__, __LINE__, errno);
                     return -1;
                 }
             }
@@ -187,20 +187,20 @@ static cdx_int32 __DTMBStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 len)
 
     if(ret == 0)
     {
-        CDX_LOGD("no bit stream,force read sync!\n");
+        LOGD("no bit stream,force read sync!");
         ret = fifoReadSync(impl->fd,buf,len);
     }
     #else
     ret = CdxPipeAsynRecv(impl->fd,buf,len,0,&impl->forceStop);
     #endif
-    //CDX_LOGD("recv size:%d\n",ret);
+    //LOGD("recv size:%d",ret);
     
     return ret;
 }
 
 static cdx_int32 __DTMBStreamClose(CdxStreamT *stream)
 {
-    CDX_LOGD("enter:%s %d\n",__FUNCTION__,__LINE__);
+    LOGD("enter:%s %d",__FUNCTION__,__LINE__);
 
     struct CdxDTMBStreamImplS *impl;
     cdx_int32 ret;
@@ -214,7 +214,7 @@ static cdx_int32 __DTMBStreamClose(CdxStreamT *stream)
     ret = fifoClose(impl->fd);
     if(ret != 0)
     {
-        logw(" close fd may be not normal, ret = %d, errno = %d",ret,errno);
+        LOGW(" close fd may be not normal, ret = %d, errno = %d",ret,errno);
     }
     
     if (impl->probeData.buf)
@@ -237,7 +237,7 @@ static cdx_int32 __DTMBStreamClose(CdxStreamT *stream)
 
 static cdx_int32 __DTMBStreamGetIoState(CdxStreamT *stream)
 {
-    CDX_LOGD("enter:%s %d\n",__FUNCTION__,__LINE__);
+    LOGD("enter:%s %d",__FUNCTION__,__LINE__);
 
     struct CdxDTMBStreamImplS *impl;
 
@@ -249,14 +249,14 @@ static cdx_int32 __DTMBStreamGetIoState(CdxStreamT *stream)
 
 static cdx_uint32 __DTMBStreamAttribute(CdxStreamT *stream)
 {
-    CDX_LOGD("enter:%s %d\n",__FUNCTION__,__LINE__);
+    LOGD("enter:%s %d",__FUNCTION__,__LINE__);
 
     struct CdxDTMBStreamImplS *impl;
     cdx_uint32 flag = 0;
     
     impl = CdxContainerOf(stream, struct CdxDTMBStreamImplS, base);
     
-    //CDX_LOGD("Attribute:%d\n",flag|CDX_STREAM_FLAG_NET);
+    //LOGD("Attribute:%d",flag|CDX_STREAM_FLAG_NET);
     
     //fixme,whether NET stream?
     return flag|CDX_STREAM_FLAG_DTMB;
@@ -264,7 +264,7 @@ static cdx_uint32 __DTMBStreamAttribute(CdxStreamT *stream)
 
 static cdx_int32 __DTMBStreamControl(CdxStreamT *stream, cdx_int32 cmd, void *param)
 {
-    CDX_LOGV("enter:%s %d cmd:%d\n",__FUNCTION__,__LINE__,cmd);
+    LOGV("enter:%s %d cmd:%d",__FUNCTION__,__LINE__,cmd);
 
     struct CdxDTMBStreamImplS *impl;
 
@@ -276,12 +276,12 @@ static cdx_int32 __DTMBStreamControl(CdxStreamT *stream, cdx_int32 cmd, void *pa
     switch (cmd)
     {
         case STREAM_CMD_SET_FORCESTOP:
-               CDX_LOGD("DTMB STREAM_CMD_SET_FORCESTOP");
+               LOGD("DTMB STREAM_CMD_SET_FORCESTOP");
             impl->forceStop = 1;
             break;
 
         case STREAM_CMD_CLR_FORCESTOP:
-               CDX_LOGD("DTMB STREAM_CMD_CLR_FORCESTOP 0");
+               LOGD("DTMB STREAM_CMD_CLR_FORCESTOP 0");
             impl->forceStop = 0;
             break;
         default :
@@ -293,7 +293,7 @@ static cdx_int32 __DTMBStreamControl(CdxStreamT *stream, cdx_int32 cmd, void *pa
 
 static cdx_int64 __DTMBStreamTell(CdxStreamT *stream)
 {
-    CDX_LOGD("enter:%s %d\n",__FUNCTION__,__LINE__);
+    LOGD("enter:%s %d",__FUNCTION__,__LINE__);
 
     struct CdxDTMBStreamImplS *impl;
     cdx_int64 pos;
@@ -307,7 +307,7 @@ static cdx_int64 __DTMBStreamTell(CdxStreamT *stream)
 
 static cdx_bool __DTMBStreamEos(CdxStreamT *stream)
 {
-    CDX_LOGD("enter:%s %d\n",__FUNCTION__,__LINE__);
+    LOGD("enter:%s %d",__FUNCTION__,__LINE__);
 
     struct CdxDTMBStreamImplS *impl;
     cdx_int64 pos = -1;
@@ -321,7 +321,7 @@ static cdx_bool __DTMBStreamEos(CdxStreamT *stream)
 
 static cdx_int64 __DTMBStreamSize(CdxStreamT *stream)
 {
-    CDX_LOGD("enter:%s %d\n",__FUNCTION__,__LINE__);
+    LOGD("enter:%s %d",__FUNCTION__,__LINE__);
 
     struct CdxDTMBStreamImplS *impl;
     
@@ -334,7 +334,7 @@ static cdx_int64 __DTMBStreamSize(CdxStreamT *stream)
 
 static cdx_int32 __DTMBStreamGetMetaData(CdxStreamT *stream, const cdx_char *key, void **pVal)
 {
-    CDX_LOGD("enter:%s %d\n",__FUNCTION__,__LINE__);
+    LOGD("enter:%s %d",__FUNCTION__,__LINE__);
 
     struct CdxDTMBStreamImplS *impl;
     
@@ -343,12 +343,12 @@ static cdx_int32 __DTMBStreamGetMetaData(CdxStreamT *stream, const cdx_char *key
 
     if (strcmp(key, "uri") == 0)
     {
-        CDX_LOGW("key(%s)found:%s ...", key,impl->streamPath);
+        LOGW("key(%s)found:%s ...", key,impl->streamPath);
         *pVal = impl->streamPath;
         return 0;
     }
     
-    CDX_LOGW("key(%s) not found...", key);
+    LOGW("key(%s) not found...", key);
     return -1;
 }
 
@@ -356,7 +356,7 @@ static cdx_int32 __DTMBStreamGetMetaData(CdxStreamT *stream, const cdx_char *key
 
 cdx_int32 __DTMBStreamConnect(CdxStreamT *stream)
 {
-    CDX_LOGD("enter:%s %d\n",__FUNCTION__,__LINE__);
+    LOGD("enter:%s %d",__FUNCTION__,__LINE__);
 
     cdx_int32 ret = 0;
     int i = 0;
@@ -380,11 +380,11 @@ cdx_int32 __DTMBStreamConnect(CdxStreamT *stream)
     if(socketPathServer != NULL)
     {
         sprintf(socketPathServer,"%s%d",DTMB_SERVER_SOCKET,hdlPipe);
-        CDX_LOGD("server path:%s\n",socketPathServer);
+        LOGD("server path:%s",socketPathServer);
     }
     else
     {
-        CDX_LOGE("memory full!!\n");
+        LOGE("memory full!!");
         goto failure;
     }
 
@@ -392,17 +392,17 @@ cdx_int32 __DTMBStreamConnect(CdxStreamT *stream)
     if(socketPathClient != NULL)
     {
         sprintf(socketPathClient,"%s%d",DTMB_CLIENT_SOCKET,hdlPipe);
-        CDX_LOGD("client path:%s\n",socketPathClient);
+        LOGD("client path:%s",socketPathClient);
     }
     else
     {
-        CDX_LOGE("memory full!!\n");
+        LOGE("memory full!!");
         goto failure;
     }
 
     if((fd = socket(AF_UNIX,SOCK_STREAM,0))<0)
     {
-        CDX_LOGE("socket cdx errno:%d",errno);
+        LOGE("socket cdx errno:%d",errno);
         goto failure;
     }
 
@@ -413,7 +413,7 @@ cdx_int32 __DTMBStreamConnect(CdxStreamT *stream)
 
     if(bind(fd,(struct sockaddr*)&un,addr_len)<0)
     {
-        CDX_LOGE("bind cdx errno:%d",errno);
+        LOGE("bind cdx errno:%d",errno);
         goto failure;
     }
 
@@ -424,7 +424,7 @@ cdx_int32 __DTMBStreamConnect(CdxStreamT *stream)
     
     if(connect(fd,(struct sockaddr*)&un,addr_len) < 0)
     {
-        CDX_LOGE("connect cdx errno:%d",errno);
+        LOGE("connect cdx errno:%d",errno);
         goto failure;
     }
 #else
@@ -432,21 +432,21 @@ cdx_int32 __DTMBStreamConnect(CdxStreamT *stream)
     if(pipePath != NULL)
     {
         sprintf(pipePath,"%s%d",DTMB,hdlPipe);
-        CDX_LOGD("pipe path:%s\n",pipePath);
+        LOGD("pipe path:%s",pipePath);
     }
     else
     {
-        CDX_LOGE("memory full!!\n");
+        LOGE("memory full!!");
         goto failure;
     }
 #endif
 
 #ifdef USE_SOCKET
     impl->fd = fd;
-    CDX_LOGD("socket fd:%d\n",impl->fd);
+    LOGD("socket fd:%d",impl->fd);
     if (impl->fd <= 0)
     {
-        CDX_LOGE("socket connect failure!\n");
+        LOGE("socket connect failure!");
         goto failure;
     }
     
@@ -454,10 +454,10 @@ cdx_int32 __DTMBStreamConnect(CdxStreamT *stream)
     CdxFree(socketPathClient);
 #else
     impl->fd = open(pipePath,O_RDONLY|O_NONBLOCK);//
-    CDX_LOGD("dup fd:%d\n",impl->fd);
+    LOGD("dup fd:%d",impl->fd);
     if (impl->fd <= 0)
     {
-        CDX_LOGE("open dtmb file failure, errno(%d)", errno);
+        LOGE("open dtmb file failure, errno(%d)", errno);
         goto failure;
     }
     CdxFree(pipePath);
@@ -503,7 +503,7 @@ static struct CdxStreamOpsS DTMBStreamOps =
 
 static CdxStreamT *__DTMBStreamCreate(CdxDataSourceT *source)
 {
-    CDX_LOGD("enter:%s %d\n",__FUNCTION__,__LINE__);
+    LOGD("enter:%s %d",__FUNCTION__,__LINE__);
 
     struct CdxDTMBStreamImplS *impl;
     
@@ -514,7 +514,7 @@ static CdxStreamT *__DTMBStreamCreate(CdxDataSourceT *source)
     impl->base.ops = &DTMBStreamOps;
     impl->streamPath = CdxStrdup(source->uri);
 
-    CDX_LOGD("dtmb file '%s'", source->uri);
+    LOGD("dtmb file '%s'", source->uri);
 
     return &impl->base;
 }

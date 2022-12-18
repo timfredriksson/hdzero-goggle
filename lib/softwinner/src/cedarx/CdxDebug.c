@@ -21,7 +21,7 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <unistd.h>
 
 #include <CdxDebug.h>
@@ -53,13 +53,13 @@ void CdxDumpThreadStack(pthread_t tid)
             char line[1024];
             format_backtrace_line(i, &backtrace[i], &backtrace_symbols[i],
                     line, 1024);
-            CDX_LOGD("  %s\n", line);
+            LOGD("  %s", line);
         }
         free_backtrace_symbols(backtrace_symbols, frames);
     }
     else
     {
-        CDX_LOGD("(native backtrace unavailable), tid(%lu)", tagTid);
+        LOGD("(native backtrace unavailable), tid(%lu)", tagTid);
     }
 #else
     (void)tid;
@@ -86,16 +86,16 @@ void CdxCallStack(void)
     threadNum = scandir(procTaskPath, &namelist, CdxCommonScanDirFilter, NULL);
     if (threadNum <= 0)
     {
-        CDX_LOGE("no task???");
+        LOGE("no task???");
         return ;
     }
 
     for (i = 0; i < threadNum; i++)
     {
         pthread_t pid= (pthread_t)atol(namelist[i]->d_name);
-        CDX_LOGD("------------tid(%ld)------------", (unsigned long)pid);
+        LOGD("------------tid(%ld)------------", (unsigned long)pid);
         CdxDumpThreadStack(pid);
-        CDX_LOGD("------------tid(%ld) end------------\n\n", (unsigned long)pid);
+        LOGD("------------tid(%ld) end------------", (unsigned long)pid);
     }
 
     free(namelist);

@@ -8,7 +8,7 @@
  *
  */
 
-#include <cdx_log.h>
+#include <log/log.h>
 #include "CdxRtmpStream.h"
 #include <SmartDnsService.h>
 
@@ -144,7 +144,7 @@ void aw_rtmp_parse_playpath(aw_rtmp_aval_t *pIn, aw_rtmp_aval_t *pOut)
     char *playpath = NULL;
     char *temp = NULL;
     char *q = NULL;
-    char *pExt = NULL;  /*ºó×ºÃû*/
+    char *pExt = NULL;  /*ï¿½ï¿½×ºï¿½ï¿½*/
     char *pListStart = NULL;
     char *pStreamUrl = NULL;
     char *pDest = NULL;
@@ -909,20 +909,20 @@ new_read_packet:
             char* a = (char*)malloc(len+1);
             memcpy(a, ptr, len);
             a[len] = '\0';
-            //printf("*****************\n%c\n******************\n",a);
+            //LOGI("*****************\n%c\n******************",a);
             char* key = strstr(a, "p");
             if(key)
             {
                 rtmp->isLiveStream = 1;
-                printf("The stream has keyframes.\n");
+                LOGI("The stream has keyframes.");
             }
             else
             {
-                printf("connot seek.\n");
+                LOGI("connot seek.");
             }
 
             char* datasize = strstr(a, "width");
-            if(datasize)printf("******width******\n");
+            if(datasize)LOGI("******width******");
         }
 */
         /* correct tagSize and obtain timestamp if we have an FLV stream */
@@ -1053,7 +1053,7 @@ int aw_rtmp_stream_read(aw_rtmp_t* rtmp, char* buf, int size)
         while(rtmp->read.timestamp == 0)
         {
             nRead = aw_rtmp_read_one_packet(rtmp, buf, size);
-         /*¶ÁÈ¡ÍøÂçÁ÷Êý¾Ýµ½rtmp¿Í»§¶Ëbuffer*/
+         /*ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½rtmpï¿½Í»ï¿½ï¿½ï¿½buffer*/
             if(nRead <= 0)
             {
 
@@ -1385,8 +1385,8 @@ int __RtmpSeek(CdxStreamT* stream, cdx_int64 offset, int whence)
 
     int64_t seekPos = 0;
     CdxAtomicSet(&rtmp->mState, RTMP_STREAM_SEEKING);
-//CDX_LOGD("rtmp seek (offset = %lld, whence = %d)", offset, whence);
-//CDX_LOGD("demux read pos = %lld", rtmp->dmxReadPos);
+//LOGD("rtmp seek (offset = %lld, whence = %d)", offset, whence);
+//LOGD("demux read pos = %lld", rtmp->dmxReadPos);
 
     switch(whence)
     {
@@ -1406,7 +1406,7 @@ int __RtmpSeek(CdxStreamT* stream, cdx_int64 offset, int whence)
 
     if(seekPos < 0)
     {
-        CDX_LOGW("we can not seek to this position");
+        LOGW("we can not seek to this position");
         CdxAtomicSet(&rtmp->mState, RTMP_STREAM_IDLE);
         return -1;
     }
@@ -1440,7 +1440,7 @@ int __RtmpSeek(CdxStreamT* stream, cdx_int64 offset, int whence)
     }
     else
     {
-        CDX_LOGW("maybe the buffer is override by the new data,\
+        LOGW("maybe the buffer is override by the new data,\
          so we can not support to seek to this position");
         pthread_mutex_lock(&rtmp->bufferMutex);
         rtmp->bufReadPtr += (seekPos - rtmp->dmxReadPos);
@@ -1476,7 +1476,7 @@ int __RtmpSeekToTime(CdxStreamT* stream, cdx_int64 timeUs)
         offset = timeUs - nTimeStamp;
         if(!aw_send_seek(rtmp, offset))
         {
-            CDX_LOGE("seek error.\n");
+            LOGE("seek error.");
             return -1;
         }
         else
@@ -1524,7 +1524,7 @@ static int __RtmpConect(CdxStreamT* stream)
 
     if(!aw_rtmp_connect(rtmp, NULL) )
     {
-        CDX_LOGW("rtmp connect error!");
+        LOGW("rtmp connect error!");
         rtmp->eof = 1;
         CdxAtomicSet(&rtmp->mState, RTMP_STREAM_IDLE);
 
@@ -1536,7 +1536,7 @@ static int __RtmpConect(CdxStreamT* stream)
 
     if(!aw_rtmp_connect_stream(rtmp, 0))
     {
-        CDX_LOGW("rtmp connect stream error!");
+        LOGW("rtmp connect stream error!");
         rtmp->eof = 1;
         CdxAtomicSet(&rtmp->mState, RTMP_STREAM_IDLE);
 
@@ -1660,7 +1660,7 @@ CdxStreamT* aw_rtmp_streaming_start2(CdxDataSourceT* datasource, int flags)
     rtmp->dnsMutex = (pthread_mutex_t*)calloc(1,sizeof(pthread_mutex_t));
     if (rtmp->dnsMutex == NULL)
     {
-        CDX_LOGE("malloc failed");
+        LOGE("malloc failed");
         return NULL;
     }
     pthread_mutex_init(rtmp->dnsMutex, NULL);
@@ -1679,7 +1679,7 @@ CdxStreamT* aw_rtmp_streaming_start2(CdxDataSourceT* datasource, int flags)
 fail:
     if(rtmp)
     {
-        CDX_LOGW("failed in rtmp stream start");
+        LOGW("failed in rtmp stream start");
         rtmp->eof = 1;
         rtmp->iostate = CDX_IO_STATE_ERROR;
         RtmpClose(rtmp);

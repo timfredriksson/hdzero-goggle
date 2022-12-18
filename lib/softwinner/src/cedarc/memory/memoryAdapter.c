@@ -26,7 +26,7 @@
 #include <pthread.h>
 #include "memoryAdapter.h"
 
-#include "log.h"
+#include <log/log.h>
 #include "ionMemory/ionAllocEntry.h"
 
 struct ScMemOpsS* MemAdapterGetOpsS()
@@ -39,7 +39,7 @@ struct ScMemOpsS* SecureMemAdapterGetOpsS()
 #if(PLATFORM_SURPPORT_SECURE_OS == 1)
     return __GetSecureMemOpsS();
 #else
-    loge("platform not surpport secure os, return null");
+    LOGE("platform not surpport secure os, return null");
     return NULL;
 #endif
 }

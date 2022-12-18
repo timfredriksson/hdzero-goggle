@@ -18,7 +18,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "cedarx_outstream"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +54,7 @@ struct cdx_stream_info *create_outstream_handle(CedarXDataSourceDesc *datasource
 
     if(ret!=0)
     {
-        aloge("(f:%s, l:%d) fatal error! create stream fail[%d]!", __FUNCTION__, __LINE__, ret);
+        LOGE("(f:%s, l:%d) fatal error! create stream fail[%d]!", __FUNCTION__, __LINE__, ret);
         free(stm_info);
         stm_info = NULL;
     }

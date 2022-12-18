@@ -10,7 +10,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CdxPlsParser"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <string.h>
 #include <pthread.h>
 #include <CdxTypes.h>
@@ -90,7 +90,7 @@ static char *plsMakeURL(char *baseURL, const char *url)
              && strncasecmp("file://", baseURL, 7))
     {
         /*Base URL must be absolute*/
-        logw("url:%s", baseURL);
+        LOGW("url:%s", baseURL);
         //return -1;
     }
 
@@ -100,7 +100,7 @@ static char *plsMakeURL(char *baseURL, const char *url)
         out = calloc(1, strlen(url) + 1);
         if(!out)
         {
-            CDX_LOGE("err_no_memory");
+            LOGE("err_no_memory");
             return NULL;
         }
         memcpy(out, url, strlen(url) + 1);
@@ -109,7 +109,7 @@ static char *plsMakeURL(char *baseURL, const char *url)
 
     cdx_uint32 memSize = 0;
     char *temp;
-    char *protocolEnd = strstr(baseURL, "//") + 2;/*ÎªÁËÆÁ±Îhttp://£¬https://Ö®¼äµÄ²îÒì*/
+    char *protocolEnd = strstr(baseURL, "//") + 2;/*Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½http://ï¿½ï¿½https://Ö®ï¿½ï¿½Ä²ï¿½ï¿½ï¿½*/
 
     if (url[0] == '/')
     {
@@ -122,11 +122,11 @@ static char *plsMakeURL(char *baseURL, const char *url)
             temp = (char *)calloc(1, memSize);
             if (temp == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 return NULL;
             }
             memcpy(temp, baseURL, pathStart - baseURL);
-            memcpy(temp + (pathStart - baseURL), url, strlen(url) + 1);/*urlÊÇÒÔ'\0'½áÎ²µÄ*/
+            memcpy(temp + (pathStart - baseURL), url, strlen(url) + 1);/*urlï¿½ï¿½ï¿½ï¿½'\0'ï¿½ï¿½Î²ï¿½ï¿½*/
         }
         else
         {
@@ -134,7 +134,7 @@ static char *plsMakeURL(char *baseURL, const char *url)
             temp = (char *)calloc(1, memSize);
             if (temp == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 return NULL;
             }
             memcpy(temp, baseURL, strlen(baseURL));
@@ -160,7 +160,7 @@ static char *plsMakeURL(char *baseURL, const char *url)
                 temp = (char *)calloc(1, memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return NULL;
                 }
                 memcpy(temp, baseURL, slashPos - baseURL);
@@ -173,7 +173,7 @@ static char *plsMakeURL(char *baseURL, const char *url)
                 temp = (char *)calloc(1, memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return NULL;
                 }
                 memcpy(temp, baseURL, n);
@@ -188,7 +188,7 @@ static char *plsMakeURL(char *baseURL, const char *url)
             temp = (char *)calloc(1, memSize);
             if (temp == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 return NULL;
             }
             memcpy(temp, baseURL, n);
@@ -204,7 +204,7 @@ static char *plsMakeURL(char *baseURL, const char *url)
                 temp = (char *)calloc(1, memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return NULL;
                 }
                 memcpy(temp, baseURL, slashPos - baseURL);
@@ -217,7 +217,7 @@ static char *plsMakeURL(char *baseURL, const char *url)
                 temp = (char *)calloc(1, memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return NULL;
                 }
                 memcpy(temp, baseURL, n);
@@ -279,16 +279,16 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
     PlaylistT *playList = calloc(1, sizeof(PlaylistT));
     if(!playList)
     {
-        CDX_LOGE("err_no_memory");
+        LOGE("err_no_memory");
         return -1;
     }
 
-    CDX_LOGD("baseURI=%s", baseURI);
+    LOGD("baseURI=%s", baseURI);
     int baseLen = strlen(baseURI);
     playList->mBaseURI = calloc(1, baseLen+1);
     if(!playList->mBaseURI)
     {
-        CDX_LOGE("err_no_memory");
+        LOGE("err_no_memory");
         err = -1;
         goto _err;
     }
@@ -328,13 +328,13 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
             line = (char *)malloc(offsetData - offset + 1);
             if(!line)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 err = -1;
                 goto _err;
             }
             memcpy(line, &data[offset], offsetData - offset);
             line[offsetData - offset] = '\0';
-            CDX_LOGI("%s", line);
+            LOGI("%s", line);
         }
 
         //now we have one line.
@@ -364,7 +364,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
 
         if(!strcasecmp(lineKey, "version"))
         {
-            CDX_LOGD("pls file version: %s", lineKey);
+            LOGD("pls file version: %s", lineKey);
             free(line);
             line = NULL;
             offset = offsetLF + 1;
@@ -372,7 +372,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
         }
         if(!strcasecmp(lineKey, "numberofentries"))
         {
-            CDX_LOGD("pls should have %d entries", atoi(lineValue));
+            LOGD("pls should have %d entries", atoi(lineValue));
             free(line);
             line = NULL;
             offset = offsetLF + 1;
@@ -383,7 +383,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
         int iNewItem;
         if(sscanf(lineKey, "%*[^0-9]%d", &iNewItem) != 1)
         {
-            CDX_LOGD("couldn't find number of items");
+            LOGD("couldn't find number of items");
             free(line);
             line = NULL;
             offset = offsetLF + 1;
@@ -400,7 +400,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
                 PlsItemT *item= (PlsItemT *)calloc(1, sizeof(PlsItemT));
                 if (!item)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     err = -1;
                     goto _err;
                 }
@@ -408,7 +408,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
                 item->mURI = strdup(pUrl);
                 if(item->mURI == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     err = -1;
                     goto _err;
                 }
@@ -417,7 +417,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
                     item->pTitle = strdup(title);
                     if(item->pTitle == NULL)
                     {
-                        CDX_LOGE("err_no_memory");
+                        LOGE("err_no_memory");
                         err = -1;
                         goto _err;
                     }
@@ -445,7 +445,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
             }
             else
             {
-                CDX_LOGW("no file= part found for item %d", iItem);
+                LOGW("no file= part found for item %d", iItem);
             }
             free(title);
             title = NULL;
@@ -480,7 +480,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
         }
         else
         {
-            CDX_LOGW("unknown key found in pls file: %s", lineKey);
+            LOGW("unknown key found in pls file: %s", lineKey);
         }
         free(line);
         line = NULL;
@@ -493,7 +493,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
         PlsItemT *item = (PlsItemT *)calloc(1, sizeof(PlsItemT));
         if (!item)
         {
-            CDX_LOGE("err_no_memory");
+            LOGE("err_no_memory");
             err = -1;
             goto _err;
         }
@@ -501,7 +501,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
         item->mURI = strdup(pUrl);
         if(item->mURI == NULL)
         {
-            CDX_LOGE("err_no_memory");
+            LOGE("err_no_memory");
             err = -1;
             goto _err;
         }
@@ -510,7 +510,7 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
             item->pTitle = strdup(title);
             if(item->pTitle == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 err = -1;
                 goto _err;
             }
@@ -538,14 +538,14 @@ static int PlsParse(char *data, cdx_uint32 size, PlaylistT **P, const char *base
     }
     else
     {
-        CDX_LOGW("no file= part found for item %d", iItem);
+        LOGW("no file= part found for item %d", iItem);
     }
     free(title);
     title = NULL;
 
     if(playList->mNumItems <= 0)
     {
-        CDX_LOGE("playList->mNumItems <= 0");
+        LOGE("playList->mNumItems <= 0");
         goto _err;
     }
     *P = playList;
@@ -575,7 +575,7 @@ static int DownloadParsePls(CdxPlsParser *plsParser)
             plsParser->plsBuf + readSize, 1024);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             return -1;
         }
         if(ret == 0)
@@ -587,7 +587,7 @@ static int DownloadParsePls(CdxPlsParser *plsParser)
 
     if(readSize == 0)
     {
-        CDX_LOGE("download pls fail");
+        LOGE("download pls fail");
         return -1;
     }
 
@@ -596,7 +596,7 @@ static int DownloadParsePls(CdxPlsParser *plsParser)
     if ((err = PlsParse(plsParser->plsBuf, readSize, &pls,
         plsParser->plsUrl)) < 0)
     {
-        CDX_LOGE("create pls fail, err=%d", err);
+        LOGE("create pls fail, err=%d", err);
         return -1;
     }
     plsParser->mPls = pls;
@@ -615,7 +615,7 @@ static PlsItemT *findPlsItemBySeqNum(PlaylistT *playlist, int seqNum)
 
 /*return -1:error*/
 /*return 0:plsParser PSR_EOS*/
-/*return 1:Ñ¡Ôñµ½ÁËÐÂµÄSegment*/
+/*return 1:Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½Segment*/
 static int plsSelectNextSegment(CdxPlsParser *plsParser)
 {
     PlaylistT *pls = plsParser->mPls;
@@ -626,7 +626,7 @@ static int plsSelectNextSegment(CdxPlsParser *plsParser)
     PlsItemT *item = findPlsItemBySeqNum(pls, plsParser->curSeqNum);
     if(!item)
     {
-        CDX_LOGE("findPlsItemBySeqNum fail");
+        LOGE("findPlsItemBySeqNum fail");
         return -1;
     }
     SetDataSouceForPlsSegment(item, &plsParser->cdxDataSource);
@@ -639,7 +639,7 @@ static cdx_int32 __PlsParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *pMed
     CdxPlsParser *plsParser = (CdxPlsParser*)parser;
     if(plsParser->status < CDX_PLS_IDLE)
     {
-        CDX_LOGE("status < CDX_PLS_IDLE, PlsParserGetMediaInfo invaild");
+        LOGE("status < CDX_PLS_IDLE, PlsParserGetMediaInfo invaild");
         plsParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -652,14 +652,14 @@ static cdx_int32 __PlsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     CdxPlsParser *plsParser = (CdxPlsParser*)parser;
     if(plsParser->status != CDX_PLS_IDLE && plsParser->status != CDX_PLS_PREFETCHED)
     {
-        CDX_LOGW("status != CDX_PLS_IDLE && status != CDX_PLS_PREFETCHED,"
+        LOGW("status != CDX_PLS_IDLE && status != CDX_PLS_PREFETCHED,"
             " PlsParserPrefetch invaild");
         plsParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     if(plsParser->mErrno == PSR_EOS)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         return -1;
     }
     if(plsParser->status == CDX_PLS_PREFETCHED)
@@ -700,22 +700,22 @@ static cdx_int32 __PlsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             pthread_mutex_unlock(&plsParser->statusLock);
 
             plsParser->curSeqNum++;
-            CDX_LOGI("curSeqNum = %d", plsParser->curSeqNum);
+            LOGI("curSeqNum = %d", plsParser->curSeqNum);
             ret = plsSelectNextSegment(plsParser);
             if(ret < 0)
             {
-                CDX_LOGE("Select Next Segment fail.");
+                LOGE("Select Next Segment fail.");
                 plsParser->mErrno = PSR_UNKNOWN_ERR;
                 goto _exit;
             }
             else if(ret == 0)
             {
-                CDX_LOGD("plsParser->status = PSR_EOS");
+                LOGD("plsParser->status = PSR_EOS");
                 plsParser->mErrno = PSR_EOS;
                 ret = -1;
                 goto _exit;
             }
-            CDX_LOGD("replace parser");
+            LOGD("replace parser");
             ret = CdxParserPrepare(&plsParser->cdxDataSource, NO_NEED_DURATION,
                 &plsParser->statusLock, &plsParser->forceStop,
                 &plsParser->child, &plsParser->childStream, NULL, NULL);
@@ -724,7 +724,7 @@ static cdx_int32 __PlsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
                 plsParser->curSeqNum = -1;
                 if(!plsParser->forceStop)
                 {
-                    CDX_LOGE("CdxParserPrepare fail");
+                    LOGE("CdxParserPrepare fail");
                     plsParser->mErrno = PSR_UNKNOWN_ERR;
                 }
                 goto _exit;
@@ -734,7 +734,7 @@ static cdx_int32 __PlsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             ret = CdxParserGetMediaInfo(plsParser->child, &mediaInfo);
             if(ret < 0)
             {
-                CDX_LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
+                LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
                 plsParser->mErrno = PSR_UNKNOWN_ERR;
                 goto _exit;
             }
@@ -744,7 +744,7 @@ static cdx_int32 __PlsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             {
                 if(!plsParser->forceStop)
                 {
-                    CDX_LOGE(" prefetch error! ret(%d)", ret);
+                    LOGE(" prefetch error! ret(%d)", ret);
                     plsParser->mErrno = PSR_UNKNOWN_ERR;
                 }
                 goto _exit;
@@ -753,7 +753,7 @@ static cdx_int32 __PlsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
         else
         {
             plsParser->mErrno = mErrno;
-            CDX_LOGE("CdxParserPrefetch mErrno = %d", mErrno);
+            LOGE("CdxParserPrefetch mErrno = %d", mErrno);
             goto _exit;
         }
     }
@@ -764,7 +764,7 @@ static cdx_int32 __PlsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     plsParser->status = CDX_PLS_PREFETCHED;
     pthread_mutex_unlock(&plsParser->statusLock);
     pthread_cond_signal(&plsParser->cond);
-    CDX_LOGV("CdxParserPrefetch pkt->pts=%lld, pkt->type=%d, pkt->length=%d",
+    LOGV("CdxParserPrefetch pkt->pts=%lld, pkt->type=%d, pkt->length=%d",
         pkt->pts, pkt->type, pkt->length);
     return 0;
 _exit:
@@ -780,7 +780,7 @@ static cdx_int32 __PlsParserRead(CdxParserT *parser, CdxPacketT *pkt)
     CdxPlsParser *plsParser = (CdxPlsParser*)parser;
     if(plsParser->status != CDX_PLS_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PLS_PREFETCHED, we can not read!");
+        LOGE("status != CDX_PLS_PREFETCHED, we can not read!");
         plsParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -804,7 +804,7 @@ static cdx_int32 __PlsParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
 cdx_int32 PlsParserForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("PlsParserForceStop start");
+    LOGI("PlsParserForceStop start");
     CdxPlsParser *plsParser = (CdxPlsParser*)parser;
     int ret;
     pthread_mutex_lock(&plsParser->statusLock);
@@ -814,7 +814,7 @@ cdx_int32 PlsParserForceStop(CdxParserT *parser)
         ret = CdxParserForceStop(plsParser->child);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserForceStop fail, ret(%d)", ret);
+            LOGE("CdxParserForceStop fail, ret(%d)", ret);
         }
     }
     else if(plsParser->childStream)
@@ -822,7 +822,7 @@ cdx_int32 PlsParserForceStop(CdxParserT *parser)
         ret = CdxStreamForceStop(plsParser->childStream);
         if(ret < 0)
         {
-            CDX_LOGW("CdxStreamForceStop fail");
+            LOGW("CdxStreamForceStop fail");
         }
     }
 
@@ -831,7 +831,7 @@ cdx_int32 PlsParserForceStop(CdxParserT *parser)
         ret = CdxParserForceStop(plsParser->tmpChild);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserForceStop fail, ret(%d)", ret);
+            LOGE("CdxParserForceStop fail, ret(%d)", ret);
             //plsParser->mErrno = CdxParserGetStatus(plsParser->child);
             //return -1;
         }
@@ -841,7 +841,7 @@ cdx_int32 PlsParserForceStop(CdxParserT *parser)
         ret = CdxStreamForceStop(plsParser->tmpChildStream);
         if(ret < 0)
         {
-            CDX_LOGW("CdxStreamForceStop fail");
+            LOGW("CdxStreamForceStop fail");
             //hlsParser->mErrno = PSR_UNKNOWN_ERR;
         }
     }
@@ -852,18 +852,18 @@ cdx_int32 PlsParserForceStop(CdxParserT *parser)
     plsParser->mErrno = PSR_USER_CANCEL;
     plsParser->status = CDX_PLS_IDLE;
     pthread_mutex_unlock(&plsParser->statusLock);
-    CDX_LOGD("PlsParserForceStop end");
+    LOGD("PlsParserForceStop end");
     return 0;
 
 }
 
 cdx_int32 PlsParserClrForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("PlsParserClrForceStop start");
+    LOGI("PlsParserClrForceStop start");
     CdxPlsParser *plsParser = (CdxPlsParser*)parser;
     if(plsParser->status != CDX_PLS_IDLE)
     {
-        CDX_LOGW("status != CDX_PLS_IDLE");
+        LOGW("status != CDX_PLS_IDLE");
         plsParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -873,11 +873,11 @@ cdx_int32 PlsParserClrForceStop(CdxParserT *parser)
         int ret = CdxParserClrForceStop(plsParser->child);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserClrForceStop fail, ret(%d)", ret);
+            LOGE("CdxParserClrForceStop fail, ret(%d)", ret);
             return ret;
         }
     }
-    CDX_LOGI("PlsParserClrForceStop end");
+    LOGI("PlsParserClrForceStop end");
     return 0;
 
 }
@@ -892,7 +892,7 @@ static int __PlsParserControl(CdxParserT *parser, int cmd, void *param)
     {
         case CDX_PSR_CMD_SWITCH_AUDIO:
         case CDX_PSR_CMD_SWITCH_SUBTITLE:
-            CDX_LOGI(" pls parser is not support switch stream yet!!!");
+            LOGI(" pls parser is not support switch stream yet!!!");
             break;
         case CDX_PSR_CMD_SET_FORCESTOP:
             return PlsParserForceStop(parser);
@@ -912,18 +912,18 @@ cdx_int32 __PlsParserGetStatus(CdxParserT *parser)
 
 cdx_int32 __PlsParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType seekModeType)
 {
-    CDX_LOGI("PlsParserSeekTo start, timeUs = %lld", timeUs);
+    LOGI("PlsParserSeekTo start, timeUs = %lld", timeUs);
     CdxPlsParser *plsParser = (CdxPlsParser *)parser;
     plsParser->mErrno = PSR_OK;
     if(timeUs < 0)
     {
-        CDX_LOGE("timeUs invalid");
+        LOGE("timeUs invalid");
         plsParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     else if(timeUs >= plsParser->mPls->durationUs)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         plsParser->mErrno = PSR_EOS;
         return 0;
     }
@@ -932,7 +932,7 @@ cdx_int32 __PlsParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType s
     if(plsParser->forceStop)
     {
         plsParser->mErrno = PSR_USER_CANCEL;
-        CDX_LOGE("PSR_USER_CANCEL");
+        LOGE("PSR_USER_CANCEL");
         pthread_mutex_unlock(&plsParser->statusLock);
         return -1;
     }
@@ -952,7 +952,7 @@ cdx_int32 __PlsParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType s
     }
     if(!item)
     {
-        CDX_LOGE("unknown error");
+        LOGE("unknown error");
         plsParser->mErrno = PSR_UNKNOWN_ERR;
         ret = -1;
         goto _exit;
@@ -986,7 +986,7 @@ cdx_int32 __PlsParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType s
             plsParser->curSeqNum = -1;
             if(!plsParser->forceStop)
             {
-                CDX_LOGE("CdxParserPrepare fail");
+                LOGE("CdxParserPrepare fail");
                 plsParser->mErrno = PSR_UNKNOWN_ERR;
             }
             ret = -1;
@@ -996,14 +996,14 @@ cdx_int32 __PlsParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType s
         ret = CdxParserGetMediaInfo(plsParser->child, &mediaInfo);
         if(ret < 0)
         {
-            CDX_LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
+            LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
             plsParser->mErrno = PSR_UNKNOWN_ERR;
             goto _exit;
         }
         plsParser->baseTimeUs = item->baseTimeUs;
         plsParser->curSeqNum = item->seqNum;
     }
-    CDX_LOGI("mDurationUs = %lld", mDurationUs);
+    LOGI("mDurationUs = %lld", mDurationUs);
 
     ret = CdxParserSeekTo(plsParser->child, timeUs - mDurationUs, seekModeType);
 
@@ -1013,18 +1013,18 @@ _exit:
     plsParser->status = CDX_PLS_IDLE;
     pthread_mutex_unlock(&plsParser->statusLock);
     pthread_cond_signal(&plsParser->cond);
-    CDX_LOGI("PlsParserSeekTo end, ret = %d", ret);
+    LOGI("PlsParserSeekTo end, ret = %d", ret);
     return ret;
 }
 
 static cdx_int32 __PlsParserClose(CdxParserT *parser)
 {
-    CDX_LOGI("PlsParserClose start");
+    LOGI("PlsParserClose start");
     CdxPlsParser *plsParser = (CdxPlsParser *)parser;
     int ret = PlsParserForceStop(parser);
     if(ret < 0)
     {
-        CDX_LOGW("HlsParserForceStop fail");
+        LOGW("HlsParserForceStop fail");
     }
 
     if(plsParser->child)
@@ -1064,7 +1064,7 @@ static cdx_int32 __PlsParserClose(CdxParserT *parser)
     pthread_mutex_destroy(&plsParser->statusLock);
     pthread_cond_destroy(&plsParser->cond);
     free(plsParser);
-    CDX_LOGI("PlsParserClose end");
+    LOGI("PlsParserClose end");
     return 0;
 }
 
@@ -1076,12 +1076,12 @@ cdx_uint32 __PlsParserAttribute(CdxParserT *parser)
 
 int __PlsParserInit(CdxParserT *parser)
 {
-    CDX_LOGI("CdxPlsOpenThread start");
+    LOGI("CdxPlsOpenThread start");
     CdxPlsParser *plsParser = (CdxPlsParser*)parser;
 
     if(DownloadParsePls(plsParser) < 0)
     {
-        CDX_LOGE("DownloadParsePls fail");
+        LOGE("DownloadParsePls fail");
         goto _exit;
     }
 
@@ -1103,14 +1103,14 @@ int __PlsParserInit(CdxParserT *parser)
                 &plsParser->child, &plsParser->childStream, NULL, NULL);
             if(ret < 0)
             {
-                CDX_LOGE("CreatMediaParser fail");
+                LOGE("CreatMediaParser fail");
                 goto _exit;
             }
             pMediaInfo = &plsParser->mediaInfo;
             ret = CdxParserGetMediaInfo(plsParser->child, pMediaInfo);
             if(ret < 0)
             {
-                CDX_LOGE("plsParser->child getMediaInfo error!");
+                LOGE("plsParser->child getMediaInfo error!");
                 goto _exit;
             }
             pls->durationUs += item->durationUs;
@@ -1124,21 +1124,21 @@ int __PlsParserInit(CdxParserT *parser)
                 &plsParser->tmpChild, &plsParser->tmpChildStream, NULL, NULL);
             if(ret < 0)
             {
-                CDX_LOGE("CreatMediaParser fail");
+                LOGE("CreatMediaParser fail");
                 goto _exit;
             }
             pMediaInfo = &mediaInfo;
             ret = CdxParserGetMediaInfo(plsParser->tmpChild, pMediaInfo);
             if(ret < 0)
             {
-                CDX_LOGE("plsParser->child getMediaInfo error!");
+                LOGE("plsParser->child getMediaInfo error!");
             }
             ret = CdxParserClose(plsParser->tmpChild);
             plsParser->tmpChild = NULL;
             plsParser->tmpChildStream = NULL;
             if(ret < 0)
             {
-                CDX_LOGE("CdxParserClose fail!");
+                LOGE("CdxParserClose fail!");
                 goto _exit;
             }
         }
@@ -1155,14 +1155,14 @@ int __PlsParserInit(CdxParserT *parser)
     pMediaInfo->programNum = 1;
     pMediaInfo->programIndex = 0;
     pMediaInfo->program[0].duration = pls->durationUs / 1000; //duration ms
-    CDX_LOGD("duration: %lld ms, %u ms", pls->durationUs / 1000, pMediaInfo->program[0].duration);
+    LOGD("duration: %lld ms, %u ms", pls->durationUs / 1000, pMediaInfo->program[0].duration);
     //PrintMediaInfo(pMediaInfo);
     plsParser->mErrno = PSR_OK;
     pthread_mutex_lock(&plsParser->statusLock);
     plsParser->status = CDX_PLS_IDLE;
     pthread_mutex_unlock(&plsParser->statusLock);
     pthread_cond_signal(&plsParser->cond);
-    CDX_LOGI("CdxPlsOpenThread success");
+    LOGI("CdxPlsOpenThread success");
     return 0;
 
 _exit:
@@ -1171,7 +1171,7 @@ _exit:
     plsParser->status = CDX_PLS_IDLE;
     pthread_mutex_unlock(&plsParser->statusLock);
     pthread_cond_signal(&plsParser->cond);
-    CDX_LOGE("CdxPlsOpenThread fail");
+    LOGE("CdxPlsOpenThread fail");
     return -1;
 }
 static struct CdxParserOpsS plsParserOps =
@@ -1195,7 +1195,7 @@ static CdxParserT *__PlsParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     plsParser = calloc(1, sizeof(CdxPlsParser));
     if(!plsParser)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         CdxStreamClose(stream);
         return NULL;
     }
@@ -1209,7 +1209,7 @@ static CdxParserT *__PlsParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     ret = CdxStreamGetMetaData(stream, "uri", (void **)&tmpUrl);
     if(ret < 0)
     {
-        CDX_LOGE("get uri of the stream fail!");
+        LOGE("get uri of the stream fail!");
         goto open_error;
     }
     plsParser->cdxStream = stream;
@@ -1217,7 +1217,7 @@ static CdxParserT *__PlsParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     plsParser->plsUrl = calloc(1, urlLen);
     if(!plsParser->plsUrl)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         goto open_error;
     }
 
@@ -1227,7 +1227,7 @@ static CdxParserT *__PlsParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     plsParser->plsBuf = calloc(1, plsParser->plsBufSize);
     if (!plsParser->plsBuf)
     {
-        CDX_LOGE("allocate memory fail for pls file");
+        LOGE("allocate memory fail for pls file");
         goto open_error;
     }
 
@@ -1273,11 +1273,11 @@ static int PlsProbe(char *data, cdx_uint32 size)
 
 static cdx_uint32 __PlsParserProbe(CdxStreamProbeDataT *probeData)
 {
-    CDX_LOGD("PlsParserProbe");
+    LOGD("PlsParserProbe");
 
     if(probeData->len < 10)
     {
-        CDX_LOGE("Probe data is not enough.");
+        LOGE("Probe data is not enough.");
         return 0;
     }
     int ret = PlsProbe(probeData->buf, probeData->len);

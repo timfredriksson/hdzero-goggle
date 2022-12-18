@@ -72,7 +72,7 @@ static cdx_int32 IsmcFragmentElementExtract(xmlNodePtr node, SmsStreamT *sms, cd
 
     if(ChunkNew(sms, *computedDuration, *computedStartTime) == NULL)
     {
-        CDX_LOGE("No memory.");
+        LOGE("No memory.");
         return -1;
     }
     if(bWeird && startTime != -1) //* for weird case, compute last fragment's duration.
@@ -121,14 +121,14 @@ static cdx_int32 IsmcQualityLevelExtract(xmlNodePtr node, SmsStreamT *sms, cdx_u
     ql = QlNew();
     if(!ql)
     {
-        CDX_LOGE("no memory.");
+        LOGE("no memory.");
         return -1;
     }
     ql->id = qid;
     xmlAttrPtr attrPtr = node->properties;
     while(attrPtr != NULL)
     {
-        //CDX_LOGD("attrPtr->name=%s", attrPtr->name);
+        //LOGD("attrPtr->name=%s", attrPtr->name);
         if(!strcmp((char *)attrPtr->name, "Index"))
             ql->Index = strtol((char *)attrPtr->children->content, NULL, 10);
         else if(!strcmp((char *)attrPtr->name, "Bitrate"))
@@ -163,10 +163,10 @@ typedef struct
 } WAVEFORMATEX; *PWAVEFORMATEX;
 *******************************/
             cdx_uint16 wfTag = ((cdx_uint16 *)waveFormatEx)[0];
-            //CDX_LOGD("wftag=0x%x, (char *)attrPtr->children->content=[%s]",
+            //LOGD("wftag=0x%x, (char *)attrPtr->children->content=[%s]",
                       //wfTag, (char *)attrPtr->children->content);
             WfTagToFourcc(wfTag, &ql->FourCC);
-            //CDX_LOGD("ql->FourCC=%x", ql->FourCC);
+            //LOGD("ql->FourCC=%x", ql->FourCC);
             ql->WfTag         = ((cdx_uint16 *)waveFormatEx)[0];
             ql->Channels      = ((cdx_uint16 *)waveFormatEx)[1];
             ql->SamplingRate  = ((cdx_uint32 *)waveFormatEx)[1];
@@ -207,7 +207,7 @@ static cdx_int32 IsmcStreamIndexExtract(xmlNodePtr node, AwIsmcT *ismc, cdx_uint
     sms = SmsNew();
     if(NULL == sms)
     {
-        CDX_LOGE("NO memory.");
+        LOGE("NO memory.");
         return -1;
     }
 
@@ -215,7 +215,7 @@ static cdx_int32 IsmcStreamIndexExtract(xmlNodePtr node, AwIsmcT *ismc, cdx_uint
     xmlAttrPtr attrPtr = node->properties;
     while(attrPtr != NULL)
     {
-        //CDX_LOGD("attrPtr->name=%s", attrPtr->name);
+        //LOGD("attrPtr->name=%s", attrPtr->name);
         if(!strcmp((char *)attrPtr->name, "Type"))
         {
             if(!strcmp((char *)attrPtr->children->content, "video"))
@@ -235,7 +235,7 @@ static cdx_int32 IsmcStreamIndexExtract(xmlNodePtr node, AwIsmcT *ismc, cdx_uint
             }
             else
             {
-                CDX_LOGW("Type: attrPtr->children->content(%s)", attrPtr->children->content);
+                LOGW("Type: attrPtr->children->content(%s)", attrPtr->children->content);
             }
         }
         else if(!strcmp((char *)attrPtr->name, "Name"))
@@ -280,13 +280,13 @@ static cdx_int32 IsmcStreamIndexExtract(xmlNodePtr node, AwIsmcT *ismc, cdx_uint
     node = node->children;
     while(node != NULL)
     {
-        //CDX_LOGD("node->name=%s", node->name);
+        //LOGD("node->name=%s", node->name);
         //* QualityLevel
         if(!(strcmp((char *)node->name, "QualityLevel")))
         {
             if(IsmcQualityLevelExtract(node, sms, nextQid) < 0)
             {
-                CDX_LOGE("StreamIndex parse failed.");
+                LOGE("StreamIndex parse failed.");
                 return -1;
             }
             nextQid++;
@@ -296,14 +296,14 @@ static cdx_int32 IsmcStreamIndexExtract(xmlNodePtr node, AwIsmcT *ismc, cdx_uint
             if(IsmcFragmentElementExtract(node, sms, loopCount, &bWeird, &computedStartTime,
                &computedDuration) < 0)
             {
-                CDX_LOGE("FragmentElement parse failed.");
+                LOGE("FragmentElement parse failed.");
                 return -1;
             }
             loopCount++;
         }
         else
         {
-            CDX_LOGV("node->name(%s)", node->name);
+            LOGV("node->name(%s)", node->name);
         }
         node = node->next;
     }
@@ -312,7 +312,7 @@ static cdx_int32 IsmcStreamIndexExtract(xmlNodePtr node, AwIsmcT *ismc, cdx_uint
     {
         if(!ChunkNew(sms, 0, computedStartTime)) //* sms, 0, 0
         {
-            CDX_LOGE("no memory.");
+            LOGE("no memory.");
             return -1;
         }
     }
@@ -343,12 +343,12 @@ static cdx_int32 IsmcProtectionExtract(xmlNodePtr node, AwIsmcT *ismc)
                 {
                     if(!strcasecmp((char *)attrPtr->children->content, PLAYREADY_SYSTEM_ID))
                     {
-                        CDX_LOGV("playready system");
+                        LOGV("playready system");
                         ismc->protectSystem = SSTR_PROTECT_PLAYREADY;
                     }
                     else
                     {
-                        CDX_LOGW("Type: attrPtr->children->content(%s)",
+                        LOGW("Type: attrPtr->children->content(%s)",
                                  attrPtr->children->content);
                     }
                 }
@@ -358,7 +358,7 @@ static cdx_int32 IsmcProtectionExtract(xmlNodePtr node, AwIsmcT *ismc)
         }
         else
         {
-            CDX_LOGV("node->name(%s)", node->name);
+            LOGV("node->name(%s)", node->name);
         }
 
         node = node->next;
@@ -376,7 +376,7 @@ static int AwIsmcExtract(xmlNodePtr node, AwIsmcT *ismc)
     cdx_uint32 nextTrackId = 1;
     if(NULL == node || NULL == ismc)
     {
-        CDX_LOGE("bad param.");
+        LOGE("bad param.");
         return -1;
     }
 
@@ -386,7 +386,7 @@ static int AwIsmcExtract(xmlNodePtr node, AwIsmcT *ismc)
         xmlAttrPtr attrPtr = node->properties;
         while(attrPtr != NULL)
         {
-            //CDX_LOGD("attrPtr->name=%s", attrPtr->name);
+            //LOGD("attrPtr->name=%s", attrPtr->name);
             if(!strcmp((char *)attrPtr->name, "Duration"))
                 ismc->vodDuration = strtoull((char *)attrPtr->children->content, NULL, 10);
             if(!strcmp((char *)attrPtr->name, "TimeScale"))
@@ -401,7 +401,7 @@ static int AwIsmcExtract(xmlNodePtr node, AwIsmcT *ismc)
     }
     else
     {
-        CDX_LOGE("root node is not \"SmoothStreamingMedia\"");
+        LOGE("root node is not \"SmoothStreamingMedia\"");
         return -1;
     }
 
@@ -413,19 +413,19 @@ static int AwIsmcExtract(xmlNodePtr node, AwIsmcT *ismc)
         {
             if(IsmcStreamIndexExtract(node, ismc, nextTrackId) < 0)
             {
-                CDX_LOGE("StreamIndex parse failed.");
+                LOGE("StreamIndex parse failed.");
                 return -1;
             }
             nextTrackId++;
         }
         else if (!strcmp((char *)node->name, "Protection"))
         {
-            CDX_LOGV("Protection node");
+            LOGV("Protection node");
             IsmcProtectionExtract(node, ismc);
         }
         else
         {
-            //CDX_LOGW("node->name(%s)", node->name);
+            //LOGW("node->name(%s)", node->name);
         }
         node = node->next;
     }
@@ -445,38 +445,38 @@ AwIsmcT *ParseIsmc(char *buffer, int size, AwIsmcT *ismc, const char *encoding, 
 
     if(buffer == NULL || size == 0)
     {
-        CDX_LOGE("bad param, ismc file is empty.");
+        LOGE("bad param, ismc file is empty.");
         return NULL;
     }
 
     doc = xmlReadMemory(buffer, size, NULL, encoding, options);//* read xml from buffer
     if(NULL == doc)
     {
-        CDX_LOGE("read xml failed.");
+        LOGE("read xml failed.");
         return NULL;
     }
 
     rootNode = xmlDocGetRootElement(doc);
     if(NULL == rootNode)
     {
-        CDX_LOGE("has no root element.");
+        LOGE("has no root element.");
         goto err_out;
     }
     if(strcmp((const char *)rootNode->name, "SmoothStreamingMedia"))
     {
-        CDX_LOGW("Root Node is not \"SmoothStreamingMedia\"");
+        LOGW("Root Node is not \"SmoothStreamingMedia\"");
     }
 
  //   ismc = malloc(sizeof(AwIsmcT));
  //   if(ismc == NULL)
  //   {
- //       CDX_LOGE("init ismc failed.");
+ //       LOGE("init ismc failed.");
  //       goto err_out;
  //   }
 
     if(AwIsmcExtract(rootNode, ismc) < 0)
     {
-        CDX_LOGE("parse ismc failed.");
+        LOGE("parse ismc failed.");
         goto err_out;
     }
 

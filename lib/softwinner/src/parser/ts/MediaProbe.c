@@ -9,7 +9,7 @@
  */
 
 #include <CdxTsParser.h>
-#include <cdx_log.h>
+#include <log/log.h>
 
 #define    SYNCWORDH            0xff
 #define    SYNCWORDL            0xf0
@@ -166,12 +166,12 @@ static cdx_int32 DtsProbe(cdx_char *buf, cdx_int32 len)
     if (markers[max] > 3 && len / markers[max] < 32*1024 &&
         markers[max] * 4 > sum * 3)
     {
-        CDX_LOGD("It's DTS");
+        LOGD("It's DTS");
         return CDX_TRUE;
     }
     else if(sum)
     {
-        CDX_LOGD("It's DTS");
+        LOGD("It's DTS");
         return CDX_TRUE;
     }
     return CDX_FALSE;
@@ -181,7 +181,7 @@ static cdx_uint32 probe_dts(cdx_char *buf, cdx_int32 len)
 {
     if(len < 4)
     {
-        CDX_LOGE("Probe DTS_header data is not enough.");
+        LOGE("Probe DTS_header data is not enough.");
         return CDX_FALSE;
     }
     if(len >= 8 && buf != NULL && !memcmp(buf, "DTSHDHDR", 8))
@@ -190,7 +190,7 @@ static cdx_uint32 probe_dts(cdx_char *buf, cdx_int32 len)
     }
     if(!DtsProbe(buf, len))
     {
-        CDX_LOGE("dts probe failed.");
+        LOGE("dts probe failed.");
         return CDX_FALSE;
     }
     return CDX_TRUE;
@@ -308,7 +308,7 @@ cdx_int32 prob_mpg(Stream *st)
             }
             else
             {
-                CDX_LOGW("may be created yet.");
+                LOGW("may be created yet.");
             }
             VideoMetaData *videoMetaData = (VideoMetaData *)st->metadata;
             videoMetaData->width = (tmp >> 20);
@@ -484,7 +484,7 @@ cdx_int32 prob_mvc(Stream *st)
             }
             else
             {
-                CDX_LOGW("may be created yet.");
+                LOGW("may be created yet.");
             }
             VideoMetaData *videoMetaData = (VideoMetaData *)st->metadata;
             h264_parse_sps(videoMetaData, ptr, st->probeBuf + st->probeDataSize - ptr);
@@ -517,7 +517,7 @@ cdx_int32 prob_h264(Stream *st)
             }
             else
             {
-                CDX_LOGW("may be created yet.");
+                LOGW("may be created yet.");
             }
             VideoMetaData *videoMetaData = (VideoMetaData *)st->metadata;
             h264_parse_sps(videoMetaData, ptr, st->probeBuf + st->probeDataSize - ptr);
@@ -613,7 +613,7 @@ cdx_int32 prob_vc1(Stream *st)
             }
             else
             {
-                CDX_LOGW("may be created yet.");
+                LOGW("may be created yet.");
             }
             VideoMetaData *videoMetaData = (VideoMetaData *)st->metadata;
             vc1_decode_sequence_header(videoMetaData,
@@ -731,7 +731,7 @@ static cdx_int32 h265_parse_sps(VideoMetaData *videoMetaData,
 
     videoMetaData->width = h265_read_golomb(buf, &n); /* pic_width_in_luma_samples: ue(v) */
     videoMetaData->height = h265_read_golomb(buf, &n); /* pic_height_in_luma_samples: ue(v) */
-    CDX_LOGD("zwh h265 parser prob pic width: %d, pic height: %d",
+    LOGD("zwh h265 parser prob pic width: %d, pic height: %d",
         videoMetaData->width, videoMetaData->height);
     return 0;
 }
@@ -796,7 +796,7 @@ static cdx_int32 prob_h265(Stream *st)
                 }
                 else
                 {
-                    CDX_LOGW("may be created yet.");
+                    LOGW("may be created yet.");
                 }
                 VideoMetaData *videoMetaData = (VideoMetaData *)st->metadata;
 
@@ -840,7 +840,7 @@ cdx_int32 ProbeVideo(Stream *stream)
     }
     else
     {
-        CDX_LOGE("should not be here.");
+        LOGE("should not be here.");
         return -1;
     }
 }
@@ -863,7 +863,7 @@ cdx_int32 ProbeStream(Stream *stream)
     }
     else
     {
-        CDX_LOGE("should not be here.");
+        LOGE("should not be here.");
         return -1;
     }
 }

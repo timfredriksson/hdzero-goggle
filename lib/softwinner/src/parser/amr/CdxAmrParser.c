@@ -27,26 +27,26 @@ cdx_int32 AmrGetFrameSizeByOffset(AmrParserImplS *impl, cdx_int64 offset,
 
     if( CdxStreamSeek(impl->stream,offset, SEEK_SET) < 0 )
     {
-        CDX_LOGE("Seek fail...");
+        LOGE("Seek fail...");
         return AMR_UNEXPECTED_ERROR;
     }
 
     ret = CdxStreamRead(impl->stream,(void*)d,1);
     if (ret < 1) {
-        CDX_LOGD("Sync head data no enough! offset : %lld", offset);
+        LOGD("Sync head data no enough! offset : %lld", offset);
         return AMR_LACK_OF_DATA;
     }
 
     if( CdxStreamSeek(impl->stream,impl->file_offset, SEEK_SET) < 0 )
     {
-        CDX_LOGE("Seek fail...");
+        LOGE("Seek fail...");
         return AMR_UNEXPECTED_ERROR;
     }
 
     cdx_uint32 FT = (d[0] >> 3) & 0x0f;
     if (0)//FT > 15 || (isWide && FT > 10 && FT < 14) || (!isWide && FT > 8 && FT < 16))
     {
-        CDX_LOGE("illegal AMR frame type %d,offset:%lld", FT, offset);
+        LOGE("illegal AMR frame type %d,offset:%lld", FT, offset);
         *frameSize = 0;
         return AMR_UNEXPECTED_ERROR;
     }
@@ -69,7 +69,7 @@ static int AmrInit(CdxParserT* parameter)
     impl->fileSize = CdxStreamSize(impl->stream);
     ret = CdxStreamRead(impl->stream, (void *)d, 6);
     if(ret!=6){
-        CDX_LOGD("First 6 byte no enough!");
+        LOGD("First 6 byte no enough!");
         goto OPENFAILURE;
     }
     impl->file_offset+=6;
@@ -78,13 +78,13 @@ static int AmrInit(CdxParserT* parameter)
     {
         ret = CdxStreamRead(impl->stream, (void *)(d+6), 3);
         if(ret!=3){
-            CDX_LOGD("Extern 3 byte no enough!");
+            LOGD("Extern 3 byte no enough!");
             goto OPENFAILURE;
         }
         impl->file_offset+=3;
         offset+=3;
         if(memcmp(d,AMRWB_header,9)){
-            CDX_LOGE("Invaild header!");
+            LOGE("Invaild header!");
             goto OPENFAILURE;
         }
         impl->is_wide = 1;
@@ -119,7 +119,7 @@ static int AmrInit(CdxParserT* parameter)
     pthread_cond_signal(&impl->cond);
     return 0;
 OPENFAILURE:
-    CDX_LOGE("AmrOpenThread fail!!!");
+    LOGE("AmrOpenThread fail!!!");
     impl->mErrno = PSR_OPEN_FAIL;
     pthread_cond_signal(&impl->cond);
     return -1;
@@ -143,7 +143,7 @@ static cdx_int32 __AmrParserControl(CdxParserT *parser, cdx_int32 cmd, void *par
         CdxStreamClrForceStop(impl->stream);
         break;
     default :
-        CDX_LOGW("not implement...(%d)", cmd);
+        LOGW("not implement...(%d)", cmd);
         break;
     }
     impl->flags = cmd;
@@ -160,7 +160,7 @@ static cdx_int32 __AmrParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
 
     rc = AmrGetFrameSizeByOffset(impl, impl->file_offset, impl->is_wide, &pkt->length);
     if(rc == AMR_LACK_OF_DATA){
-        CDX_LOGD("AMR_LACK_OF_DATA Prefetch while lack of data...");
+        LOGD("AMR_LACK_OF_DATA Prefetch while lack of data...");
     }
     else if(rc == AMR_UNEXPECTED_ERROR){
         return CDX_FAILURE;
@@ -168,7 +168,7 @@ static cdx_int32 __AmrParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
 
     pkt->pts = (cdx_int64)impl->framecounts*20000;//one frame 20ms;
     pkt->flags |= (FIRST_PART|LAST_PART);
-    CDX_LOGV("pkt->length:%d,pkt->pts:%lld",pkt->length,pkt->pts);
+    LOGV("pkt->length:%d,pkt->pts:%lld",pkt->length,pkt->pts);
     return CDX_SUCCESS;
 }
 
@@ -193,13 +193,13 @@ static cdx_int32 __AmrParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
     if(read_length < 0)
     {
-        CDX_LOGD("CdxStreamRead fail");
+        LOGD("CdxStreamRead fail");
         impl->mErrno = PSR_IO_ERR;
         return CDX_FAILURE;
     }
     else if(read_length == 0)
     {
-       CDX_LOGD("CdxStream EOS");
+       LOGD("CdxStream EOS");
        impl->mErrno = PSR_EOS;
        return CDX_FAILURE;
     }
@@ -220,7 +220,7 @@ static cdx_int32 __AmrParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *medi
 
     if(impl->mErrno != PSR_OK)
     {
-        CDX_LOGE("audio parse status no PSR_OK");
+        LOGE("audio parse status no PSR_OK");
         return CDX_FAILURE;
     }
 
@@ -266,15 +266,15 @@ static cdx_int32 __AmrParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
 
     offset = impl->seek_table[index] + (impl->is_wide ? 9 : 6);
 
-    CDX_LOGD("offset : %lld,  fileSize : %lld", offset, impl->fileSize);
+    LOGD("offset : %lld,  fileSize : %lld", offset, impl->fileSize);
     for (i = 0; i< frames - index * 50; i++) {
         rc = AmrGetFrameSizeByOffset(impl, offset,impl->is_wide, &framesize);
         if (rc == AMR_LACK_OF_DATA) {
-            CDX_LOGD("AMR_LACK_OF_DATA seek frame but lack of data!!");
+            LOGD("AMR_LACK_OF_DATA seek frame but lack of data!!");
             break;
         }
         else if(rc == AMR_UNEXPECTED_ERROR) {
-            CDX_LOGE("AMR_UNEXPECTED_ERROR when seeking, fail...");
+            LOGE("AMR_UNEXPECTED_ERROR when seeking, fail...");
             return CDX_FAILURE;
         }
 
@@ -284,7 +284,7 @@ static cdx_int32 __AmrParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
     {
         if(CdxStreamSeek(impl->stream,offset,SEEK_SET))
         {
-            CDX_LOGE("CdxStreamSeek fail");
+            LOGE("CdxStreamSeek fail");
             return CDX_FAILURE;
         }
     }
@@ -311,7 +311,7 @@ static cdx_int32 __AmrParserForceStop(CdxParserT *parser)
     ret = CdxStreamForceStop(impl->stream);
     if (ret != CDX_SUCCESS)
     {
-        CDX_LOGE("stop stream failure... err(%d)", ret);
+        LOGE("stop stream failure... err(%d)", ret);
     }
     return ret;
 }
@@ -363,7 +363,7 @@ static cdx_int32 AmrProbe(CdxStreamProbeDataT *p)
     {
         if(p->len<9)
         {
-            CDX_LOGD("AMRWB_header data is not enough.");
+            LOGD("AMRWB_header data is not enough.");
             return CDX_FALSE;
         }
         if(memcmp(d,AMRWB_header,9))
@@ -379,13 +379,13 @@ static cdx_uint32 __AmrParserProbe(CdxStreamProbeDataT *probeData)
     CDX_CHECK(probeData);
     if(probeData->len < 6)
     {
-        CDX_LOGD("Probe AMR_header data is not enough.");
+        LOGD("Probe AMR_header data is not enough.");
         return 0;
     }
 
     if(!AmrProbe(probeData))
     {
-        CDX_LOGD("amr probe failed.");
+        LOGD("amr probe failed.");
         return 0;
     }
     return 100;

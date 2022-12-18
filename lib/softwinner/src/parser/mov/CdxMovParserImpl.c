@@ -53,7 +53,7 @@ CDX_S32 CdxMovOpen(struct CdxMovParser *p, CdxStreamT *stream)
         st = AvNewStream(c, c->nb_streams);
         if(!st)
         {
-            CDX_LOGE("new stream failed.");
+            LOGE("new stream failed.");
             return -1;
         }
         st->stsd_type = 1; //* 1:v 2:a lin
@@ -78,24 +78,24 @@ CDX_S32 CdxMovOpen(struct CdxMovParser *p, CdxStreamT *stream)
     }
     else
     {
-        CDX_LOGE("cdx mov atom create error!\n");
+        LOGE("cdx mov atom create error!");
         return -1;
     }
     if(result != 0)
     {
-        CDX_LOGE("Parser atom of mov error!\n");
+        LOGE("Parser atom of mov error!");
         return -1;
     }
 
     if(c->video_stream_num > 1)
     {
-        CDX_LOGW("---  video stream number <%d>, only support one video stream",
+        LOGW("---  video stream number <%d>, only support one video stream",
             c->video_stream_num);
     }
 
     if(!c->has_audio && !c->has_video)
     {
-        CDX_LOGW("Neither audio nor video is recognized!\n");
+        LOGW("Neither audio nor video is recognized!");
         return -1;
     }
 
@@ -201,7 +201,7 @@ CDX_S16 CdxMovClose(struct CdxMovParser *p)
             c->pAvccHdrInfo = 0;
         }
 
-        CDX_LOGD("mov close stream = %p", c->fp);
+        LOGD("mov close stream = %p", c->fp);
         if(c->fp)
         {
             CdxStreamClose(c->fp);
@@ -251,14 +251,14 @@ CDX_S16 CdxMovRead(struct CdxMovParser *p)
 
     if(!p)
     {
-        CDX_LOGW("mov reader handle is invalid!\n");
+        LOGW("mov reader handle is invalid!");
         return -1;
     }
     c = (MOVContext*)p->privData;
 
     if(c->is_fragment)
     {
-        //CDX_LOGD("xxx MovReadSampleFragment");
+        //LOGD("xxx MovReadSampleFragment");
         ret = MovReadSampleFragment(p);
     }
     else
@@ -278,22 +278,22 @@ int CdxMovSeek(struct CdxMovParser *p, cdx_int64  timeUs, SeekModeType seekModeT
 
     int               seekTime;
     seekTime = timeUs / 1000;
-    CDX_LOGD("=============mov seek to: %d ms, totaltime = %d ms\n",seekTime, p->totalTime);
+    LOGD("=============mov seek to: %d ms, totaltime = %d ms",seekTime, p->totalTime);
 
     if((CDX_U32)seekTime > p->totalTime)
     {
-        CDX_LOGW("The seek time is larger than total time!\n");
+        LOGW("The seek time is larger than total time!");
         return 0;
     }
     if(seekTime < 0)
     {
-        CDX_LOGW("The parameter for jump play is invalid!\n");
+        LOGW("The parameter for jump play is invalid!");
         return -1;
     }
 
     if(!c->bSeekAble)
     {
-        CDX_LOGD("-- can not seekable");
+        LOGD("-- can not seekable");
         return -1;
     }
 
@@ -330,7 +330,7 @@ int CdxMovSeek(struct CdxMovParser *p, cdx_int64  timeUs, SeekModeType seekModeT
         }
     }
 
-    CDX_LOGD("---- seek end");
+    LOGD("---- seek end");
 
     return 0;
 }
@@ -394,7 +394,7 @@ CDX_S32 CdxMovSetStream(struct CdxMovParser *p)
     if(c->streams[c->video_stream_idx]->stss_size == 1)
         c->streams[c->video_stream_idx]->stss_size +=
         c->streams[c->video_stream_idx]->rap_seek_count;
-    logd("== stss_size: %d", c->streams[c->video_stream_idx]->stss_size);
+    LOGD("== stss_size: %d", c->streams[c->video_stream_idx]->stss_size);
 
     c->basetime[0] = c->streams[c->video_stream_idx]->basetime;
     c->basetime[1] = c->streams[c->audio_stream_idx]->basetime;
@@ -413,7 +413,7 @@ CDX_S32 CdxMovSetStream(struct CdxMovParser *p)
     {
         p->totalTime = c->sidx_total_time;
     }
-    CDX_LOGD("mvhd = %d, ", c->mvhd_total_time);
+    LOGD("mvhd = %d, ", c->mvhd_total_time);
 
     if(c->streams[c->video_stream_idx]->stss_size<2)
     {

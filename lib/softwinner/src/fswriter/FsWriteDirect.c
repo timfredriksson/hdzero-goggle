@@ -1,7 +1,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "FsWriteDirect"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <errno.h>
@@ -59,14 +59,14 @@ FsWriter *initFsDirectWrite(struct cdx_stream_info *pStream)
 {
     FsWriter *pFsWriter = (FsWriter*)malloc(sizeof(FsWriter));
 	if (NULL == pFsWriter) {
-        aloge("Failed to alloc FsWriter(%s)", strerror(errno));
+        LOGE("Failed to alloc FsWriter(%s)", strerror(errno));
 		return NULL;
 	}
     memset(pFsWriter, 0, sizeof(FsWriter));
 
     FsDirectContext *pContext = (FsDirectContext*)malloc(sizeof(FsDirectContext));
 	if (NULL == pContext) {
-        aloge("Failed to alloc FsDirectContext(%s)", strerror(errno));
+        LOGE("Failed to alloc FsDirectContext(%s)", strerror(errno));
         free(pFsWriter);
 		return NULL;
 	}
@@ -86,7 +86,7 @@ FsWriter *initFsDirectWrite(struct cdx_stream_info *pStream)
 int deinitFsDirectWrite(FsWriter *pFsWriter)
 {
 	if (NULL == pFsWriter) {
-        aloge("pFsWriter is NULL!!");
+        LOGE("pFsWriter is NULL!!");
 		return -1;
 	}
 	FsDirectContext *pContext = (FsDirectContext*)pFsWriter->mPriv;

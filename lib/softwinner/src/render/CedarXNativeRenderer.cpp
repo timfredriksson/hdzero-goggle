@@ -16,7 +16,7 @@
  
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CedarXNativeRenderer"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -73,7 +73,7 @@ enum e_hwc_format convertPixelFormatCdx2Hwc(CdxPixelFormat format)
     }
 	else
     {
-        alogw("fatal error! format=0x%x", format);
+        LOGW("fatal error! format=0x%x", format);
 	    return HWC_FORMAT_MBYUV420;    //* format should be CEDARV_PIXEL_FORMAT_MB_UV_COMBINED_YUV420, VIRTUAL_HWC_FORMAT_MBYUV420
 	}
 }
@@ -90,7 +90,7 @@ static disp_color_space convertColorSpaceCdx2Hwc(int nColorSpace)
 //            hwcColorSpace = DISP_YCC;
 //            break;
         default:
-            aloge("fatal error! unknown cdx color space[0x%x]", nColorSpace);
+            LOGE("fatal error! unknown cdx color space[0x%x]", nColorSpace);
             hwcColorSpace = DISP_BT601;
             break;
     }
@@ -104,31 +104,31 @@ CedarXNativeRenderer::CedarXNativeRenderer(const int hlay, MetaData *meta)
 
     if(!meta->findInt32(kKeyColorFormat, &halFormat))
     {
-        aloge("not find kKeyColorFormat");
+        LOGE("not find kKeyColorFormat");
     }
     if(!meta->findInt32(kKeyWidth, &mWidth))   //width and height is bufWidth and bufHeight.
     {
-        aloge("not find kKeyWidth");
+        LOGE("not find kKeyWidth");
     }
     if(!meta->findInt32(kKeyHeight, &mHeight))
     {
-        aloge("not find kKeyHeight");
+        LOGE("not find kKeyHeight");
     }
     if(!meta->findInt32(kCedarXKeyDisplayTopX, &mCropLeft)) //displayTopX and displayTopY.
     {
-        aloge("not find kCedarXKeyDisplayTopX");
+        LOGE("not find kCedarXKeyDisplayTopX");
     }
     if(!meta->findInt32(kCedarXKeyDisplayTopY, &mCropTop))
     {
-        aloge("not find kCedarXKeyDisplayTopY");
+        LOGE("not find kCedarXKeyDisplayTopY");
     }
     if(!meta->findInt32(kKeyDisplayWidth, &mCropWidth)) //width and height is display_width and display_height.
     {
-        aloge("not find kKeyDisplayWidth");
+        LOGE("not find kKeyDisplayWidth");
     }
     if(!meta->findInt32(kKeyDisplayHeight, &mCropHeight))
     {
-        aloge("not find kKeyDisplayHeight");
+        LOGE("not find kKeyDisplayHeight");
     }
     mCdxPixelFormat = (CdxPixelFormat)halFormat;
     mPixelFormat = (int32_t)convertPixelFormatCdx2Hwc((CdxPixelFormat)halFormat);
@@ -137,22 +137,22 @@ CedarXNativeRenderer::CedarXNativeRenderer(const int hlay, MetaData *meta)
     int32_t nVdecInitRotation;  //clock wise.
     if (!meta->findInt32(kKeyRotation, &nVdecInitRotation))
     {
-        alogw("vdec already rotate [%d] clock-wise", nVdecInitRotation);
+        LOGW("vdec already rotate [%d] clock-wise", nVdecInitRotation);
     }
     if(!meta->findInt32(kCedarXKeyColorSpace, &mColorSpace))
     {
-        aloge("not find kCedarXKeyColorSpace");
+        LOGE("not find kCedarXKeyColorSpace");
     }
 
     //when YV12: vdec_buffer's Y now is 32 pixel align in width, 16 lines align in height. (16*16)
     //when MB32: one Y_MB is 32pixel * 32 lines. spec is 16*16, but hw decoder extend to 32*32!
     if(mWidth != mCropWidth)
     {
-        alogw("bufWidth[%d]!=display_width[%d]", mWidth, mCropWidth);
+        LOGW("bufWidth[%d]!=display_width[%d]", mWidth, mCropWidth);
     }
     if(mHeight != mCropHeight)
     {
-        alogw("bufHeight[%d]!=display_height[%d]", mHeight, mCropHeight);
+        LOGW("bufHeight[%d]!=display_height[%d]", mHeight, mCropHeight);
     }
 
     if(mVideoLayerId >= 0)
@@ -167,12 +167,12 @@ CedarXNativeRenderer::CedarXNativeRenderer(const int hlay, MetaData *meta)
     	src.crop_h = mCropHeight;
     	src.format = mPixelFormat;
         src.color_space = (int)convertColorSpaceCdx2Hwc(mColorSpace);
-        alogd("hwc disp fmt[0x%x], color space:%d", src.format, src.color_space);
+        LOGD("hwc disp fmt[0x%x], color space:%d", src.format, src.color_space);
         hwd_layer_set_src(mVideoLayerId, &src);
     }
 	else
 	{
-        alogd("Be careful! video layer id[%d] < 0", mVideoLayerId);
+        LOGD("Be careful! video layer id[%d] < 0", mVideoLayerId);
 	}
     mLayerShowed = 0;
 }
@@ -195,7 +195,7 @@ int CedarXNativeRenderer::control(int cmd, int para, void *pData)
             }
             if(mVideoLayerId < 0)
             {
-                alogd("Be careful! video layer id[%d] invalid, not show", mVideoLayerId);
+                LOGD("Be careful! video layer id[%d] invalid, not show", mVideoLayerId);
                 ret = CDX_OK;
                 break;
             }
@@ -208,7 +208,7 @@ int CedarXNativeRenderer::control(int cmd, int para, void *pData)
                 }
                 else
                 {
-                    alogw("fatal error! hwd layer close fail!");
+                    LOGW("fatal error! hwd layer close fail!");
                     ret = CDX_ERROR_UNKNOWN;
                 }
             }
@@ -221,7 +221,7 @@ int CedarXNativeRenderer::control(int cmd, int para, void *pData)
                 }
                 else
                 {
-                    alogw("fatal error! hwd layer open fail!");
+                    LOGW("fatal error! hwd layer open fail!");
                     ret = CDX_ERROR_UNKNOWN;
                 }
             }
@@ -260,7 +260,7 @@ int CedarXNativeRenderer::control(int cmd, int para, void *pData)
             }
             else
             {
-                alogd("Be careful! video layer id[%d] invalid, not set crop", mVideoLayerId);
+                LOGD("Be careful! video layer id[%d] invalid, not set crop", mVideoLayerId);
                 ret = CDX_OK;
             }
             break;
@@ -269,13 +269,13 @@ int CedarXNativeRenderer::control(int cmd, int para, void *pData)
         {
             if (mVideoLayerId >= 0) 
             {
-                alogd("not support window videoScaling mode tmp");
+                LOGD("not support window videoScaling mode tmp");
             }
             ret = CDX_OK;
             break;
         }
         default:
-            alogw("undefined command[0x%x]!", cmd);
+            LOGW("undefined command[0x%x]!", cmd);
             ret = CDX_ERROR_UNKNOWN;
             break;
     }
@@ -297,7 +297,7 @@ void CedarXNativeRenderer::render(const void *data, size_t size)
     }
     else
     {
-        alogv("Be careful! video layer id[%d] is invalid, not render", mVideoLayerId);
+        LOGV("Be careful! video layer id[%d] is invalid, not render", mVideoLayerId);
     }
 }
 

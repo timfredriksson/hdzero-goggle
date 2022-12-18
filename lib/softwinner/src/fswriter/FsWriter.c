@@ -1,7 +1,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "FsWriter"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <string.h>
 
@@ -32,7 +32,7 @@ FsWriter* createFsWriter(FSWRITEMODE mode, struct cdx_stream_info *pStream, char
     }
     else
     {
-        aloge("not support mode[%d]", mode);
+        LOGE("not support mode[%d]", mode);
         return NULL;
     }
 }
@@ -40,7 +40,7 @@ FsWriter* createFsWriter(FSWRITEMODE mode, struct cdx_stream_info *pStream, char
 int destroyFsWriter(FsWriter *thiz)
 {
     if (NULL == thiz) {
-        aloge("FsWriter is NULL");
+        LOGE("FsWriter is NULL");
         return -1;
     }
     if(FSWRITEMODE_CACHETHREAD == thiz->mMode)
@@ -57,7 +57,7 @@ int destroyFsWriter(FsWriter *thiz)
     }
     else
     {
-        aloge("not support mode[%d]", thiz->mMode);
+        LOGE("not support mode[%d]", thiz->mMode);
         return -1;
     }
     return 0;
@@ -87,15 +87,15 @@ ssize_t fileWriter(struct cdx_stream_info *pStream, const char *buffer, size_t s
     tm2 = CDX_GetSysTimeUsMonotonic();
     if (tm2-tm1 > SHOW_TIME_THRESHOLD) 
     {
-        alogd("write %d(req is %d) Bytes, [%lld]ms", totalWriten, size, (tm2-tm1)/1000);
+        LOGD("write %d(req is %d) Bytes, [%lld]ms", totalWriten, size, (tm2-tm1)/1000);
     }
 #endif
     if((size_t)(totalWriten) != size)
     {
-        aloge("Stream[%p]fwrite error [%d]!=[%u](%s)", pStream, totalWriten, size, strerror(errno));
+        LOGE("Stream[%p]fwrite error [%d]!=[%u](%s)", pStream, totalWriten, size, strerror(errno));
         if (errno == EIO) 
         {
-            aloge("disk io error, stop write disk!!");
+            LOGE("disk io error, stop write disk!!");
         }
         pStream->writeError = errno;
         if (pStream->writeErrcnt++ > 10 || pStream->writeError == EIO) 

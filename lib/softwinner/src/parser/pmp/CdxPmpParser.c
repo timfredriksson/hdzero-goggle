@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CdxPmpParser"
 #include "CdxPmpParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 #define CheckNalIntegrity (0)
 
@@ -29,26 +29,26 @@ static int CheckPmpHeader(CdxPmpParser *pmpParser)
 {
     if (pmpParser->vdCodecID > 1)
     {
-        CDX_LOGE("unknown video codec id.");
+        LOGE("unknown video codec id.");
         return -1;
     }
     if (pmpParser->vdFrmNum == 0)
     {
-        CDX_LOGE("total frame number is zero.");
+        LOGE("total frame number is zero.");
         return -1;
     }
     if (pmpParser->auCodecID > 1)
     {
-        CDX_LOGE("unknow audio format.");
+        LOGE("unknow audio format.");
         return -1;
     }
     if (pmpParser->vdWidth == 0 || pmpParser->vdHeight == 0)
     {
-        CDX_LOGW("video width and height error.");
+        LOGW("video width and height error.");
     }
     if (pmpParser->vdScale == 0 || pmpParser->vdRate == 0)
     {
-        CDX_LOGW("video frame rate error.");
+        LOGW("video frame rate error.");
         pmpParser->vdScale = 1000;
         pmpParser->vdRate = 30000;
     }
@@ -60,7 +60,7 @@ static int CreateDataFrameDescription(CdxPmpParser *pmpParser)
                                     pmpParser->maxAuPerFrame * 4 + 13);
     if (!tmpBuf)
     {
-        CDX_LOGE("malloc fail");
+        LOGE("malloc fail");
         return -1;
     }
     cdx_uint32 **auSize = (cdx_uint32 **)CdxMalloc(pmpParser->auStrmNum * sizeof(cdx_uint32 *));
@@ -103,7 +103,7 @@ static int CreateDataFrameDescription(CdxPmpParser *pmpParser)
             sampRateIdx_4bits = i;
         else
         {
-            CDX_LOGW("unsupport audio sample rate.");
+            LOGW("unsupport audio sample rate.");
             sampRateIdx_4bits = 0;
         }
 
@@ -142,7 +142,7 @@ static int BuildKeyFrameIndexTable(CdxPmpParser *pmpParser)
     DataFrameIndex *pIdx = (DataFrameIndex *)CdxMalloc(pmpParser->vdFrmNum * 4);
     if (!pIdx)
     {
-        CDX_LOGE("malloc fail");
+        LOGE("malloc fail");
         return -1;
     }
     KeyFrameEntry *pKeyIdx = NULL;
@@ -150,7 +150,7 @@ static int BuildKeyFrameIndexTable(CdxPmpParser *pmpParser)
     int ret = CdxStreamRead(pmpParser->file, pIdx, len);
     if(ret != len)
     {
-        CDX_LOGE("CdxStreamRead fail, request(%d), ret(%d)", len, ret);
+        LOGE("CdxStreamRead fail, request(%d), ret(%d)", len, ret);
         goto _fail;
     }
 
@@ -165,14 +165,14 @@ static int BuildKeyFrameIndexTable(CdxPmpParser *pmpParser)
     pKeyIdx = (KeyFrameEntry *)CdxMalloc(keyFrmNum * sizeof(KeyFrameEntry));
     if(!pKeyIdx)
     {
-        CDX_LOGE("malloc fail");
+        LOGE("malloc fail");
         goto _fail;
     }
 
     cdx_int64 filePos = CdxStreamTell(pmpParser->file);
     if(filePos < 0)
     {
-        CDX_LOGE("CdxStreamTell fail, return(%lld)", filePos);
+        LOGE("CdxStreamTell fail, return(%lld)", filePos);
         goto _fail;
     }
 
@@ -224,9 +224,9 @@ static int SetMediaInfo(CdxPmpParser *pmpParser)
 
     video->nWidth = pmpParser->vdWidth;
     video->nHeight = pmpParser->vdHeight;
-    /*ÊÓÆµÖ¡ÂÊ£¬±íÊ¾Ã¿1000ÃëÓÐ¶àÉÙÖ¡»­Ãæ±»²¥·Å£¬ÀýÈç25000¡¢29970¡¢30000µÈ*/
+    /*ï¿½ï¿½ÆµÖ¡ï¿½Ê£ï¿½ï¿½ï¿½Ê¾Ã¿1000ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½Ö¡ï¿½ï¿½ï¿½æ±»ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½25000ï¿½ï¿½29970ï¿½ï¿½30000ï¿½ï¿½*/
     video->nFrameRate = pmpParser->vdRate * 1000 / pmpParser->vdScale;
-    /*Á½Ö¡»­ÃæÖ®¼äµÄ¼ä¸ôÊ±¼ä£¬ÊÇÖ¡ÂÊµÄµ¹Êý£¬µ¥Î»Îªus*/
+    /*ï¿½ï¿½Ö¡ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½Ä¼ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Ö¡ï¿½ÊµÄµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»Îªus*/
     video->nFrameDuration = pmpParser->vdFrmInterval;
 
     video->nCodecSpecificDataLen = pmpParser->tempVideoInfo.nCodecSpecificDataLen;
@@ -241,7 +241,7 @@ static int SetMediaInfo(CdxPmpParser *pmpParser)
         }
         else
         {
-            CDX_LOGD("auCodecID(%d), audio is mp3 format.", pmpParser->auCodecID);
+            LOGD("auCodecID(%d), audio is mp3 format.", pmpParser->auCodecID);
             audio->eCodecFormat = AUDIO_CODEC_FORMAT_MP3;
         }
         if(pmpParser->bStereo)
@@ -253,7 +253,7 @@ static int SetMediaInfo(CdxPmpParser *pmpParser)
 
         if(pmpParser->auStrmNum > 1)
         {
-            CDX_LOGD("have %d audio streams", pmpParser->auStrmNum);
+            LOGD("have %d audio streams", pmpParser->auStrmNum);
             cdx_uint32 i;
             for(i = 1; i < pmpParser->auStrmNum && i < AUDIO_STREAM_LIMIT; i++)
             {
@@ -276,7 +276,7 @@ _newDataFrame:
         pmpParser->dataFrameCount++;
         if(pmpParser->dataFrameCount > pmpParser->vdFrmNum)
         {
-            CDX_LOGD("pmpParser EOS");
+            LOGD("pmpParser EOS");
             pmpParser->mErrno = PSR_EOS;
             ret = -1;
             goto _exit;
@@ -286,7 +286,7 @@ _newDataFrame:
         ret = CdxStreamRead(pmpParser->file, buf, 13);
         if(ret != 13)
         {
-            CDX_LOGE("CdxStreamRead fail, request(13), ret(%d)", ret);
+            LOGE("CdxStreamRead fail, request(13), ret(%d)", ret);
             ret = -1;
             goto _exit;
         }
@@ -301,7 +301,7 @@ _newDataFrame:
 
         if(dataFrame->audFrmNum > pmpParser->maxAuPerFrame)
         {
-            CDX_LOGE("audFrmNum(%u) > maxAuPerFrame(%u)",
+            LOGE("audFrmNum(%u) > maxAuPerFrame(%u)",
                     dataFrame->audFrmNum, pmpParser->maxAuPerFrame);
             ret = -1;
             pmpParser->mErrno = PSR_UNKNOWN_ERR;
@@ -311,7 +311,7 @@ _newDataFrame:
         ret = CdxStreamRead(pmpParser->file, buf, len);
         if(ret != len)
         {
-            CDX_LOGE("CdxStreamRead fail, request(%d), ret(%d)", len, ret);
+            LOGE("CdxStreamRead fail, request(%d), ret(%d)", len, ret);
             ret = -1;
             goto _exit;
         }
@@ -337,7 +337,7 @@ _newDataFrame:
             ret = CdxStreamSeek(pmpParser->file, dataFrame->vdFrmSize, SEEK_CUR);
             if(ret < 0)
             {
-                CDX_LOGE("CdxStreamSeek fail, return(%d)", ret);
+                LOGE("CdxStreamSeek fail, return(%d)", ret);
                 goto _exit;
             }
             pmpParser->curStream = (pmpParser->curStream + 1)%(pmpParser->auStrmNum + 1);
@@ -364,7 +364,7 @@ _newDataFrame:
         ret = CdxStreamSeek(pmpParser->file, len, SEEK_CUR);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamSeek fail, return(%d)", ret);
+            LOGE("CdxStreamSeek fail, return(%d)", ret);
             goto _exit;
         }
         pmpParser->curStream = 0;
@@ -415,7 +415,7 @@ static cdx_int32 ReadPacket(CdxPmpParser *pmpParser, CdxPacketT *pkt)
                 ret = CdxStreamRead(pmpParser->file, data, len);
                 if(ret != len)
                 {
-                    CDX_LOGE("CdxStreamRead fail, request(%d), ret(%d)", len, ret);
+                    LOGE("CdxStreamRead fail, request(%d), ret(%d)", len, ret);
                     ret = -1;
                     pmpParser->mErrno = PSR_UNKNOWN_ERR;
                     goto _exit;
@@ -465,7 +465,7 @@ static cdx_int32 ReadPacket(CdxPmpParser *pmpParser, CdxPacketT *pkt)
                     ret = CdxStreamRead(pmpParser->file, data, len);
                     if(ret != len)
                     {
-                        CDX_LOGE("CdxStreamRead fail, request(%d), ret(%d)", len, ret);
+                        LOGE("CdxStreamRead fail, request(%d), ret(%d)", len, ret);
                         ret = -1;
                         pmpParser->mErrno = PSR_UNKNOWN_ERR;
                         goto _exit;
@@ -486,7 +486,7 @@ static cdx_int32 ReadPacket(CdxPmpParser *pmpParser, CdxPacketT *pkt)
                     ret = CdxStreamRead(pmpParser->file, data, remaining);
                     if(ret != remaining)
                     {
-                        CDX_LOGE("CdxStreamRead fail, request(%d), ret(%d)", remaining, ret);
+                        LOGE("CdxStreamRead fail, request(%d), ret(%d)", remaining, ret);
                         ret = -1;
                         pmpParser->mErrno = PSR_UNKNOWN_ERR;
                         goto _exit;
@@ -495,7 +495,7 @@ static cdx_int32 ReadPacket(CdxPmpParser *pmpParser, CdxPacketT *pkt)
                     ret = CdxStreamRead(pmpParser->file, data, len - remaining);
                     if(ret != len - remaining)
                     {
-                        CDX_LOGE("CdxStreamRead fail, request(%d), ret(%d)", len - remaining, ret);
+                        LOGE("CdxStreamRead fail, request(%d), ret(%d)", len - remaining, ret);
                         ret = -1;
                         pmpParser->mErrno = PSR_UNKNOWN_ERR;
                         goto _exit;
@@ -514,7 +514,7 @@ static cdx_int32 ReadPacket(CdxPmpParser *pmpParser, CdxPacketT *pkt)
             ret = CdxStreamRead(pmpParser->file, pkt->buf, pkt->length);
             if(ret != pkt->length)
             {
-                CDX_LOGE("CdxStreamRead fail, request(%d), ret(%d)", pkt->length, ret);
+                LOGE("CdxStreamRead fail, request(%d), ret(%d)", pkt->length, ret);
                 ret = -1;
                 pmpParser->mErrno = PSR_UNKNOWN_ERR;
                 goto _exit;
@@ -525,7 +525,7 @@ static cdx_int32 ReadPacket(CdxPmpParser *pmpParser, CdxPacketT *pkt)
             ret = CdxStreamRead(pmpParser->file, pkt->buf, pkt->buflen);
             if(ret != pkt->buflen)
             {
-                CDX_LOGE("CdxStreamRead fail, request(%d), ret(%d)", pkt->buflen, ret);
+                LOGE("CdxStreamRead fail, request(%d), ret(%d)", pkt->buflen, ret);
                 ret = -1;
                 pmpParser->mErrno = PSR_UNKNOWN_ERR;
                 goto _exit;
@@ -535,7 +535,7 @@ static cdx_int32 ReadPacket(CdxPmpParser *pmpParser, CdxPacketT *pkt)
             ret = CdxStreamRead(pmpParser->file, pkt->ringBuf, len);
             if(ret != len)
             {
-                CDX_LOGE("CdxStreamRead fail, request(%d), ret(%d)", len, ret);
+                LOGE("CdxStreamRead fail, request(%d), ret(%d)", len, ret);
                 ret = -1;
                 pmpParser->mErrno = PSR_UNKNOWN_ERR;
                 goto _exit;
@@ -556,7 +556,7 @@ static cdx_int32 ReadPacket(CdxPmpParser *pmpParser, CdxPacketT *pkt)
                 }
                 if(offset1 == pkt->ringBufLen)
                 {
-                    CDX_LOGE(" nal is incomplete!!!");//²»ÊÇÕûÊý¸önal
+                    LOGE(" nal is incomplete!!!");//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½nal
                     goto _exit1;
                 }
                 else
@@ -572,11 +572,11 @@ static cdx_int32 ReadPacket(CdxPmpParser *pmpParser, CdxPacketT *pkt)
             // A valid startcode consists of at least two 0x00 bytes followed by 0x01.
 
             if (offset + offset1 < 2 || *tmp != 0x01) {
-                CDX_LOGE("nal is incomplete!!!");//²»ÊÇÕûÊý¸önal
+                LOGE("nal is incomplete!!!");//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½nal
             }
             else
             {
-                CDX_LOGD("OK");//ÊÇÕûÊý¸önal
+                LOGD("OK");//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½nal
             }
         }
 #endif
@@ -598,38 +598,38 @@ static int MakeSpecificData(CdxPmpParser *pmpParser)
         pkt = NULL;
         if(pmpParser->forceStop)
         {
-            CDX_LOGE("PSR_USER_CANCEL");
+            LOGE("PSR_USER_CANCEL");
             goto _exit;
         }
 
         pkt = (CdxPacketT *)malloc(sizeof(CdxPacketT));
         if(!pkt)
         {
-            CDX_LOGE("malloc fail.");
+            LOGE("malloc fail.");
             goto _exit;
         }
         ret = PrefetchPacket(pmpParser, pkt);
         if(ret < 0)
         {
-            CDX_LOGW("PrefetchPacket fail.");
+            LOGW("PrefetchPacket fail.");
             goto _exit;
         }
         pkt->buf = (char *)malloc(pkt->length);
         if(!pkt->buf)
         {
-            CDX_LOGE("malloc fail.");
+            LOGE("malloc fail.");
             goto _exit;
         }
         pkt->buflen = pkt->length;
         ret = ReadPacket(pmpParser, pkt);
         if(ret < 0)
         {
-            CDX_LOGE("ReadPacket fail");
+            LOGE("ReadPacket fail");
             goto _exit;
         }
         if(pmpParser->packetNum >= MaxProbePacketNum)
         {
-            CDX_LOGE("pmpParser->probePacketNum >= MaxProbePacketNum");
+            LOGE("pmpParser->probePacketNum >= MaxProbePacketNum");
             goto _exit;
         }
         pmpParser->packets[pmpParser->packetNum++] = pkt;
@@ -638,7 +638,7 @@ static int MakeSpecificData(CdxPmpParser *pmpParser)
             if((pkt->length + pmpParser->vProbeBuf.probeDataSize) >
                     pmpParser->vProbeBuf.probeBufSize)
             {
-                CDX_LOGE("probeDataSize too big!");
+                LOGE("probeDataSize too big!");
                 goto _exit1;
             }
             else
@@ -654,7 +654,7 @@ static int MakeSpecificData(CdxPmpParser *pmpParser)
                     vCodecFormat, CDX_PARSER_PMP);
             if(ret == PROBE_SPECIFIC_DATA_ERROR)
             {
-                CDX_LOGE("probeVideoSpecificData error");
+                LOGE("probeVideoSpecificData error");
                 goto _exit1;
             }
             else if(ret == PROBE_SPECIFIC_DATA_SUCCESS)
@@ -671,7 +671,7 @@ static int MakeSpecificData(CdxPmpParser *pmpParser)
             }
             else
             {
-                CDX_LOGE("probeVideoSpecificData (%d), it is unknown.", ret);
+                LOGE("probeVideoSpecificData (%d), it is unknown.", ret);
             }
         }
     }
@@ -691,7 +691,7 @@ _exit1:
 
 int PmpParserInit(CdxParserT *parser)
 {
-    CDX_LOGI("PmpParserInit start");
+    LOGI("PmpParserInit start");
 
     CdxPmpParser *pmpParser = (CdxPmpParser *)parser;
 
@@ -700,13 +700,13 @@ int PmpParserInit(CdxParserT *parser)
     int ret = CdxStreamRead(pmpParser->file, pmpHead, 56);
     if(ret != 56)
     {
-        CDX_LOGE("CdxStreamRead(%d)", ret);
+        LOGE("CdxStreamRead(%d)", ret);
         goto _exit;
     }
     cdx_uint32 *data = (cdx_uint32 *)pmpHead;
     if((MKTAG('p', 'm', 'p', 'm') != *data++) || (1 != *data++))
     {
-        CDX_LOGE("may not be pmp-2.0");
+        LOGE("may not be pmp-2.0");
         goto _exit;
     }
     pmpParser->vdCodecID        = *data++;
@@ -724,25 +724,25 @@ int PmpParserInit(CdxParserT *parser)
 
     if(CheckPmpHeader(pmpParser) != 0)
     {
-        CDX_LOGE("format error");
+        LOGE("format error");
         goto _exit;
     }
     pmpParser->vdFrmInterval = pmpParser->vdScale * 1000LL *1000 / pmpParser->vdRate;
 
     if(CreateDataFrameDescription(pmpParser) != 0)
     {
-        CDX_LOGE("PmpPacketCreate fail");
+        LOGE("PmpPacketCreate fail");
         goto _exit;
     }
     if(BuildKeyFrameIndexTable(pmpParser) != 0)
     {
-        CDX_LOGE("PmpIndexTableBuild fail");
+        LOGE("PmpIndexTableBuild fail");
         goto _exit;
     }
     ret = MakeSpecificData(pmpParser);
     if(ret != PROBE_SPECIFIC_DATA_SUCCESS)
     {
-        CDX_LOGE("MakeSpecificData fail");
+        LOGE("MakeSpecificData fail");
         goto _exit;
     }
     SetMediaInfo(pmpParser);
@@ -752,7 +752,7 @@ int PmpParserInit(CdxParserT *parser)
     pmpParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&pmpParser->statusLock);
     pthread_cond_signal(&pmpParser->cond);
-    CDX_LOGI("PmpParserInit success");
+    LOGI("PmpParserInit success");
     return 0;
 
 _exit:
@@ -761,7 +761,7 @@ _exit:
     pmpParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&pmpParser->statusLock);
     pthread_cond_signal(&pmpParser->cond);
-    CDX_LOGI("PmpParserInit fail");
+    LOGI("PmpParserInit fail");
     return -1;
 }
 
@@ -770,7 +770,7 @@ static cdx_int32 PmpParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *pMedia
     CdxPmpParser *pmpParser = (CdxPmpParser*)parser;
     if(pmpParser->status < CDX_PSR_IDLE)
     {
-        CDX_LOGE("status < CDX_PSR_IDLE, PmpParserGetMediaInfo invaild");
+        LOGE("status < CDX_PSR_IDLE, PmpParserGetMediaInfo invaild");
         pmpParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -783,7 +783,7 @@ static cdx_int32 PmpParserPrefetch(CdxParserT *parser, CdxPacketT *cdxPkt)
     CdxPmpParser *pmpParser = (CdxPmpParser*)parser;
     if(pmpParser->status != CDX_PSR_IDLE && pmpParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PSR_IDLE && status != CDX_PSR_PREFETCHED, "
+        LOGE("status != CDX_PSR_IDLE && status != CDX_PSR_PREFETCHED, "
                 "PmpParserPrefetch invaild");
         pmpParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
@@ -804,12 +804,12 @@ static cdx_int32 PmpParserPrefetch(CdxParserT *parser, CdxPacketT *cdxPkt)
     }
     if(pmpParser->mErrno == PSR_EOS)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         return -1;
     }
     if((pmpParser->flags & DISABLE_VIDEO) && (pmpParser->flags & DISABLE_AUDIO))
     {
-        CDX_LOGE("DISABLE_VIDEO && DISABLE_AUDIO");
+        LOGE("DISABLE_VIDEO && DISABLE_AUDIO");
         pmpParser->mErrno = PSR_UNKNOWN_ERR;
         return -1;
     }
@@ -843,7 +843,7 @@ static cdx_int32 PmpParserRead(CdxParserT *parser, CdxPacketT *pkt)
     CdxPmpParser *pmpParser = (CdxPmpParser*)parser;
     if(pmpParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
+        LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
         pmpParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -890,7 +890,7 @@ static cdx_int32 PmpParserRead(CdxParserT *parser, CdxPacketT *pkt)
 }
 cdx_int32 PmpParserForceStop(CdxParserT *parser)
 {
-    CDX_LOGV("PmpParserForceStop start");
+    LOGV("PmpParserForceStop start");
     CdxPmpParser *pmpParser = (CdxPmpParser*)parser;
     pthread_mutex_lock(&pmpParser->statusLock);
     pmpParser->forceStop = 1;
@@ -898,7 +898,7 @@ cdx_int32 PmpParserForceStop(CdxParserT *parser)
     int ret = CdxStreamForceStop(pmpParser->file);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamForceStop fail");
+        LOGE("CdxStreamForceStop fail");
     }
     while(pmpParser->status != CDX_PSR_IDLE && pmpParser->status != CDX_PSR_PREFETCHED)
     {
@@ -907,16 +907,16 @@ cdx_int32 PmpParserForceStop(CdxParserT *parser)
     pthread_mutex_unlock(&pmpParser->statusLock);
     pmpParser->mErrno = PSR_USER_CANCEL;
     pmpParser->status = CDX_PSR_IDLE;
-    CDX_LOGV("PmpParserForceStop end");
+    LOGV("PmpParserForceStop end");
     return 0;
 }
 cdx_int32 PmpParserClrForceStop(CdxParserT *parser)
 {
-    CDX_LOGV("PmpParserClrForceStop start");
+    LOGV("PmpParserClrForceStop start");
     CdxPmpParser *pmpParser = (CdxPmpParser*)parser;
     if(pmpParser->status != CDX_PSR_IDLE)
     {
-        CDX_LOGW("pmpParser->status != CDX_PSR_IDLE");
+        LOGW("pmpParser->status != CDX_PSR_IDLE");
         pmpParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -924,9 +924,9 @@ cdx_int32 PmpParserClrForceStop(CdxParserT *parser)
     int ret = CdxStreamClrForceStop(pmpParser->file);
     if(ret < 0)
     {
-        CDX_LOGW("CdxStreamClrForceStop fail");
+        LOGW("CdxStreamClrForceStop fail");
     }
-    CDX_LOGI("PmpParserClrForceStop end");
+    LOGI("PmpParserClrForceStop end");
     return 0;
 }
 
@@ -940,7 +940,7 @@ static int PmpParserControl(CdxParserT *parser, int cmd, void *param)
     {
         case CDX_PSR_CMD_SWITCH_AUDIO:
         case CDX_PSR_CMD_SWITCH_SUBTITLE:
-            CDX_LOGI("pmp parser is not support switch stream yet!!!");
+            LOGI("pmp parser is not support switch stream yet!!!");
             break;
         case CDX_PSR_CMD_SET_FORCESTOP:
             return PmpParserForceStop(parser);
@@ -960,27 +960,27 @@ cdx_int32 PmpParserGetStatus(CdxParserT *parser)
 cdx_int32 PmpParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType seekModeType)
 {
     CDX_UNUSE(seekModeType);
-    CDX_LOGV("PmpParserSeekTo start, timeUs = %lld", timeUs);
+    LOGV("PmpParserSeekTo start, timeUs = %lld", timeUs);
     CdxPmpParser *pmpParser = (CdxPmpParser *)parser;
     pmpParser->mErrno = PSR_OK;
     pmpParser->status = CDX_PSR_IDLE;
     pmpParser->packetPos = pmpParser->packetNum;
     if(timeUs < 0)
     {
-        CDX_LOGE("timeUs invalid");
+        LOGE("timeUs invalid");
         pmpParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     else if(((cdx_uint64)timeUs/1000) >= (pmpParser->durationUs/1000))
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         pmpParser->mErrno = PSR_EOS;
         return 0;
     }
 
     if(!pmpParser->mediaInfo.bSeekable)
     {
-        CDX_LOGE("bSeekable = false");
+        LOGE("bSeekable = false");
         pmpParser->mErrno = PSR_UNKNOWN_ERR;
         return -1;
     }
@@ -1008,7 +1008,7 @@ cdx_int32 PmpParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType se
     ret = CdxStreamSeek(pmpParser->file, pos, SEEK_SET);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamSeek fail, return(%d)", ret);
+        LOGE("CdxStreamSeek fail, return(%d)", ret);
         pmpParser->mErrno = PSR_UNKNOWN_ERR;
         goto _exit;
     }
@@ -1017,13 +1017,13 @@ cdx_int32 PmpParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType se
     pmpParser->curStream = 0;
     ret = 0;
     //cdx_uint64 seekTo = (cdx_uint64)pmpParser->vdFrmInterval * pmpParser->dataFrameCount;
-    //CDX_LOGV("PmpParserSeekTo timeUs = %llu", seekTo);
+    //LOGV("PmpParserSeekTo timeUs = %llu", seekTo);
 _exit:
     pthread_mutex_lock(&pmpParser->statusLock);
     pmpParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&pmpParser->statusLock);
     pthread_cond_signal(&pmpParser->cond);
-    CDX_LOGV("PmpParserSeekTo end, ret = %d", ret);
+    LOGV("PmpParserSeekTo end, ret = %d", ret);
     return ret;
 }
 static cdx_int32 PmpParserClose(CdxParserT *parser)
@@ -1033,7 +1033,7 @@ static cdx_int32 PmpParserClose(CdxParserT *parser)
     int ret = PmpParserForceStop(parser);
     if(ret < 0)
     {
-        CDX_LOGW("PmpParserForceStop fail");
+        LOGW("PmpParserForceStop fail");
     }
 
     CdxStreamClose(pmpParser->file);
@@ -1092,7 +1092,7 @@ CdxParserT *PmpParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     CdxPmpParser *pmpParser = CdxMalloc(sizeof(CdxPmpParser));
     if(!pmpParser)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         CdxStreamClose(stream);
         return NULL;
     }
@@ -1119,13 +1119,13 @@ cdx_uint32 PmpParserProbe(CdxStreamProbeDataT *probeData)
 {
     if(probeData->len < 8)
     {
-        CDX_LOGE("Probe data is not enough.");
+        LOGE("Probe data is not enough.");
         return 0;
     }
     cdx_uint32 *data = (cdx_uint32 *)probeData->buf;
     if((MKTAG('p', 'm', 'p', 'm') != *data++) || (1 != *data))
     {
-        CDX_LOGE("It is not pmp-2.0, and is not supported.");
+        LOGE("It is not pmp-2.0, and is not supported.");
         return 0;
     }
     return 100;

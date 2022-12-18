@@ -21,6 +21,8 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
+#include <log/log.h>
+
 #include "video.h"
 #include "isp_v4l2_helper.h"
 #include "isp_dev.h"
@@ -43,7 +45,7 @@ int check_soc_ft_zone(int csi_id)
 
 	fd = open("/dev/sunxi_soc_info", O_RDONLY);
 	if (fd < 0){
-		printf("open /dev/sunxi_soc_info failed!");
+		LOGI("open /dev/sunxi_soc_info failed!");
 		return -1;
 	}
 
@@ -52,7 +54,7 @@ int check_soc_ft_zone(int csi_id)
 	close(fd);
 
 	if (ret < 0) {
-		printf("ioctl err!\n");
+		LOGI("ioctl err!\n");
 		return ret;
 	}
 
@@ -74,8 +76,8 @@ void check_soc_ft_fps(int *frame_mode)
 
 	fd = open("/dev/sunxi_soc_info", O_RDONLY);
 	if (fd < 0){
-		printf("open /dev/sunxi_soc_info failed!");
-		return -1;
+		LOGI("open /dev/sunxi_soc_info failed!");
+		return;
 	}
 
 	memset(buf, 0, sizeof(buf));
@@ -83,8 +85,8 @@ void check_soc_ft_fps(int *frame_mode)
 	close(fd);
 
 	if (ret < 0) {
-		printf("ioctl err!\n");
-		return ret;
+		LOGI("ioctl err!\n");
+		return;
 	}
 
 	//value = atoi(buf);
@@ -240,7 +242,7 @@ int video_req_buffers(struct isp_video_device *video, struct buffers_pool *pool)
 	int ret;
 
 	if ((video->nplanes > VIDEO_MAX_PLANES) || (video->nplanes <= 0)) {
-		printf("planes number is error!\n");
+		LOGI("planes number is error!\n");
 		return -1;
 	}
 
@@ -297,7 +299,7 @@ int video_req_buffers(struct isp_video_device *video, struct buffers_pool *pool)
 					 video->entity->fd, buf.m.planes[j].m.mem_offset);
 
 				if (MAP_FAILED == pool->buffers[i].planes[j].mem) {
-					printf("%s: unable to map buffer %u (%d)\n",
+					LOGI("%s: unable to map buffer %u (%d)\n",
 					       video->entity->devname, i, errno);
 					goto done;
 				}
@@ -374,7 +376,7 @@ int video_free_buffers(struct isp_video_device *video)
 					continue;
 
 				if (munmap(plane->mem, plane->size)) {
-					printf("%s: unable to unmap buffer %u (%d)\n",
+					LOGI("%s: unable to unmap buffer %u (%d)\n",
 						video->entity->devname, i, errno);
 					return -errno;
 				}
@@ -616,12 +618,12 @@ void buffers_pool_delete(struct isp_video_device *video)
 	unsigned int i, j;
 
 	if (video == NULL) {
-		printf("%s error at %d\n", __func__, __LINE__);
+		LOGI("%s error at %d\n", __func__, __LINE__);
 		return;
 	}
 	pool = video->pool;
 	if (pool == NULL) {
-		printf("%s error at %d\n", __func__, __LINE__);
+		LOGI("%s error at %d\n", __func__, __LINE__);
 		return;
 	}
 
@@ -658,7 +660,7 @@ int video_save_frames(struct isp_video_device *video, unsigned int buf_id, char 
 	struct video_buffer *buffer = &video->pool->buffers[buf_id];
 
 	for (j = 0; j < video->nplanes; j++) {
-		//printf("file start = %p length = %d\n",
+		//LOGI("file start = %p length = %d\n",
 		//	buffer->planes[j].mem, buffer->planes[j].size);
 		sprintf(fdstr, "%s/fb%d_yuv.bin", path, video->id);
 		file_fd = fopen(fdstr, "ab");

@@ -13,7 +13,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "AOChannel_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <errno.h>
 #include <mm_component.h>
@@ -34,7 +34,7 @@ static ERRORTYPE AOChannel_SendCommand(PARAM_IN COMP_HANDLETYPE hComponent,
     ERRORTYPE eError = SUCCESS;
     message_t msg;
 
-    //alogv("AOChannel_SendCommand: %d", Cmd);
+    //LOGV("AOChannel_SendCommand: %d", Cmd);
 
     if (NULL == pChnData) {
         eError = ERR_AO_ILLEGAL_PARAM;
@@ -114,7 +114,7 @@ static ERRORTYPE AOChannel_SetCallbacks(PARAM_IN COMP_HANDLETYPE hComponent,
     ERRORTYPE eError = SUCCESS;
 
     if (NULL == pChnData || NULL == pCallbacks || NULL == pAppData) {
-        aloge("pChnData=%p, pCallbacks=%p, pAppData=%p", pChnData, pCallbacks, pAppData);
+        LOGE("pChnData=%p, pCallbacks=%p, pAppData=%p", pChnData, pCallbacks, pAppData);
         eError = ERR_AO_ILLEGAL_PARAM;
         goto COMP_CONF_CMD_BAIL;
     }
@@ -148,7 +148,7 @@ ERRORTYPE AOSetTimeActiveRefClock(
     }
     else
     {
-        aloge("fatal error! check RefClock[0x%x]", pRefClock->eClock);
+        LOGE("fatal error! check RefClock[0x%x]", pRefClock->eClock);
         pChnData->is_ref_clock = FALSE;
     }
     return eError;
@@ -167,7 +167,7 @@ ERRORTYPE AOSetStreamEof(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN BOOL drai
     AO_CHN_DATA_S *pChnData = (AO_CHN_DATA_S*)((MM_COMPONENTTYPE*)hComponent)->pComponentPrivate;
     ERRORTYPE eError = SUCCESS;
 
-    alogd("AO end flag is set! drain pcm flag:%d!", drainFlag);
+    LOGD("AO end flag is set! drain pcm flag:%d!", drainFlag);
     pChnData->mWaitDrainPcmSemFlag = drainFlag;
     pChnData->priv_flag |= CDX_comp_PRIV_FLAGS_STREAMEOF;
     message_t   msg;
@@ -228,7 +228,7 @@ static ERRORTYPE AOReleaseFrame_l(
             omxRet = COMP_FillThisBuffer(pADecTunnel->hTunnel, &obh);
             if(omxRet != SUCCESS)
             {
-                aloge("fatal error! fill this buffer fail[0x%x], pts=[%lld], nId=[%d], check code!",
+                LOGE("fatal error! fill this buffer fail[0x%x], pts=[%lld], nId=[%d], check code!",
                     omxRet, pInFrame->mAFrame.mTimeStamp, pInFrame->mAFrame.mId);
             }
             else
@@ -247,7 +247,7 @@ static ERRORTYPE AOReleaseFrame_l(
     }
     else
     {
-        aloge("fatal error! not find pInFrame[%p], pts[%lld], nId[%d] in used and ready list.",
+        LOGE("fatal error! not find pInFrame[%p], pts[%lld], nId[%d] in used and ready list.",
             pInFrame, pInFrame->mAFrame.mTimeStamp, pInFrame->mAFrame.mId);
         omxRet = ERR_AO_ILLEGAL_PARAM;
     }
@@ -272,11 +272,11 @@ static ERRORTYPE AOAddFrame_l(
     AOCompInputFrame *pNode;
     if(list_empty(&pChnData->mAudioInputFrameIdleList))
     {
-        alogw("input frame list is empty, increase one");
+        LOGW("input frame list is empty, increase one");
         pNode = (AOCompInputFrame*)malloc(sizeof(AOCompInputFrame));
         if(NULL == pNode)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
         }
         list_add_tail(&pNode->mList, &pChnData->mAudioInputFrameIdleList);
         pChnData->mFrameNodeNum++;
@@ -308,7 +308,7 @@ ERRORTYPE AOSeek(PARAM_IN COMP_HANDLETYPE hComponent)
         AOReleaseFrame_l(pChnData, pEntry);
         cnt++;
     }
-    alogd("AO seek, release [%d]input audio Frame!", cnt);
+    LOGD("AO seek, release [%d]input audio Frame!", cnt);
     pthread_mutex_unlock(&pChnData->mInputFrameListMutex);
     return eError;
 }
@@ -321,7 +321,7 @@ static ERRORTYPE AOChannel_SetSaveFileInfo(
 
     if (COMP_StateIdle != pChnData->state && COMP_StateExecuting != pChnData->state)
     {
-        aloge("call SetSaveFileInfo in wrong state[0x%x]!", pChnData->state);
+        LOGE("call SetSaveFileInfo in wrong state[0x%x]!", pChnData->state);
         return ERR_AO_NOT_PERM;
     }
 
@@ -329,7 +329,7 @@ static ERRORTYPE AOChannel_SetSaveFileInfo(
     pChnData->mpSaveFileFullPath = (char*)malloc(nPathLen);
     if (NULL == pChnData->mpSaveFileFullPath)
     {
-        aloge("malloc %d fail! FilePath:[%s], FileName:[%s]", nPathLen, pFileInfo->mFilePath, pFileInfo->mFileName);
+        LOGE("malloc %d fail! FilePath:[%s], FileName:[%s]", nPathLen, pFileInfo->mFilePath, pFileInfo->mFileName);
         return ERR_AO_NOMEM;
     }
 
@@ -339,13 +339,13 @@ static ERRORTYPE AOChannel_SetSaveFileInfo(
     pChnData->mFpSaveFile = fopen(pChnData->mpSaveFileFullPath, "wb+");
     if (pChnData->mFpSaveFile)
     {
-        alogd("create file(%s) to save pcm file", pChnData->mpSaveFileFullPath);
+        LOGD("create file(%s) to save pcm file", pChnData->mpSaveFileFullPath);
         pChnData->mSaveFileFlag = TRUE;
         pChnData->mSaveFileSize = 0;
     }
     else
     {
-        aloge("create file(%s) failed!", pChnData->mpSaveFileFullPath);
+        LOGE("create file(%s) failed!", pChnData->mpSaveFileFullPath);
         pChnData->mSaveFileFlag = FALSE;
     }
 
@@ -360,7 +360,7 @@ static ERRORTYPE AOChannel_QueryFileStatus(
 
     if (COMP_StateIdle != pChnData->state && COMP_StateExecuting != pChnData->state)
     {
-        aloge("call SetSaveFileInfo in wrong state[0x%x]!", pChnData->state);
+        LOGE("call SetSaveFileInfo in wrong state[0x%x]!", pChnData->state);
         return ERR_AO_NOT_PERM;
     }
 
@@ -376,7 +376,7 @@ static ERRORTYPE AOChannel_QueryFileStatus(
     }
     else
     {
-        alogw("AO NOT in save file status!");
+        LOGW("AO NOT in save file status!");
     }
     return SUCCESS;
 }
@@ -428,7 +428,7 @@ static ERRORTYPE AOChannel_SetConfig(
         }
         case COMP_IndexVendorAOChnSendFrame:
         {
-            alogd("Not use this any more! non-tunnel send frame api use EmptyThisBuffer().");
+            LOGD("Not use this any more! non-tunnel send frame api use EmptyThisBuffer().");
             break;
         }
         case COMP_IndexVendorAIOReSmpEnable:
@@ -596,11 +596,11 @@ static ERRORTYPE AOChannel_ComponentTunnelRequest(
 
     if (pChnData->state == COMP_StateExecuting)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if(pChnData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request can't be in state[0x%x]", pChnData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]", pChnData->state);
         eError = ERR_AO_INCORRECT_STATE_OPERATION;
         goto COMP_CMD_FAIL;
     }
@@ -612,7 +612,7 @@ static ERRORTYPE AOChannel_ComponentTunnelRequest(
         }
     }
     if (i == AO_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AO_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -624,7 +624,7 @@ static ERRORTYPE AOChannel_ComponentTunnelRequest(
         }
     }
     if (i == AO_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AO_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -636,7 +636,7 @@ static ERRORTYPE AOChannel_ComponentTunnelRequest(
         }
     }
     if (i == AO_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AO_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -646,7 +646,7 @@ static ERRORTYPE AOChannel_ComponentTunnelRequest(
     pPortTunnelInfo->nTunnelPortIndex = nTunneledPort;
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup) {
-        alogd("Cancel setup tunnel on port[%d]", nPort);
+        LOGD("Cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         goto COMP_CMD_FAIL;
     }
@@ -659,7 +659,7 @@ static ERRORTYPE AOChannel_ComponentTunnelRequest(
     }
     if(pPortDef->eDir == COMP_DirOutput) {
         if (pChnData->mOutputPortTunnelFlag) {
-            aloge("AO_Comp outport already bind, why bind again?!");
+            LOGE("AO_Comp outport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -669,7 +669,7 @@ static ERRORTYPE AOChannel_ComponentTunnelRequest(
         pChnData->mOutputPortTunnelFlag = TRUE;
     } else {
         if (pChnData->mInputPortTunnelFlag[AO_INPORT_SUFFIX_AUDIO] && pChnData->mInputPortTunnelFlag[AO_INPORT_SUFFIX_CLOCK]) {
-            aloge("AO_Comp inport already bind, why bind again?!");
+            LOGE("AO_Comp inport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -679,7 +679,7 @@ static ERRORTYPE AOChannel_ComponentTunnelRequest(
         out_port_def.nPortIndex = nTunneledPort;
         ((MM_COMPONENTTYPE*)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput) {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_AO_ILLEGAL_PARAM;
             goto COMP_CMD_FAIL;
         }
@@ -687,7 +687,7 @@ static ERRORTYPE AOChannel_ComponentTunnelRequest(
 
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier) {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -723,7 +723,7 @@ static ERRORTYPE AOChannel_EmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, 
     pthread_mutex_lock(&pChnData->mStateLock);
     if(pChnData->state!=COMP_StateIdle && pChnData->state!=COMP_StateExecuting && pChnData->state!=COMP_StatePause)
     {
-        aloge("Call function in invalid state[0x%x]!", pChnData->state);
+        LOGE("Call function in invalid state[0x%x]!", pChnData->state);
         pthread_mutex_unlock(&pChnData->mStateLock);
         return ERR_AO_SYS_NOTREADY;
     }
@@ -746,7 +746,7 @@ static ERRORTYPE AOChannel_EmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, 
         }
         else
         {
-            aloge("Fatal error! inputPortIndex[%d] match nothing!", pBuffer->nInputPortIndex);
+            LOGE("Fatal error! inputPortIndex[%d] match nothing!", pBuffer->nInputPortIndex);
             eError = FAILURE;
         }
     }
@@ -795,7 +795,7 @@ static ERRORTYPE AOChannel_FillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, P
         if (tmp != NULL) {
             *frame = *tmp;
         } else {
-            aloge("getFreeFrame error!");
+            LOGE("getFreeFrame error!");
             eError = FAILURE;
         }
 #endif
@@ -810,7 +810,7 @@ static ERRORTYPE AOChannel_FillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, P
         }
 #endif
     } else {
-        aloge("fatal error! invalid outPortIndex[%d]", pBuffer->nOutputPortIndex);
+        LOGE("fatal error! invalid outPortIndex[%d]", pBuffer->nOutputPortIndex);
     }
 
     return eError;
@@ -825,7 +825,7 @@ static ERRORTYPE AOChannel_ComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     msg.command = eCmd;
     put_message(&pChnData->mCmdQueue, &msg);
-    alogd("wait AO channel component exit!...");
+    LOGD("wait AO channel component exit!...");
     pthread_join(pChnData->mThreadId, (void*) &eError);
 
     cdx_sem_deinit(&pChnData->mAllFrameRelSem);
@@ -835,11 +835,11 @@ static ERRORTYPE AOChannel_ComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pthread_mutex_lock(&pChnData->mInputFrameListMutex);
     if (!list_empty(&pChnData->mAudioInputFrameUsedList))
     {
-        aloge("fatal error! inputUsedFrame must be 0!");
+        LOGE("fatal error! inputUsedFrame must be 0!");
     }
     if (!list_empty(&pChnData->mAudioInputFrameReadyList))
     {
-        aloge("fatal error! inputReadyFrame must be 0!");
+        LOGE("fatal error! inputReadyFrame must be 0!");
     }
     if (!list_empty(&pChnData->mAudioInputFrameIdleList))
     {
@@ -853,7 +853,7 @@ static ERRORTYPE AOChannel_ComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         }
         if (cnt != pChnData->mFrameNodeNum)
         {
-            aloge("fatal error! Why node_cnt[%d] in IdleList not match mFrameNodeNum[%d]?!", cnt, pChnData->mFrameNodeNum);
+            LOGE("fatal error! Why node_cnt[%d] in IdleList not match mFrameNodeNum[%d]?!", cnt, pChnData->mFrameNodeNum);
         }
     }
     pthread_mutex_unlock(&pChnData->mInputFrameListMutex);
@@ -883,7 +883,7 @@ static ERRORTYPE AOChannel_ComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
 
     free(pChnData);
-    alogd("AO component exited!");
+    LOGD("AO component exited!");
 
     return SUCCESS;
 }
@@ -900,7 +900,7 @@ ERRORTYPE AOChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     // Create private data
     pChnData = (AO_CHN_DATA_S*)malloc(sizeof(AO_CHN_DATA_S));
     if (pChnData == NULL) {
-        aloge("Alloc AO_CHN_DATA_S error!");
+        LOGE("Alloc AO_CHN_DATA_S error!");
         return FAILURE;
     }
     memset(pChnData, 0x0, sizeof(AO_CHN_DATA_S));
@@ -964,12 +964,12 @@ ERRORTYPE AOChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pChnData->sPortParam.nPorts++;
 
 //    if (audioHw_AO_GetPcmConfig(pChnData->mMppChnInfo.mDevId, &pChnData->mpPcmCfg) != SUCCESS) {
-//        aloge("audioHw_AO_GetPcmConfig error!");
+//        LOGE("audioHw_AO_GetPcmConfig error!");
 //        eError = FAILURE;
 //        goto ERR_EXIT0;
 //    }
 //    if (audioHw_AO_GetAIOAttr(pChnData->mMppChnInfo.mDevId, &pChnData->mpAioAttr) != SUCCESS) {
-//        aloge("audioHw_AO_GetAIOAttr error!");
+//        LOGE("audioHw_AO_GetAIOAttr error!");
 //        eError = FAILURE;
 //        goto ERR_EXIT0;
 //    }
@@ -983,7 +983,7 @@ ERRORTYPE AOChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         AOCompInputFrame *pNode = (AOCompInputFrame*)malloc(sizeof(AOCompInputFrame));
         if (NULL == pNode)
         {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             break;
         }
         memset(pNode, 0, sizeof(AOCompInputFrame));
@@ -994,7 +994,7 @@ ERRORTYPE AOChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pChnData->mInputFrameListMutex, NULL);
     if(err != 0)
     {
-        aloge("Fatal error! pthread mutex init fail!");
+        LOGE("Fatal error! pthread mutex init fail!");
         eError = FAILURE;
         goto ERR_EXIT0;
     }
@@ -1002,7 +1002,7 @@ ERRORTYPE AOChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pChnData->mOutputBufMutex, NULL);
     if(err != 0)
     {
-        aloge("Fatal error! pthread mutex init fail!");
+        LOGE("Fatal error! pthread mutex init fail!");
         eError = FAILURE;
         goto ERR_EXIT0;
     }
@@ -1010,33 +1010,33 @@ ERRORTYPE AOChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pChnData->mStateLock, NULL);
     if(err != 0)
     {
-        aloge("Fatal error! pthread mutex init fail!");
+        LOGE("Fatal error! pthread mutex init fail!");
         eError = FAILURE;
         goto ERR_EXIT0;
     }
 
     if (message_create(&pChnData->mCmdQueue) < 0){
-        aloge("message error!");
+        LOGE("message error!");
         eError = FAILURE;
         goto ERR_EXIT2;
     }
 
     err = cdx_sem_init(&pChnData->mAllFrameRelSem, 0);
     if (err != 0) {
-        aloge("cdx_sem_init AllFrameRelSem error!");
+        LOGE("cdx_sem_init AllFrameRelSem error!");
         goto ERR_EXIT3;
     }
 
     err = cdx_sem_init(&pChnData->mWaitDrainPcmSem, 0);
     if (err != 0) {
-        aloge("cdx_sem_init mWaitDrainPcmSem error!");
+        LOGE("cdx_sem_init mWaitDrainPcmSem error!");
         goto ERR_EXIT4;
     }
 
     //pChnData->res = Creat_Resampler();
     //if(pChnData->res == NULL)
     //{
-    //   aloge("create resample res error!");
+    //   LOGE("create resample res error!");
     //   goto ERR_EXIT4;
     //}
 
@@ -1044,7 +1044,7 @@ ERRORTYPE AOChannel_ComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pChnData->tmpHandleBuf = (char *)malloc(pChnData->tmpBufSize);
     if (pChnData->tmpHandleBuf == NULL)
     {
-        aloge("malloc tmpbuf error!");
+        LOGE("malloc tmpbuf error!");
         goto ERR_EXIT5;
     }
 
@@ -1100,7 +1100,7 @@ static int audioEQHandle(AO_CHN_DATA_S *pChnData, AUDIO_FRAME_S *pInFrm)
 
     if (AUDIO_BIT_WIDTH_16 != pInFrm->mBitwidth)
     {
-        aloge("audio pcm format error! bitwidth=%d", pInFrm->mBitwidth);
+        LOGE("audio pcm format error! bitwidth=%d", pInFrm->mBitwidth);
         return FAILURE;
     }
 
@@ -1117,7 +1117,7 @@ static int audioEQHandle(AO_CHN_DATA_S *pChnData, AUDIO_FRAME_S *pInFrm)
         pChnData->equalizer = eq_create(&prms[0], sizeof(prms)/sizeof(prms[0]));
         if (pChnData->equalizer == NULL)
         {
-            aloge("eq create fail!");
+            LOGE("eq create fail!");
             return FAILURE;
         }
     }
@@ -1147,7 +1147,7 @@ static int audioResampleHandle(AO_CHN_DATA_S *pChnData, PARAM_INOUT AUDIO_FRAME_
         pChnData->res = Creat_Resampler();
         if (pChnData->res == NULL)
         {
-            aloge("create resample res error!");
+            LOGE("create resample res error!");
             return 0;
         }
     }
@@ -1176,7 +1176,7 @@ static int audioEffectProc(AO_CHN_DATA_S *pChnData, PARAM_INOUT AUDIO_FRAME_S *p
     int ret = 0;
 
     {
-        //alogd("inframe_size=%d", inFrame->mLen);
+        //LOGD("inframe_size=%d", inFrame->mLen);
 #ifdef CFG_AUDIO_EFFECT_GAIN
         if (pChnData->mVqeCfg.bGainOpen)
         {
@@ -1220,7 +1220,7 @@ static void *AOChannel_ComponentThread(void *pThreadData)
     COMP_INTERNAL_TUNNELINFOTYPE* pClkTunnel = NULL;
     COMP_INTERNAL_TUNNELINFOTYPE* pADecTunnel = NULL;
 
-    alogv("AO channel ComponentThread start run...");
+    LOGV("AO channel ComponentThread start run...");
 
     long long RelativeTime = 0;
     long long CurrentTime;
@@ -1233,7 +1233,7 @@ PROCESS_MESSAGE:
             cmd = cmdmsg.command;
             cmddata = (unsigned int)cmdmsg.para0;
             if (cmd == SetState) {
-                //alogv("cmd=SetState, cmddata=%d", cmddata);
+                //LOGV("cmd=SetState, cmddata=%d", cmddata);
                 pthread_mutex_lock(&pChnData->mStateLock);
                 if (pChnData->state == (COMP_STATETYPE) (cmddata)) {
                     CompSendEvent(pChnData, COMP_EventError, ERR_AO_SAMESTATE, 0);
@@ -1250,12 +1250,12 @@ PROCESS_MESSAGE:
                         {
                             if (pChnData->state != COMP_StateIdle)
                             {
-                                aloge("fatal error! AO incorrect state transition [0x%x]->Loaded!", pChnData->state);
+                                LOGE("fatal error! AO incorrect state transition [0x%x]->Loaded!", pChnData->state);
                                 CompSendEvent(pChnData, COMP_EventError, ERR_AO_INCORRECT_STATE_TRANSITION, 0);
                             }
                             ERRORTYPE   omxRet;
                             //release all frames.
-                            alogd("release all frames to ADec, when state[0x%x]->[0x%x]", pChnData->state, COMP_StateLoaded);
+                            LOGD("release all frames to ADec, when state[0x%x]->[0x%x]", pChnData->state, COMP_StateLoaded);
                             pthread_mutex_lock(&pChnData->mInputFrameListMutex);
                             if(!list_empty(&pChnData->mAudioInputFrameUsedList))
                             {
@@ -1265,7 +1265,7 @@ PROCESS_MESSAGE:
                                 {
                                     cnt++;
                                 }
-                                alogd("release [%d]used inputFrame!", cnt);
+                                LOGD("release [%d]used inputFrame!", cnt);
                                 AOCompInputFrame *pEntry, *pTmp;
                                 list_for_each_entry_safe(pEntry, pTmp, &pChnData->mAudioInputFrameUsedList, mList)
                                 {
@@ -1280,7 +1280,7 @@ PROCESS_MESSAGE:
                                 {
                                     cnt++;
                                 }
-                                alogd("release [%d]ready inputFrame!", cnt);
+                                LOGD("release [%d]ready inputFrame!", cnt);
                                 AOCompInputFrame *pEntry, *pTmp;
                                 list_for_each_entry_safe(pEntry, pTmp, &pChnData->mAudioInputFrameReadyList, mList)
                                 {
@@ -1321,7 +1321,7 @@ PROCESS_MESSAGE:
                                     pChnData->wait_time_out = 0;
                                     if (pChnData->seek_flag)
                                     {
-                                        alogd("seek in idle state?");
+                                        LOGD("seek in idle state?");
                                         pChnData->seek_flag = 0;
                                     }
                                 }
@@ -1341,7 +1341,7 @@ PROCESS_MESSAGE:
                                 }
                                 if (pChnData->priv_flag & CDX_comp_PRIV_FLAGS_REINIT)
                                 {
-                                    alogd("pChnData->priv_flag = %#x, reinit AudioRender...", pChnData->priv_flag);
+                                    LOGD("pChnData->priv_flag = %#x, reinit AudioRender...", pChnData->priv_flag);
                                     pChnData->audio_rend_flag |= AUDIO_RENDER_INIT_RENDER_FLAG;
                                     pChnData->priv_flag &= ~CDX_comp_PRIV_FLAGS_REINIT;
                                 }
@@ -1383,9 +1383,9 @@ PROCESS_MESSAGE:
                 pthread_mutex_unlock(&pChnData->mStateLock);
             } else if (cmd == AOChannel_InputPcmAvailable) {
                 //pChnData->mWaitInputFrameFlag = FALSE;
-                //alogv("AOChannel_InputPcmAvailable");
+                //LOGV("AOChannel_InputPcmAvailable");
             } else if (cmd == AOChannel_OutBufAvailable) {
-                alogv("AOChannel_OutBufAvailable. But NOT use!");
+                LOGV("AOChannel_OutBufAvailable. But NOT use!");
             } else if (cmd == StopPort) {
             } else if (cmd == Stop) {
                 goto EXIT;
@@ -1394,7 +1394,7 @@ PROCESS_MESSAGE:
         }
 
         if (pChnData->state != COMP_StateExecuting) {
-            alogv("AO channel Component state not OMX_StateExecuting");
+            LOGV("AO channel Component state not OMX_StateExecuting");
             TMessage_WaitQueueNotEmpty(&pChnData->mCmdQueue, 0);
             goto PROCESS_MESSAGE;
         }
@@ -1418,7 +1418,7 @@ PROCESS_MESSAGE:
             pthread_mutex_unlock(&pChnData->mInputFrameListMutex);
             if (pChnData->priv_flag & CDX_comp_PRIV_FLAGS_STREAMEOF)
             {
-                alogd("A. AO notify player eof!");
+                LOGD("A. AO notify player eof!");
                 if (pChnData->mWaitDrainPcmSemFlag)
                 {
                     audioHw_AO_DrainPcmRingBuf(pChnData->mMppChnInfo.mDevId);
@@ -1432,7 +1432,7 @@ PROCESS_MESSAGE:
             TMessage_WaitQueueNotEmpty(&pChnData->mCmdQueue, 0);
             if(pChnData->priv_flag & CDX_comp_PRIV_FLAGS_STREAMEOF)
             {
-                alogd("B. AO notify player eof!");
+                LOGD("B. AO notify player eof!");
                 if (pChnData->mWaitDrainPcmSemFlag)
                 {
                     audioHw_AO_DrainPcmRingBuf(pChnData->mMppChnInfo.mDevId);
@@ -1448,7 +1448,7 @@ PROCESS_MESSAGE:
         if (pChnData->audio_rend_flag & AUDIO_RENDER_FIRST_FRAME_FLAG) {
             AOCompInputFrame *pNode = list_first_entry(&pChnData->mAudioInputFrameUsedList, AOCompInputFrame, mList);
             AUDIO_FRAME_S *pFirstFrame = &pNode->mAFrame;
-            alogd("AO get first pcm frome ADec, nBufferLen: %d, nTimeStamp:%lldus, use it to init AudioRenderHal",
+            LOGD("AO get first pcm frome ADec, nBufferLen: %d, nTimeStamp:%lldus, use it to init AudioRenderHal",
                 pFirstFrame->mLen, pFirstFrame->mTimeStamp);
             if (pChnData->audio_rend_flag & AUDIO_RENDER_INIT_RENDER_FLAG) {
                 AIO_ATTR_S aio_attr;
@@ -1460,7 +1460,7 @@ PROCESS_MESSAGE:
                 AudioHw_AO_SetPubAttr(pChnData->mMppChnInfo.mDevId, &aio_attr);
                 audioHw_AO_Enable(pChnData->mMppChnInfo.mDevId);
                 audioHw_AI_Dev_unlock(pChnData->mMppChnInfo.mDevId);
-                alogd("audio render hal init and run ok!");
+                LOGD("audio render hal init and run ok!");
                 pChnData->audio_rend_flag &= ~AUDIO_RENDER_INIT_RENDER_FLAG;
             }
 
@@ -1469,18 +1469,18 @@ PROCESS_MESSAGE:
                 time_stamp.nPortIndex = pClkTunnel->nTunnelPortIndex;
                 time_stamp.nTimestamp = pFirstFrame->mTimeStamp;
                 //set audio start time.
-                alogd("AO set config start_time to [%lld]us", time_stamp.nTimestamp);
+                LOGD("AO set config start_time to [%lld]us", time_stamp.nTimestamp);
                 pClkTunnelComp->SetConfig(pClkTunnelComp, COMP_IndexConfigTimeClientStartTime, &time_stamp);
                 RelativeTime = pFirstFrame->mTimeStamp;
 
                 //wait 1.
                 while(pChnData->start_to_play != TRUE)
                 {
-                    alogd("AO wait 50ms for flag change...");
+                    LOGD("AO wait 50ms for flag change...");
                     usleep(50*1000);
                     if (pChnData->wait_time_out > 20)
                     {
-                        alogw("AO wait too long, force clock component to start.");
+                        LOGW("AO wait too long, force clock component to start.");
                         pClkTunnelComp->SetConfig(pClkTunnelComp, COMP_IndexVendorConfigTimeClientForceStart, &time_stamp);
                         pChnData->wait_time_out = 0;
                     }
@@ -1488,7 +1488,7 @@ PROCESS_MESSAGE:
 
                     if (get_message_count(&pChnData->mCmdQueue) > 0)
                     {
-                        alogd("AO detect message come when start_to_play is not ture!");
+                        LOGD("AO detect message come when start_to_play is not ture!");
                         goto PROCESS_MESSAGE;
                     }
                 }
@@ -1506,7 +1506,7 @@ PROCESS_MESSAGE:
             }
             else
             {
-                alogw("Why no node in UsedList?! Impossible!!!");
+                LOGW("Why no node in UsedList?! Impossible!!!");
                 pthread_mutex_unlock(&pChnData->mInputFrameListMutex);
                 goto PROCESS_MESSAGE;
             }
@@ -1517,7 +1517,7 @@ PROCESS_MESSAGE:
             pClkTunnelComp->GetConfig(pClkTunnelComp, COMP_IndexConfigTimeCurrentMediaTime, &time_stamp);
             CurrentTime = pPcmFrame->mTimeStamp;
             if (pChnData->is_ref_clock && CurrentTime - RelativeTime > AVS_ADJUST_PERIOD) {
-                //alogv("AO adjust av clock, AudioPts:Cur[%lld], Relative[%lld]", CurrentTime, RelativeTime);
+                //LOGV("AO adjust av clock, AudioPts:Cur[%lld], Relative[%lld]", CurrentTime, RelativeTime);
                 time_stamp.nTimestamp = pPcmFrame->mTimeStamp;
                 pClkTunnelComp->SetConfig(pClkTunnelComp, COMP_IndexVendorAdjustClock, &time_stamp);
                 RelativeTime = CurrentTime;
@@ -1563,6 +1563,6 @@ PROCESS_MESSAGE:
     }
 
 EXIT:
-    alogv("AO channel ComponentThread stop!");
+    LOGV("AO channel ComponentThread stop!");
     return NULL;
 }

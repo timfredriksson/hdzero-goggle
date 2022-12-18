@@ -18,7 +18,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "cedarx_demux"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 
 #include "cedarx_demux.h"
@@ -28,7 +28,7 @@ CedarXDemuxerAPI *cedarx_demux_create(CEDARX_SOURCETYPE nSourceType)
 {
     CedarXDemuxerAPI *cedarx_demuxer_handle = malloc(sizeof(CedarXDemuxerAPI));
 
-    alogd("cedarx_demux_create: sourceType[0x%x]", nSourceType);
+    LOGD("cedarx_demux_create: sourceType[0x%x]", nSourceType);
     memcpy(cedarx_demuxer_handle, &cdx_dmxs_aw, sizeof(CedarXDemuxerAPI));
     AwDemuxInfo *pPrivInfo = (AwDemuxInfo*)malloc(sizeof(AwDemuxInfo));
     memset(pPrivInfo, 0, sizeof(AwDemuxInfo));

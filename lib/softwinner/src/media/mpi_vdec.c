@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mpi_vdec"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //rely on platform headers
 #include <stdlib.h>
@@ -63,14 +63,14 @@ ERRORTYPE VDEC_Construct(void)
     gpVdecChnManager = (VdecChnManager*)malloc(sizeof(VdecChnManager));
     if (NULL == gpVdecChnManager) 
     {
-        aloge("alloc VdecChnManager error(%s)!", strerror(errno));
+        LOGE("alloc VdecChnManager error(%s)!", strerror(errno));
         return FAILURE;
     }
     memset(gpVdecChnManager, 0, sizeof(VdecChnManager));
     ret = pthread_mutex_init(&gpVdecChnManager->mLock, NULL);
     if (ret != 0) 
     {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         free(gpVdecChnManager);
         gpVdecChnManager = NULL;
         return FAILURE;
@@ -85,7 +85,7 @@ ERRORTYPE VDEC_Destruct(void)
     {
         if (!list_empty(&gpVdecChnManager->mList)) 
         {
-            aloge("fatal error! some vdec channel still running when destroy vdec device!");
+            LOGE("fatal error! some vdec channel still running when destroy vdec device!");
         }
         pthread_mutex_destroy(&gpVdecChnManager->mLock);
         free(gpVdecChnManager);
@@ -184,7 +184,7 @@ static VDEC_CHN_MAP_S* VDEC_CHN_MAP_S_Construct()
     VDEC_CHN_MAP_S *pChannel = (VDEC_CHN_MAP_S*)malloc(sizeof(VDEC_CHN_MAP_S));
     if(NULL == pChannel)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pChannel, 0, sizeof(VDEC_CHN_MAP_S));
@@ -196,7 +196,7 @@ static void VDEC_CHN_MAP_S_Destruct(VDEC_CHN_MAP_S *pChannel)
 {
     if(pChannel->mComp)
     {
-        aloge("fatal error! Vdec component need free before!");
+        LOGE("fatal error! Vdec component need free before!");
         COMP_FreeHandle(pChannel->mComp);
         pChannel->mComp = NULL;
     }
@@ -217,7 +217,7 @@ static ERRORTYPE VideoDecEventHandler(
     ret = COMP_GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &VdecChnInfo);
     if(ret == SUCCESS)
     {
-        alogv("video decoder event, MppChannel[%d][%d][%d]", VdecChnInfo.mModId, VdecChnInfo.mDevId, VdecChnInfo.mChnId);
+        LOGV("video decoder event, MppChannel[%d][%d][%d]", VdecChnInfo.mModId, VdecChnInfo.mDevId, VdecChnInfo.mChnId);
     }
 	VDEC_CHN_MAP_S *pChn = (VDEC_CHN_MAP_S*)pAppData;
 
@@ -227,18 +227,18 @@ static ERRORTYPE VideoDecEventHandler(
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("video decoder EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("video decoder EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(COMP_CommandVendorChangeANativeWindow == nData1)
             {
-                alogd("change video layer?");
+                LOGD("change video layer?");
                 break;
             }
             else
             {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
@@ -246,29 +246,29 @@ static ERRORTYPE VideoDecEventHandler(
         {
             if(ERR_VDEC_SAMESTATE == nData1)
             {
-                alogv("set same state to vdec!");
+                LOGV("set same state to vdec!");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(ERR_VDEC_INVALIDSTATE == nData1)
             {
-                aloge("why vdec state turn to invalid?");
+                LOGE("why vdec state turn to invalid?");
                 break;
             }
             else if(ERR_VDEC_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("fatal error! vdec state transition incorrect."); 
+                LOGE("fatal error! vdec state transition incorrect."); 
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(ERR_VDEC_NOMEM == nData1)
             {
-                aloge("fatal error! no memory!");
+                LOGE("fatal error! no memory!");
                 break;
             }
             else
             {
-                aloge("fatal error! unknown error[0x%x]!", nData1);
+                LOGE("fatal error! unknown error[0x%x]!", nData1);
                 break;
             }
         }
@@ -284,12 +284,12 @@ static ERRORTYPE VideoDecEventHandler(
         }
         case COMP_EventMultiPixelExit:
         {
-            alogw("resolution change, what can I do?");
+            LOGW("resolution change, what can I do?");
             break;
         }
         case COMP_EventMoreBuffer:
         {
-            alogd("vdec no frame buffer! notify user!");
+            LOGD("vdec no frame buffer! notify user!");
             MPP_CHN_S ChannelInfo;
             ChannelInfo.mModId = MOD_ID_VDEC;
             ChannelInfo.mDevId = 0;
@@ -301,7 +301,7 @@ static ERRORTYPE VideoDecEventHandler(
             break;
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
 	return SUCCESS;
@@ -317,12 +317,12 @@ ERRORTYPE AW_MPI_VDEC_CreateChn(VDEC_CHN VdChn, const VDEC_CHN_ATTR_S *pAttr)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     if(NULL == pAttr)
     {
-        aloge("fatal error! illagal VencAttr!");
+        LOGE("fatal error! illagal VencAttr!");
         return ERR_VDEC_ILLEGAL_PARAM;
     }
     pthread_mutex_lock(&gpVdecChnManager->mLock);
@@ -339,7 +339,7 @@ ERRORTYPE AW_MPI_VDEC_CreateChn(VDEC_CHN VdChn, const VDEC_CHN_ATTR_S *pAttr)
     eRet = COMP_GetHandle((COMP_HANDLETYPE*)&pNode->mComp, CDX_ComponentNameVideoDecoder, (void*)pNode, &VideoDecCallback);
     if(eRet != SUCCESS)
     {
-        aloge("fatal error! get comp handle fail!");
+        LOGE("fatal error! get comp handle fail!");
     }
     MPP_CHN_S ChannelInfo;
     ChannelInfo.mModId = MOD_ID_VDEC;
@@ -362,7 +362,7 @@ ERRORTYPE AW_MPI_VDEC_DestroyChn(VDEC_CHN VdChn)
     ERRORTYPE ret;
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -388,12 +388,12 @@ ERRORTYPE AW_MPI_VDEC_DestroyChn(VDEC_CHN VdChn)
             }
             else if(nCompState == COMP_StateInvalid)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             }
             else
             {
-                aloge("fatal error! invalid VdChn[%d] state[0x%x]!", VdChn, nCompState);
+                LOGE("fatal error! invalid VdChn[%d] state[0x%x]!", VdChn, nCompState);
                 eRet = FAILURE;
             }
 
@@ -412,13 +412,13 @@ ERRORTYPE AW_MPI_VDEC_DestroyChn(VDEC_CHN VdChn)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_VDEC_BUSY;
         }
     }
     else
     {
-        aloge("fatal error! no Vdec component!");
+        LOGE("fatal error! no Vdec component!");
         list_del(&pChn->mList);
         VDEC_CHN_MAP_S_Destruct(pChn);
         ret = SUCCESS;
@@ -430,7 +430,7 @@ ERRORTYPE AW_MPI_VDEC_GetChnAttr(VDEC_CHN VdChn, VDEC_CHN_ATTR_S *pAttr)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -443,7 +443,7 @@ ERRORTYPE AW_MPI_VDEC_GetChnAttr(VDEC_CHN VdChn, VDEC_CHN_ATTR_S *pAttr)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = pChn->mComp->GetConfig(pChn->mComp, COMP_IndexVendorVdecChnAttr, (void*)pAttr);
@@ -454,7 +454,7 @@ ERRORTYPE AW_MPI_VDEC_StartRecvStreamEx(VDEC_CHN VdChn, VDEC_DECODE_FRAME_PARAM_
 {    
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -473,20 +473,20 @@ ERRORTYPE AW_MPI_VDEC_StartRecvStreamEx(VDEC_CHN VdChn, VDEC_DECODE_FRAME_PARAM_
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         
         pChn->mComp->GetState(pChn->mComp, &nCompState_new); 
         if(nCompState_new == nCompState)
         {
-            aloge("fatal_error_change_state_fail:%d-%d",nCompState,nCompState_new);
+            LOGE("fatal_error_change_state_fail:%d-%d",nCompState,nCompState_new);
             ret = FAILURE;
         }
     }
     else
     {
-        alogd("VdecChannel[%d] State[0x%x], do nothing!", VdChn, nCompState);
+        LOGD("VdecChannel[%d] State[0x%x], do nothing!", VdChn, nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -504,7 +504,7 @@ ERRORTYPE AW_MPI_VDEC_StopRecvStream(VDEC_CHN VdChn)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -521,19 +521,19 @@ ERRORTYPE AW_MPI_VDEC_StopRecvStream(VDEC_CHN VdChn)
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StateIdle, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateIdle fail");
+            LOGE("fatal error! send command stateIdle fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogv("VdecChannel[%d] State[0x%x], do nothing!", VdChn, nCompState);
+        LOGV("VdecChannel[%d] State[0x%x], do nothing!", VdChn, nCompState);
         ret = SUCCESS;
     }
     else
     {
-        aloge("fatal error! check VdecChannelState[0x%x]!", nCompState);
+        LOGE("fatal error! check VdecChannelState[0x%x]!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -543,7 +543,7 @@ ERRORTYPE AW_MPI_VDEC_Pause(VDEC_CHN VdChn)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -560,24 +560,24 @@ ERRORTYPE AW_MPI_VDEC_Pause(VDEC_CHN VdChn)
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StatePause, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command statePause fail!");
+            LOGE("fatal error! Send command statePause fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StatePause == nCompState)
     {
-        alogd("vdecChannel[%d] already statePause.", VdChn);
+        LOGD("vdecChannel[%d] already statePause.", VdChn);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("VdecChannel[%d] stateIdle, can't turn to statePause!", VdChn);
+        LOGD("VdecChannel[%d] stateIdle, can't turn to statePause!", VdChn);
         ret = ERR_VDEC_INCORRECT_STATE_TRANSITION;
     }
     else
     {
-        aloge("fatal error! check VdecChannel[%d]State[0x%x]!", VdChn, nCompState);
+        LOGE("fatal error! check VdecChannel[%d]State[0x%x]!", VdChn, nCompState);
         ret = ERR_VDEC_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -587,7 +587,7 @@ ERRORTYPE AW_MPI_VDEC_Resume(VDEC_CHN VdChn)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -604,24 +604,24 @@ ERRORTYPE AW_MPI_VDEC_Resume(VDEC_CHN VdChn)
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command statePause fail!");
+            LOGE("fatal error! Send command statePause fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateExecuting == nCompState)
     {
-        alogd("vdecChannel[%d] already stateExecuting.", VdChn);
+        LOGD("vdecChannel[%d] already stateExecuting.", VdChn);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("VdecChannel[%d] stateIdle, can't turn to stateExecuting!", VdChn);
+        LOGD("VdecChannel[%d] stateIdle, can't turn to stateExecuting!", VdChn);
         ret = ERR_VDEC_INCORRECT_STATE_TRANSITION;
     }
     else
     {
-        aloge("fatal error! check VdecChannel[%d]State[0x%x]!", VdChn, nCompState);
+        LOGE("fatal error! check VdecChannel[%d]State[0x%x]!", VdChn, nCompState);
         ret = ERR_VDEC_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -631,7 +631,7 @@ ERRORTYPE AW_MPI_VDEC_Seek(VDEC_CHN VdChn)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -649,7 +649,7 @@ ERRORTYPE AW_MPI_VDEC_Seek(VDEC_CHN VdChn)
     }
     else
     {
-        aloge("fatal error! can't seek int VdecChannel[%d]State[0x%x]!", VdChn, nCompState);
+        LOGE("fatal error! can't seek int VdecChannel[%d]State[0x%x]!", VdChn, nCompState);
         ret = ERR_VDEC_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -659,7 +659,7 @@ ERRORTYPE AW_MPI_VDEC_Query(VDEC_CHN VdChn, VDEC_CHN_STAT_S *pStat)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -672,7 +672,7 @@ ERRORTYPE AW_MPI_VDEC_Query(VDEC_CHN VdChn, VDEC_CHN_STAT_S *pStat)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = pChn->mComp->GetConfig(pChn->mComp, COMP_IndexVendorVdecChnState, pStat);
@@ -690,7 +690,7 @@ ERRORTYPE AW_MPI_VDEC_RegisterCallback(VDEC_CHN VdChn, MPPCallbackInfo *pCallbac
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -714,7 +714,7 @@ ERRORTYPE AW_MPI_VDEC_SetStreamEof(VDEC_CHN VdChn, BOOL bEofFlag)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -727,7 +727,7 @@ ERRORTYPE AW_MPI_VDEC_SetStreamEof(VDEC_CHN VdChn, BOOL bEofFlag)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-       aloge("wrong state[0x%x], return!", nState);
+       LOGE("wrong state[0x%x], return!", nState);
        return ERR_VDEC_NOT_PERM;
     }
     if(bEofFlag)
@@ -753,7 +753,7 @@ ERRORTYPE AW_MPI_VDEC_ResetChn(VDEC_CHN VdChn)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -769,13 +769,13 @@ ERRORTYPE AW_MPI_VDEC_ResetChn(VDEC_CHN VdChn)
         eRet2 = pChn->mComp->SetConfig(pChn->mComp, COMP_IndexVendorVdecResetChannel, NULL);
         if(eRet2 != SUCCESS)
         {
-            aloge("fatal error! reset channel fail[0x%x]!", eRet2);
+            LOGE("fatal error! reset channel fail[0x%x]!", eRet2);
         }
         return eRet2;
     }
     else
     {
-        aloge("wrong status[0x%x], can't reset vdec channel!", nCompState);
+        LOGE("wrong status[0x%x], can't reset vdec channel!", nCompState);
         return ERR_VDEC_NOT_PERM;
     }
 }
@@ -784,7 +784,7 @@ ERRORTYPE AW_MPI_VDEC_SetChnParam(VDEC_CHN VdChn, VDEC_CHN_PARAM_S* pParam)
 {
     if(!(VdChn>=0 && VdChn<VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -797,7 +797,7 @@ ERRORTYPE AW_MPI_VDEC_SetChnParam(VDEC_CHN VdChn, VDEC_CHN_PARAM_S* pParam)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = pChn->mComp->SetConfig(pChn->mComp, COMP_IndexVendorVdecParam, (void*)pParam);
@@ -808,7 +808,7 @@ ERRORTYPE AW_MPI_VDEC_GetChnParam(VDEC_CHN VdChn, VDEC_CHN_PARAM_S* pParam)
 {
     if(!(VdChn>=0 && VdChn<VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -821,7 +821,7 @@ ERRORTYPE AW_MPI_VDEC_GetChnParam(VDEC_CHN VdChn, VDEC_CHN_PARAM_S* pParam)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = pChn->mComp->GetConfig(pChn->mComp, COMP_IndexVendorVdecParam, (void*)pParam);
@@ -832,7 +832,7 @@ ERRORTYPE AW_MPI_VDEC_SetProtocolParam(VDEC_CHN VdChn, VDEC_PRTCL_PARAM_S *pPara
 {
     if(!(VdChn>=0 && VdChn<VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -845,7 +845,7 @@ ERRORTYPE AW_MPI_VDEC_SetProtocolParam(VDEC_CHN VdChn, VDEC_PRTCL_PARAM_S *pPara
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = pChn->mComp->SetConfig(pChn->mComp, COMP_IndexVendorVdecProtocolParam, (void*)pParam);
@@ -856,7 +856,7 @@ ERRORTYPE AW_MPI_VDEC_GetProtocolParam(VDEC_CHN VdChn,VDEC_PRTCL_PARAM_S *pParam
 {
     if(!(VdChn>=0 && VdChn<VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -869,19 +869,19 @@ ERRORTYPE AW_MPI_VDEC_GetProtocolParam(VDEC_CHN VdChn,VDEC_PRTCL_PARAM_S *pParam
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = pChn->mComp->GetConfig(pChn->mComp, COMP_IndexVendorVdecProtocolParam, (void*)pParam);
     return ret;
 }
 
-/* s32MilliSec: -1 is block£¬ 0 is no block£¬other positive number is timeout */
+/* s32MilliSec: -1 is blockï¿½ï¿½ 0 is no blockï¿½ï¿½other positive number is timeout */
 ERRORTYPE AW_MPI_VDEC_SendStream(VDEC_CHN VdChn, const VDEC_STREAM_S *pStream, int nMilliSec)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -894,7 +894,7 @@ ERRORTYPE AW_MPI_VDEC_SendStream(VDEC_CHN VdChn, const VDEC_STREAM_S *pStream, i
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     VdecInputStream inputStream;
@@ -919,24 +919,24 @@ ERRORTYPE AW_MPI_VDEC_GetDoubleImage(VDEC_CHN VdChn, VIDEO_FRAME_INFO_S *pFrameI
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
     if(SUCCESS != searchExistChannel(VdChn, &pChn))
     {
-        aloge("fatal error! can not find VdecChn[%d]", VdChn);
+        LOGE("fatal error! can not find VdecChn[%d]", VdChn);
         return ERR_VDEC_UNEXIST;
     }
     if(NULL == pFrameInfo)
     {
-        aloge("fatal error! pFrame == NULL!");
+        LOGE("fatal error! pFrame == NULL!");
         return ERR_VDEC_NULL_PTR;
     }
 
 //    if(nMilliSec < -1)
 //    {
-//        aloge("fatal error! illegal nMilliSec[%d]!", nMilliSec);
+//        LOGE("fatal error! illegal nMilliSec[%d]!", nMilliSec);
 //        return ERR_VDEC_ILLEGAL_PARAM;
 //    }
     
@@ -945,7 +945,7 @@ ERRORTYPE AW_MPI_VDEC_GetDoubleImage(VDEC_CHN VdChn, VIDEO_FRAME_INFO_S *pFrameI
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     VdecOutFrame vdecFrame;
@@ -960,18 +960,18 @@ ERRORTYPE AW_MPI_VDEC_ReleaseDoubleImage(VDEC_CHN VdChn, VIDEO_FRAME_INFO_S *pFr
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
     if(SUCCESS != searchExistChannel(VdChn, &pChn))
     {
-        alogw("Be careful! vdecChn[%d] is not exist!", VdChn);
+        LOGW("Be careful! vdecChn[%d] is not exist!", VdChn);
         return ERR_VDEC_UNEXIST;
     }
     if(NULL == pFrameInfo)
     {
-        aloge("fatal error! pFrame == NULL!");
+        LOGE("fatal error! pFrame == NULL!");
         return ERR_VDEC_NULL_PTR;
     }
     ERRORTYPE ret;
@@ -979,7 +979,7 @@ ERRORTYPE AW_MPI_VDEC_ReleaseDoubleImage(VDEC_CHN VdChn, VIDEO_FRAME_INFO_S *pFr
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     VdecOutFrame vdecFrame;
@@ -1008,7 +1008,7 @@ ERRORTYPE AW_MPI_VDEC_SetRotate(VDEC_CHN VdChn, ROTATE_E enRotate)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -1021,7 +1021,7 @@ ERRORTYPE AW_MPI_VDEC_SetRotate(VDEC_CHN VdChn, ROTATE_E enRotate)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = pChn->mComp->SetConfig(pChn->mComp, COMP_IndexVendorVdecRotate, (void*)&enRotate);
@@ -1032,7 +1032,7 @@ ERRORTYPE AW_MPI_VDEC_GetRotate(VDEC_CHN VdChn, ROTATE_E *penRotate)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -1045,7 +1045,7 @@ ERRORTYPE AW_MPI_VDEC_GetRotate(VDEC_CHN VdChn, ROTATE_E *penRotate)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = pChn->mComp->GetConfig(pChn->mComp, COMP_IndexVendorVdecRotate, (void*)penRotate);
@@ -1056,7 +1056,7 @@ ERRORTYPE AW_MPI_VDEC_GetChnLuma(VDEC_CHN VdChn, VDEC_CHN_LUM_S *pLuma)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -1069,7 +1069,7 @@ ERRORTYPE AW_MPI_VDEC_GetChnLuma(VDEC_CHN VdChn, VDEC_CHN_LUM_S *pLuma)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = pChn->mComp->GetConfig(pChn->mComp, COMP_IndexVendorVdecLuma, (void*)pLuma);
@@ -1080,7 +1080,7 @@ ERRORTYPE AW_MPI_VDEC_ReopenVideoEngine(VDEC_CHN VdChn)
 {
     if(!(VdChn>=0 && VdChn <VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
@@ -1093,7 +1093,7 @@ ERRORTYPE AW_MPI_VDEC_ReopenVideoEngine(VDEC_CHN VdChn)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = pChn->mComp->SetConfig(pChn->mComp, COMP_IndexVendorReopenVideoEngine, NULL);
@@ -1111,7 +1111,7 @@ ERRORTYPE AW_MPI_VDEC_SetVEFreq(VDEC_CHN VdChn, int nFreq)
 {
     if(MM_INVALID_CHN == VdChn)
     {
-        alogd("change global ve freq[%d]->[%d]", gpVdecChnManager->mVeFreq, nFreq);
+        LOGD("change global ve freq[%d]->[%d]", gpVdecChnManager->mVeFreq, nFreq);
         pthread_mutex_lock(&gpVdecChnManager->mLock);
         gpVdecChnManager->mVeFreq = nFreq;
         pthread_mutex_unlock(&gpVdecChnManager->mLock);
@@ -1119,13 +1119,13 @@ ERRORTYPE AW_MPI_VDEC_SetVEFreq(VDEC_CHN VdChn, int nFreq)
     }
     if(!(VdChn>=0 && VdChn<VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
     if(SUCCESS != searchExistChannel(VdChn, &pChn))
     {
-        aloge("fatal error! vdChn[%d] is not exist!", VdChn);
+        LOGE("fatal error! vdChn[%d] is not exist!", VdChn);
         return ERR_VDEC_UNEXIST;
     }
     pthread_mutex_lock(&gpVdecChnManager->mLock);
@@ -1136,7 +1136,7 @@ ERRORTYPE AW_MPI_VDEC_SetVEFreq(VDEC_CHN VdChn, int nFreq)
     ret = COMP_GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mComp, COMP_IndexVendorVEFreq, (void*)&gpVdecChnManager->mVeFreq);
@@ -1147,18 +1147,18 @@ ERRORTYPE AW_MPI_VDEC_SetVideoStreamInfo(VDEC_CHN VdChn, VideoStreamInfo *pVideo
 {
     if(!(VdChn>=0 && VdChn<VDEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VdChn[%d]!", VdChn);
+        LOGE("fatal error! invalid VdChn[%d]!", VdChn);
         return ERR_VDEC_INVALID_CHNID;
     }
     VDEC_CHN_MAP_S *pChn;
     if(SUCCESS != searchExistChannel(VdChn, &pChn))
     {
-        aloge("fatal error! vdChn[%d] is not exist!", VdChn);
+        LOGE("fatal error! vdChn[%d] is not exist!", VdChn);
         return ERR_VDEC_UNEXIST;
     }
     if (NULL == pVideoStreamInfo)
     {
-        aloge("fatal error! Set VideoStreamInfo is NULL!");
+        LOGE("fatal error! Set VideoStreamInfo is NULL!");
         return ERR_VDEC_NULL_PTR;
     }
     ERRORTYPE ret;
@@ -1166,7 +1166,7 @@ ERRORTYPE AW_MPI_VDEC_SetVideoStreamInfo(VDEC_CHN VdChn, VideoStreamInfo *pVideo
     ret = COMP_GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VDEC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mComp, COMP_IndexVendorExtraData, (void*)pVideoStreamInfo);

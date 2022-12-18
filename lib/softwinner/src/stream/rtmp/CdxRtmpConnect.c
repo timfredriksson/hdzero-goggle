@@ -471,11 +471,11 @@ static int aw_add_addr_info(struct sockaddr_in *service, aw_rtmp_aval_t *host, i
     }
 
     service->sin_addr.s_addr = inet_addr(hostname);
-   /*½«µã·ÖÊ®½øÖÆ×Ö×Ö·û´®×ª»»Îª32Î»¶þ½øÖÆÍøÂç×Ö½ÚÐòµÄIPV4µØÖ·*/
+   /*ï¿½ï¿½ï¿½ï¿½ï¿½Ê®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½×ªï¿½ï¿½Îª32Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½ï¿½IPV4ï¿½ï¿½Ö·*/
     if(service->sin_addr.s_addr == INADDR_NONE)
     {
         struct hostent *host = gethostbyname(hostname);
-      /*·µ»Ø¶ÔÓ¦ÓÚ¸ø¶¨Ö÷»úÃûµÄ°üº¬Ö÷»úÃû×ÖºÍµØÖ·ÐÅÏ¢µÄhostent½á¹¹Ö¸Õë*/
+      /*ï¿½ï¿½ï¿½Ø¶ï¿½Ó¦ï¿½Ú¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÖºÍµï¿½Ö·ï¿½ï¿½Ï¢ï¿½ï¿½hostentï¿½á¹¹Ö¸ï¿½ï¿½*/
         if(host == NULL || host->h_addr == NULL)
         {
             ret = 0;
@@ -483,7 +483,7 @@ static int aw_add_addr_info(struct sockaddr_in *service, aw_rtmp_aval_t *host, i
         }
         service->sin_addr = *(struct in_addr *)host->h_addr;
     }
-    service->sin_port = htons(port);  /*Ö÷»ú×Ö½ÚË³Ðò×ª»¯ÎªÍøÂç×Ö½ÚË³Ðò*/
+    service->sin_port = htons(port);  /*ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½Ë³ï¿½ï¿½×ªï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½Ë³ï¿½ï¿½*/
 
 finish:
     if(hostname != host->pVal)
@@ -505,7 +505,7 @@ static void DnsResponeHook(void *userhdr, int ret, struct addrinfo *ai)
     {
         rtmp->dnsAI = ai;
 
-/*        CDX_LOGD("%x%x%x", ai->ai_addr->sa_data[0], ai->ai_addr->sa_data[1],
+/*        LOGD("%x%x%x", ai->ai_addr->sa_data[0], ai->ai_addr->sa_data[1],
             ai->ai_addr->sa_data[2]);*/
     }
     rtmp->dnsRet = ret;
@@ -540,11 +540,11 @@ static struct addrinfo *aw_add_addr_info_new(aw_rtmp_aval_t *host,
 
 #if 0
     service->sin_addr.s_addr = inet_addr(hostname);
-   /*½«µã·ÖÊ®½øÖÆ×Ö×Ö·û´®×ª»»Îª32Î»¶þ½øÖÆÍøÂç×Ö½ÚÐòµÄIPV4µØÖ·*/
+   /*ï¿½ï¿½ï¿½ï¿½ï¿½Ê®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½×ªï¿½ï¿½Îª32Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½ï¿½IPV4ï¿½ï¿½Ö·*/
     if(service->sin_addr.s_addr == INADDR_NONE)
     {
         struct hostent *host = gethostbyname(hostname);
-      /*·µ»Ø¶ÔÓ¦ÓÚ¸ø¶¨Ö÷»úÃûµÄ°üº¬Ö÷»úÃû×ÖºÍµØÖ·ÐÅÏ¢µÄhostent½á¹¹Ö¸Õë*/
+      /*ï¿½ï¿½ï¿½Ø¶ï¿½Ó¦ï¿½Ú¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÖºÍµï¿½Ö·ï¿½ï¿½Ï¢ï¿½ï¿½hostentï¿½á¹¹Ö¸ï¿½ï¿½*/
         if(host == NULL || host->h_addr == NULL)
         {
             ret = 0;
@@ -552,7 +552,7 @@ static struct addrinfo *aw_add_addr_info_new(aw_rtmp_aval_t *host,
         }
         service->sin_addr = *(struct in_addr *)host->h_addr;
     }
-    service->sin_port = htons(port);  /*Ö÷»ú×Ö½ÚË³Ðò×ª»¯ÎªÍøÂç×Ö½ÚË³Ðò*/
+    service->sin_port = htons(port);  /*ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½Ë³ï¿½ï¿½×ªï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½Ë³ï¿½ï¿½*/
 #endif
 
     ret = SDSRequest(hostname, port, &ai, r, DnsResponeHook);
@@ -741,7 +741,7 @@ ssize_t CdxRecv(int sockfd, void *buf, size_t len,
         }
         else if (ret == 0)
         {
-            //printf("select = 0; timeout\n");
+            //LOGI("select = 0; timeout");
             continue;
         }
 
@@ -793,7 +793,7 @@ ssize_t CdxRecv(int sockfd, void *buf, size_t len,
     return recvSize;
 }
 
-//°Ñsocket bufferÌîÂú
+//ï¿½ï¿½socket bufferï¿½ï¿½ï¿½ï¿½
 int aw_rtmp_sockbuf_fill(aw_rtmp_socket_buf_t *sb, int *exitflag)
 {
     int nBytes;
@@ -832,7 +832,7 @@ int aw_rtmp_sockbuf_fill(aw_rtmp_socket_buf_t *sb, int *exitflag)
             nBytes = sizeof(sb->sbBuf) - sb->sbSize
                     - (sb->sbStart - sb->sbBuf);
             readLen = recv(sb->sbSocket, sb->sbStart + sb->sbSize, nBytes, 0);
-         //* ½ÓÊÜÊý¾Ý´æÈësocket»º´æ
+         //* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý´ï¿½ï¿½ï¿½socketï¿½ï¿½ï¿½ï¿½
             if (readLen != -1)
             {
                 sb->sbSize += readLen;
@@ -1442,7 +1442,7 @@ static int aw_send_bytes_received(aw_rtmp_t *r)
 }
 //*******************************************************************************//
 //*******************************************************************************//
-/*´Ósocket buffer¶Án¸ö×Ö½Úµ½client buffer*/
+/*ï¿½ï¿½socket bufferï¿½ï¿½nï¿½ï¿½ï¿½Ö½Úµï¿½client buffer*/
 static int ReadN(aw_rtmp_t *r, char *buffer, int n)
 {
     int nOriginalSize = n;
@@ -1548,7 +1548,7 @@ static int WriteN(aw_rtmp_t *r, char *buffer, int n)
     while (n > 0)
     {
         int nBytes;
-        /*Èç¹ûÊÇhttpÐÎÊ½£¬ÔòÐèÒªÔÚ´«ÊäÖ®Ç°Ìí¼ÓÒ»Ð©ÇëÇóÐÅÏ¢*/
+        /*ï¿½ï¿½ï¿½ï¿½ï¿½httpï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ú´ï¿½ï¿½ï¿½Ö®Ç°ï¿½ï¿½ï¿½ï¿½Ò»Ð©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢*/
         if(r->link.protocol & CDX_RTMP_FEATURE_HTTP)
         {
             nBytes = aw_rtmp_http_post(r, RTMPT_SEND, ptr, n);
@@ -1588,7 +1588,7 @@ static int SocksNegotiate(aw_rtmp_t *r)
     memset(&service, 0, sizeof(struct sockaddr_in));
 
     aw_add_addr_info(&service, &r->link.hostname, r->link.port);
-    addr = htonl(service.sin_addr.s_addr);      /*½«Ò»¸ö32Î»Êý´ÓÖ÷»ú×Ö½ÚË³Ðò×ª»»³ÉÍøÂç×Ö½ÚË³Ðò¡£*/
+    addr = htonl(service.sin_addr.s_addr);      /*ï¿½ï¿½Ò»ï¿½ï¿½32Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½Ë³ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½Ë³ï¿½ï¿½*/
 
     {
         char packet[] = {4, 1,           /* SOCKS 4, connect */
@@ -1678,10 +1678,10 @@ int aw_rtmp_connect0(aw_rtmp_t *r, struct sockaddr * service)
     if(r->sb.sbSocket != -1) // SOCKET_ERROR : -1
     {
         if(connect(r->sb.sbSocket, service, sizeof(struct sockaddr)) != 0)
-      //*connect½«socketÁ¬½Óµ½·þÎñ¶Ë
+      //*connectï¿½ï¿½socketï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         {
 
-            if (errno != EINPROGRESS)  //*×èÈû
+            if (errno != EINPROGRESS)  //*ï¿½ï¿½ï¿½ï¿½
             {
                 r->iostate = CDX_IO_STATE_ERROR;
                 aw_rtmp_close(r);
@@ -1705,7 +1705,7 @@ int aw_rtmp_connect0(aw_rtmp_t *r, struct sockaddr * service)
                 {
                     if (r->link.socksport)
                     {
-                        if (!SocksNegotiate(r))  //*ÅÐ¶ÏÊÇ·ñÁ¬½Ó³É¹¦£¿
+                        if (!SocksNegotiate(r))  //*ï¿½Ð¶ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½Ó³É¹ï¿½ï¿½ï¿½
                         {
                             aw_rtmp_close(r);
                             return 0;
@@ -1728,7 +1728,7 @@ int aw_rtmp_connect0(aw_rtmp_t *r, struct sockaddr * service)
         //* set timeout
     SET_RCVTIMEO(tv, r->link.timeout);
     setsockopt(r->sb.sbSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(tv));
-   //*ÉèÖÃÌ×½Ó×ÖÊôÐÔ
+   //*ï¿½ï¿½ï¿½ï¿½ï¿½×½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     setsockopt(r->sb.sbSocket, IPPROTO_TCP, TCP_NODELAY, (char *) &on, sizeof(on));
 
     return 1;
@@ -1767,7 +1767,7 @@ static int aw_rtmp_hand_shake(aw_rtmp_t *r, int FP9HandShake)
     uptime = htonl(aw_rtmp_get_time());
     memcpy(clientsig, &uptime, 4);    /*time stamp*/
     memset(&clientsig[4], 0, 4);     /* zero */
-    /*clientËæ»úÉú³É1528¸ö×Ö½ÚµÄÊý¾Ý*/
+    /*clientï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1528ï¿½ï¿½ï¿½Ö½Úµï¿½ï¿½ï¿½ï¿½ï¿½*/
     for(i = 8; i < RTMP_SIG_SIZE; i++)
     {
         clientsig[i] = (char)(rand() % 256);
@@ -1775,7 +1775,7 @@ static int aw_rtmp_hand_shake(aw_rtmp_t *r, int FP9HandShake)
 
     if(!WriteN(r, clientbuf, RTMP_SIG_SIZE + 1))  /*C0+C1*/
     {
-        CDX_LOGW("write C0,C1 error");
+        LOGW("write C0,C1 error");
         return 0;
     }
 
@@ -1786,7 +1786,7 @@ static int aw_rtmp_hand_shake(aw_rtmp_t *r, int FP9HandShake)
 
     if(ReadN(r, serversig, RTMP_SIG_SIZE) != RTMP_SIG_SIZE)   /*S1*/
     {
-        CDX_LOGW(" the size of server send S1 is 1536");
+        LOGW(" the size of server send S1 is 1536");
         return 0;
     }
 
@@ -2076,7 +2076,7 @@ int aw_rtmp_connect1(aw_rtmp_t *r, aw_rtmp_packet_t *cp)
 {
     if(r->link.protocol & CDX_RTMP_FEATURE_SSL)
     {
-        CDX_LOGE("it is SSL rtmp. not support");
+        LOGE("it is SSL rtmp. not support");
         //aw_rtmp_close(r);
         return 0;
     }
@@ -2098,13 +2098,13 @@ int aw_rtmp_connect1(aw_rtmp_t *r, aw_rtmp_packet_t *cp)
 
     if(!aw_rtmp_hand_shake(r, 1))
     {
-        CDX_LOGW("hand shake error, rtmp close");
+        LOGW("hand shake error, rtmp close");
         //aw_rtmp_close(r);
         return 0;
     }
     if(!aw_send_connect_packet(r, cp))
     {
-        CDX_LOGW("connect packet error, rtmp close");
+        LOGW("connect packet error, rtmp close");
         //aw_rtmp_close(r);
         return 0;
     }
@@ -2115,7 +2115,7 @@ int aw_rtmp_connect1(aw_rtmp_t *r, aw_rtmp_packet_t *cp)
 //******************************************************************************************//
 int aw_rtmp_connect(aw_rtmp_t *r, aw_rtmp_packet_t *cp)
 {
-    struct sockaddr_in service;  /* serverµØÖ·*/
+    struct sockaddr_in service;  /* serverï¿½ï¿½Ö·*/
 
     if(!r->link.hostname.len)
     {
@@ -2129,7 +2129,7 @@ int aw_rtmp_connect(aw_rtmp_t *r, aw_rtmp_packet_t *cp)
         /* Connect via SOCKS */
         if(!aw_add_addr_info(&service, &r->link.sockshost, (int)r->link.socksport))
         {
-            CDX_LOGW("Connect via SOCKS  error");
+            LOGW("Connect via SOCKS  error");
             return 0;
         }
     }
@@ -2139,7 +2139,7 @@ int aw_rtmp_connect(aw_rtmp_t *r, aw_rtmp_packet_t *cp)
         /* Connect directly */
         if(!aw_add_addr_info(&service, &r->link.hostname, (int)r->link.port))
         {
-            CDX_LOGW("-- Connect directly error, hostname = %s", r->link.hostname.pVal);
+            LOGW("-- Connect directly error, hostname = %s", r->link.hostname.pVal);
             return 0;
         }
     #else
@@ -2147,7 +2147,7 @@ int aw_rtmp_connect(aw_rtmp_t *r, aw_rtmp_packet_t *cp)
         ai = aw_add_addr_info_new(&r->link.hostname, (int)r->link.port, r);
         if(NULL == ai)
         {
-            CDX_LOGW("-- Connect directly error, hostname = %s", r->link.hostname.pVal);
+            LOGW("-- Connect directly error, hostname = %s", r->link.hostname.pVal);
             return 0;
         }
         service = *(struct sockaddr_in *)ai->ai_addr;
@@ -2162,7 +2162,7 @@ int aw_rtmp_connect(aw_rtmp_t *r, aw_rtmp_packet_t *cp)
                 cdx_char ipbufInfo[100];
                 addrInfo = (struct sockaddr_in *)curInfo->ai_addr;
                 inet_ntop(AF_INET, &addrInfo->sin_addr, ipbufInfo, 100);
-                logd("xxxxxxxxxxxxx ip: %s, host: %s, ai->ai_addr:%p",
+                LOGD("xxxxxxxxxxxxx ip: %s, host: %s, ai->ai_addr:%p",
                     ipbufInfo, r->link.hostname.pVal, ai->ai_addr);
             }while ((ai = ai->ai_next) != NULL);
         }
@@ -2170,14 +2170,14 @@ int aw_rtmp_connect(aw_rtmp_t *r, aw_rtmp_packet_t *cp)
     #endif
     }
 
-    if(!aw_rtmp_connect0(r, (struct sockaddr *)(&service)))  /* tcp´«Êä²ãÁ¬½Ó */
+    if(!aw_rtmp_connect0(r, (struct sockaddr *)(&service)))  /* tcpï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
     {
-        CDX_LOGD("aw_rtmp_connect0  error");
+        LOGD("aw_rtmp_connect0  error");
         return 0;
     }
     r->bSendCounter = 1;
 
-    return aw_rtmp_connect1(r, cp);  /* rtmpÓ¦ÓÃ²ãÈý´ÎÎÕÊÖ C0+C1, S0+S1+S2, C2 */
+    return aw_rtmp_connect1(r, cp);  /* rtmpÓ¦ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ C0+C1, S0+S1+S2, C2 */
 }
 //************************************************************************************//
 //************************************************************************************//
@@ -4476,7 +4476,7 @@ int aw_rtmp_connect_stream(aw_rtmp_t *r, int seekTime)
             aw_rtmp_packet_free(&packet);
         }
     }
-//    printf("aw_rtmp_connect_stream    end\n");
+//    LOGI("aw_rtmp_connect_stream    end");
     return r->bPlaying;
 }
 

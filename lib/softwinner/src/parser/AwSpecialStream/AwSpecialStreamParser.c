@@ -13,7 +13,7 @@
 */
 
 #include "AwSpecialStreamParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -37,7 +37,7 @@ static cdx_int32 AwSpecialStreamParserGetMediaInfo(CdxParserT *parser, CdxMediaI
     {
          char pp[16];
         ret |= CdxStreamRead(specialStreamParser->file, pp, 14);
-        logd("special parser test: %x,%x,%x,%x,%x,%x,%x,%x", \
+        LOGD("special parser test: %x,%x,%x,%x,%x,%x,%x,%x", \
             pp[0],pp[1],pp[2],pp[3],pp[4],pp[5],pp[6],pp[7]);
 
     }
@@ -46,7 +46,7 @@ static cdx_int32 AwSpecialStreamParserGetMediaInfo(CdxParserT *parser, CdxMediaI
     ret |= CdxStreamRead(specialStreamParser->file, &height, sizeof(int));
     ret |= CdxStreamRead(specialStreamParser->file, &bIs3DStream, sizeof(int));
     ret |= CdxStreamRead(specialStreamParser->file, &nSpecialDataLen, sizeof(int));
-    logd(" special parser get special data len: \
+    LOGD(" special parser get special data len: \
         %d, width: %d, height: %d, codex: %x , bIs3DStream: %d",  \
         nSpecialDataLen, width, height, (unsigned int)codec, bIs3DStream);
     if(ret < 0)
@@ -57,7 +57,7 @@ static cdx_int32 AwSpecialStreamParserGetMediaInfo(CdxParserT *parser, CdxMediaI
         pSpecilData = CdxMalloc(size);
         if(pSpecilData == NULL)
         {
-            loge(" aw special stream parser malloc error, size: %d ", size);
+            LOGE(" aw special stream parser malloc error, size: %d ", size);
             return -1;
         }
         ret = CdxStreamRead(specialStreamParser->file, pSpecilData, nSpecialDataLen);
@@ -87,14 +87,14 @@ static cdx_int32 AwSpecialStreamParserPrefetch(CdxParserT *parser, CdxPacketT *p
     if(specialStreamParser->status != CDX_PSR_IDLE &&
         specialStreamParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGW("status != CDX_PSR_IDLE && status != \
+        LOGW("status != CDX_PSR_IDLE && status != \
             CDX_PSR_PREFETCHED, BdParserPrefetch invaild");
         specialStreamParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     if(specialStreamParser->mErrno == PSR_EOS)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         return -1;
     }
     if(specialStreamParser->status == CDX_PSR_PREFETCHED)
@@ -117,7 +117,7 @@ static cdx_int32 AwSpecialStreamParserPrefetch(CdxParserT *parser, CdxPacketT *p
     ret |= CdxStreamRead(specialStreamParser->file, &nStreamIndex, 4);
     if(nStreamIndex == 0x70737761)
     {
-        CDX_LOGI("data contain the awsp tab\n");
+        LOGI("data contain the awsp tab");
         ret |= CdxStreamRead(specialStreamParser->file, &nStreamIndex, sizeof(int));
     }
     #else
@@ -125,7 +125,7 @@ static cdx_int32 AwSpecialStreamParserPrefetch(CdxParserT *parser, CdxPacketT *p
     #endif
     ret = CdxStreamRead(specialStreamParser->file, &nLen, sizeof(int));
     ret = CdxStreamRead(specialStreamParser->file, &nPts, sizeof(int64_t));
-    logv("  special parser get data stream index: %d, size: %d, ret: %d", \
+    LOGV("  special parser get data stream index: %d, size: %d, ret: %d", \
         nStreamIndex, nLen, ret);
     if(nLen <= 0)
     {
@@ -157,7 +157,7 @@ static cdx_int32 AwSpecialStreamParserRead(CdxParserT *parser, CdxPacketT *pkt)
     SpecialStreamParser *specialStreamParser = (SpecialStreamParser*)parser;
     if(specialStreamParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
+        LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
         specialStreamParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -196,11 +196,11 @@ static cdx_int32 AwSpecialStreamParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
 cdx_int32 AwSpecialStreamParserForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("AwSpecialStreamParserForceStop start");
+    LOGI("AwSpecialStreamParserForceStop start");
     SpecialStreamParser *specialStreamParser = (SpecialStreamParser*)parser;
     if(specialStreamParser->status < CDX_PSR_IDLE)
     {
-        CDX_LOGW("specialStreamParser->status < CDX_PSR_IDLE, can not forceStop");
+        LOGW("specialStreamParser->status < CDX_PSR_IDLE, can not forceStop");
         specialStreamParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -213,7 +213,7 @@ cdx_int32 AwSpecialStreamParserForceStop(CdxParserT *parser)
     int ret = CdxStreamForceStop(specialStreamParser->file);
     if(ret < 0)
     {
-        CDX_LOGW("CdxStreamForceStop fail");
+        LOGW("CdxStreamForceStop fail");
     }
     while(specialStreamParser->status != CDX_PSR_IDLE &&
         specialStreamParser->status != CDX_PSR_PREFETCHED)
@@ -221,17 +221,17 @@ cdx_int32 AwSpecialStreamParserForceStop(CdxParserT *parser)
         usleep(10000);
     }
     specialStreamParser->status = CDX_PSR_IDLE;
-    CDX_LOGI("AwSpecialStreamParserForceStop end");
+    LOGI("AwSpecialStreamParserForceStop end");
     return 0;
 }
 
 cdx_int32 AwSpecialStreamParserClrForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("AwSpecialStreamParserClrForceStop start");
+    LOGI("AwSpecialStreamParserClrForceStop start");
     SpecialStreamParser *specialStreamParser = (SpecialStreamParser*)parser;
     if(specialStreamParser->status != CDX_PSR_IDLE)
     {
-        CDX_LOGW("specialStreamParser->status != CDX_PSR_IDLE");
+        LOGW("specialStreamParser->status != CDX_PSR_IDLE");
         specialStreamParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -240,9 +240,9 @@ cdx_int32 AwSpecialStreamParserClrForceStop(CdxParserT *parser)
     int ret = CdxStreamClrForceStop(specialStreamParser->file);
     if(ret < 0)
     {
-        CDX_LOGW("CdxStreamClrForceStop fail");
+        LOGW("CdxStreamClrForceStop fail");
     }
-    CDX_LOGI("AwSpecialStreamParserClrForceStop end");
+    LOGI("AwSpecialStreamParserClrForceStop end");
     return 0;
 }
 
@@ -256,7 +256,7 @@ static int AwSpecialStreamParserControl(CdxParserT *parser, int cmd, void *param
     {
         case CDX_PSR_CMD_SWITCH_AUDIO:
         case CDX_PSR_CMD_SWITCH_SUBTITLE:
-            CDX_LOGI(" awts parser is not support switch stream yet!!!");
+            LOGI(" awts parser is not support switch stream yet!!!");
             break;
         case CDX_PSR_CMD_SET_FORCESTOP:
             return 0;
@@ -276,8 +276,8 @@ cdx_int32 AwSpecialStreamParserGetStatus(CdxParserT *parser)
 /*
 cdx_int32 AwSpecialStreamParserSeekTo(CdxParserT *parser, cdx_int64  timeUs)
 {
-    //CDX_LOGD("AwSpecialStreamParserSeekTo start, timeUs = %lld", timeUs);
-    CDX_LOGE("it is not supported");
+    //LOGD("AwSpecialStreamParserSeekTo start, timeUs = %lld", timeUs);
+    LOGE("it is not supported");
     return -1;
 }*/
 static cdx_int32 AwSpecialStreamParserClose(CdxParserT *parser)
@@ -301,7 +301,7 @@ static cdx_int32 AwSpecialStreamParserClose(CdxParserT *parser)
     ret = CdxStreamClose(specialStreamParser->file);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamClose fail, ret(%d)", ret);
+        LOGE("CdxStreamClose fail, ret(%d)", ret);
     }
 
     pthread_mutex_destroy(&specialStreamParser->statusLock);
@@ -340,7 +340,7 @@ CdxParserT *AwSpecialStreamParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     SpecialStreamParser *specialStreamParser = CdxMalloc(sizeof(SpecialStreamParser));
     if(!specialStreamParser)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         CdxStreamClose(stream);
         return NULL;
     }
@@ -370,13 +370,13 @@ cdx_uint32 AwSpecialStreamParserProbe(CdxStreamProbeDataT *probeData)
     cdx_char *data = probeData->buf;
     cdx_char mask[] = "awspcialstream"; //14 bytes
     int i, ret = 70;
-    logd("  parser probe aw special parser");
+    LOGD("  parser probe aw special parser");
     for(i = 0; i < 14; i++)
     {
         if(data[i] != mask[i])
         {
             ret = 0;
-            loge(" probe special parser fail ");
+            LOGE(" probe special parser fail ");
             break;
         }
     }

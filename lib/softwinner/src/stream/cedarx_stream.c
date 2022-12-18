@@ -18,7 +18,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "cedarx_stream"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -63,7 +63,7 @@ struct cdx_stream_info *create_stream_handle(CedarXDataSourceDesc *datasource_de
     }
     else
     {
-        aloge("fatal error! source_type[%d] stream_type[%d] wrong!", datasource_desc->source_type, datasource_desc->stream_type);
+        LOGE("fatal error! source_type[%d] stream_type[%d] wrong!", datasource_desc->source_type, datasource_desc->stream_type);
         ret = -1;
     }
 
@@ -71,7 +71,7 @@ struct cdx_stream_info *create_stream_handle(CedarXDataSourceDesc *datasource_de
     {
 		//Must destory here, parser cannot destroy stream handle
 		//when it holds a NULL stream info handle.
-		aloge("create_stream_handle failed");
+		LOGE("create_stream_handle failed");
         //stm info have been freed in destory_stream_handle.
         //but stm_info is not NULL as it was passed by value.
         free(stm_info);

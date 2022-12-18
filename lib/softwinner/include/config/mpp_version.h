@@ -29,13 +29,13 @@ extern "C" {
 
 static inline void MPPLogVersionInfo(void)
 {
-    printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Media Process Platform<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
-    printf("modName : %s\n", REPO_MODULE_NAME);
-    printf("tag   : %s\n", REPO_TAG);
-    printf("branch: %s\n", REPO_BRANCH);
-    printf("commit: %s\n", REPO_COMMIT);
-    printf("date  : %s\n", REPO_DATE);
-    printf("author: %s\n", RELEASE_AUTHOR);
+    LOGI(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Media Process Platform<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+    LOGI("modName : %s", REPO_MODULE_NAME);
+    LOGI("tag   : %s", REPO_TAG);
+    LOGI("branch: %s", REPO_BRANCH);
+    LOGI("commit: %s", REPO_COMMIT);
+    LOGI("date  : %s", REPO_DATE);
+    LOGI("author: %s", RELEASE_AUTHOR);
 }
 
 #ifdef __cplusplus

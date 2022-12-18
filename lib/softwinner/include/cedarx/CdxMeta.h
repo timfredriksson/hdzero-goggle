@@ -11,7 +11,7 @@
 #ifndef CDX_META_H
 #define CDX_META_H
 #include <CdxTypes.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <AwPool.h>
 
 #define CDX_META_ITEM_NAMESIZE 32
@@ -125,8 +125,8 @@ static inline cdx_err CdxMetaSetString(CdxMetaT  *meta,
 }
 
 /**
- *通过入参获得所需要的string
- *用户需要自行调用CdxFree()释放空间
+ *通锟斤拷锟斤拷位锟斤拷锟斤拷锟斤拷要锟斤拷string
+ *锟矫伙拷锟斤拷要锟斤拷锟叫碉拷锟斤拷CdxFree()锟酵放空硷拷
  */
 static inline cdx_err CdxMetaFindString(CdxMetaT  *meta,
                                 cdx_char *name, cdx_char **pVal)
@@ -156,8 +156,8 @@ static inline cdx_err CdxMetaSetData(CdxMetaT  *meta, cdx_char *name,
 }
 
 /**
- *通过入参获得所需要的string
- *用户需要自行调用CdxFree()释放空间
+ *通锟斤拷锟斤拷位锟斤拷锟斤拷锟斤拷要锟斤拷string
+ *锟矫伙拷锟斤拷要锟斤拷锟叫碉拷锟斤拷CdxFree()锟酵放空硷拷
  */
 static inline cdx_err CdxMetaFindData(CdxMetaT  *meta, cdx_char *name,
                                     cdx_uint8 **pVal, cdx_uint32 *pSize)
@@ -177,10 +177,10 @@ static inline cdx_err CdxMetaSetObject(CdxMetaT *meta, cdx_char *name, void *val
 }
 
 /**
- *通过入参获得需要的对象的句柄
- *meta生命周期内,对象是有效，
- *需要长期保存使用的话请自行做引用计数+1
- *或者保存副本
+ *通锟斤拷锟斤拷位锟斤拷锟斤拷要锟侥讹拷锟斤拷木锟斤拷
+ *meta锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷,锟斤拷锟斤拷锟斤拷锟斤拷效锟斤拷
+ *锟斤拷要锟斤拷锟节憋拷锟斤拷使锟矫的伙拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟矫硷拷锟斤拷+1
+ *锟斤拷锟竭憋拷锟芥副锟斤拷
  */
 static inline cdx_err CdxMetaFindObject(CdxMetaT  *meta,
                                 cdx_char *name, void **pVal)

@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mpi_demux"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <stdlib.h>
@@ -61,12 +61,12 @@ ERRORTYPE DEMUX_Construct(void)
     }
     gpDemuxChnMap = (DemuxChnManager*)malloc(sizeof(DemuxChnManager));
     if (NULL == gpDemuxChnMap) {
-        aloge("alloc DemuxChnManager error(%s)!", strerror(errno));
+        LOGE("alloc DemuxChnManager error(%s)!", strerror(errno));
         return FAILURE;
     }
     ret = pthread_mutex_init(&gpDemuxChnMap->mLock, NULL);
     if (ret != 0) {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         free(gpDemuxChnMap);
         gpDemuxChnMap = NULL;
         return FAILURE;
@@ -79,7 +79,7 @@ ERRORTYPE DEMUX_Destruct(void)
 {
     if (gpDemuxChnMap != NULL) {
         if (!list_empty(&gpDemuxChnMap->mList)) {
-            aloge("fatal error! some demux channel still running when destroy demux device!");
+            LOGE("fatal error! some demux channel still running when destroy demux device!");
         }
         pthread_mutex_destroy(&gpDemuxChnMap->mLock);
         free(gpDemuxChnMap);
@@ -173,7 +173,7 @@ static DEMUX_CHN_MAP_S* DEMUX_CHN_MAP_S_Construct()
     DEMUX_CHN_MAP_S *pChannel = (DEMUX_CHN_MAP_S*)malloc(sizeof(DEMUX_CHN_MAP_S));
     if(NULL == pChannel)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pChannel, 0, sizeof(DEMUX_CHN_MAP_S));
@@ -185,7 +185,7 @@ static void DEMUX_CHN_MAP_S_Destruct(DEMUX_CHN_MAP_S *pChannel)
 {
     if(pChannel->mDemuxComp)
     {
-        aloge("fatal error! Demux component need free before!");
+        LOGE("fatal error! Demux component need free before!");
         COMP_FreeHandle(pChannel->mDemuxComp);
         pChannel->mDemuxComp = NULL;
     }
@@ -207,7 +207,7 @@ static ERRORTYPE DemuxEventHandler(
     ret = ((MM_COMPONENTTYPE*)hComponent)->GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &DemuxChnInfo);
     if(ret == SUCCESS)
     {
-        alogv("demux event, MppChannel[%d][%d][%d]", DemuxChnInfo.mModId, DemuxChnInfo.mDevId, DemuxChnInfo.mChnId);
+        LOGV("demux event, MppChannel[%d][%d][%d]", DemuxChnInfo.mModId, DemuxChnInfo.mDevId, DemuxChnInfo.mChnId);
     }
 	DEMUX_CHN_MAP_S *pChn = (DEMUX_CHN_MAP_S*)pAppData;
 
@@ -217,13 +217,13 @@ static ERRORTYPE DemuxEventHandler(
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("Demux EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("Demux EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else
             {
-                alogw("Low probability! What command[0x%x]?", nData1);
+                LOGW("Low probability! What command[0x%x]?", nData1);
                 break;
             }
         }
@@ -231,25 +231,25 @@ static ERRORTYPE DemuxEventHandler(
         {
             if(ERR_DEMUX_SAMESTATE == nData1)
             {
-                alogw("Demux set same StateSet[%d]", nData2);
+                LOGW("Demux set same StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(ERR_DEMUX_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("Why invalid state transition?! CurState[%#x]", nData2);
+                LOGE("Why invalid state transition?! CurState[%#x]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else
             {
-                aloge("Fatal error! What command[%#x]?!", nData1);
+                LOGE("Fatal error! What command[%#x]?!", nData1);
                 break;
             }
         }
         case COMP_EventBufferFlag:
         {
-            alogw("EOF found!");
+            LOGW("EOF found!");
             MPP_CHN_S ChannelInfo;
             ChannelInfo.mModId = MOD_ID_DEMUX;
             ChannelInfo.mDevId = 0;
@@ -260,7 +260,7 @@ static ERRORTYPE DemuxEventHandler(
         }
         default:
         {
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
         }
     }
@@ -277,12 +277,12 @@ ERRORTYPE AW_MPI_DEMUX_CreateChn(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN const DEMUX
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
     if(NULL == pAttr)
     {
-        aloge("fatal error! illagal DemuxAttr!");
+        LOGE("fatal error! illagal DemuxAttr!");
         return ERR_DEMUX_ILLEGAL_PARAM;
     }
     pthread_mutex_lock(&gpDemuxChnMap->mLock);
@@ -299,7 +299,7 @@ ERRORTYPE AW_MPI_DEMUX_CreateChn(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN const DEMUX
     eRet = COMP_GetHandle((COMP_HANDLETYPE*)&pNode->mDemuxComp, CDX_ComponentNameDemux, (void*)pNode, &DemuxCallback);
     if(eRet != SUCCESS)
     {
-        aloge("fatal error! get comp handle fail!");
+        LOGE("fatal error! get comp handle fail!");
     }
     MPP_CHN_S ChannelInfo;
     ChannelInfo.mModId = MOD_ID_DEMUX;
@@ -330,7 +330,7 @@ ERRORTYPE AW_MPI_DEMUX_DestroyChn(PARAM_IN DEMUX_CHN dmxChn)
     ERRORTYPE ret;
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
     DEMUX_CHN_MAP_S *pChn;
@@ -356,12 +356,12 @@ ERRORTYPE AW_MPI_DEMUX_DestroyChn(PARAM_IN DEMUX_CHN dmxChn)
             }
             else if(nCompState == COMP_StateInvalid)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             }
             else
             {
-                aloge("fatal error! invalid DemuxChn[%d] state[0x%x]!", dmxChn, nCompState);
+                LOGE("fatal error! invalid DemuxChn[%d] state[0x%x]!", dmxChn, nCompState);
                 eRet = FAILURE;
             }
 
@@ -380,13 +380,13 @@ ERRORTYPE AW_MPI_DEMUX_DestroyChn(PARAM_IN DEMUX_CHN dmxChn)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_DEMUX_BUSY;
         }
     }
     else
     {
-        aloge("fatal error! no Demux component!");
+        LOGE("fatal error! no Demux component!");
         list_del(&pChn->mList);
         DEMUX_CHN_MAP_S_Destruct(pChn);
         ret = SUCCESS;
@@ -398,7 +398,7 @@ ERRORTYPE AW_MPI_DEMUX_RegisterCallback(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN MPPC
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DmxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DmxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
     DEMUX_CHN_MAP_S *pChn;
@@ -415,7 +415,7 @@ ERRORTYPE AW_MPI_DEMUX_SetChnAttr(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN DEMUX_CHN_
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid dmxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid dmxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
     DEMUX_CHN_MAP_S *pChn;
@@ -428,7 +428,7 @@ ERRORTYPE AW_MPI_DEMUX_SetChnAttr(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN DEMUX_CHN_
     ret = pChn->mDemuxComp->GetState(pChn->mDemuxComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_DEMUX_NOT_PERM;
     }
     ret = pChn->mDemuxComp->SetConfig(pChn->mDemuxComp, COMP_IndexVendorDemuxChnAttr, (void*)pAttr);
@@ -439,7 +439,7 @@ ERRORTYPE AW_MPI_DEMUX_GetChnAttr(PARAM_IN DEMUX_CHN dmxChn, PARAM_OUT DEMUX_CHN
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
     DEMUX_CHN_MAP_S *pChn;
@@ -452,7 +452,7 @@ ERRORTYPE AW_MPI_DEMUX_GetChnAttr(PARAM_IN DEMUX_CHN dmxChn, PARAM_OUT DEMUX_CHN
     ret = pChn->mDemuxComp->GetState(pChn->mDemuxComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_DEMUX_NOT_PERM;
     }
     ret = pChn->mDemuxComp->GetConfig(pChn->mDemuxComp, COMP_IndexVendorDemuxChnAttr, (void*)pAttr);
@@ -471,13 +471,13 @@ static ERRORTYPE convert_CdxMediaInfoT_to_DEMUX_MEDIA_INFO_S(DEMUX_MEDIA_INFO_S 
         pDemuxMediaInfo->mVideoNum = pProgram->videoNum;
         if(pDemuxMediaInfo->mVideoNum > DEMUX_MAX_VIDEO_STREAM_NUM)
         {
-            aloge("fatal error! videoNum[%d]>max[%d]", pDemuxMediaInfo->mVideoNum, DEMUX_MAX_VIDEO_STREAM_NUM);
+            LOGE("fatal error! videoNum[%d]>max[%d]", pDemuxMediaInfo->mVideoNum, DEMUX_MAX_VIDEO_STREAM_NUM);
             pDemuxMediaInfo->mVideoNum = DEMUX_MAX_VIDEO_STREAM_NUM;
         }
         pDemuxMediaInfo->mVideoIndex = pProgram->videoIndex;
         if(pDemuxMediaInfo->mVideoIndex >= pDemuxMediaInfo->mVideoNum)
         {
-            aloge("fatal error! videoIndex[%d]>num[%d]", pDemuxMediaInfo->mVideoIndex, pDemuxMediaInfo->mVideoNum);
+            LOGE("fatal error! videoIndex[%d]>num[%d]", pDemuxMediaInfo->mVideoIndex, pDemuxMediaInfo->mVideoNum);
         }
         for(i=0; i<pDemuxMediaInfo->mVideoNum; i++)
         {
@@ -497,13 +497,13 @@ static ERRORTYPE convert_CdxMediaInfoT_to_DEMUX_MEDIA_INFO_S(DEMUX_MEDIA_INFO_S 
         pDemuxMediaInfo->mAudioNum = pProgram->audioNum;
         if(pDemuxMediaInfo->mAudioNum > DEMUX_MAX_AUDIO_STREAM_NUM)
         {
-            aloge("fatal error! audioNum[%d]>max[%d]", pDemuxMediaInfo->mAudioNum, DEMUX_MAX_AUDIO_STREAM_NUM);
+            LOGE("fatal error! audioNum[%d]>max[%d]", pDemuxMediaInfo->mAudioNum, DEMUX_MAX_AUDIO_STREAM_NUM);
             pDemuxMediaInfo->mAudioNum = DEMUX_MAX_AUDIO_STREAM_NUM;
         }
         pDemuxMediaInfo->mAudioIndex = pProgram->audioIndex;
         if(pDemuxMediaInfo->mAudioIndex >= pDemuxMediaInfo->mAudioNum)
         {
-            aloge("fatal error! audioIndex[%d]>num[%d]", pDemuxMediaInfo->mAudioIndex, pDemuxMediaInfo->mAudioNum);
+            LOGE("fatal error! audioIndex[%d]>num[%d]", pDemuxMediaInfo->mAudioIndex, pDemuxMediaInfo->mAudioNum);
         }
         for(i=0; i<pDemuxMediaInfo->mAudioNum; i++)
         {
@@ -523,7 +523,7 @@ ERRORTYPE AW_MPI_DEMUX_GetMediaInfo(PARAM_IN DEMUX_CHN dmxChn, PARAM_OUT DEMUX_M
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
     DEMUX_CHN_MAP_S *pChn;
@@ -536,7 +536,7 @@ ERRORTYPE AW_MPI_DEMUX_GetMediaInfo(PARAM_IN DEMUX_CHN dmxChn, PARAM_OUT DEMUX_M
     ret = pChn->mDemuxComp->GetState(pChn->mDemuxComp, &nState);
     if(COMP_StateIdle != nState && COMP_StateExecuting!= nState && COMP_StatePause!= nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_DEMUX_NOT_PERM;
     }
     CdxMediaInfoT stMediaInfo;
@@ -550,7 +550,7 @@ ERRORTYPE AW_MPI_DEMUX_Start(PARAM_IN DEMUX_CHN dmxChn)
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
     DEMUX_CHN_MAP_S *pChn;
@@ -567,14 +567,14 @@ ERRORTYPE AW_MPI_DEMUX_Start(PARAM_IN DEMUX_CHN dmxChn)
         eRet = pChn->mDemuxComp->SendCommand(pChn->mDemuxComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else
     {
-        alogd("DemuxChannelState[0x%x], do nothing!", nCompState);
+        LOGD("DemuxChannelState[0x%x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -584,13 +584,13 @@ ERRORTYPE AW_MPI_DEMUX_Stop(PARAM_IN DEMUX_CHN dmxChn)
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
     DEMUX_CHN_MAP_S *pChn;
     if(SUCCESS != DEMUX_searchExistChannel(dmxChn, &pChn))
     {
-        alogd("chn not exist");
+        LOGD("chn not exist");
         return ERR_DEMUX_UNEXIST;
     }
     int ret;
@@ -602,19 +602,19 @@ ERRORTYPE AW_MPI_DEMUX_Stop(PARAM_IN DEMUX_CHN dmxChn)
         eRet = pChn->mDemuxComp->SendCommand(pChn->mDemuxComp, COMP_CommandStateSet, COMP_StateIdle, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogv("DemuxChannelState[0x%x], do nothing!", nCompState);
+        LOGV("DemuxChannelState[0x%x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     else
     {
-        aloge("fatal error! check DemuxChannelState[0x%x]!", nCompState);
+        LOGE("fatal error! check DemuxChannelState[0x%x]!", nCompState);
         ret = FAILURE;
     }
     return ret;
@@ -624,7 +624,7 @@ ERRORTYPE AW_MPI_DEMUX_Pause(PARAM_IN DEMUX_CHN dmxChn)
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
     DEMUX_CHN_MAP_S *pChn;
@@ -641,19 +641,19 @@ ERRORTYPE AW_MPI_DEMUX_Pause(PARAM_IN DEMUX_CHN dmxChn)
         eRet = pChn->mDemuxComp->SendCommand(pChn->mDemuxComp, COMP_CommandStateSet, COMP_StatePause, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogv("DemuxChannelState[%#x], do nothing!", nCompState);
+        LOGV("DemuxChannelState[%#x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     else
     {
-        aloge("Fatal error! Check DemuxChannelState[%#x]!", nCompState);
+        LOGE("Fatal error! Check DemuxChannelState[%#x]!", nCompState);
         ret = FAILURE;
     }
     return ret;
@@ -663,7 +663,7 @@ ERRORTYPE AW_MPI_DEMUX_Pause(PARAM_IN DEMUX_CHN dmxChn)
 //{
 //    if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
 //    {
-//        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+//        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
 //        return ERR_DEMUX_INVALID_CHNID;
 //    }
 //    DEMUX_CHN_MAP_S *pChn;
@@ -679,13 +679,13 @@ ERRORTYPE AW_MPI_DEMUX_Pause(PARAM_IN DEMUX_CHN dmxChn)
 //        eRet2 = pChn->mDemuxComp->SetConfig(pChn->mDemuxComp, COMP_IndexVendorDemuxResetChannel, NULL);
 //        if(eRet2 != SUCCESS)
 //        {
-//            aloge("fatal error! reset channel fail[0x%x]!", eRet2);
+//            LOGE("fatal error! reset channel fail[0x%x]!", eRet2);
 //        }
 //        return eRet2;
 //    }
 //    else
 //    {
-//        aloge("wrong status[0x%x], can't reset demux channel!", nCompState);
+//        LOGE("wrong status[0x%x], can't reset demux channel!", nCompState);
 //        return ERR_DEMUX_NOT_PERM;
 //    }
 //}
@@ -694,7 +694,7 @@ ERRORTYPE AW_MPI_DEMUX_Seek(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN int msec)
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
     DEMUX_CHN_MAP_S *pChn;
@@ -714,13 +714,13 @@ ERRORTYPE AW_MPI_DEMUX_Seek(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN int msec)
         eRet = pChn->mDemuxComp->SetConfig(pChn->mDemuxComp, COMP_IndexVendorSeekToPosition, (void*)&seekPara);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! demux seek fail!");
+            LOGE("fatal error! demux seek fail!");
         }
         ret = eRet;
     }
     else
     {
-        alogd("seek in wrong DemuxChannelState[0x%x], do nothing!", nCompState);
+        LOGD("seek in wrong DemuxChannelState[0x%x], do nothing!", nCompState);
         ret = ERR_DEMUX_INCORRECT_STATE_OPERATION;
     }
     return ret;
@@ -730,7 +730,7 @@ ERRORTYPE AW_MPI_DEMUX_Seek(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN int msec)
 //{
 //    if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
 //    {
-//        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+//        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
 //        return ERR_DEMUX_INVALID_CHNID;
 //    }
 //    DEMUX_CHN_MAP_S *pChn;
@@ -747,13 +747,13 @@ ERRORTYPE AW_MPI_DEMUX_Seek(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN int msec)
 //        eRet = pChn->mDemuxComp->SetConfig(pChn->mDemuxComp, COMP_IndexVendorDemuxDisableTrack, (void*)&nDisableTrack);
 //        if(eRet != SUCCESS)
 //        {
-//            aloge("fatal error! send command stateExecuting fail");
+//            LOGE("fatal error! send command stateExecuting fail");
 //        }
 //        ret = SUCCESS;
 //    }
 //    else
 //    {
-//        aloge("DisableTrack in WRONG State[%#x]!", nCompState);
+//        LOGE("DisableTrack in WRONG State[%#x]!", nCompState);
 //        ret = FAILURE;
 //    }
 //    return ret;
@@ -763,7 +763,7 @@ ERRORTYPE AW_MPI_DEMUX_Seek(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN int msec)
 //{
 //    if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
 //    {
-//        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+//        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
 //        return ERR_DEMUX_INVALID_CHNID;
 //    }
 //    DEMUX_CHN_MAP_S *pChn;
@@ -780,13 +780,13 @@ ERRORTYPE AW_MPI_DEMUX_Seek(PARAM_IN DEMUX_CHN dmxChn, PARAM_IN int msec)
 //        eRet = pChn->mDemuxComp->SetConfig(pChn->mDemuxComp, COMP_IndexVendorDemuxDisableMediaType, (void*)&nDisableMediaType);
 //        if(eRet != SUCCESS)
 //        {
-//            aloge("fatal error! send command stateExecuting fail");
+//            LOGE("fatal error! send command stateExecuting fail");
 //        }
 //        ret = SUCCESS;
 //    }
 //    else
 //    {
-//        alogw("DisableMediaType in WRONG State[%#x]!", nCompState);
+//        LOGW("DisableMediaType in WRONG State[%#x]!", nCompState);
 //        ret = FAILURE;
 //    }
 //    return ret;
@@ -796,7 +796,7 @@ ERRORTYPE AW_MPI_DEMUX_getDmxOutPutBuf(PARAM_IN DEMUX_CHN dmxChn, PARAM_OUT Enco
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
 
@@ -818,7 +818,7 @@ ERRORTYPE AW_MPI_DEMUX_getDmxOutPutBuf(PARAM_IN DEMUX_CHN dmxChn, PARAM_OUT Enco
         eRet = pChn->mDemuxComp->GetConfig(pChn->mDemuxComp, COMP_IndexVendorDemuxOutBuffer, (void *)&stDmxStream);
         if(eRet != SUCCESS)
         {
-            aloge("get buf fail");
+            LOGE("get buf fail");
             ret = FAILURE;
         }
         else
@@ -828,7 +828,7 @@ ERRORTYPE AW_MPI_DEMUX_getDmxOutPutBuf(PARAM_IN DEMUX_CHN dmxChn, PARAM_OUT Enco
     }
     else
     {
-        alogw("DisableMediaTrack in WRONG State[%#x]!", nCompState);
+        LOGW("DisableMediaTrack in WRONG State[%#x]!", nCompState);
         ret = FAILURE;
     }
 
@@ -839,7 +839,7 @@ ERRORTYPE AW_MPI_DEMUX_releaseDmxBuf(PARAM_IN DEMUX_CHN dmxChn, PARAM_OUT Encode
 {
     if(!(dmxChn>=0 && dmxChn <DEMUX_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid DemuxChn[%d]!", dmxChn);
+        LOGE("fatal error! invalid DemuxChn[%d]!", dmxChn);
         return ERR_DEMUX_INVALID_CHNID;
     }
 
@@ -858,7 +858,7 @@ ERRORTYPE AW_MPI_DEMUX_releaseDmxBuf(PARAM_IN DEMUX_CHN dmxChn, PARAM_OUT Encode
    	    eRet = pChn->mDemuxComp->SetConfig(pChn->mDemuxComp, COMP_IndexVendorDemuxOutBuffer, (void *)pDmxOutBuf);
    	    if(eRet != SUCCESS)
    	    {
-            aloge("get buf fail");
+            LOGE("get buf fail");
             ret = FAILURE;
         }
    	    else
@@ -868,7 +868,7 @@ ERRORTYPE AW_MPI_DEMUX_releaseDmxBuf(PARAM_IN DEMUX_CHN dmxChn, PARAM_OUT Encode
     }
     else
     {
-   	    alogw("DisableMediaTrack in WRONG State[%#x]!", nCompState);
+   	    LOGW("DisableMediaTrack in WRONG State[%#x]!", nCompState);
    	    ret = FAILURE;
     }
     return ret;

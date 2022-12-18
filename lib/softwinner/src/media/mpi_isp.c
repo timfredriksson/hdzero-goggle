@@ -16,7 +16,7 @@
  */
  //#define LOG_NDEBUG
 #define LOG_TAG "mpi_isp"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include "mpi_isp.h"
 #include "isp_tuning.h"
@@ -90,9 +90,9 @@ AW_S32 AW_MPI_ISP_GetDynamicPltm(ISP_DEV IspDev, ISP_DYNAMIC_PLTM_S *pPltm);
 /* ======================================= */
 /* AW_S32 AW_MPI_ISP_Init(ISP_DEV IspDev)
 {
-	printf("Donot use this API.\r\n");
-	printf("AW_MPI_ISP_Init(ISP_DEV IspDev) rename -> \
-		AW_S32 AW_MPI_ISP_Init();\r\n");
+	LOGI("Donot use this API.");
+	LOGI("AW_MPI_ISP_Init(ISP_DEV IspDev) rename -> \
+		AW_S32 AW_MPI_ISP_Init();");
 	return SUCCESS;
 } */
 
@@ -127,9 +127,9 @@ AW_S32 AW_MPI_ISP_Stop(ISP_DEV IspDev)
 
 /*AW_S32 AW_MPI_ISP_Exit(ISP_DEV IspDev)
 {
-    printf("Donot use this API.\r\n");
-	printf("AW_MPI_ISP_Exit(ISP_DEV IspDev) rename -> \
-		AW_S32 AW_MPI_ISP_Exit();\r\n");
+    LOGI("Donot use this API.");
+	LOGI("AW_MPI_ISP_Exit(ISP_DEV IspDev) rename -> \
+		AW_S32 AW_MPI_ISP_Exit();");
 	return SUCCESS;
 }*/
 
@@ -579,13 +579,13 @@ AW_S32 AW_MPI_ISP_GetSaturation(ISP_DEV IspDev, ISP_SATURATION_S *pSta)
 // hue
 AW_S32 AW_MPI_ISP_SetHue(ISP_DEV IspDev, ISP_HUE_S *pHue)
 {
-    aloge("need implement");
+    LOGE("need implement");
     isp_update(IspDev);
     return FAILURE;
 }
 AW_S32 AW_MPI_ISP_GetHue(ISP_DEV IspDev, ISP_HUE_S *pHue)
 {
-    aloge("need implement");
+    LOGE("need implement");
     return FAILURE;
 }
 */

@@ -29,14 +29,14 @@
 
 #include <stdlib.h>
 //#include "avutil.h"
-#include "plat_log.h"
+#include <log/log.h>
 
 /**
  * assert() equivalent, that is always enabled.
  */
 #define av_assert0(cond) do {                                           \
     if (!(cond)) {                                                      \
-        alogd("failed at %s:%d",    \
+        LOGD("failed at %s:%d",    \
                __FILE__, __LINE__);                 \
         abort();                                                        \
     }                                                                   \

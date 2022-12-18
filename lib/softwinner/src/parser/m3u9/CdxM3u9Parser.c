@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CdxM3u9Parser"
 #include "CdxM3u9Parser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 #include <errno.h>
 #include <string.h>
@@ -38,7 +38,7 @@ static int DownloadParseM3u9(CdxM3u9Parser *m3u9Parser)
         ret = CdxStreamRead(m3u9Parser->cdxStream, m3u9Parser->m3u9Buf + m3u9ReadSize, 1024);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             return -1;
         }
         if(ret == 0)
@@ -50,7 +50,7 @@ static int DownloadParseM3u9(CdxM3u9Parser *m3u9Parser)
 
     if(m3u9ReadSize == 0)
     {
-        CDX_LOGE("download m3u9 mPlaylist fail");
+        LOGE("download m3u9 mPlaylist fail");
         return -1;
     }
 
@@ -58,7 +58,7 @@ static int DownloadParseM3u9(CdxM3u9Parser *m3u9Parser)
     status_t err;
     if ((err = M3u9Parse(m3u9Parser->m3u9Buf, m3u9ReadSize, &playlist, m3u9Parser->m3u9Url)) != OK)
     {
-        CDX_LOGE("creation playlist fail, err=%d", err);
+        LOGE("creation playlist fail, err=%d", err);
         return -1;
     }
     m3u9Parser->mPlaylist = playlist;
@@ -67,7 +67,7 @@ static int DownloadParseM3u9(CdxM3u9Parser *m3u9Parser)
 
 /*return -1:error*/
 /*return 0:m3u9Parser PSR_EOS*/
-/*return 1:Ñ¡Ôñµ½ÁËÐÂµÄSegment*/
+/*return 1:Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½Segment*/
 static int SelectNextSegment(CdxM3u9Parser *m3u9Parser)
 {
     Playlist *playlist = m3u9Parser->mPlaylist;
@@ -78,7 +78,7 @@ static int SelectNextSegment(CdxM3u9Parser *m3u9Parser)
     PlaylistItem *item = findItemBySeqNumForM3u9(playlist, m3u9Parser->curSeqNum);
     if(!item)
     {
-        CDX_LOGE("findItemBySeqNum fail");
+        LOGE("findItemBySeqNum fail");
         return -1;
     }
     SetDataSouceForSegment(item, &m3u9Parser->cdxDataSource);
@@ -92,7 +92,7 @@ static cdx_int32 M3u9ParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *pMedi
     CdxM3u9Parser *m3u9Parser = (CdxM3u9Parser*)parser;
     if(m3u9Parser->status < CDX_PSR_IDLE)
     {
-        CDX_LOGW("m3u9Parser->status < CDX_PSR_IDLE, can not GetMediaInfo");
+        LOGW("m3u9Parser->status < CDX_PSR_IDLE, can not GetMediaInfo");
         m3u9Parser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -105,14 +105,14 @@ static cdx_int32 M3u9ParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     CdxM3u9Parser *m3u9Parser = (CdxM3u9Parser*)parser;
     if(m3u9Parser->status != CDX_PSR_IDLE && m3u9Parser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGW("status != CDX_PSR_IDLE && status != "
+        LOGW("status != CDX_PSR_IDLE && status != "
             "CDX_PSR_PREFETCHED, M3u9ParserPrefetch invaild");
         m3u9Parser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     if(m3u9Parser->mErrno == PSR_EOS)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         return -1;
     }
     if(m3u9Parser->status == CDX_PSR_PREFETCHED)
@@ -166,22 +166,22 @@ static cdx_int32 M3u9ParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             pthread_mutex_unlock(&m3u9Parser->statusLock);
 
             m3u9Parser->curSeqNum++;
-            CDX_LOGI("curSeqNum = %d", m3u9Parser->curSeqNum);
+            LOGI("curSeqNum = %d", m3u9Parser->curSeqNum);
             ret = SelectNextSegment(m3u9Parser);
             if(ret < 0)
             {
-                CDX_LOGE("SelectNextSegment fail");
+                LOGE("SelectNextSegment fail");
                 m3u9Parser->mErrno = PSR_UNKNOWN_ERR;
                 goto _exit;
             }
             else if(ret == 0)
             {
-                CDX_LOGD("m3u9Parser->status = PSR_EOS");
+                LOGD("m3u9Parser->status = PSR_EOS");
                 m3u9Parser->mErrno = PSR_EOS;
                 ret = -1;
                 goto _exit;
             }
-            CDX_LOGD("replace parser");
+            LOGD("replace parser");
             int ret = CdxParserPrepare(&m3u9Parser->cdxDataSource, NO_NEED_DURATION,
                 &m3u9Parser->statusLock, &m3u9Parser->forceStop,
                 &m3u9Parser->child, &m3u9Parser->childStream, NULL, NULL);
@@ -190,7 +190,7 @@ static cdx_int32 M3u9ParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
                 m3u9Parser->curSeqNum = -1;
                 if(!m3u9Parser->forceStop)
                 {
-                    CDX_LOGE("CdxParserPrepare fail");
+                    LOGE("CdxParserPrepare fail");
                     m3u9Parser->mErrno = PSR_UNKNOWN_ERR;
                 }
                 goto _exit;
@@ -200,7 +200,7 @@ static cdx_int32 M3u9ParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             ret = CdxParserGetMediaInfo(m3u9Parser->child, &mediaInfo);
             if(ret < 0)
             {
-                CDX_LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
+                LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
                 m3u9Parser->mErrno = PSR_UNKNOWN_ERR;
                 goto _exit;
             }
@@ -209,7 +209,7 @@ static cdx_int32 M3u9ParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             m3u9Parser->fpVideoStream = fopen(m3u9Parser->url, "wb");
             if (!m3u9Parser->fpVideoStream)
             {
-                CDX_LOGE("open video stream debug file failure errno(%d)", errno);
+                LOGE("open video stream debug file failure errno(%d)", errno);
             }
 #endif
 #if _SAVE_AUDIO_STREAM
@@ -217,7 +217,7 @@ static cdx_int32 M3u9ParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             m3u9Parser->fpAudioStream = fopen(m3u9Parser->url, "wb");
             if (!m3u9Parser->fpAudioStream)
             {
-                CDX_LOGE("open audio stream debug file failure errno(%d)", errno);
+                LOGE("open audio stream debug file failure errno(%d)", errno);
             }
 #endif
             ret = CdxParserPrefetch(m3u9Parser->child, pkt);
@@ -225,7 +225,7 @@ static cdx_int32 M3u9ParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             {
                 if(!m3u9Parser->forceStop)
                 {
-                    CDX_LOGE(" prefetch error! ret(%d)", ret);
+                    LOGE(" prefetch error! ret(%d)", ret);
                     m3u9Parser->mErrno = PSR_UNKNOWN_ERR;
                 }
                 goto _exit;
@@ -234,7 +234,7 @@ static cdx_int32 M3u9ParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
         else
         {
             m3u9Parser->mErrno = mErrno;
-            CDX_LOGE("CdxParserPrefetch mErrno = %d", mErrno);
+            LOGE("CdxParserPrefetch mErrno = %d", mErrno);
             goto _exit;
         }
     }
@@ -245,7 +245,7 @@ static cdx_int32 M3u9ParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     m3u9Parser->status = CDX_PSR_PREFETCHED;
     pthread_mutex_unlock(&m3u9Parser->statusLock);
     pthread_cond_signal(&m3u9Parser->cond);
-    //CDX_LOGD("CdxParserPrefetch pkt->pts=%lld, pkt->type=%d, "
+    //LOGD("CdxParserPrefetch pkt->pts=%lld, pkt->type=%d, "
     //"pkt->length=%d", pkt->pts, pkt->type, pkt->length);
     return 0;
 _exit:
@@ -261,7 +261,7 @@ static cdx_int32 M3u9ParserRead(CdxParserT *parser, CdxPacketT *pkt)
     CdxM3u9Parser *m3u9Parser = (CdxM3u9Parser*)parser;
     if(m3u9Parser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
+        LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
         m3u9Parser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -292,7 +292,7 @@ static cdx_int32 M3u9ParserRead(CdxParserT *parser, CdxPacketT *pkt)
             }
             else
             {
-                CDX_LOGE("m3u9Parser->fpVideoStream == NULL");
+                LOGE("m3u9Parser->fpVideoStream == NULL");
             }
         }
 #endif
@@ -310,7 +310,7 @@ static cdx_int32 M3u9ParserRead(CdxParserT *parser, CdxPacketT *pkt)
             }
             else
             {
-                CDX_LOGE("m3u9Parser->fpAudioStream == NULL");
+                LOGE("m3u9Parser->fpAudioStream == NULL");
             }
         }
 #endif
@@ -323,7 +323,7 @@ static cdx_int32 M3u9ParserRead(CdxParserT *parser, CdxPacketT *pkt)
 }
 cdx_int32 M3u9ParserForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("M3u9ParserForceStop start");
+    LOGI("M3u9ParserForceStop start");
     CdxM3u9Parser *m3u9Parser = (CdxM3u9Parser*)parser;
     int ret;
 
@@ -334,7 +334,7 @@ cdx_int32 M3u9ParserForceStop(CdxParserT *parser)
         ret = CdxParserForceStop(m3u9Parser->child);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserForceStop fail, ret(%d)", ret);
+            LOGE("CdxParserForceStop fail, ret(%d)", ret);
             //m3u9Parser->mErrno = CdxParserGetStatus(m3u9Parser->child);
             //return -1;
         }
@@ -344,7 +344,7 @@ cdx_int32 M3u9ParserForceStop(CdxParserT *parser)
         ret = CdxStreamForceStop(m3u9Parser->childStream);
         if(ret < 0)
         {
-            CDX_LOGW("CdxStreamForceStop fail");
+            LOGW("CdxStreamForceStop fail");
             //hlsParser->mErrno = PSR_UNKNOWN_ERR;
         }
     }
@@ -355,18 +355,18 @@ cdx_int32 M3u9ParserForceStop(CdxParserT *parser)
     pthread_mutex_unlock(&m3u9Parser->statusLock);
     m3u9Parser->mErrno = PSR_USER_CANCEL;
     m3u9Parser->status = CDX_PSR_IDLE;
-    CDX_LOGI("M3u9ParserForceStop end");
+    LOGI("M3u9ParserForceStop end");
     return 0;
     
 }
 
 cdx_int32 M3u9ParserClrForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("M3u9ParserClrForceStop start");
+    LOGI("M3u9ParserClrForceStop start");
     CdxM3u9Parser *m3u9Parser = (CdxM3u9Parser*)parser;
     if(m3u9Parser->status != CDX_PSR_IDLE)
     {
-        CDX_LOGW("m3u9Parser->status != CDX_PSR_IDLE");
+        LOGW("m3u9Parser->status != CDX_PSR_IDLE");
         m3u9Parser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -376,7 +376,7 @@ cdx_int32 M3u9ParserClrForceStop(CdxParserT *parser)
         int ret = CdxParserClrForceStop(m3u9Parser->child);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserClrForceStop fail, ret(%d)", ret);
+            LOGE("CdxParserClrForceStop fail, ret(%d)", ret);
             return ret;
         }
     }
@@ -385,11 +385,11 @@ cdx_int32 M3u9ParserClrForceStop(CdxParserT *parser)
         int ret = CdxStreamClrForceStop(m3u9Parser->childStream);
         if(ret < 0)
         {
-            CDX_LOGW("CdxStreamClrForceStop fail");
+            LOGW("CdxStreamClrForceStop fail");
             //hlsParser->mErrno = PSR_UNKNOWN_ERR;
         }
     }
-    CDX_LOGI("M3u9ParserClrForceStop end");
+    LOGI("M3u9ParserClrForceStop end");
     return 0;
     
 }
@@ -404,7 +404,7 @@ static int M3u9ParserControl(CdxParserT *parser, int cmd, void *param)
     {
         case CDX_PSR_CMD_SWITCH_AUDIO:
         case CDX_PSR_CMD_SWITCH_SUBTITLE:
-            CDX_LOGI(" m3u9 parser is not support switch stream yet!!!");
+            LOGI(" m3u9 parser is not support switch stream yet!!!");
             break;
         case CDX_PSR_CMD_SET_FORCESTOP:
             return M3u9ParserForceStop(parser);
@@ -424,18 +424,18 @@ cdx_int32 M3u9ParserGetStatus(CdxParserT *parser)
 }
 cdx_int32 M3u9ParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType seekModeType)
 {
-    CDX_LOGI("M3u9ParserSeekTo start, timeUs = %lld", timeUs);
+    LOGI("M3u9ParserSeekTo start, timeUs = %lld", timeUs);
     CdxM3u9Parser *m3u9Parser = (CdxM3u9Parser *)parser;
     m3u9Parser->mErrno = PSR_OK;
     if(timeUs < 0)
     {
-        CDX_LOGE("timeUs invalid");
+        LOGE("timeUs invalid");
         m3u9Parser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     else if(timeUs >= m3u9Parser->mPlaylist->durationUs)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         m3u9Parser->mErrno = PSR_EOS;
         return 0;
     }
@@ -444,7 +444,7 @@ cdx_int32 M3u9ParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType se
     if(m3u9Parser->forceStop)
     {
         m3u9Parser->mErrno = PSR_USER_CANCEL;
-        CDX_LOGE("PSR_USER_CANCEL");
+        LOGE("PSR_USER_CANCEL");
         pthread_mutex_unlock(&m3u9Parser->statusLock);
         return -1;
     }
@@ -464,7 +464,7 @@ cdx_int32 M3u9ParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType se
     }
     if(!item)
     {
-        CDX_LOGE("unknown error");
+        LOGE("unknown error");
         m3u9Parser->mErrno = PSR_UNKNOWN_ERR;
         ret = -1;
         goto _exit;
@@ -499,7 +499,7 @@ cdx_int32 M3u9ParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType se
             m3u9Parser->curSeqNum = -1;
             if(!m3u9Parser->forceStop)
             {
-                CDX_LOGE("CdxParserPrepare fail");
+                LOGE("CdxParserPrepare fail");
                 m3u9Parser->mErrno = PSR_UNKNOWN_ERR;
             }
             goto _exit;
@@ -508,14 +508,14 @@ cdx_int32 M3u9ParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType se
         ret = CdxParserGetMediaInfo(m3u9Parser->child, &mediaInfo);
         if(ret < 0)
         {
-            CDX_LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
+            LOGE(" CdxParserGetMediaInfo fail. ret(%d)", ret);
             m3u9Parser->mErrno = PSR_UNKNOWN_ERR;
             goto _exit;
         }
         m3u9Parser->baseTimeUs = item->baseTimeUs;
         m3u9Parser->curSeqNum = item->seqNum;
     }
-    CDX_LOGI("mDurationUs = %lld", mDurationUs);
+    LOGI("mDurationUs = %lld", mDurationUs);
 #if 1
     ret = CdxParserSeekTo(m3u9Parser->child, timeUs - mDurationUs, seekModeType);
 #endif
@@ -525,19 +525,19 @@ _exit:
     m3u9Parser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&m3u9Parser->statusLock);
     pthread_cond_signal(&m3u9Parser->cond);
-    CDX_LOGI("M3u9ParserSeekTo end, ret = %d", ret);
+    LOGI("M3u9ParserSeekTo end, ret = %d", ret);
     return ret;
 }
 
 
 static cdx_int32 M3u9ParserClose(CdxParserT *parser)
 {
-    CDX_LOGI("M3u9ParserClose start");
+    LOGI("M3u9ParserClose start");
     CdxM3u9Parser *m3u9Parser = (CdxM3u9Parser *)parser;
     int ret = M3u9ParserForceStop(parser);
     if(ret < 0)
     {
-        CDX_LOGW("HlsParserForceStop fail");
+        LOGW("HlsParserForceStop fail");
     }
     if(m3u9Parser->child)
     {
@@ -549,7 +549,7 @@ static cdx_int32 M3u9ParserClose(CdxParserT *parser)
         ret = CdxStreamClose(m3u9Parser->childStream);
         if(ret < 0)
         {
-            CDX_LOGW("CdxStreamForceStop fail");
+            LOGW("CdxStreamForceStop fail");
         }
     }
     ret = CdxStreamClose(m3u9Parser->cdxStream);
@@ -569,7 +569,7 @@ static cdx_int32 M3u9ParserClose(CdxParserT *parser)
     pthread_mutex_destroy(&m3u9Parser->statusLock);
     pthread_cond_destroy(&m3u9Parser->cond);
     free(m3u9Parser);
-    CDX_LOGI("M3u9ParserClose end");
+    LOGI("M3u9ParserClose end");
     return 0;
 }
 
@@ -581,12 +581,12 @@ cdx_uint32 M3u9ParserAttribute(CdxParserT *parser) /*return falgs define as open
 
 int M3u9ParserInit(CdxParserT *parser)
 {
-    CDX_LOGI("PmpParserInit start");
+    LOGI("PmpParserInit start");
     CdxM3u9Parser *m3u9Parser = (CdxM3u9Parser*)parser;
 
     if(DownloadParseM3u9(m3u9Parser) < 0)
     {
-        CDX_LOGE("downloadParseM3u9 fail");
+        LOGE("downloadParseM3u9 fail");
         goto _exit;
     }
 
@@ -595,7 +595,7 @@ int M3u9ParserInit(CdxParserT *parser)
     PlaylistItem *item = findItemBySeqNumForM3u9(playlist, m3u9Parser->curSeqNum);
     if(!item)
     {
-        CDX_LOGE("findItemBySeqNum fail");
+        LOGE("findItemBySeqNum fail");
         goto _exit;
     }
     SetDataSouceForSegment(item, &m3u9Parser->cdxDataSource);
@@ -604,7 +604,7 @@ int M3u9ParserInit(CdxParserT *parser)
         &m3u9Parser->child, &m3u9Parser->childStream, NULL, NULL);
     if(ret < 0)
     {
-        CDX_LOGE("CdxParserPrepare fail");
+        LOGE("CdxParserPrepare fail");
         goto _exit;
     }
 
@@ -612,7 +612,7 @@ int M3u9ParserInit(CdxParserT *parser)
     ret = CdxParserGetMediaInfo(m3u9Parser->child, pMediaInfo);
     if(ret < 0)
     {
-        CDX_LOGE("m3u9Parser->child getMediaInfo error!");
+        LOGE("m3u9Parser->child getMediaInfo error!");
         goto _exit;
     }
 #if _SAVE_VIDEO_STREAM || _SAVE_AUDIO_STREAM
@@ -623,7 +623,7 @@ int M3u9ParserInit(CdxParserT *parser)
     m3u9Parser->fpVideoStream = fopen(m3u9Parser->url, "wb");
     if (!m3u9Parser->fpVideoStream)
     {
-        CDX_LOGE("open video stream debug file failure errno(%d)", errno);
+        LOGE("open video stream debug file failure errno(%d)", errno);
     }
 #endif
 #if _SAVE_AUDIO_STREAM
@@ -631,7 +631,7 @@ int M3u9ParserInit(CdxParserT *parser)
     m3u9Parser->fpAudioStream = fopen(m3u9Parser->url, "wb");
     if (!m3u9Parser->fpAudioStream)
     {
-        CDX_LOGE("open audio stream debug file failure errno(%d)", errno);
+        LOGE("open audio stream debug file failure errno(%d)", errno);
     }
 #endif
     pMediaInfo->fileSize = -1;
@@ -647,7 +647,7 @@ int M3u9ParserInit(CdxParserT *parser)
     m3u9Parser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&m3u9Parser->statusLock);
     pthread_cond_signal(&m3u9Parser->cond);
-    CDX_LOGI("CdxM3u9OpenThread success");
+    LOGI("CdxM3u9OpenThread success");
     return 0;
     
 _exit:
@@ -656,7 +656,7 @@ _exit:
     m3u9Parser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&m3u9Parser->statusLock);
     pthread_cond_signal(&m3u9Parser->cond);
-    CDX_LOGE("CdxM3u9OpenThread fail");
+    LOGE("CdxM3u9OpenThread fail");
     return -1;
 }
 static struct CdxParserOpsS m3u9ParserOps =
@@ -677,7 +677,7 @@ CdxParserT *M3u9ParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     CdxM3u9Parser *m3u9Parser = CdxMalloc(sizeof(CdxM3u9Parser));
     if(!m3u9Parser)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         CdxStreamClose(stream);
         return NULL;
     }
@@ -693,7 +693,7 @@ CdxParserT *M3u9ParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     ret = CdxStreamGetMetaData(stream, "uri", (void **)&tmpUrl);
     if(ret < 0)
     {
-        CDX_LOGE("get the uri of the stream error!");
+        LOGE("get the uri of the stream error!");
         goto open_error;
     }
     m3u9Parser->cdxStream = stream;
@@ -701,7 +701,7 @@ CdxParserT *M3u9ParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     m3u9Parser->m3u9Url = malloc(urlLen);
     if(!m3u9Parser->m3u9Url)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         goto open_error;
     }
     memcpy(m3u9Parser->m3u9Url, tmpUrl, urlLen);
@@ -710,10 +710,10 @@ CdxParserT *M3u9ParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     m3u9Parser->m3u9Buf = malloc(m3u9Parser->m3u9BufSize);
     if (!m3u9Parser->m3u9Buf)
     {
-        CDX_LOGE("allocate memory fail for m3u8 file");
+        LOGE("allocate memory fail for m3u8 file");
         goto open_error;
     }
-    //memset(m3u9Parser->m3u9Buf, 0, m3u9Parser->m3u9BufSize);//ÓÉÃ¿´ÎÏÂÔØm3u9ÎÄ¼þÊ±ÖØÖÃ
+    //memset(m3u9Parser->m3u9Buf, 0, m3u9Parser->m3u9BufSize);//ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½m3u9ï¿½Ä¼ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
 
     m3u9Parser->base.ops = &m3u9ParserOps;
     m3u9Parser->base.type = CDX_PARSER_M3U9;
@@ -740,14 +740,14 @@ open_error:
 
 cdx_uint32 M3u9ParserProbe(CdxStreamProbeDataT *probeData)
 {
-    CDX_LOGD("M3u9ParserProbe");
+    LOGD("M3u9ParserProbe");
     if(probeData->len < 9)
     {
-        CDX_LOGE("Probe data is not enough.");
+        LOGE("Probe data is not enough.");
         return 0;
     }
     int ret = M3u9Probe((const char *)probeData->buf, probeData->len);
-    CDX_LOGD("M3u9Probe = %d", ret);
+    LOGD("M3u9Probe = %d", ret);
     return ret*100;
     
 }

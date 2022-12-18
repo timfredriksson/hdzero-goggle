@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "PlaylistParser"
 #include "PlaylistParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,8 +47,8 @@ PlaylistItem *findItemByIndexForPlaylist(Playlist *playlist, int index)
 }
 
 //***********************************************************//
-/* baseURL,url¶¼ÊÇ±ê×¼µÄ×Ö·û´®£¬¼´±ØÐëÒÔ¡®\0¡¯½áÊø£¬·ñÔòÕâÀïµÄstrstrµÈ²éÕÒÎÞ·¨ÖÕÖ¹*/
-/* ÕâÀïÈç¹ûbaseURL£¬urlÇ°ÃæÊÇÒ»Ð©Ç°µ¼µÄ¿Õ¸ñ£¬Ôòstrncasecmpº¯Êý»á³ö´í£¬ËùÒÔ×îºÃÔÚÒ»¿ªÊ¼²Ã¼ôÇ°ÃæµÄ¿Õ¸ñ*/
+/* baseURL,urlï¿½ï¿½ï¿½Ç±ï¿½×¼ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¡ï¿½\0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½strstrï¿½È²ï¿½ï¿½ï¿½ï¿½Þ·ï¿½ï¿½ï¿½Ö¹*/
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½baseURLï¿½ï¿½urlÇ°ï¿½ï¿½ï¿½ï¿½Ò»Ð©Ç°ï¿½ï¿½ï¿½Ä¿Õ¸ï¿½ï¿½ï¿½strncasecmpï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ê¼ï¿½Ã¼ï¿½Ç°ï¿½ï¿½Ä¿Õ¸ï¿½*/
 //***********************************************************//
 static status_t MakeURL(const char *baseURL, const char *url, char **out)
 {
@@ -67,7 +67,7 @@ static status_t MakeURL(const char *baseURL, const char *url, char **out)
         *out = malloc(strlen(url) + 1);
         if(!*out)
         {
-            CDX_LOGE("err_no_memory");
+            LOGE("err_no_memory");
             return err_no_memory;
         }
         memcpy(*out, url, strlen(url) + 1);
@@ -76,7 +76,7 @@ static status_t MakeURL(const char *baseURL, const char *url, char **out)
 
     cdx_uint32 memSize = 0;
     char *temp;
-    char *protocolEnd = strstr(baseURL, "//") + 2;/*ÎªÁËÆÁ±Îhttp://£¬https://Ö®¼äµÄ²îÒì*/
+    char *protocolEnd = strstr(baseURL, "//") + 2;/*Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½http://ï¿½ï¿½https://Ö®ï¿½ï¿½Ä²ï¿½ï¿½ï¿½*/
 
     if (url[0] == '/')
     {
@@ -89,11 +89,11 @@ static status_t MakeURL(const char *baseURL, const char *url, char **out)
             temp = (char *)malloc(memSize);
             if (temp == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 return err_no_memory;
             }
             memcpy(temp, baseURL, pathStart - baseURL);
-            memcpy(temp + (pathStart - baseURL), url, strlen(url) + 1);/*urlÊÇÒÔ'\0'½áÎ²µÄ*/
+            memcpy(temp + (pathStart - baseURL), url, strlen(url) + 1);/*urlï¿½ï¿½ï¿½ï¿½'\0'ï¿½ï¿½Î²ï¿½ï¿½*/
         }
         else
         {
@@ -101,7 +101,7 @@ static status_t MakeURL(const char *baseURL, const char *url, char **out)
             temp = (char *)malloc(memSize);
             if (temp == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 return err_no_memory;
             }
             memcpy(temp, baseURL, strlen(baseURL));
@@ -121,13 +121,13 @@ static status_t MakeURL(const char *baseURL, const char *url, char **out)
                 if(*slashPos == '/')
                     break;
             }
-            if (slashPos >= protocolEnd)/*ÕÒµ½*/
+            if (slashPos >= protocolEnd)/*ï¿½Òµï¿½*/
             {
                 memSize = slashPos - baseURL + strlen(url) + 2;
                 temp = (char *)malloc(memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return err_no_memory;
                 }
                 memcpy(temp, baseURL, slashPos - baseURL);
@@ -140,7 +140,7 @@ static status_t MakeURL(const char *baseURL, const char *url, char **out)
                 temp = (char *)malloc(memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return err_no_memory;
                 }
                 memcpy(temp, baseURL, n);
@@ -155,7 +155,7 @@ static status_t MakeURL(const char *baseURL, const char *url, char **out)
             temp = (char *)malloc(memSize);
             if (temp == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 return err_no_memory;
             }
             memcpy(temp, baseURL, n);
@@ -165,13 +165,13 @@ static status_t MakeURL(const char *baseURL, const char *url, char **out)
         {
             slashPos = strrchr(protocolEnd, '/');
 
-            if (slashPos != NULL)/*ÕÒµ½*/
+            if (slashPos != NULL)/*ï¿½Òµï¿½*/
             {
                 memSize = slashPos - baseURL + strlen(url) + 2;
                 temp = (char *)malloc(memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return err_no_memory;
                 }
                 memcpy(temp, baseURL, slashPos - baseURL);
@@ -184,7 +184,7 @@ static status_t MakeURL(const char *baseURL, const char *url, char **out)
                 temp = (char *)malloc(memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return err_no_memory;
                 }
                 memcpy(temp, baseURL, n);
@@ -226,11 +226,11 @@ void destoryPlaylist_P(Playlist *playList)
     return ;
 }
 
-/*ÅÐ¶ÏÊÇ·ñPlaylistÎÄ¼þ*/
+/*ï¿½Ð¶ï¿½ï¿½Ç·ï¿½Playlistï¿½Ä¼ï¿½*/
 bool PlaylistProbe(const char *data, cdx_uint32 size)
 {
     cdx_uint32 offset = 0;
-    while (offset < size && isspace(data[offset])) //isspaceÖÐ°üº¬¡®\n¡¯\r,ËùÒÔÒÑ¾­ÅÅ³ýÁË¿ÕÐÐµÄÇé¿ö
+    while (offset < size && isspace(data[offset])) //isspaceï¿½Ð°ï¿½ï¿½ï¿½ï¿½ï¿½\nï¿½ï¿½\r,ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½Å³ï¿½ï¿½Ë¿ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½
     {
         offset++;
     }
@@ -253,17 +253,17 @@ status_t PlaylistParse(const void *_data, cdx_uint32 size, Playlist **P, const c
     Playlist *playList = malloc(sizeof(Playlist));
     if(!playList)
     {
-        CDX_LOGE("err_no_memory");
+        LOGE("err_no_memory");
         return err_no_memory;
     }
     memset(playList, 0x00, sizeof(Playlist));
 
-    CDX_LOGV("baseURI=%s", baseURI);
+    LOGV("baseURI=%s", baseURI);
     int baseLen = strlen(baseURI);
     playList->mBaseURI = malloc(baseLen+1);
     if(!playList->mBaseURI)
     {
-        CDX_LOGE("err_no_memory");
+        LOGE("err_no_memory");
         err = err_no_memory;
         goto _err;
     }
@@ -272,7 +272,7 @@ status_t PlaylistParse(const void *_data, cdx_uint32 size, Playlist **P, const c
     while(offset < size)
     {
         while(offset < size && isspace(data[offset]))
-            //isspaceÖÐ°üº¬¡®\n¡¯\r,ËùÒÔÒÑ¾­ÅÅ³ýÁË¿ÕÐÐµÄÇé¿ö
+            //isspaceï¿½Ð°ï¿½ï¿½ï¿½ï¿½ï¿½\nï¿½ï¿½\r,ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½Å³ï¿½ï¿½Ë¿ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½
         {
             offset++;
         }
@@ -295,9 +295,9 @@ status_t PlaylistParse(const void *_data, cdx_uint32 size, Playlist **P, const c
         while(isspace(data[offsetData-1]))
         {
             --offsetData;
-        }/*offsetDataµÄÇ°Ò»¸öÎ»ÖÃdata[offsetData-1]ÊÇÓÐÐ§×Ö·û£¬
-        ²»»áÊÇ'\r'ºÍ'\n'£¬data[offsetData]ÊÇ'\r'»ò'\n'£¬offsetData - offsetÊÇÓÐÐ§×Ö·ûµÄ¸öÊý*/
-        if ((offsetData - offset)<=0)        /*ËµÃ÷ÊÇ¿ÕÐÐ*/
+        }/*offsetDataï¿½ï¿½Ç°Ò»ï¿½ï¿½Î»ï¿½ï¿½data[offsetData-1]ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ö·ï¿½ï¿½ï¿½
+        ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½'\r'ï¿½ï¿½'\n'ï¿½ï¿½data[offsetData]ï¿½ï¿½'\r'ï¿½ï¿½'\n'ï¿½ï¿½offsetData - offsetï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ö·ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½*/
+        if ((offsetData - offset)<=0)        /*Ëµï¿½ï¿½ï¿½Ç¿ï¿½ï¿½ï¿½*/
         {
             offset = offsetLF + 1;
             continue;
@@ -307,14 +307,14 @@ status_t PlaylistParse(const void *_data, cdx_uint32 size, Playlist **P, const c
             line = (char *)malloc(offsetData - offset + 1);
             if(!line)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 err = err_no_memory;
                 goto _err;
             }
             memcpy(line, &data[offset], offsetData - offset);
-            /*´Ódata[offset]¶Áµ½data[offsetData-1]¹¹³ÉÒ»ÐÐ*/
+            /*ï¿½ï¿½data[offset]ï¿½ï¿½ï¿½ï¿½data[offsetData-1]ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½*/
             line[offsetData - offset] = '\0';
-            CDX_LOGI("#%s#", line);
+            LOGI("#%s#", line);
         }
 
 //TODO
@@ -322,7 +322,7 @@ status_t PlaylistParse(const void *_data, cdx_uint32 size, Playlist **P, const c
         PlaylistItem *item= (PlaylistItem*)malloc(sizeof(PlaylistItem));
         if (!item)
         {
-            CDX_LOGE("err_no_memory");
+            LOGE("err_no_memory");
             err = err_no_memory;
             goto _err;
         }
@@ -334,10 +334,10 @@ status_t PlaylistParse(const void *_data, cdx_uint32 size, Playlist **P, const c
         err = MakeURL(playList->mBaseURI, line, &item->mURI);
         if (err != OK)
         {
-            CDX_LOGE("err = %d", err);
+            LOGE("err = %d", err);
             goto _err;
         }
-        //item->next = NULL;//memsetÒÑ¾­ÇåÁãÁË
+        //item->next = NULL;//memsetï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if (playList->mItems == NULL)
         {
             playList->mItems = item;
@@ -359,7 +359,7 @@ status_t PlaylistParse(const void *_data, cdx_uint32 size, Playlist **P, const c
     }
     if(playList->mNumItems <= 0)
     {
-        CDX_LOGE("playList->mNumItems <= 0");
+        LOGE("playList->mNumItems <= 0");
         goto _err;
     }
     *P = playList;

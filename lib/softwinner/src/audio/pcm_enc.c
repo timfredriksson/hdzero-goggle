@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "aenc_sw_lib.h"
-#include "alib_log.h"
+#include <log/log.h>
 
 #define ENCODEEND   (ERR_AUDIO_ENC_ABSEND)
 #define ERROR       (ERR_AUDIO_ENC_UNKNOWN)
@@ -170,7 +170,7 @@ int PCMframeEnc(struct __AudioENC_AC320 *p, char *OutBuffer,int *OutBuffLen)
 		//flash time
 	p->EncoderCom->ulNowTimeMS = (unsigned int)((double)p->EncoderCom->framecount * DECODEMPEGTS *1000/((double)p->AudioBsEncInf->InSamplerate*2*p->AudioBsEncInf->InChan));
 
-		alib_logv("p->EncoderCom->ulNowTimeMS: %d", p->EncoderCom->ulNowTimeMS);
+		LOGV("p->EncoderCom->ulNowTimeMS: %d", p->EncoderCom->ulNowTimeMS);
 		read_sum = ReadPcmDataForEnc((void *)(OutBuffer+4),DECODEMPEGTS, p->pPcmBufManager);
 
 		//big little
@@ -192,7 +192,7 @@ int PCMframeEnc(struct __AudioENC_AC320 *p, char *OutBuffer,int *OutBuffLen)
 		}
 		else
 		{
-			alib_loge("unsupport audio Sample rate: %d", p->AudioBsEncInf->InSamplerate);
+			LOGE("unsupport audio Sample rate: %d", p->AudioBsEncInf->InSamplerate);
 		}
 
 		OutBuffer[3] =  sampling_frequence<<3 | 0x01;
@@ -214,7 +214,7 @@ int PCMframeEnc(struct __AudioENC_AC320 *p, char *OutBuffer,int *OutBuffLen)
         nEncodeOutSize = MAXDECODESAMPLE * (p->AudioBsEncInf->SamplerBits>>3)*p->AudioBsEncInf->InChan;
         if(nEncodeOutSize > OUT_ENCODE_BUFFER_SIZE)
         {
-            alib_loge("(f:%s, l:%d) must modify code! encodeOutBufSize[%d] < len[%d]", __FUNCTION__, __LINE__, OUT_ENCODE_BUFFER_SIZE, nEncodeOutSize);
+            LOGE("(f:%s, l:%d) must modify code! encodeOutBufSize[%d] < len[%d]", __FUNCTION__, __LINE__, OUT_ENCODE_BUFFER_SIZE, nEncodeOutSize);
             nEncodeOutSize = OUT_ENCODE_BUFFER_SIZE;
         }
 		read_sum = ReadPcmDataForEnc((void *)OutBuffer, nEncodeOutSize, p->pPcmBufManager);

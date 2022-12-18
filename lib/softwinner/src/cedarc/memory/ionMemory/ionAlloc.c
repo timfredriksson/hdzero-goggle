@@ -25,8 +25,9 @@
 //#define CONFIG_LOG_LEVEL    OPTION_LOG_LEVEL_DETAIL
 #define LOG_TAG "ionAlloc"
 
-#include "log.h"
+#include <log/log.h>
 #include "CdcUtil.h"
+#include "CdxTypes.h"
 #include "ionAllocList.h"
 #include "ionAllocEntry.h"
 #include "sc_interface.h"
@@ -98,10 +99,10 @@ static int getPhyAddr(int nIonFd, uintptr_t handle, void *pIommuBuf,
 
         if(pIommuBuffer->iommu_addr & 0xff)
         {
-            loge("get iommu addr maybe wrong:%x\n", pIommuBuffer->iommu_addr);
+            LOGE("get iommu addr maybe wrong:%x", pIommuBuffer->iommu_addr);
             return -1;
         }
-        logv("ion_alloc_palloc: fd:%d, iommu_addr:%x\n", pIommuBuffer->fd,
+        LOGV("ion_alloc_palloc: fd:%d, iommu_addr:%x", pIommuBuffer->fd,
             pIommuBuffer->iommu_addr);
 
         *pAddr = (unsigned long)pIommuBuffer->iommu_addr;
@@ -117,10 +118,10 @@ static int getPhyAddr(int nIonFd, uintptr_t handle, void *pIommuBuf,
         custom_data.aw_arg = (unsigned long)&phys_data;
         int ret = ioctl(nIonFd, AW_MEM_ION_IOC_CUSTOM, &custom_data);
         if(ret) {
-            loge("ION_IOC_CUSTOM err, ret %d\n", ret);
+            LOGE("ION_IOC_CUSTOM err, ret %d", ret);
             return -1;
         }
-        logv("CdcIonGetPhyAdrVe:%x, fd:%d, handle:%d\n",phys_data.phys_addr, fd, handle);
+        LOGV("CdcIonGetPhyAdrVe:%x, fd:%d, handle:%d",phys_data.phys_addr, nIonFd, handle);
 
         *pAddr = (unsigned long)phys_data.phys_addr;
     }
@@ -134,24 +135,24 @@ static int ion_alloc_get_total_size();
 /*funciton begin*/
 int ion_alloc_open()
 {
-    logd("begin ion_alloc_open \n");
+    LOGD("begin ion_alloc_open ");
 
     pthread_mutex_lock(&g_mutex_alloc);
     if (g_alloc_context != NULL)
     {
-        logv("ion allocator has already been created \n");
+        LOGV("ion allocator has already been created ");
         goto SUCCEED_OUT;
     }
 
     g_alloc_context = (ion_alloc_context*)malloc(sizeof(ion_alloc_context));
     if (g_alloc_context == NULL)
     {
-        loge("create ion allocator failed, out of memory \n");
+        LOGE("create ion allocator failed, out of memory ");
         goto ERROR_OUT;
     }
     else
     {
-        logv("pid: %d, g_alloc_context = %p \n", getpid(), g_alloc_context);
+        LOGV("pid: %d, g_alloc_context = %p ", getpid(), g_alloc_context);
     }
 
     memset((void*)g_alloc_context, 0, sizeof(ion_alloc_context));
@@ -160,23 +161,23 @@ int ion_alloc_open()
     VeOpsS* veOps = GetVeOpsS(type);
     if(veOps == NULL)
     {
-        loge("get ve ops failed");
+        LOGE("get ve ops failed");
         goto ERROR_OUT;
     }
     VeConfig mVeConfig;
     memset(&mVeConfig, 0, sizeof(VeConfig));
     mVeConfig.nDecoderFlag = 1;
 
-    logd("get offset by ve");
+    LOGD("get offset by ve");
     void* pVeopsSelf = CdcVeInit(veOps,&mVeConfig);
     if(pVeopsSelf == NULL)
     {
-        loge("init ve ops failed");
+        LOGE("init ve ops failed");
         CdcVeRelease(veOps, pVeopsSelf);
         goto ERROR_OUT;
     }
     g_alloc_context->phyOffset = CdcVeGetPhyOffset(veOps, pVeopsSelf);
-    logd("** phy offset = %x",g_alloc_context->phyOffset);
+    LOGD("** phy offset = %x",g_alloc_context->phyOffset);
 
     CdcVeRelease(veOps, pVeopsSelf);
 
@@ -185,14 +186,14 @@ int ion_alloc_open()
 
     if (g_alloc_context->fd <= 0)
     {
-        loge("open %s failed \n", DEV_NAME);
+        LOGE("open %s failed ", DEV_NAME);
         goto ERROR_OUT;
     }
 
 #if DEBUG_ION_REF==1
     cdx_use_mem = 0;
     memset(&ion_buf_nodes_test, 0, sizeof(ion_buf_nodes_test));
-    logd("ion_open, cdx_use_mem=[%dByte].", cdx_use_mem);
+    LOGD("ion_open, cdx_use_mem=[%dByte].", cdx_use_mem);
     ion_alloc_get_total_size();
 #endif
 
@@ -225,24 +226,24 @@ void ion_alloc_close()
 {
     struct aw_mem_list_head * pos, *q;
 
-    logv("ion_alloc_close \n");
+    LOGV("ion_alloc_close ");
 
     pthread_mutex_lock(&g_mutex_alloc);
     if (--g_alloc_context->ref_cnt <= 0)
     {
-        logv("pid: %d, release g_alloc_context = %p \n", getpid(), g_alloc_context);
+        LOGV("pid: %d, release g_alloc_context = %p ", getpid(), g_alloc_context);
 
         aw_mem_list_for_each_safe(pos, q, &g_alloc_context->list)
         {
             buffer_node * tmp;
             tmp = aw_mem_list_entry(pos, buffer_node, i_list);
-            logv("ion_alloc_close del item phy= 0x%lx vir= 0x%lx, size= %d \n", \
+            LOGV("ion_alloc_close del item phy= 0x%lx vir= 0x%lx, size= %d ", \
                 tmp->phy, tmp->vir, tmp->size);
             aw_mem_list_del(pos);
             free(tmp);
         }
 #if DEBUG_ION_REF==1
-        logd("ion_close, cdx_use_mem=[%d MB]", cdx_use_mem/1024/1024);
+        LOGD("ion_close, cdx_use_mem=[%d MB]", cdx_use_mem/1024/1024);
         ion_alloc_get_total_size();
 #endif
         close(g_alloc_context->fd);
@@ -253,7 +254,7 @@ void ion_alloc_close()
     }
     else
     {
-        logv("ref cnt: %d > 0, do not free \n", g_alloc_context->ref_cnt);
+        LOGV("ref cnt: %d > 0, do not free ", g_alloc_context->ref_cnt);
     }
     pthread_mutex_unlock(&g_mutex_alloc);
 
@@ -265,7 +266,7 @@ void ion_alloc_close()
     {
         if(ion_buf_nodes_test[i].addr != 0 || ion_buf_nodes_test[i].size != 0){
 
-            loge("ion mem leak????  addr->[0x%lx], leak size->[%dByte]", \
+            LOGE("ion mem leak????  addr->[0x%lx], leak size->[%dByte]", \
                 ion_buf_nodes_test[i].addr, ion_buf_nodes_test[i].size);
             counter ++;
         }
@@ -273,11 +274,11 @@ void ion_alloc_close()
 
     if(counter != 0)
     {
-        loge("my god, have [%d]blocks ion mem leak.!!!!", counter);
+        LOGE("my god, have [%d]blocks ion mem leak.!!!!", counter);
     }
     else
     {
-        logd("well done, no ion mem leak.");
+        LOGD("well done, no ion mem leak.");
     }
 #endif
     //--------------
@@ -301,14 +302,14 @@ void* ion_alloc_palloc_base(int size, void *veOps, void *pVeopsSelf, unsigned ch
 
     if (g_alloc_context == NULL)
     {
-        loge("ion_alloc do not opened, should call ion_alloc_open() \
+        LOGE("ion_alloc do not opened, should call ion_alloc_open() \
             before ion_alloc_alloc(size) \n");
         goto ALLOC_OUT;
     }
 
     if(size <= 0)
     {
-        loge("can not alloc size 0 \n");
+        LOGE("can not alloc size 0 ");
         goto ALLOC_OUT;
     }
 
@@ -340,7 +341,7 @@ void* ion_alloc_palloc_base(int size, void *veOps, void *pVeopsSelf, unsigned ch
     ret = ioctl(g_alloc_context->fd, AW_MEM_ION_IOC_ALLOC, &alloc_data);
     if (ret)
     {
-        loge("ION_IOC_ALLOC error , size = %d\n", size);
+        LOGE("ION_IOC_ALLOC error , size = %d", size);
         goto ALLOC_OUT;
     }
 
@@ -349,7 +350,7 @@ void* ion_alloc_palloc_base(int size, void *veOps, void *pVeopsSelf, unsigned ch
     ret = ioctl(g_alloc_context->fd, AW_MEM_ION_IOC_MAP, &fd_data);
     if(ret)
     {
-        loge("ION_IOC_MAP err, ret %d, dmabuf fd 0x%08x\n", ret, (unsigned int)fd_data.aw_fd);
+        LOGE("ION_IOC_MAP err, ret %d, dmabuf fd 0x%08x", ret, (unsigned int)fd_data.aw_fd);
         goto ALLOC_OUT;
     }
 
@@ -358,7 +359,7 @@ void* ion_alloc_palloc_base(int size, void *veOps, void *pVeopsSelf, unsigned ch
         PROT_READ|PROT_WRITE, MAP_SHARED, fd_data.aw_fd, 0);
     if((unsigned long)MAP_FAILED == addr_vir)
     {
-        loge("mmap err, ret %lx\n", (unsigned long)addr_vir);
+        LOGE("mmap err, ret %lx", (unsigned long)addr_vir);
         addr_vir = 0;
         goto ALLOC_OUT;
     }
@@ -366,12 +367,12 @@ void* ion_alloc_palloc_base(int size, void *veOps, void *pVeopsSelf, unsigned ch
     alloc_buffer = (buffer_node *)malloc(sizeof(buffer_node));
     if (alloc_buffer == NULL)
     {
-        loge("malloc buffer node failed");
+        LOGE("malloc buffer node failed");
 
         /* unmmap */
         ret = munmap((void*)addr_vir, alloc_data.aw_len);
         if(ret) {
-            loge("munmap err, ret %d\n", ret);
+            LOGE("munmap err, ret %d", ret);
         }
 
         /* close dmabuf fd */
@@ -382,7 +383,7 @@ void* ion_alloc_palloc_base(int size, void *veOps, void *pVeopsSelf, unsigned ch
         ret = ioctl(g_alloc_context->fd, AW_MEM_ION_IOC_FREE, &handle_data);
 
         if(ret) {
-            loge("ION_IOC_FREE err, ret %d\n", ret);
+            LOGE("ION_IOC_FREE err, ret %d", ret);
         }
 
         addr_phy = 0;
@@ -399,7 +400,7 @@ void* ion_alloc_palloc_base(int size, void *veOps, void *pVeopsSelf, unsigned ch
                                  (void *)&iommu_buffer, veOps, pVeopsSelf, &addr_phy);
     if(ret < 0)
     {
-        loge("get phy addr error\n");
+        LOGE("get phy addr error");
         goto ALLOC_OUT;
     }
     memcpy(&alloc_buffer->iommu_buffer, &iommu_buffer, sizeof(struct user_iommu_param));
@@ -410,14 +411,14 @@ void* ion_alloc_palloc_base(int size, void *veOps, void *pVeopsSelf, unsigned ch
     alloc_buffer->fd_data.handle = fd_data.handle;
     alloc_buffer->fd_data.aw_fd = fd_data.aw_fd;
 
-    logv("alloc succeed, addr_phy: 0x%lx, addr_vir: 0x%lx, size: %d", addr_phy, addr_vir, size);
+    LOGV("alloc succeed, addr_phy: 0x%lx, addr_vir: 0x%lx, size: %d", addr_phy, addr_vir, size);
 
     aw_mem_list_add_tail(&alloc_buffer->i_list, &g_alloc_context->list);
 
     //------start-----------------
 #if DEBUG_ION_REF==1
     cdx_use_mem += size;
-    logd("++++++cdx_use_mem = [%d MB], increase size->[%d B], addr_vir=[0x%lx], addr_phy=[0x%lx]", \
+    LOGD("++++++cdx_use_mem = [%d MB], increase size->[%d B], addr_vir=[0x%lx], addr_phy=[0x%lx]", \
         cdx_use_mem/1024/1024, size, addr_vir, addr_phy);
     int i = 0;
     for(i=0; i<ION_BUF_LEN; i++)
@@ -430,7 +431,7 @@ void* ion_alloc_palloc_base(int size, void *veOps, void *pVeopsSelf, unsigned ch
     }
 
     if(i>= ION_BUF_LEN){
-        loge("error, ion buf len is large than [%d]", ION_BUF_LEN);
+        LOGE("error, ion buf len is large than [%d]", ION_BUF_LEN);
     }
 #endif
 //--------------------------------
@@ -462,7 +463,7 @@ void ion_alloc_pfree(void * pbuf, void *veOps, void *pVeopsSelf)
 
     if (0 == pbuf)
     {
-        loge("can not free NULL buffer \n");
+        LOGE("can not free NULL buffer ");
         return ;
     }
 
@@ -470,7 +471,7 @@ void ion_alloc_pfree(void * pbuf, void *veOps, void *pVeopsSelf)
 
     if (g_alloc_context == NULL)
     {
-        loge("ion_alloc do not opened, should call ion_alloc_open() \
+        LOGE("ion_alloc do not opened, should call ion_alloc_open() \
             before ion_alloc_alloc(size) \n");
         pthread_mutex_unlock(&g_mutex_alloc);
         return ;
@@ -480,23 +481,23 @@ void ion_alloc_pfree(void * pbuf, void *veOps, void *pVeopsSelf)
     {
         if (tmp->vir == addr_vir)
         {
-            logv("ion_alloc_free item phy= 0x%lx vir= 0x%lx, size= %d \n", \
+            LOGV("ion_alloc_free item phy= 0x%lx vir= 0x%lx, size= %d ", \
                 tmp->phy, tmp->vir, tmp->size);
             /*unmap user space*/
             if(CdcIonGetMemType() == MEMORY_IOMMU &&
                 veOps != NULL && pVeopsSelf != NULL)
             {
-                logv("ion_alloc_pfree: fd:%d, iommu_addr:%x\n",
+                LOGV("ion_alloc_pfree: fd:%d, iommu_addr:%x",
                                         tmp->iommu_buffer.fd,
                                         tmp->iommu_buffer.iommu_addr);
 
                 if(CdcVeFreeIommuAddr((VeOpsS*)veOps, pVeopsSelf, &tmp->iommu_buffer) < 0)
-                    loge("VeFreeIommuAddr error\n");
+                    LOGE("VeFreeIommuAddr error");
             }
 
             if (munmap((void *)(tmp->user_virt), tmp->size) < 0)
             {
-                loge("munmap 0x%p, size: %d failed \n", (void*)addr_vir, tmp->size);
+                LOGE("munmap 0x%p, size: %d failed ", (void*)addr_vir, tmp->size);
             }
 
             /*close dma buffer fd*/
@@ -507,7 +508,7 @@ void ion_alloc_pfree(void * pbuf, void *veOps, void *pVeopsSelf)
             ret = ioctl(g_alloc_context->fd, AW_MEM_ION_IOC_FREE, &handle_data);
             if (ret)
             {
-                logv("TON_IOC_FREE failed \n");
+                LOGV("TON_IOC_FREE failed ");
             }
 
             aw_mem_list_del(&tmp->i_list);
@@ -523,7 +524,7 @@ void ion_alloc_pfree(void * pbuf, void *veOps, void *pVeopsSelf)
                 if(ion_buf_nodes_test[i].addr == addr_vir && ion_buf_nodes_test[i].size > 0){
 
                     cdx_use_mem -= ion_buf_nodes_test[i].size;
-                    logv("--------cdx_use_mem = [%d MB], reduce size->[%d B]",\
+                    LOGV("--------cdx_use_mem = [%d MB], reduce size->[%d B]",\
                         cdx_use_mem/1024/1024, ion_buf_nodes_test[i].size);
                     ion_buf_nodes_test[i].addr = 0;
                     ion_buf_nodes_test[i].size = 0;
@@ -533,7 +534,7 @@ void ion_alloc_pfree(void * pbuf, void *veOps, void *pVeopsSelf)
             }
 
             if(i>= ION_BUF_LEN){
-                loge("error, ion buf len is large than [%d]", ION_BUF_LEN);
+                LOGE("error, ion buf len is large than [%d]", ION_BUF_LEN);
             }
 #endif
             //--------------------------------
@@ -544,7 +545,7 @@ void ion_alloc_pfree(void * pbuf, void *veOps, void *pVeopsSelf)
 
     if (0 == flag)
     {
-        loge("ion_alloc_free failed, do not find virtual address: 0x%lx \n", addr_vir);
+        LOGE("ion_alloc_free failed, do not find virtual address: 0x%lx ", addr_vir);
     }
 
     pthread_mutex_unlock(&g_mutex_alloc);
@@ -560,7 +561,7 @@ void* ion_alloc_vir2phy_cpu(void * pbuf)
 
     if (0 == pbuf)
     {
-        // logv("can not vir2phy NULL buffer \n");
+        // LOGV("can not vir2phy NULL buffer ");
         return 0;
     }
 
@@ -572,7 +573,7 @@ void* ion_alloc_vir2phy_cpu(void * pbuf)
             && addr_vir < tmp->vir + tmp->size)
         {
             addr_phy = tmp->phy + addr_vir - tmp->vir;
-            // logv("ion_alloc_vir2phy phy= 0x%08x vir= 0x%08x \n", addr_phy, addr_vir);
+            // LOGV("ion_alloc_vir2phy phy= 0x%08x vir= 0x%08x ", addr_phy, addr_vir);
             flag = 1;
             break;
         }
@@ -580,7 +581,7 @@ void* ion_alloc_vir2phy_cpu(void * pbuf)
 
     if (0 == flag)
     {
-        loge("ion_alloc_vir2phy failed, do not find virtual address: 0x%lx \n", addr_vir);
+        LOGE("ion_alloc_vir2phy failed, do not find virtual address: 0x%lx ", addr_vir);
     }
 
     pthread_mutex_unlock(&g_mutex_alloc);
@@ -597,7 +598,7 @@ void* ion_alloc_phy2vir_cpu(void * pbuf)
 
     if (0 == pbuf)
     {
-        loge("can not phy2vir NULL buffer \n");
+        LOGE("can not phy2vir NULL buffer ");
         return 0;
     }
 
@@ -616,7 +617,7 @@ void* ion_alloc_phy2vir_cpu(void * pbuf)
 
     if (0 == flag)
     {
-        loge("ion_alloc_phy2vir failed, do not find physical address: 0x%lx \n", addr_phy);
+        LOGE("ion_alloc_phy2vir failed, do not find physical address: 0x%lx ", addr_phy);
     }
 
     pthread_mutex_unlock(&g_mutex_alloc);
@@ -626,14 +627,14 @@ void* ion_alloc_phy2vir_cpu(void * pbuf)
 
 void* ion_alloc_vir2phy_ve(void * pbuf)
 {
-    logv("**11 phy offset = %x",g_alloc_context->phyOffset);
+    LOGV("**11 phy offset = %x",g_alloc_context->phyOffset);
 
     return (void*)((unsigned long)ion_alloc_vir2phy_cpu(pbuf) - g_alloc_context->phyOffset);
 }
 
 void* ion_alloc_phy2vir_ve(void * pbuf)
 {
-    logv("**22 phy offset = %x",g_alloc_context->phyOffset);
+    LOGV("**22 phy offset = %x",g_alloc_context->phyOffset);
 
     return (void*)((unsigned long)ion_alloc_phy2vir_cpu(pbuf) - g_alloc_context->phyOffset);
 }
@@ -655,7 +656,7 @@ void ion_alloc_flush_cache(void* startAddr, int size)
     ret = ioctl(g_alloc_context->fd, AW_MEM_ION_IOC_CUSTOM, &custom_data);
     if (ret)
     {
-        loge("ION_IOC_CUSTOM failed \n");
+        LOGE("ION_IOC_CUSTOM failed ");
     }
 
     return;
@@ -669,11 +670,11 @@ void ion_alloc_flush_cache(void* startAddr, int size)
      /* clean and invalid user cache */
     range.start = (unsigned long)startAddr;
     range.end = (unsigned long)startAddr + size;
-    logv("start:%p, end:%lx, size:%lx(%ld)\n", startAddr, range.end, (long)size, (long)size);
+    LOGV("start:%p, end:%lx, size:%lx(%ld)", startAddr, range.end, (long)size, (long)size);
     ret = ioctl(g_alloc_context->fd, ION_IOC_SUNXI_FLUSH_RANGE, &range);
     if (ret)
     {
-        loge("ION_IOC_SUNXI_FLUSH_RANGE failed errno: %d, ret: %d", errno, ret);
+        LOGE("ION_IOC_SUNXI_FLUSH_RANGE failed errno: %d, ret: %d", errno, ret);
     }
 
     return;
@@ -706,14 +707,14 @@ void* ion_alloc_alloc_drm(int size, void*veOps, void* pVeopsSelf)
 
     if (g_alloc_context == NULL)
     {
-        loge("ion_alloc do not opened, should call ion_alloc_open() \
+        LOGE("ion_alloc do not opened, should call ion_alloc_open() \
             before ion_alloc_alloc(size) \n");
         goto ALLOC_OUT;
     }
 
     if(size <= 0)
     {
-        logv("can not alloc size 0 \n");
+        LOGV("can not alloc size 0 ");
         goto ALLOC_OUT;
     }
 
@@ -725,7 +726,7 @@ void* ion_alloc_alloc_drm(int size, void*veOps, void* pVeopsSelf)
     ret = ioctl(g_alloc_context->fd, AW_MEM_ION_IOC_ALLOC, &alloc_data);
     if (ret)
     {
-        loge("ION_IOC_ALLOC error %s \n", strerror(errno));
+        LOGE("ION_IOC_ALLOC error %s ", strerror(errno));
         goto ALLOC_OUT;
     }
 
@@ -734,7 +735,7 @@ void* ion_alloc_alloc_drm(int size, void*veOps, void* pVeopsSelf)
     ret = ioctl(g_alloc_context->fd, AW_MEM_ION_IOC_MAP, &fd_data);
     if(ret)
     {
-        loge("ION_IOC_MAP err, ret %d, dmabuf fd 0x%08x\n", ret, (unsigned int)fd_data.aw_fd);
+        LOGE("ION_IOC_MAP err, ret %d, dmabuf fd 0x%08x", ret, (unsigned int)fd_data.aw_fd);
         goto ALLOC_OUT;
     }
 
@@ -744,7 +745,7 @@ void* ion_alloc_alloc_drm(int size, void*veOps, void* pVeopsSelf)
         PROT_READ|PROT_WRITE, MAP_SHARED, fd_data.aw_fd, 0);
     if((unsigned long)MAP_FAILED == addr_vir)
     {
-        //loge("mmap err, ret %d\n", (unsigned int)addr_vir);
+        //LOGE("mmap err, ret %d", (unsigned int)addr_vir);
         addr_vir = 0;
         goto ALLOC_OUT;
     }
@@ -758,7 +759,7 @@ void* ion_alloc_alloc_drm(int size, void*veOps, void* pVeopsSelf)
 
     ret = ioctl(g_alloc_context->fd, AW_MEM_ION_IOC_CUSTOM, &custom_data);
     if(ret) {
-        loge("ION_IOC_CUSTOM err, ret %d\n", ret);
+        LOGE("ION_IOC_CUSTOM err, ret %d", ret);
         addr_phy = 0;
         addr_vir = 0;
         goto ALLOC_OUT;
@@ -773,7 +774,7 @@ void* ion_alloc_alloc_drm(int size, void*veOps, void* pVeopsSelf)
     custom_data.aw_arg = (unsigned long)&tee_data;
     ret = ioctl(g_alloc_context->fd, AW_MEM_ION_IOC_CUSTOM, &custom_data);
     if(ret) {
-        loge("ION_IOC_CUSTOM err, ret %d\n", ret);
+        LOGE("ION_IOC_CUSTOM err, ret %d", ret);
         addr_phy = 0;
         addr_vir = 0;
         goto ALLOC_OUT;
@@ -785,12 +786,12 @@ void* ion_alloc_alloc_drm(int size, void*veOps, void* pVeopsSelf)
     alloc_buffer = (buffer_node *)malloc(sizeof(buffer_node));
     if (alloc_buffer == NULL)
     {
-        loge("malloc buffer node failed");
+        LOGE("malloc buffer node failed");
 
         /* unmmap */
         ret = munmap((void*)addr_vir, alloc_data.aw_len);
         if(ret) {
-            loge("munmap err, ret %d\n", ret);
+            LOGE("munmap err, ret %d", ret);
         }
 
         /* close dmabuf fd */
@@ -801,7 +802,7 @@ void* ion_alloc_alloc_drm(int size, void*veOps, void* pVeopsSelf)
         ret = ioctl(g_alloc_context->fd, AW_MEM_ION_IOC_FREE, &handle_data);
 
         if(ret) {
-            loge("ION_IOC_FREE err, ret %d\n", ret);
+            LOGE("ION_IOC_FREE err, ret %d", ret);
         }
 
         addr_phy = 0;
@@ -821,10 +822,10 @@ void* ion_alloc_alloc_drm(int size, void*veOps, void* pVeopsSelf)
                                  (void *)&iommu_buffer, veOps, pVeopsSelf, &addr_phy);
         if(ret < 0)
         {
-            loge("get phy addr error\n");
+            LOGE("get phy addr error");
             goto ALLOC_OUT;
         }
-        logd("iommu_buffer.fd: %d, iommu_buffer.iommu_addr: %x",
+        LOGD("iommu_buffer.fd: %d, iommu_buffer.iommu_addr: %x",
             iommu_buffer.fd, iommu_buffer.iommu_addr);
         memcpy(&alloc_buffer->iommu_buffer, &iommu_buffer, sizeof(struct user_iommu_param));
     }
@@ -854,7 +855,7 @@ int ion_alloc_get_total_size()
     int ion_fd = open(DEV_NAME, O_WRONLY);
 
     if (ion_fd < 0) {
-        loge("open ion dev failed, cannot get ion mem.");
+        LOGE("open ion dev failed, cannot get ion mem.");
         goto err;
     }
 
@@ -870,11 +871,11 @@ int ion_alloc_get_total_size()
     cdata.aw_arg = (unsigned long)&binfo;
     ret = ioctl(ion_fd,AW_MEM_ION_IOC_CUSTOM, &cdata);
     if (ret < 0){
-        logw("Failed to ioctl ion device, errno:%s\n", strerror(errno));
+        LOGW("Failed to ioctl ion device, errno:%s", strerror(errno));
         goto err;
     }
 
-    logd(" ion dev get free pool [%d MB], total [%d MB]\n", binfo.free_mb, binfo.total / 1024);
+    LOGD(" ion dev get free pool [%d MB], total [%d MB]", binfo.free_mb, binfo.total / 1024);
     ret = binfo.total;
 err:
     if(ion_fd > 0){
@@ -923,7 +924,7 @@ unsigned int ion_alloc_get_ve_addr_offset()
         return g_alloc_context->phyOffset;
     else
     {
-        loge("g_alloc_context is NULL, please call ion_alloc_open\n");
+        LOGE("g_alloc_context is NULL, please call ion_alloc_open");
         return 0;
     }
 }
@@ -954,6 +955,6 @@ struct ScMemOpsS _ionMemOpsS =
 
 struct ScMemOpsS* __GetIonMemOpsS()
 {
-    logd("*** get __GetIonMemOpsS ***");
+    LOGD("*** get __GetIonMemOpsS ***");
     return &_ionMemOpsS;
 }

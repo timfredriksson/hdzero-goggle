@@ -52,13 +52,13 @@ int MKVSetUserSubtitleStreamSel(void *pMkvInfo, int SubArrayIdx)
     MatroskaDemuxContext *matroska = NULL;
     if(NULL == pMkvPsr || NULL == pMkvPsr->priv_data)
     {
-        CDX_LOGW("pMkvPsr==NULL\n");
+        LOGW("pMkvPsr==NULL");
         return -1;
     }
 
     matroska = (MatroskaDemuxContext*)pMkvPsr->priv_data;
 
-    CDX_LOGW("SubArrayIdx=[%d]\n", SubArrayIdx);
+    LOGW("SubArrayIdx=[%d]", SubArrayIdx);
     if((SubArrayIdx>=0) && (SubArrayIdx< pMkvPsr->nhasSubTitle))
     {
         pMkvPsr->UserSelSubStreamIdx = matroska->SubTitleStream[SubArrayIdx];
@@ -72,7 +72,7 @@ int MKVSetUserSubtitleStreamSel(void *pMkvInfo, int SubArrayIdx)
         return 0;
     }
 
-    CDX_LOGW("not find stream_idx matching array, wrong! check!\n");
+    LOGW("not find stream_idx matching array, wrong! check!");
     return -1;
 }
 
@@ -290,21 +290,21 @@ static int __CdxMkvParserInit(CdxParserT *parser)
     int ret;
     struct CdxMkvParser* impl = (struct CdxMkvParser*)parser;
 
-    CDX_LOGD("---- __CdxMkvParserInit");
+    LOGD("---- __CdxMkvParserInit");
     CdxAtomicInc(&impl->ref);
 
     //open media file to parse file information
     ret = CdxMatroskaOpen(impl);
     if(ret < 0)
     {
-        CDX_LOGE("open mkv reader failed@");
+        LOGE("open mkv reader failed@");
         impl->mErrno = PSR_OPEN_FAIL;
         impl->mStatus = CDX_MKV_IDLE;
         CdxAtomicDec(&impl->ref);
         return -1;
     }
 
-    CDX_LOGD("***** mkv open success!!");
+    LOGD("***** mkv open success!!");
     CdxAtomicDec(&impl->ref);
     impl->mErrno = PSR_OK;
     impl->mStatus = CDX_MKV_IDLE;
@@ -313,7 +313,7 @@ static int __CdxMkvParserInit(CdxParserT *parser)
 
 static cdx_int32 __CdxMkvParserClose(CdxParserT *parser)
 {
-CDX_LOGD("--- __CdxMkvParserClose");
+LOGD("--- __CdxMkvParserClose");
     int ret;
     struct CdxMkvParser* impl = (struct CdxMkvParser*)parser;
     if(!impl)
@@ -325,7 +325,7 @@ CDX_LOGD("--- __CdxMkvParserClose");
     CdxAtomicDec(&impl->ref);
     while ((ret = CdxAtomicRead(&impl->ref)) != 0)
     {
-        CDX_LOGD("wait for ref = %d", ret);
+        LOGD("wait for ref = %d", ret);
         usleep(10000);
     }
 
@@ -348,12 +348,12 @@ static cdx_int32 __CdxMkvParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
 
     if(impl->mErrno == PSR_EOS)
     {
-        CDX_LOGW("--- EOS");
+        LOGW("--- EOS");
         return -1;
     }
     if((impl->mStatus != CDX_MKV_IDLE) && (impl->mStatus != CDX_MKV_PREFETCHED))
     {
-        CDX_LOGW("the status of prefetch is error");
+        LOGW("the status of prefetch is error");
         impl->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -374,17 +374,17 @@ static cdx_int32 __CdxMkvParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
     do
     {
         ret = CdxMatroskaRead(impl);
-        //CDX_LOGD("matroska->data_rdy = %d", matroska->data_rdy);
+        //LOGD("matroska->data_rdy = %d", matroska->data_rdy);
         if(ret < 0)
         {
-            CDX_LOGD("---- io error, ret(%d)", ret);
+            LOGD("---- io error, ret(%d)", ret);
             impl->mStatus = CDX_MKV_IDLE;
             impl->mErrno = PSR_IO_ERR;
             return ret;
         }
         else if(ret == 1)
         {
-            CDX_LOGD("--- eos");
+            LOGD("--- eos");
             impl->mErrno = PSR_EOS;
             impl->mStatus = CDX_MKV_IDLE;
             return -1;
@@ -435,7 +435,7 @@ static cdx_int32 __CdxMkvParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
     }while(matroska->data_rdy == 0);
 
     track = matroska->tracks[matroska->track];
-    //CDX_LOGD("--- matroska->prefetch_track_num= %d", matroska->track);
+    //LOGD("--- matroska->prefetch_track_num= %d", matroska->track);
 
     pkt->type = CDX_MEDIA_UNKNOWN;
     pkt->length = matroska->t_size;
@@ -477,7 +477,7 @@ static cdx_int32 __CdxMkvParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
     pkt->flags |= (FIRST_PART|LAST_PART);
 
     memcpy(&impl->packet, pkt, sizeof(CdxPacketT));
-    //CDX_LOGD("type = %d, pkt->length= %d, pkt->pts = %lld,
+    //LOGD("type = %d, pkt->length= %d, pkt->pts = %lld,
     //streamIndex = %d", pkt->type, pkt->length, pkt->pts, pkt->streamIndex);
     impl->mStatus = CDX_MKV_PREFETCHED;
     return 0;
@@ -525,7 +525,7 @@ static cdx_int32 __CdxMkvParserRead(CdxParserT *parser, CdxPacketT *pkt)
     {
          if(pkt_size0 ==0)
         {
-            CDX_LOGV("pkt_size0=0 return 0");
+            LOGV("pkt_size0=0 return 0");
             return 0;
          }
         if(track->comp_settings_len > pkt_size0)
@@ -751,7 +751,7 @@ static cdx_int32 __CdxMkvParserRead(CdxParserT *parser, CdxPacketT *pkt)
     {
         if(pkt_size0 == 0)
         {
-            CDX_LOGV("matroska->chk_type=0x%x  pkt_size0=0 return 0",matroska->chk_type);
+            LOGV("matroska->chk_type=0x%x  pkt_size0=0 return 0",matroska->chk_type);
             return 0;
         }
         if(track->encoding_scope == 1)
@@ -800,7 +800,7 @@ static cdx_int32 __CdxMkvParserRead(CdxParserT *parser, CdxPacketT *pkt)
         matroska->data_rdy = 0;
     }
 
-    //CDX_LOGD("type = %d, pkt->length= %d, pkt->pts = %lld, offset=%lld",
+    //LOGD("type = %d, pkt->length= %d, pkt->pts = %lld, offset=%lld",
     //pkt->type, pkt->length, pkt->pts, CdxStreamTell(matroska->fp));
 
     impl->mStatus = CDX_MKV_IDLE;
@@ -836,11 +836,11 @@ static cdx_int32 __CdxMkvParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT * 
     }
     else
     {
-        CDX_LOGW("cannot seek");
+        LOGW("cannot seek");
         pMediaInfo->bSeekable = 0;
     }
     pMediaInfo->fileSize = matroska->fileEndPst;
-    CDX_LOGD("---- seekable = %d", pMediaInfo->bSeekable);
+    LOGD("---- seekable = %d", pMediaInfo->bSeekable);
 
     pMediaInfo->program[0].audioNum    = impl->nhasAudio;
     pMediaInfo->program[0].videoNum    = impl->nhasVideo;
@@ -857,13 +857,13 @@ static cdx_int32 __CdxMkvParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT * 
     //**< frameRate should multi 1000, (24000, 50000)
     //set video bitstream information
     memcpy(&pMediaInfo->program[0].video[0], &impl->vFormat, sizeof(VideoStreamInfo));
-    CDX_LOGD("*********** video stream ************");
-    CDX_LOGD("****eCodecFormat:           %x", impl->vFormat.eCodecFormat);
-    CDX_LOGD("****nFrameRate:             %d", impl->vFormat.nFrameRate);
-    CDX_LOGD("****nWidth:                 %d", impl->vFormat.nWidth);
-    CDX_LOGD("****nHeight:                %d", impl->vFormat.nHeight);
-    CDX_LOGD("****nCodecSpecificDataLen:  %d", impl->vFormat.nCodecSpecificDataLen);
-    CDX_LOGD("************************************");
+    LOGD("*********** video stream ************");
+    LOGD("****eCodecFormat:           %x", impl->vFormat.eCodecFormat);
+    LOGD("****nFrameRate:             %d", impl->vFormat.nFrameRate);
+    LOGD("****nWidth:                 %d", impl->vFormat.nWidth);
+    LOGD("****nHeight:                %d", impl->vFormat.nHeight);
+    LOGD("****nCodecSpecificDataLen:  %d", impl->vFormat.nCodecSpecificDataLen);
+    LOGD("************************************");
 
     //set audio bitstream information
     for(i=0; i<impl->nhasAudio; i++)
@@ -885,17 +885,17 @@ static cdx_int32 __CdxMkvParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT * 
         pMediaInfo->program[0].audio[i].pCodecSpecificData =
                                                     impl->aFormat_arry[i].pCodecSpecificData;
 
-        CDX_LOGD("***********audio stream %d************", i);
-        CDX_LOGD("****language:               %s", pMediaInfo->program[0].audio[i].strLang);
-        CDX_LOGD("****eCodecFormat:           %d", impl->aFormat_arry[i].eCodecFormat);
-        CDX_LOGD("****eSubCodecFormat:        %d", impl->aFormat_arry[i].eSubCodecFormat);
-        CDX_LOGD("****nChannelNum:            %d", impl->aFormat_arry[i].nChannelNum);
-        CDX_LOGD("****nAvgBitrate:            %d", impl->aFormat_arry[i].nAvgBitrate);
-        CDX_LOGD("****nMaxBitRate:            %d", impl->aFormat_arry[i].nMaxBitRate);
-        CDX_LOGD("****nSampleRate:            %d", impl->aFormat_arry[i].nSampleRate);
-        CDX_LOGD("****nBlockAlign:            %d", impl->aFormat_arry[i].nBlockAlign);
-        CDX_LOGD("****nCodecSpecificDataLen:  %d", impl->aFormat_arry[i].nCodecSpecificDataLen);
-        CDX_LOGD("************************************");
+        LOGD("***********audio stream %d************", i);
+        LOGD("****language:               %s", pMediaInfo->program[0].audio[i].strLang);
+        LOGD("****eCodecFormat:           %d", impl->aFormat_arry[i].eCodecFormat);
+        LOGD("****eSubCodecFormat:        %d", impl->aFormat_arry[i].eSubCodecFormat);
+        LOGD("****nChannelNum:            %d", impl->aFormat_arry[i].nChannelNum);
+        LOGD("****nAvgBitrate:            %d", impl->aFormat_arry[i].nAvgBitrate);
+        LOGD("****nMaxBitRate:            %d", impl->aFormat_arry[i].nMaxBitRate);
+        LOGD("****nSampleRate:            %d", impl->aFormat_arry[i].nSampleRate);
+        LOGD("****nBlockAlign:            %d", impl->aFormat_arry[i].nBlockAlign);
+        LOGD("****nCodecSpecificDataLen:  %d", impl->aFormat_arry[i].nCodecSpecificDataLen);
+        LOGD("************************************");
     }
 
     if(!(impl->vFormat.eCodecFormat == VIDEO_CODEC_FORMAT_RXG2 ||
@@ -939,15 +939,15 @@ static cdx_int32 __CdxMkvParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT * 
         pMediaInfo->program[0].subtitle[i].pCodecSpecificData =
                                                     matroska->streams[stream_idx]->extradata;
 
-        CDX_LOGD("***********subtitle %d****************", i);
-        CDX_LOGD("****streamindex:   %d", pMediaInfo->program[0].subtitle[i].nStreamIndex);
-        CDX_LOGD("****width:         %d", pMediaInfo->program[0].subtitle[i].nReferenceVideoWidth);
-        CDX_LOGD("****height:        %d", pMediaInfo->program[0].subtitle[i].nReferenceVideoHeight);
-        CDX_LOGD("****TextFormat:    %d", pMediaInfo->program[0].subtitle[i].eTextFormat);
-        CDX_LOGD("****eCodecFormat:  %x", pMediaInfo->program[0].subtitle[i].eCodecFormat);
-        CDX_LOGD("****Language:      %s", pMediaInfo->program[0].subtitle[i].strLang);
-        CDX_LOGD("****extradataSize: %d", matroska->streams[stream_idx]->extradata_size);
-        CDX_LOGD("***************************************");
+        LOGD("***********subtitle %d****************", i);
+        LOGD("****streamindex:   %d", pMediaInfo->program[0].subtitle[i].nStreamIndex);
+        LOGD("****width:         %d", pMediaInfo->program[0].subtitle[i].nReferenceVideoWidth);
+        LOGD("****height:        %d", pMediaInfo->program[0].subtitle[i].nReferenceVideoHeight);
+        LOGD("****TextFormat:    %d", pMediaInfo->program[0].subtitle[i].eTextFormat);
+        LOGD("****eCodecFormat:  %x", pMediaInfo->program[0].subtitle[i].eCodecFormat);
+        LOGD("****Language:      %s", pMediaInfo->program[0].subtitle[i].strLang);
+        LOGD("****extradataSize: %d", matroska->streams[stream_idx]->extradata_size);
+        LOGD("***************************************");
         if(matroska->SubTitleCodecType[i] == SUBTITLE_CODEC_DVDSUB)
         {
             cdx_uint8 *extradata = (cdx_uint8 *)matroska->streams[stream_idx]->extradata;
@@ -1077,7 +1077,7 @@ cdx_int32 __CdxMkvParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeTy
     //if seekto the end of file, set status to eos, so we cannot prefetch anymore
     if(timeUs/1000 >= matroska->segment_duration)
     {
-        CDX_LOGD("EOS, timeUs = %lld, duration = %lld", timeUs/1000, matroska->segment_duration);
+        LOGD("EOS, timeUs = %lld, duration = %lld", timeUs/1000, matroska->segment_duration);
         impl->mErrno = PSR_EOS;
         return 0;
     }
@@ -1137,12 +1137,12 @@ static CdxParserT *__CdxMkvParserOpen(CdxStreamT *stream, cdx_uint32 flag)
     int ret;
     struct CdxMkvParser* impl = NULL;
 
-    CDX_LOGD("------ __CdxMkvParserOpen");
+    LOGD("------ __CdxMkvParserOpen");
     // create mkv reader
     impl = CdxMatroskaInit(&ret);
     if(!impl || (ret < 0))
     {
-        CDX_LOGW("Create mkv file reader failed!");
+        LOGW("Create mkv file reader failed!");
         if(stream)
             CdxStreamClose(stream);
         goto open_error;
@@ -1152,7 +1152,7 @@ static CdxParserT *__CdxMkvParserOpen(CdxStreamT *stream, cdx_uint32 flag)
 
     impl->mStatus = CDX_MKV_INITIALIZED;
     CdxAtomicSet(&impl->ref, 1);
-    CDX_LOGD("mkv parser open stream = %p", stream);
+    LOGD("mkv parser open stream = %p", stream);
     impl->parserinfo.ops = &mkvParserOps;
     impl->parserinfo.type = CDX_PARSER_MKV;
 
@@ -1167,7 +1167,7 @@ static CdxParserT *__CdxMkvParserOpen(CdxStreamT *stream, cdx_uint32 flag)
     return &impl->parserinfo;
 
 open_error:
-    CDX_LOGW("open failed");
+    LOGW("open failed");
     CdxMatroskaClose(impl);
     CdxMatroskaExit(impl);
     return NULL;
@@ -1175,7 +1175,7 @@ open_error:
 
 static cdx_uint32 __CdxMkvParserProbe(CdxStreamProbeDataT *probeData)
 {
-CDX_LOGD("mkv probe");
+LOGD("mkv probe");
     //static const char *const cdx_matroska_doctypes[] = { "matroska", "webm" };
 
     //uint64_t total = 0;
@@ -1222,7 +1222,7 @@ CDX_LOGD("mkv probe");
         }
     }
 #endif
-    CDX_LOGD(" mkv file ");
+    LOGD(" mkv file ");
     return 100;
 }
 

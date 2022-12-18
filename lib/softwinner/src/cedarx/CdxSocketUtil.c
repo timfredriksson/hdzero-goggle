@@ -18,7 +18,7 @@
 #include <netdb.h>
 #include <netinet/tcp.h>
 
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 
 #define CONFIG_KEEP_ALIVE (1)
@@ -26,11 +26,11 @@
 #if defined(CONF_CMCC)
 #define TCP_KEEP_IDLE_SECS      (1) // cmcc do not need 1 min
 #else
-#define TCP_KEEP_IDLE_SECS      (10) // Èç¸ÃÁ¬½ÓÔÚ60ÃëÄÚÃ»ÓÐÈÎºÎÊý¾ÝÍùÀ´,Ôò½øÐÐÌ½²â
+#define TCP_KEEP_IDLE_SECS      (10) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½60ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ï¿½
 #endif
 
-#define TCP_KEEP_INTERVAL_SECS  (5)  // Ì½²âÊ±·¢°üµÄÊ±¼ä¼ä¸ôÎª5 Ãë
-#define TCP_KEEP_COUNT          (3)  // Ì½²â³¢ÊÔµÄ´ÎÊý.Èç¹ûµÚ1´ÎÌ½²â°ü¾ÍÊÕµ½ÏìÓ¦ÁË,Ôòºó2´ÎµÄ²»ÔÙ·¢.
+#define TCP_KEEP_INTERVAL_SECS  (5)  // Ì½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Îª5 ï¿½ï¿½
+#define TCP_KEEP_COUNT          (3)  // Ì½ï¿½â³¢ï¿½ÔµÄ´ï¿½ï¿½ï¿½.ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½Ó¦ï¿½ï¿½,ï¿½ï¿½ï¿½2ï¿½ÎµÄ²ï¿½ï¿½Ù·ï¿½.
 
 cdx_err CdxMakeSocketBlocking(cdx_int32 s, cdx_bool blocking)
 {
@@ -120,7 +120,7 @@ cdx_int32 CdxSockAddrConstruct(struct sockaddr_in *dest, char *ip, cdx_int32 por
 
     if(!hp)
     {
-        CDX_LOGE("get host fail.");
+        LOGE("get host fail.");
         return -1;
     }
 
@@ -163,20 +163,20 @@ cdx_int32 CdxAsynSocket(int domain, cdx_int32 *nRecvBufLen)
     cdx_int32 sockfd;
     cdx_int32 ret;
 #if CONFIG_KEEP_ALIVE
-    cdx_int32 keepalive = 1;                            // ¿ªÆôkeepaliveÊôÐÔ
-    cdx_int32 keepidle = TCP_KEEP_IDLE_SECS;            // Èç¸ÃÁ¬½ÓÔÚ60ÃëÄÚÃ»ÓÐÈÎºÎÊý¾ÝÍùÀ´,Ôò½øÐÐÌ½²â
-    cdx_int32 keepinterval = TCP_KEEP_INTERVAL_SECS;    // Ì½²âÊ±·¢°üµÄÊ±¼ä¼ä¸ôÎª5 Ãë
-    // Ì½²â³¢ÊÔµÄ´ÎÊý.Èç¹ûµÚ1´ÎÌ½²â°ü¾ÍÊÕµ½ÏìÓ¦ÁË,Ôòºó2´ÎµÄ²»ÔÙ·¢.
+    cdx_int32 keepalive = 1;                            // ï¿½ï¿½ï¿½ï¿½keepaliveï¿½ï¿½ï¿½ï¿½
+    cdx_int32 keepidle = TCP_KEEP_IDLE_SECS;            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½60ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ï¿½
+    cdx_int32 keepinterval = TCP_KEEP_INTERVAL_SECS;    // Ì½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Îª5 ï¿½ï¿½
+    // Ì½ï¿½â³¢ï¿½ÔµÄ´ï¿½ï¿½ï¿½.ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½Ó¦ï¿½ï¿½,ï¿½ï¿½ï¿½2ï¿½ÎµÄ²ï¿½ï¿½Ù·ï¿½.
     cdx_int32 keepcount = TCP_KEEP_COUNT;
 #endif
 
-    logv("address family[%d] = %s", domain, domain == AF_INET ? "AF_INET" :
+    LOGV("address family[%d] = %s", domain, domain == AF_INET ? "AF_INET" :
                                     (domain == AF_INET6 ? "AF_INET6":"others"));
 
     sockfd = socket(domain, SOCK_STREAM, 0);
     if(sockfd < 0)
     {
-        CDX_LOGE("errno(%d)", errno);
+        LOGE("errno(%d)", errno);
         return -1;
     }
 
@@ -194,7 +194,7 @@ cdx_int32 CdxAsynSocket(int domain, cdx_int32 *nRecvBufLen)
         ret = getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF,
                 nRecvBufLen, &(socklen_t){sizeof(*nRecvBufLen)});
         //CDX_FORCE_CHECK(ret == 0);
-        //CDX_LOGV("sock recv buf len set to: %d, return %d", nRecvBufLen, *nRecvBufLenRet);
+        //LOGV("sock recv buf len set to: %d, return %d", nRecvBufLen, *nRecvBufLenRet);
     }
 
 #if CONFIG_KEEP_ALIVE
@@ -214,20 +214,20 @@ void CdxSockDisableTcpKeepalive(cdx_int32 sockfd)
 
     if(getsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &optval, &optlen) < 0)
     {
-      logd("getsockopt failed. errno=%d", errno);
+      LOGD("getsockopt failed. errno=%d", errno);
     }
-    //logd("SO_KEEPALIVE is %s, optval=%d, optlen=%d", (optval ? "ON" : "OFF"), optval, optlen);
+    //LOGD("SO_KEEPALIVE is %s, optval=%d, optlen=%d", (optval ? "ON" : "OFF"), optval, optlen);
 
     optval = 0;
     optlen = sizeof(optval);
     if(setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0)
     {
-      logd("setsockopt failed.");
+      LOGD("setsockopt failed.");
     }
 
     if(getsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &optval, &optlen) < 0)
     {
-      logd("getsockopt failed.");
+      LOGD("getsockopt failed.");
     }
 
     return;
@@ -259,7 +259,7 @@ cdx_int32  CdxSockAsynConnect(cdx_int32 sockfd, const struct sockaddr *addr, soc
 
     if (errno != EINPROGRESS)
     {
-        CDX_LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, errno);
+        LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, errno);
         return -1;
     }
 
@@ -267,7 +267,7 @@ cdx_int32  CdxSockAsynConnect(cdx_int32 sockfd, const struct sockaddr *addr, soc
     {
         if (pForceStop && *pForceStop)
         {
-            CDX_LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
+            LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
             return -2;
         }
 
@@ -290,7 +290,7 @@ cdx_int32  CdxSockAsynConnect(cdx_int32 sockfd, const struct sockaddr *addr, soc
                 {
                     errno = nError;
                 }
-                CDX_LOGE("connect err(%d)", errno);
+                LOGE("connect err(%d)", errno);
                 return -1;
             }
             // connect success
@@ -307,7 +307,7 @@ cdx_int32  CdxSockAsynConnect(cdx_int32 sockfd, const struct sockaddr *addr, soc
             {
                 continue;
             }
-            CDX_LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, errno);
+            LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, errno);
             return -1;
         }
     }
@@ -338,7 +338,7 @@ cdx_ssize CdxSockAsynSend(cdx_int32 sockfd, const void *buf, cdx_size len,
     {
         if (pForceStop && *pForceStop)
         {
-            CDX_LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
+            LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
             return sendSize>0 ? sendSize : -2;
         }
 
@@ -356,7 +356,7 @@ cdx_ssize CdxSockAsynSend(cdx_int32 sockfd, const void *buf, cdx_size len,
             {
                 continue;
             }
-            CDX_LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, errno);
+            LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, errno);
             return -1;
         }
         else if (ret == 0)
@@ -369,18 +369,18 @@ cdx_ssize CdxSockAsynSend(cdx_int32 sockfd, const void *buf, cdx_size len,
         {
             if (pForceStop && *pForceStop)
             {
-                CDX_LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
+                LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
                 return sendSize>0 ? sendSize : -2;
             }
 
             if(FD_ISSET(sockfd, &errs))
             {
-                CDX_LOGE("<%s,%d>errs ", __FUNCTION__, __LINE__);
+                LOGE("<%s,%d>errs ", __FUNCTION__, __LINE__);
                 break;
             }
             if(!FD_ISSET(sockfd, &ws))
             {
-                CDX_LOGW("select > 0, but sockfd is not ready?");
+                LOGW("select > 0, but sockfd is not ready?");
                 break;
             }
 
@@ -394,7 +394,7 @@ cdx_ssize CdxSockAsynSend(cdx_int32 sockfd, const void *buf, cdx_size len,
                 }
                 else
                 {
-                    CDX_LOGE("<%s,%d>send err(%d)", __FUNCTION__, __LINE__, errno);
+                    LOGE("<%s,%d>send err(%d)", __FUNCTION__, __LINE__, errno);
                     return -1;
                 }
             }
@@ -432,7 +432,7 @@ cdx_ssize CdxSockAsynRecv(cdx_int32 sockfd, void *buf, cdx_size len,
 
     if (CdxSockIsBlocking(sockfd))
     {
-        CDX_LOGE("<%s,%d>err, blocking socket", __FUNCTION__, __LINE__);
+        LOGE("<%s,%d>err, blocking socket", __FUNCTION__, __LINE__);
         return -1;
     }
 
@@ -449,7 +449,7 @@ cdx_ssize CdxSockAsynRecv(cdx_int32 sockfd, void *buf, cdx_size len,
     {
         if (pForceStop && *pForceStop)
         {
-            CDX_LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
+            LOGE("<%s,%d>force stop", __FUNCTION__, __LINE__);
             return recvSize>0 ? recvSize : -2;
         }
 
@@ -467,13 +467,13 @@ cdx_ssize CdxSockAsynRecv(cdx_int32 sockfd, void *buf, cdx_size len,
             {
                 continue;
             }
-            CDX_LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, ioErr);
+            LOGE("<%s,%d>select err(%d)", __FUNCTION__, __LINE__, ioErr);
             return -1;
         }
         else if (ret == 0)
         {
             //("timeout\n");
-            //CDX_LOGV("xxx timeout, select again...");
+            //LOGV("xxx timeout, select again...");
             continue;
         }
 
@@ -481,17 +481,17 @@ cdx_ssize CdxSockAsynRecv(cdx_int32 sockfd, void *buf, cdx_size len,
         {
             if (pForceStop && *pForceStop)
             {
-                CDX_LOGE("<%s,%d>force stop.recvSize(%ld)", __FUNCTION__, __LINE__, recvSize);
+                LOGE("<%s,%d>force stop.recvSize(%ld)", __FUNCTION__, __LINE__, recvSize);
                 return recvSize>0 ? recvSize : -2;
             }
             if(FD_ISSET(sockfd,&errs))
             {
-                CDX_LOGE("<%s,%d>errs ", __FUNCTION__, __LINE__);
+                LOGE("<%s,%d>errs ", __FUNCTION__, __LINE__);
                 break;
             }
             if(!FD_ISSET(sockfd, &rs))
             {
-                CDX_LOGV("select > 0, but sockfd is not ready?");
+                LOGV("select > 0, but sockfd is not ready?");
                 break;
             }
 
@@ -505,13 +505,13 @@ cdx_ssize CdxSockAsynRecv(cdx_int32 sockfd, void *buf, cdx_size len,
                 }
                 else
                 {
-                    CDX_LOGE("<%s,%d>recv err(%d)", __FUNCTION__, __LINE__, errno);
+                    LOGE("<%s,%d>recv err(%d)", __FUNCTION__, __LINE__, errno);
                     return -1;
                 }
             }
             else if (ret == 0)//socket is close by peer?
             {
-                CDX_LOGD("xxx recvSize(%ld),sockfd(%d), want to read(%lu),"
+                LOGD("xxx recvSize(%ld),sockfd(%d), want to read(%lu),"
                         "errno(%d), socket is closed by peer?",
                                         recvSize, sockfd, len, errno);
                 return recvSize;

@@ -1,6 +1,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "video_frame_info"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include "plat_errno.h"
 #include "plat_type.h"
@@ -11,7 +11,7 @@ ERRORTYPE getVideoFrameBufferSizeInfo(PARAM_IN VIDEO_FRAME_INFO_S *pFrame, PARAM
 {
     if(NULL == pFrame || NULL == pSizeInfo)
     {
-        aloge("fatal error! pFrame[%p], pSizeInfo[%p]", pFrame, pSizeInfo);
+        LOGE("fatal error! pFrame[%p], pSizeInfo[%p]", pFrame, pSizeInfo);
         return FAILURE;
     }
     ERRORTYPE ret = SUCCESS;
@@ -62,7 +62,7 @@ ERRORTYPE getVideoFrameBufferSizeInfo(PARAM_IN VIDEO_FRAME_INFO_S *pFrame, PARAM
             pSizeInfo->mVSize = 0;
             break;
         default:
-            aloge("fatal error! not support pixel format[0x%x]", pFrame->VFrame.mPixelFormat);
+            LOGE("fatal error! not support pixel format[0x%x]", pFrame->VFrame.mPixelFormat);
             ret = FAILURE;
             break;
     }

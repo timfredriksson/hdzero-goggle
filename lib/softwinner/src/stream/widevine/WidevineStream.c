@@ -8,7 +8,7 @@
 */
 
 #define LOG_TAG "WidevineStream"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxStream.h>
 #include <CdxMemory.h>
 
@@ -16,8 +16,8 @@ typedef struct WidevineStream
 {
     CdxStreamT base;
     CdxStreamT *child;
-    CdxDataSourceT dataSource;//¼ÇÂ¼Ô­Ê¼µÄdatasource
-    //char *uri;//·ÃÎÊµÄuri
+    CdxDataSourceT dataSource;//ï¿½ï¿½Â¼Ô­Ê¼ï¿½ï¿½datasource
+    //char *uri;//ï¿½ï¿½ï¿½Êµï¿½uri
 }WidevineStream;
 
 void ClrExtraDataOfDataSouce(CdxDataSourceT *cdxDataSource)
@@ -53,7 +53,7 @@ void ClrExtraDataOfDataSouce(CdxDataSourceT *cdxDataSource)
     }
     else
     {
-        CDX_LOGE("extraDataType=%d, it is not supported.", extraDataType);
+        LOGE("extraDataType=%d, it is not supported.", extraDataType);
     }
     cdxDataSource->extraData = NULL;
     cdxDataSource->extraDataType = EXTRA_DATA_UNKNOWN;
@@ -89,13 +89,13 @@ int DupExtraDataOfDataSouce(CdxDataSourceT *dest, CdxDataSourceT *src)
                 (hdr1->pHttpHeader + i)->key = strdup((hdr->pHttpHeader + i)->key);
                 (hdr1->pHttpHeader + i)->val = strdup((hdr->pHttpHeader + i)->val);
 
-                CDX_LOGD("extraDataContainer %s %s",
+                LOGD("extraDataContainer %s %s",
                          (hdr1->pHttpHeader + i)->key,(hdr1->pHttpHeader + i)->val);
             }
         }
         else
         {
-            CDX_LOGE("extraDataType=%d, it is not supported.", extraDataType);
+            LOGE("extraDataType=%d, it is not supported.", extraDataType);
         }
     }
     return 0;
@@ -186,7 +186,7 @@ inline static cdx_int32 WidevineStreamGetMetaData(CdxStreamT *stream, const cdx_
     }
     else
     {
-        CDX_LOGD("key = %s", key);
+        LOGD("key = %s", key);
         return CdxStreamGetMetaData(widevine->child, key, pVal);
     }
 }
@@ -215,7 +215,7 @@ CdxStreamT *WidevineStreamCreate(CdxDataSourceT *dataSource)
     WidevineStream *widevine = malloc(sizeof(WidevineStream));
     if(!widevine)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         return NULL;
     }
     memset(widevine, 0x00, sizeof(WidevineStream));
@@ -229,7 +229,7 @@ CdxStreamT *WidevineStreamCreate(CdxDataSourceT *dataSource)
     widevine->child = CdxStreamCreate(&source);
     if(!widevine->child)
     {
-        CDX_LOGE("CdxStreamCreate fail! (%s)", source.uri);
+        LOGE("CdxStreamCreate fail! (%s)", source.uri);
         goto _error;
     }
     ClrDataSource(&source);

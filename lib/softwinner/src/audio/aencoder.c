@@ -5,7 +5,7 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "alib_log.h"
+#include <log/log.h>
 #include "aenc_sw_lib.h"
 #include "aacencApi.h"
 #include "mp3encApi.h"
@@ -68,7 +68,7 @@ static int RequestWriteBuf(AudioEncoder *handle, void * pInbuf, int inSize)
 	if (audioEncData->PcmManager.uFreeBufSize < inSize)
 	{
 		pthread_mutex_unlock(&audioEncData->in_buf_lock);
-		alib_logw("not enough buffer to write, audioEncData->PcmManager.uFreeBufSize: %d", audioEncData->PcmManager.uFreeBufSize);
+		LOGW("not enough buffer to write, audioEncData->PcmManager.uFreeBufSize: %d", audioEncData->PcmManager.uFreeBufSize);
 		return -1;
 	}
 
@@ -92,7 +92,7 @@ static int RequestWriteBuf(AudioEncoder *handle, void * pInbuf, int inSize)
 		audioEncData->PcmManager.pBufWritPtr += inSize;
         if(audioEncData->PcmManager.pBufWritPtr == audioEncData->PcmManager.pBufStart+audioEncData->PcmManager.uBufTotalLen)
         {
-            //ALOGD("(f:%s, l:%d) oh my god, we meet a return head, but don't worry.", __FUNCTION__, __LINE__);
+            //LOGD("(f:%s, l:%d) oh my god, we meet a return head, but don't worry.", __FUNCTION__, __LINE__);
             //audioEncData->PcmManager.pBufWritPtr = audioEncData->PcmManager.pBufStart;
         }
 	}
@@ -100,13 +100,13 @@ static int RequestWriteBuf(AudioEncoder *handle, void * pInbuf, int inSize)
 	audioEncData->PcmManager.uFreeBufSize -= inSize;
 	audioEncData->PcmManager.uDataLen += inSize;
 
-	alib_logv("(f:%s, l:%d) after wr: uBufTotalLen: %d, uDataLen: %d, uFreeBufSize: %d, pBufReadPtr: %x, pBufWritPtr: %x", __FUNCTION__, __LINE__,
+	LOGV("(f:%s, l:%d) after wr: uBufTotalLen: %d, uDataLen: %d, uFreeBufSize: %d, pBufReadPtr: %x, pBufWritPtr: %x", __FUNCTION__, __LINE__,
 		audioEncData->PcmManager.uBufTotalLen, audioEncData->PcmManager.uDataLen, audioEncData->PcmManager.uFreeBufSize,
 		audioEncData->PcmManager.pBufReadPtr, audioEncData->PcmManager.pBufWritPtr);
 
 	pthread_mutex_unlock(&audioEncData->in_buf_lock);
 
-	alib_logv("RequestWriteBuf --");
+	LOGV("RequestWriteBuf --");
 
 	return 0;
 }
@@ -125,17 +125,17 @@ static int AudioEncPro(AudioEncoder *handle)
 	if(audioEncData->gOutBufManager.buf_unused <= 1)
 	{
 		pthread_mutex_unlock(&audioEncData->out_buf_lock);
-		alib_logv("===AudioEncPro: no fifo to write, audioEncData->gOutBufManager.buf_unused: %d\n", audioEncData->gOutBufManager.buf_unused);
+		LOGV("===AudioEncPro: no fifo to write, audioEncData->gOutBufManager.buf_unused: %d", audioEncData->gOutBufManager.buf_unused);
 		return ERR_AUDIO_ENC_OUTFRAME_UNDERFLOW;
 	}
-    //ALOGD("(f:%s, l:%d) readyBufCnt[%d]", __FUNCTION__, __LINE__, FIFO_LEVEL-audioEncData->gOutBufManager.buf_unused);
+    //LOGD("(f:%s, l:%d) readyBufCnt[%d]", __FUNCTION__, __LINE__, FIFO_LEVEL-audioEncData->gOutBufManager.buf_unused);
     pthread_mutex_unlock(&audioEncData->out_buf_lock);
 
 	pbuf = audioEncData->gOutBufManager.out_buf[audioEncData->gOutBufManager.write_id].buf;
 
 	if (pbuf == NULL)
 	{
-		alib_loge("AudioEncPro: error get out buf");
+		LOGE("AudioEncPro: error get out buf");
 		ret = ERR_AUDIO_ENC_UNKNOWN;
 		goto EXIT;
 	}
@@ -145,11 +145,11 @@ static int AudioEncPro(AudioEncoder *handle)
 
 	if (size == 0)
 	{
-		alib_logv("(f:%s, l:%d) audio not encoder, ret=%d", __FUNCTION__, __LINE__, ret);
+		LOGV("(f:%s, l:%d) audio not encoder, ret=%d", __FUNCTION__, __LINE__, ret);
 		//ret = -1;
 		goto EXIT;
 	}
-	alib_logv("a enc ok: size: %d", size);
+	LOGV("a enc ok: size: %d", size);
 
 	pthread_mutex_lock(&audioEncData->out_buf_lock);
 	audioEncData->gOutBufManager.out_buf[audioEncData->gOutBufManager.write_id].size = size;
@@ -160,7 +160,7 @@ static int AudioEncPro(AudioEncoder *handle)
 	audioEncData->gOutBufManager.write_id %= FIFO_LEVEL;
 	pthread_mutex_unlock(&audioEncData->out_buf_lock);
 
-	alib_logv("a wr: buf_unused: %d, read_id: %d, prefetch_id:%d, write_id: %d\n",
+	LOGV("a wr: buf_unused: %d, read_id: %d, prefetch_id:%d, write_id: %d",
 		audioEncData->gOutBufManager.buf_unused, audioEncData->gOutBufManager.read_id, audioEncData->gOutBufManager.prefetch_id, audioEncData->gOutBufManager.write_id);
 EXIT:
 	return ret;
@@ -175,7 +175,7 @@ static int GetAudioEncBuf(AudioEncoder *handle, void ** pOutbuf, unsigned int * 
 	if(audioEncData->gOutBufManager.buf_unused >= FIFO_LEVEL)
 	{
 		pthread_mutex_unlock(&audioEncData->out_buf_lock);
-		alib_logv("=== GetAudioEncBuf: no valid fifo, buf_unused: %d\n", audioEncData->gOutBufManager.buf_unused);
+		LOGV("=== GetAudioEncBuf: no valid fifo, buf_unused: %d", audioEncData->gOutBufManager.buf_unused);
 		return -1;
 	}
 
@@ -187,7 +187,7 @@ static int GetAudioEncBuf(AudioEncoder *handle, void ** pOutbuf, unsigned int * 
         }
         else
         {
-            alib_loge("(f:%s, l:%d) fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!\n", __FUNCTION__, __LINE__,
+            LOGE("(f:%s, l:%d) fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!", __FUNCTION__, __LINE__,
                 audioEncData->gOutBufManager.read_id, audioEncData->gOutBufManager.prefetch_id, audioEncData->gOutBufManager.write_id);
             pthread_mutex_unlock(&audioEncData->out_buf_lock);
             return -1;
@@ -201,7 +201,7 @@ static int GetAudioEncBuf(AudioEncoder *handle, void ** pOutbuf, unsigned int * 
         }
         else
         {
-            alib_loge("(f:%s, l:%d) fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!\n", __FUNCTION__, __LINE__,
+            LOGE("(f:%s, l:%d) fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!", __FUNCTION__, __LINE__,
                 audioEncData->gOutBufManager.read_id, audioEncData->gOutBufManager.prefetch_id, audioEncData->gOutBufManager.write_id);
             pthread_mutex_unlock(&audioEncData->out_buf_lock);
             return -1;
@@ -211,7 +211,7 @@ static int GetAudioEncBuf(AudioEncoder *handle, void ** pOutbuf, unsigned int * 
     {
         if(audioEncData->gOutBufManager.buf_unused!=0)
         {
-            alib_loge("(f:%s, l:%d) fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!\n", __FUNCTION__, __LINE__,
+            LOGE("(f:%s, l:%d) fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!", __FUNCTION__, __LINE__,
                 audioEncData->gOutBufManager.read_id, audioEncData->gOutBufManager.prefetch_id, audioEncData->gOutBufManager.write_id);
             pthread_mutex_unlock(&audioEncData->out_buf_lock);
             return -1;
@@ -219,7 +219,7 @@ static int GetAudioEncBuf(AudioEncoder *handle, void ** pOutbuf, unsigned int * 
     }
 	if(audioEncData->gOutBufManager.prefetch_id==audioEncData->gOutBufManager.write_id)
 	{
-        alib_logv("(f:%s, l:%d) prefechId[%d]==writeId[%d], readId[%d], all outAudioFrames are requested\n", __FUNCTION__, __LINE__,
+        LOGV("(f:%s, l:%d) prefechId[%d]==writeId[%d], readId[%d], all outAudioFrames are requested", __FUNCTION__, __LINE__,
 		    audioEncData->gOutBufManager.prefetch_id, audioEncData->gOutBufManager.write_id, audioEncData->gOutBufManager.read_id);
         pthread_mutex_unlock(&audioEncData->out_buf_lock);
         return -1;
@@ -228,7 +228,7 @@ static int GetAudioEncBuf(AudioEncoder *handle, void ** pOutbuf, unsigned int * 
 	*outSize	= (unsigned int)(audioEncData->gOutBufManager.out_buf[audioEncData->gOutBufManager.prefetch_id].size);
 	*timeStamp	= (long long)(audioEncData->gOutBufManager.out_buf[audioEncData->gOutBufManager.prefetch_id].timeStamp);
     *pBufId = audioEncData->gOutBufManager.prefetch_id;
-    alib_logv("(f:%s, l:%d)buf_unused: %d, read_id: %d, prefetch_id: %d, write_id: %d\n", __FUNCTION__, __LINE__,
+    LOGV("(f:%s, l:%d)buf_unused: %d, read_id: %d, prefetch_id: %d, write_id: %d", __FUNCTION__, __LINE__,
 		audioEncData->gOutBufManager.buf_unused, audioEncData->gOutBufManager.read_id, audioEncData->gOutBufManager.prefetch_id, audioEncData->gOutBufManager.write_id);
     audioEncData->gOutBufManager.prefetch_id++;
     audioEncData->gOutBufManager.prefetch_id %= FIFO_LEVEL;
@@ -245,13 +245,13 @@ static int ReleaseAudioEncBuf(AudioEncoder *handle, void* pOutbuf, unsigned int 
 	if(audioEncData->gOutBufManager.buf_unused == FIFO_LEVEL)
 	{
 		pthread_mutex_unlock(&audioEncData->out_buf_lock);
-		alib_loge("(f:%s, l:%d) fatal error! AudioEncPro: no valid fifo\n", __FUNCTION__, __LINE__);
+		LOGE("(f:%s, l:%d) fatal error! AudioEncPro: no valid fifo", __FUNCTION__, __LINE__);
 		return -1;
 	}
     if(nBufId != audioEncData->gOutBufManager.read_id)
     {
         pthread_mutex_unlock(&audioEncData->out_buf_lock);
-        alib_loge("(f:%s, l:%d) fatal error! nReleaseId[%d]!=readId[%d]\n", __FUNCTION__, __LINE__, nBufId, audioEncData->gOutBufManager.read_id);
+        LOGE("(f:%s, l:%d) fatal error! nReleaseId[%d]!=readId[%d]", __FUNCTION__, __LINE__, nBufId, audioEncData->gOutBufManager.read_id);
 		return -1;
     }
 
@@ -261,7 +261,7 @@ static int ReleaseAudioEncBuf(AudioEncoder *handle, void* pOutbuf, unsigned int 
 	    //|| timeStamp != (long long)(audioEncData->gOutBufManager.out_buf[audioEncData->gOutBufManager.read_id].timeStamp)
 	  )
     {
-        alib_loge("(f:%s, l:%d) fatal error, check code!buf[%p->%p]size[%d->%d]pts[%lld->%lld]", __FUNCTION__, __LINE__,
+        LOGE("(f:%s, l:%d) fatal error, check code!buf[%p->%p]size[%d->%d]pts[%lld->%lld]", __FUNCTION__, __LINE__,
             pOutbuf, audioEncData->gOutBufManager.out_buf[audioEncData->gOutBufManager.read_id].buf,
             outSize, (unsigned int)(audioEncData->gOutBufManager.out_buf[audioEncData->gOutBufManager.read_id].size),
             timeStamp, (long long)(audioEncData->gOutBufManager.out_buf[audioEncData->gOutBufManager.read_id].timeStamp));
@@ -269,7 +269,7 @@ static int ReleaseAudioEncBuf(AudioEncoder *handle, void* pOutbuf, unsigned int 
 	audioEncData->gOutBufManager.buf_unused++;
 	audioEncData->gOutBufManager.read_id++;
 	audioEncData->gOutBufManager.read_id %= FIFO_LEVEL;
-	alib_logv("(f:%s, l:%d) a rd: buf_unused: %d, read_id: %d, write_id: %d\n", __FUNCTION__, __LINE__,
+	LOGV("(f:%s, l:%d) a rd: buf_unused: %d, read_id: %d, write_id: %d", __FUNCTION__, __LINE__,
 		audioEncData->gOutBufManager.buf_unused, audioEncData->gOutBufManager.read_id, audioEncData->gOutBufManager.write_id);
 	pthread_mutex_unlock(&audioEncData->out_buf_lock);
 	return 0;
@@ -315,7 +315,7 @@ int GetPcmDataSize(__pcm_buf_manager_t *pPcmMan)
 {
 	audio_Enc_data * audioEncData = (audio_Enc_data *)pPcmMan->parent;
 
-	alib_logd("GetPcmDataSize : %d", audioEncData->PcmManager.uDataLen);
+	LOGD("GetPcmDataSize : %d", audioEncData->PcmManager.uDataLen);
     return audioEncData->PcmManager.uDataLen;
 }
 
@@ -323,13 +323,13 @@ int ReadPcmDataForEnc(void *pBuf, int uGetLen, __pcm_buf_manager_t *pPcmMan)
 {
 	audio_Enc_data * audioEncData = (audio_Enc_data *)pPcmMan->parent;
 
-	alib_logv("ReadPcmDataForEnc ++, getLen: %d", uGetLen);
+	LOGV("ReadPcmDataForEnc ++, getLen: %d", uGetLen);
 
     pthread_mutex_lock(&audioEncData->in_buf_lock);
 
     if(audioEncData->PcmManager.uDataLen < uGetLen)
     {
-        alib_logw("pcm is not enough for audio encoder! uGetLen: %d, uDataLen: %d\n",
+        LOGW("pcm is not enough for audio encoder! uGetLen: %d, uDataLen: %d",
 			uGetLen, audioEncData->PcmManager.uDataLen);
         pthread_mutex_unlock(&audioEncData->in_buf_lock);
         return 0;
@@ -358,12 +358,12 @@ int ReadPcmDataForEnc(void *pBuf, int uGetLen, __pcm_buf_manager_t *pPcmMan)
     audioEncData->PcmManager.uDataLen -= uGetLen;
     audioEncData->PcmManager.uFreeBufSize += uGetLen;
 
-	alib_logv("after rd: uBufTotalLen: %d, uDataLen: %d, uFreeBufSize: %d, pBufReadPtr: %x, pBufWritPtr: %x",
+	LOGV("after rd: uBufTotalLen: %d, uDataLen: %d, uFreeBufSize: %d, pBufReadPtr: %x, pBufWritPtr: %x",
 		audioEncData->PcmManager.uBufTotalLen, audioEncData->PcmManager.uDataLen, audioEncData->PcmManager.uFreeBufSize,
 		audioEncData->PcmManager.pBufReadPtr, audioEncData->PcmManager.pBufWritPtr);
 
 	pthread_mutex_unlock(&audioEncData->in_buf_lock);
-	alib_logv("ReadPcmDataForEnc --");
+	LOGV("ReadPcmDataForEnc --");
 
     return uGetLen;
 }
@@ -379,7 +379,7 @@ static int AudioEncInit(AudioEncoder *pEncoder, __audio_enc_inf_t * audio_inf, i
        encode_type != AUDIO_ENCODER_LPCM_TYPE &&
        encode_type != AUDIO_ENCODER_MP3_TYPE)
 	{
-		alib_loge("(f:%s, l:%d) not support audio encode type[%d]", __FUNCTION__, __LINE__, encode_type);
+		LOGE("(f:%s, l:%d) not support audio encode type[%d]", __FUNCTION__, __LINE__, encode_type);
 		return -1;
 	}
 	//init audio encode content
@@ -388,7 +388,7 @@ static int AudioEncInit(AudioEncoder *pEncoder, __audio_enc_inf_t * audio_inf, i
 	audioEncData = (audio_Enc_data *)malloc(sizeof(audio_Enc_data));
 	if(audioEncData == NULL)
 	{
-		alib_loge("malloc audioEncData fail");
+		LOGE("malloc audioEncData fail");
 		return -1;
 	}
 
@@ -401,7 +401,7 @@ static int AudioEncInit(AudioEncoder *pEncoder, __audio_enc_inf_t * audio_inf, i
 		audioEncData->gOutBufManager.out_buf[i].buf = (void *)malloc(OUT_ENCODE_BUFFER_SIZE);
 		if (audioEncData->gOutBufManager.out_buf[i].buf == NULL)
 		{
-			alib_loge("AudioEncInit: malloc out buffer failed");
+			LOGE("AudioEncInit: malloc out buffer failed");
 			return -1;
 		}
 	}
@@ -409,7 +409,7 @@ static int AudioEncInit(AudioEncoder *pEncoder, __audio_enc_inf_t * audio_inf, i
 	audioEncData->PcmManager.pBufStart = (unsigned char *)malloc(BS_BUFFER_SIZE);
 	if (audioEncData->PcmManager.pBufStart == NULL)
 	{
-		alib_loge("AudioEncInit: malloc PcmManager failed");
+		LOGE("AudioEncInit: malloc PcmManager failed");
 		return -1;
 	}
 
@@ -426,28 +426,28 @@ static int AudioEncInit(AudioEncoder *pEncoder, __audio_enc_inf_t * audio_inf, i
 	// get __AudioENC_AC320
 	if(encode_type == AUDIO_ENCODER_AAC_TYPE)
 	{
-		alib_logv("++++++++++++ encode aac encode ++++++++++++");
+		LOGV("++++++++++++ encode aac encode ++++++++++++");
 		audioEncData->pAudioEnc = AudioAACENCEncInit();
 	}
     else if(encode_type == AUDIO_ENCODER_PCM_TYPE || encode_type == AUDIO_ENCODER_LPCM_TYPE)
     {
-        alib_logv("(f:%s, l:%d) encode pcm[%d]", __FUNCTION__, __LINE__, encode_type);
+        LOGV("(f:%s, l:%d) encode pcm[%d]", __FUNCTION__, __LINE__, encode_type);
 		audioEncData->pAudioEnc = AudioPCMEncInit();
     }
     else if(encode_type == AUDIO_ENCODER_MP3_TYPE)
     {
-        alib_logv("(f:%s, l:%d) encode[%d]", __FUNCTION__, __LINE__, encode_type);
+        LOGV("(f:%s, l:%d) encode[%d]", __FUNCTION__, __LINE__, encode_type);
 		audioEncData->pAudioEnc = AudioMP3ENCEncInit();
     }
 	else
 	{
-		alib_loge("(f:%s, l:%d) not support other audio encode type[%d]", __FUNCTION__, __LINE__, encode_type);
+		LOGE("(f:%s, l:%d) not support other audio encode type[%d]", __FUNCTION__, __LINE__, encode_type);
 		return -1;
 	}
 
 	if (audioEncData->pAudioEnc == NULL)
 	{
-		alib_loge("AudioEncInit: EncInit failed");
+		LOGE("AudioEncInit: EncInit failed");
 		return -1;
 	}
 
@@ -482,7 +482,7 @@ static void AudioEncExit(void *handle)
 
 	if(gAEncContent == NULL)
 	{
-		alib_loge("gAEncContent == NULL");
+		LOGE("gAEncContent == NULL");
 		return;
 	}
 
@@ -538,7 +538,7 @@ static void AudioEncExit(void *handle)
 		gAEncContent = NULL;
 	}
 
-	alib_logv("AudioEncExit --");
+	LOGV("AudioEncExit --");
 }
 
 
@@ -547,7 +547,7 @@ AudioEncoder* CreateAudioEncoder()
 	AudioEncoderContext *pAudioEncoder = (AudioEncoderContext*)malloc(sizeof(AudioEncoderContext));
 	if(NULL == pAudioEncoder)
 	{
-		alib_loge("create audio encoder failed");
+		LOGE("create audio encoder failed");
 		return NULL;
 	}
 	memset(pAudioEncoder, 0x00, sizeof(AudioEncoderContext));
@@ -565,7 +565,7 @@ int InitializeAudioEncoder(AudioEncoder *pEncoder, AudioEncConfig *pConfig)
 	   pConfig->nType != AUDIO_ENCODER_PCM_TYPE &&
 	   pConfig->nType != AUDIO_ENCODER_MP3_TYPE)
 	{
-		alib_loge("cannot support sudio encode type(%d)", pConfig->nType);
+		LOGE("cannot support sudio encode type(%d)", pConfig->nType);
 		return -1;
 	}
 

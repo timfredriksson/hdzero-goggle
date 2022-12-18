@@ -14,6 +14,9 @@
 #ifndef __IPCLINUX_AUDIOENC_COMPONENT_H__
 #define __IPCLINUX_AUDIOENC_COMPONENT_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+
 //ref platform headers
 #include "plat_type.h"
 #include "plat_errno.h"

@@ -17,7 +17,7 @@
 *******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "RecAVSync"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 
@@ -32,7 +32,7 @@ static ERRORTYPE RecAVSyncSetVideoPts(
     if(-1 == pSync->mGetFirstVideoTime)
     {
         pSync->mGetFirstVideoTime = CDX_GetSysTimeUsMonotonic()/1000;
-        alogd("get first video frame at [%lld]ms", pSync->mGetFirstVideoTime);
+        LOGD("get first video frame at [%lld]ms", pSync->mGetFirstVideoTime);
     }
     if(-1 == pSync->mVideoBasePts)
     {
@@ -61,7 +61,7 @@ static ERRORTYPE RecAVSyncSetVideoPts(
         if(-1 == pSync->mFirstDurationDiff)
         {
             pSync->mFirstDurationDiff = nVideoDuration-nAudioDuration;
-            alogd("first durationDiff[%lld]", pSync->mFirstDurationDiff);
+            LOGD("first durationDiff[%lld]", pSync->mFirstDurationDiff);
         }
         //int64_t nCacheDiff = (pSync->mGetFirstVideoTime - pSync->mGetFirstAudioTime);   //-:audio cache more; +:video cache more;
         int64_t nCacheDiff = -pSync->mFirstDurationDiff;   //-:front audio cache more; +: front video cache more;
@@ -74,13 +74,13 @@ static ERRORTYPE RecAVSyncSetVideoPts(
             adjust_ratio = adjust_ratio < -2 ? -2 : adjust_ratio;
 
             pSync->mpAvsCounter->adjust(pSync->mpAvsCounter, adjust_ratio);
-            alogd("----adjust ratio:%d, cachediff:%lld, video:%lld, audio:%lld, durationDiff:%lld, diff:%lld, diff-percent:%lld ", 
+            LOGD("----adjust ratio:%d, cachediff:%lld, video:%lld, audio:%lld, durationDiff:%lld, diff:%lld, diff-percent:%lld ", 
                 adjust_ratio, nCacheDiff, nVideoDuration, nAudioDuration, nVideoDuration-nAudioDuration, mediaTimediff, mediaTimediff / (AVS_ADJUST_PERIOD_MS/100));
         }
         else
         {
             pSync->mpAvsCounter->adjust(pSync->mpAvsCounter, 0);
-            alogv("----adjust ratio: 0, cachediff:%lld, video: %lld(ms), auido: %lld(ms), durationDiff:%lld, diff: %lld(ms) ",
+            LOGV("----adjust ratio: 0, cachediff:%lld, video: %lld(ms), auido: %lld(ms), durationDiff:%lld, diff: %lld(ms) ",
                 nCacheDiff, nVideoDuration, nAudioDuration, nVideoDuration-nAudioDuration, mediaTimediff);
         }
     
@@ -107,7 +107,7 @@ static ERRORTYPE RecAVSyncAddAudioDataLen(
     if(-1 == pSync->mGetFirstAudioTime)
     {
         pSync->mGetFirstAudioTime = CDX_GetSysTimeUsMonotonic()/1000;
-        alogd("get first audio frame at [%lld]ms", pSync->mGetFirstAudioTime);
+        LOGD("get first audio frame at [%lld]ms", pSync->mGetFirstAudioTime);
     }
     pSync->mAudioDataSize += nLen;
     return SUCCESS;
@@ -137,7 +137,7 @@ ERRORTYPE RecAVSyncInit(RecAVSync *pThiz)
 	pThiz->mpAvsCounter = cedarx_avs_counter_request();
 	if (pThiz->mpAvsCounter == NULL) 
     {
-        aloge("cedarx_avs_counter request failed!");
+        LOGE("cedarx_avs_counter request failed!");
         return FAILURE;
 	}
     pThiz->SetVideoPts = RecAVSyncSetVideoPts;
@@ -162,7 +162,7 @@ RecAVSync* RecAVSyncConstruct()
     RecAVSync *pThiz = (RecAVSync*)malloc(sizeof(RecAVSync));
     if(NULL == pThiz)
     {
-        aloge("fatal error! malloc fail!");
+        LOGE("fatal error! malloc fail!");
         return NULL;
     }
     if(SUCCESS!=RecAVSyncInit(pThiz))

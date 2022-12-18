@@ -7,11 +7,11 @@
 * History :
 *   Author  : Wenju Lin <linwenju@allwinnertech.com>
 *   Date    : 2014/08/08
-*   Comment : ´´½¨³õÊ¼°æ±¾£¬ÊµÏÖ APE µÄ½â¸´ÓÃ¹¦ÄÜ
+*   Comment : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½æ±¾ï¿½ï¿½Êµï¿½ï¿½ APE ï¿½Ä½â¸´ï¿½Ã¹ï¿½ï¿½ï¿½
 *
 *   Author  : Khan <chengkan@allwinnertech.com>
 *   Date    : 2015/08/08
-*   Comment : ÐÞ¸´ APE Ìø²¥ÎÊÌâ, APE PARSER ÎÈ¶¨°æ
+*   Comment : ï¿½Þ¸ï¿½ APE ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, APE PARSER ï¿½È¶ï¿½ï¿½ï¿½
 */
 #ifdef LOG_TAG
 #undef LOG_TAG
@@ -38,39 +38,39 @@
 
 static void ApeDumpInfo(APEParserImpl *pApeCtx)
 {
-    CDX_LOGV("blocksperframe       = %d\n", pApeCtx->blocksperframe);
-    CDX_LOGV("duration             = %lld\n", pApeCtx->duration);
+    LOGV("blocksperframe       = %d", pApeCtx->blocksperframe);
+    LOGV("duration             = %lld", pApeCtx->duration);
 #if ENABLE_INFO_DEBUG
     cdx_uint32 i;
 
-    CDX_LOGV("magic                = \"%c%c%c%c\"\n",
+    LOGV("magic                = \"%c%c%c%c\"",
               pApeCtx->magic[0], pApeCtx->magic[1], pApeCtx->magic[2], pApeCtx->magic[3]);
-    CDX_LOGV("fileversion          = %d\n", pApeCtx->fileversion);
-    CDX_LOGV("descriptorlength     = %d\n", pApeCtx->descriptorlength);
-    CDX_LOGV("headerlength         = %d\n", pApeCtx->headerlength);
-    CDX_LOGV("seektablelength      = %d\n", pApeCtx->seektablelength);
-    CDX_LOGV("wavheaderlength      = %d\n", pApeCtx->wavheaderlength);
-    CDX_LOGV("audiodatalength      = %d\n", pApeCtx->audiodatalength);
-    CDX_LOGV("audiodatalength_high = %d\n", pApeCtx->audiodatalength_high);
-    CDX_LOGV("wavtaillength        = %d\n", pApeCtx->wavtaillength);
-    CDX_LOGV("md5                  = ");
+    LOGV("fileversion          = %d", pApeCtx->fileversion);
+    LOGV("descriptorlength     = %d", pApeCtx->descriptorlength);
+    LOGV("headerlength         = %d", pApeCtx->headerlength);
+    LOGV("seektablelength      = %d", pApeCtx->seektablelength);
+    LOGV("wavheaderlength      = %d", pApeCtx->wavheaderlength);
+    LOGV("audiodatalength      = %d", pApeCtx->audiodatalength);
+    LOGV("audiodatalength_high = %d", pApeCtx->audiodatalength_high);
+    LOGV("wavtaillength        = %d", pApeCtx->wavtaillength);
+    LOGV("md5                  = ");
     for(i = 0; i < 16; i++)
-        CDX_LOGV("%02x", pApeCtx->md5[i]);
+        LOGV("%02x", pApeCtx->md5[i]);
 
-    CDX_LOGV("\nHeader Block:\n\n");
+    LOGV("\nHeader Block:");
 
-    CDX_LOGV("compressiontype      = %d\n", pApeCtx->compressiontype);
-    CDX_LOGV("formatflags          = %d\n", pApeCtx->formatflags);
-    CDX_LOGV("finalframeblocks     = %d\n", pApeCtx->finalframeblocks);
-    CDX_LOGV("totalframes          = %d\n", pApeCtx->totalframes);
-    CDX_LOGV("bps                  = %d\n", pApeCtx->bps);
-    CDX_LOGV("channels             = %d\n", pApeCtx->channels);
-    CDX_LOGV("samplerate           = %d\n", pApeCtx->samplerate);
+    LOGV("compressiontype      = %d", pApeCtx->compressiontype);
+    LOGV("formatflags          = %d", pApeCtx->formatflags);
+    LOGV("finalframeblocks     = %d", pApeCtx->finalframeblocks);
+    LOGV("totalframes          = %d", pApeCtx->totalframes);
+    LOGV("bps                  = %d", pApeCtx->bps);
+    LOGV("channels             = %d", pApeCtx->channels);
+    LOGV("samplerate           = %d", pApeCtx->samplerate);
 
-    CDX_LOGV("\nSeektable\n");
+    LOGV("\nSeektable");
     if((pApeCtx->seektablelength / sizeof(uint32_t)) != pApeCtx->totalframes)
     {
-        CDX_LOGV("No seektable\n");
+        LOGV("No seektable");
     }
     else
     {
@@ -78,30 +78,30 @@ static void ApeDumpInfo(APEParserImpl *pApeCtx)
         {
             if (i < pApeCtx->totalframes - 1)
             {
-                CDX_LOGV("%8d   %d (%d bytes)\n",
+                LOGV("%8d   %d (%d bytes)",
                           i,
                           pApeCtx->seektable[i],
                           pApeCtx->seektable[i + 1] - pApeCtx->seektable[i]);
             }
             else
             {
-                CDX_LOGV("%8d   %d\n", i, pApeCtx->seektable[i]);
+                LOGV("%8d   %d", i, pApeCtx->seektable[i]);
             }
         }
     }
 
-    CDX_LOGV("\nFrames\n");
+    LOGV("\nFrames");
     for(i = 0; i < pApeCtx->totalframes; i++)
     {
-        CDX_LOGV("%8d, pos = %8lld, size = %8d, samples = %d, skips %d\n",
+        LOGV("%8d, pos = %8lld, size = %8d, samples = %d, skips %d",
                   i, pApeCtx->frames[i].pos, pApeCtx->frames[i].size,
             pApeCtx->frames[i].nblocks, pApeCtx->frames[i].skip);
-        CDX_LOGV("%d, perframespts      = %8lld \n", i, pApeCtx->frames[i].pts);
+        LOGV("%d, perframespts      = %8lld ", i, pApeCtx->frames[i].pts);
     }
-    CDX_LOGV("\nCalculated information:\n\n");
-    CDX_LOGV("junklength           = %d\n", pApeCtx->junklength);
-    CDX_LOGV("firstframe           = %d\n", pApeCtx->firstframe);
-    CDX_LOGV("totalsamples         = %d\n", pApeCtx->totalsamples);
+    LOGV("\nCalculated information:");
+    LOGV("junklength           = %d", pApeCtx->junklength);
+    LOGV("firstframe           = %d", pApeCtx->firstframe);
+    LOGV("totalsamples         = %d", pApeCtx->totalsamples);
 #endif
 }
 
@@ -119,16 +119,16 @@ static int ApeIndexSearch(CdxParserT *parser, cdx_int64 timeUs)
     pApe = (APEParserImpl *)parser;
     if(!pApe)
     {
-        CDX_LOGE("pApe file parser lib has not been initiated!");
+        LOGE("pApe file parser lib has not been initiated!");
         ret = -1;
         goto Exit;
     }
     timeindex = timeUs / 1E6;
-    CDX_LOGV("timeindex %d", timeindex);
+    LOGV("timeindex %d", timeindex);
     if(timeindex >= 0)
     {
         frameindex = (cdx_int32)timeindex * pApe->samplerate / pApe->blocksperframe;
-        CDX_LOGV("frameindex %d", frameindex);
+        LOGV("frameindex %d", frameindex);
         if (frameindex > (cdx_int32)pApe->totalframes - 1)
         {
             frameindex = pApe->totalframes - 1;
@@ -149,14 +149,14 @@ static int ApeIndexSearch(CdxParserT *parser, cdx_int64 timeUs)
     }
     else
     {
-        CDX_LOGW("pApe file seekUs negative");
+        LOGW("pApe file seekUs negative");
         frameindex = 0;
     }
-    CDX_LOGV("seek to frameindex : %d",frameindex);
+    LOGV("seek to frameindex : %d",frameindex);
     pApe->currentframe = frameindex;
 
     pApe->nseeksession = 1;
-    CDX_LOGV("pApe file seekUs currentframe %d", pApe->currentframe);
+    LOGV("pApe file seekUs currentframe %d", pApe->currentframe);
 Exit:
     return ret;
 
@@ -174,7 +174,7 @@ static int CdxApeInit(CdxParserT* Parameter)
     pApe->extradata = malloc(APE_EXTRADATA_SIZE);
     if(pApe->extradata == NULL)
     {
-        CDX_LOGE("No mem for ape extradata!");
+        LOGE("No mem for ape extradata!");
         goto Exit;
     }
     memset(pApe->extradata, 0x00, APE_EXTRADATA_SIZE);
@@ -270,7 +270,7 @@ static int CdxApeInit(CdxParserT* Parameter)
 
     if(pApe->totalframes > UINT_MAX / sizeof(APEFrame))
     {
-        CDX_LOGW("Too many frames %d\n", pApe->totalframes);
+        LOGW("Too many frames %d", pApe->totalframes);
         pApe->mErrno = PSR_OPEN_FAIL;
         goto Exit;
     }
@@ -330,7 +330,7 @@ static int CdxApeInit(CdxParserT* Parameter)
         pApe->frames[i].pts = pts;
         pts += (cdx_int64)pApe->blocksperframe * AV_TIME_BASE  / pApe->samplerate;
     }
-    CDX_LOGV("pApe->fileversion : %d, pApe->compressiontype : %d, pApe->formatflags : %d",
+    LOGV("pApe->fileversion : %d, pApe->compressiontype : %d, pApe->formatflags : %d",
             pApe->fileversion, pApe->compressiontype, pApe->formatflags);
     pApe->extradata[0] = pApe->fileversion & 0xff;
     pApe->extradata[1] = (pApe->fileversion>>8) & 0xff;
@@ -369,7 +369,7 @@ static int CdxApeParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *mediaInfo
     pApe = (APEParserImpl *)parser;
     if(!pApe)
     {
-        CDX_LOGE("pApe file parser lib has not been initiated!");
+        LOGE("pApe file parser lib has not been initiated!");
         ret = -1;
         goto Exit;
     }
@@ -378,7 +378,7 @@ static int CdxApeParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *mediaInfo
     if(pApe->seektablelength > 0 && CdxStreamSeekAble(pApe->stream))
         mediaInfo->bSeekable = CDX_TRUE;
     else
-        CDX_LOGW("pApe file Unable To Seek");
+        LOGW("pApe file Unable To Seek");
 
     ApeDumpInfo(pApe);
 
@@ -410,7 +410,7 @@ static int CdxApeParserControl(CdxParserT *parser, cdx_int32 cmd, void *param)
     pApe = (APEParserImpl *)parser;
     if(!pApe)
     {
-        CDX_LOGE("Ape Parser Control failed for NULL ptr!");
+        LOGE("Ape Parser Control failed for NULL ptr!");
         return -1;
     }
 
@@ -427,7 +427,7 @@ static int CdxApeParserControl(CdxParserT *parser, cdx_int32 cmd, void *param)
             CdxStreamClrForceStop(pApe->stream);
             break;
         default:
-            CDX_LOGW("not implement...(%d)", cmd);
+            LOGW("not implement...(%d)", cmd);
             break;
     }
 
@@ -441,13 +441,13 @@ static int CdxApeParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     pApe = (APEParserImpl *)parser;
     if(!pApe)
     {
-        CDX_LOGE("pApe file parser prefetch failed!");
+        LOGE("pApe file parser prefetch failed!");
         return -1;
     }
 
     if(pApe->currentframe >= pApe->totalframes)
     {
-        CDX_LOGD("pApe file is eos");
+        LOGD("pApe file is eos");
         return -1;
     }
 
@@ -471,7 +471,7 @@ static int CdxApeParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
 
     // First Frame
     pkt->length += 8;
-    CDX_LOGV("pkt length %d, pkt pts %lld", pkt->length, pkt->pts);
+    LOGV("pkt length %d, pkt pts %lld", pkt->length, pkt->pts);
     return 0;
 }
 
@@ -488,14 +488,14 @@ static int CdxApeParserRead(CdxParserT *parser, CdxPacketT *pkt)
     pApe = (APEParserImpl *)parser;
     if(!pApe)
     {
-        CDX_LOGE("pApe file parser read failed!");
+        LOGE("pApe file parser read failed!");
         ret = -1;
         goto Exit;
     }
 
     if(pApe->currentframe >= pApe->totalframes)
     {
-        CDX_LOGW("pApe file is eos");
+        LOGW("pApe file is eos");
     }
 
     //nreadsize = pApe->frames[pApe->currentframe].size;
@@ -513,7 +513,7 @@ static int CdxApeParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
     if (pApe->frames[pApe->currentframe].size <= 0 ||
         pApe->frames[pApe->currentframe].size > INT_MAX - pApe->extrasize) {
-        CDX_LOGW("invalid packet size: %d\n",
+        LOGW("invalid packet size: %d",
             pApe->frames[pApe->currentframe].size);
         pApe->currentframe++;
         goto Exit;
@@ -534,7 +534,7 @@ static int CdxApeParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
     ret = CdxStreamSeek(pApe->stream, nreadpos, SEEK_SET);
     if (ret < 0) {
-        CDX_LOGE("CdxApeParserRead Failed to seek");
+        LOGE("CdxApeParserRead Failed to seek");
         ret = -1;
         goto Exit;
     }
@@ -542,13 +542,13 @@ static int CdxApeParserRead(CdxParserT *parser, CdxPacketT *pkt)
     nretsize = CdxStreamRead(pApe->stream, ptr, nreadsize);
     if(nretsize <= 0)
     {
-        CDX_LOGW("CdxApeParserRead Overflow");
+        LOGW("CdxApeParserRead Overflow");
         ret = -1;
         goto Exit;
     }
 
 #if ENABLE_FILE_DEBUG
-    CDX_LOGV("nreadpos %lld, nreadsize %d", nreadpos, nretsize);
+    LOGV("nreadpos %lld, nreadsize %d", nreadpos, nretsize);
     if(pApe->teeFd >= 0)
     {
         write(pApe->teeFd, pkt->buf, nretsize);
@@ -578,7 +578,7 @@ static int CdxApeParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType
     pApe = (APEParserImpl *)parser;
     if(!pApe)
     {
-        CDX_LOGE("pApe file parser seek failed!");
+        LOGE("pApe file parser seek failed!");
         ret = -1;
         goto Exit;
     }
@@ -599,7 +599,7 @@ static cdx_uint32 CdxApeParserAttribute(CdxParserT *parser)
     pApe = (APEParserImpl *)parser;
     if(!pApe)
     {
-        CDX_LOGE("pApe file parser Attribute failed!");
+        LOGE("pApe file parser Attribute failed!");
         ret = -1;
         goto Exit;
     }
@@ -615,7 +615,7 @@ static int CdxApeParserGetStatus(CdxParserT *parser)
 
     if(CdxStreamEos(pApe->stream))
     {
-        CDX_LOGD("File EOS! ");
+        LOGD("File EOS! ");
         return pApe->mErrno = PSR_EOS;
     }
     return pApe->mErrno;
@@ -628,7 +628,7 @@ static int CdxApeParserClose(CdxParserT *parser)
     pApe = (APEParserImpl *)parser;
     if(!pApe)
     {
-        CDX_LOGE("pApe file parser close failed!");
+        LOGE("pApe file parser close failed!");
         ret = -1;
         goto Exit;
     }
@@ -689,12 +689,12 @@ CdxParserT *CdxApeParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     //int ret = 0;
     if(flags > 0)
     {
-        CDX_LOGI("Flag Not Zero");
+        LOGI("Flag Not Zero");
     }
     ApeParserImple = (APEParserImpl *)malloc(sizeof(APEParserImpl));
     if(ApeParserImple == NULL)
     {
-        CDX_LOGE("ApeParserOpen Failed for memory lackless!");
+        LOGE("ApeParserOpen Failed for memory lackless!");
         CdxStreamClose(stream);
         return NULL;
     }
@@ -727,7 +727,7 @@ static cdx_uint32 CdxApeParserProbe(CdxStreamProbeDataT *probeData)
 {
     if(probeData->len < 4 || !ApeProbe(probeData))
     {
-        CDX_LOGE("pApe Probe Failed");
+        LOGE("pApe Probe Failed");
         return 0;
     }
 

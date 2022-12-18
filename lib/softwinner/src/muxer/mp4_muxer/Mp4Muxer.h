@@ -7,9 +7,9 @@
 #include <encoder_type.h>
 #include "mp4_mux_lib.h"
 
-#define eLIBs_printf			alogv
-#define __inf					alogv
-#define __wrn					alogw
+#define eLIBs_printf			LOGV
+#define __inf					LOGV
+#define __wrn					LOGW
 
 //#define __SIM_TEST
 
@@ -63,7 +63,7 @@
 //    unsigned int codec_id;
 //
 //	int channels;
-//	int frame_size;   //Ò»¸öaudioÖ¡µÄ½âÂëÖ®ºóµÄsampleµÄÊýÁ¿
+//	int frame_size;   //Ò»ï¿½ï¿½audioÖ¡ï¿½Ä½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½ï¿½sampleï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //	int frame_rate;
 //
 //	int bits_per_sample;

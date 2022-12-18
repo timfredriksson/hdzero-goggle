@@ -1,6 +1,6 @@
 //#include <CDX_LogNDebug.h>
 #define LOG_TAG "SEM"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <pthread.h>
 #include <sys/time.h>
@@ -54,12 +54,12 @@ void cdx_sem_down(cdx_sem_t* tsem)
 {
 	pthread_mutex_lock(&tsem->mutex);
 
-	alogv("semdown:%p val:%d",tsem,tsem->semval);
+	LOGV("semdown:%p val:%d",tsem,tsem->semval);
 	while (tsem->semval == 0)
 	{
-		alogv("semdown wait:%p val:%d",tsem,tsem->semval);
+		LOGV("semdown wait:%p val:%d",tsem,tsem->semval);
 		pthread_cond_wait(&tsem->condition, &tsem->mutex);
-		alogv("semdown wait end:%p val:%d",tsem,tsem->semval);
+		LOGV("semdown wait end:%p val:%d",tsem,tsem->semval);
 	}
 
 	tsem->semval--;
@@ -71,10 +71,10 @@ int cdx_sem_down_timedwait(cdx_sem_t* tsem, unsigned int timeout)
     int ret = 0;
     pthread_mutex_lock(&tsem->mutex);
 
-    alogv("semdown:%p val:%d",tsem,tsem->semval);
+    LOGV("semdown:%p val:%d",tsem,tsem->semval);
     if(tsem->semval == 0)
     {
-        alogv("semdown wait:%p val:%d",tsem, tsem->semval);
+        LOGV("semdown wait:%p val:%d",tsem, tsem->semval);
         struct timespec ts;
         clock_gettime(CLOCK_MONOTONIC, &ts);
         int relative_sec = timeout/1000;
@@ -86,16 +86,16 @@ int cdx_sem_down_timedwait(cdx_sem_t* tsem, unsigned int timeout)
         ret = pthread_cond_timedwait(&tsem->condition, &tsem->mutex, &ts);
         if(ETIMEDOUT == ret)
         {
-            //alogd("pthread cond timeout np timeout[%d]", ret);
+            //LOGD("pthread cond timeout np timeout[%d]", ret);
         }
         else if(0 == ret)
         {
         }
         else
         {
-            aloge("fatal error! pthread cond timedwait[%d]", ret);
+            LOGE("fatal error! pthread cond timedwait[%d]", ret);
         }
-        alogv("semdown wait end:%p val:%d",tsem,tsem->semval);
+        LOGV("semdown wait end:%p val:%d",tsem,tsem->semval);
     }
     if(tsem->semval > 0)
     {
@@ -114,7 +114,7 @@ void cdx_sem_up(cdx_sem_t* tsem)
 	pthread_mutex_lock(&tsem->mutex);
 
 	tsem->semval++;
-	alogv("semup signal:%p val:%d",tsem,tsem->semval);
+	LOGV("semup signal:%p val:%d",tsem,tsem->semval);
 	pthread_cond_signal(&tsem->condition);
 
 	pthread_mutex_unlock(&tsem->mutex);

@@ -237,14 +237,14 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
     raw_header_len = 2;
     if((AV_RB16(raw_header) & 0xFFFE) != 0xFFF8)
     {
-        CDX_LOGE("+++++++++++++Sync header error+++++++++++");
+        LOGE("+++++++++++++Sync header error+++++++++++");
         return CDX_FALSE;
     }
 
     /* check to make sure that reserved bit is 0 */
     if(raw_header[1] & 0x02) /* MAGIC NUMBER */
     {
-        CDX_LOGV("Sync head error at bit 15!");
+        LOGV("Sync head error at bit 15!");
         is_unparseable = CDX_TRUE;
     }
 
@@ -275,7 +275,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
         if(x == 0xff) { /* MAGIC NUMBER for the first 8 frame sync bits */
             /* if we get here it means our original sync was erroneous since
             the sync code cannot appear in the header */
-                CDX_LOGV("Sync head error at byte 2,3!");
+                LOGV("Sync head error at byte 2,3!");
                 return CDX_FALSE;
         }
         raw_header[raw_header_len++] = (cdx_uint8)x;
@@ -320,7 +320,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
             if(impl->orgSr)
                 impl->orgSr = impl->ulSampleRate;
             else{
-                CDX_LOGV("Sync head error at impl->orgSr == 0!");
+                LOGV("Sync head error at impl->orgSr == 0!");
                 is_unparseable = CDX_TRUE;
             }
             break;
@@ -363,7 +363,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
             sample_rate_hint = x;
             break;
         case 15:
-            CDX_LOGV("Sync head error at unknown Sr !");
+            LOGV("Sync head error at unknown Sr !");
             return CDX_FALSE;
         default:
             impl->orgSr = 0;
@@ -386,7 +386,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
                 impl->orgChanAsign = FLAC__CHANNEL_ASSIGNMENT_MID_SIDE;
                 break;
             default:
-                CDX_LOGV("Sync head error at unknown chanasign !");
+                LOGV("Sync head error at unknown chanasign !");
                 is_unparseable = CDX_TRUE;
                 break;
         }
@@ -404,7 +404,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
             impl->orgSampbit = impl->ulBitsSample;
         else
         {
-            CDX_LOGV("Sync head error at impl->orgSampbit !");
+            LOGV("Sync head error at impl->orgSampbit !");
             is_unparseable = CDX_TRUE;
         }
         break;
@@ -425,7 +425,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
             break;
         case 3:
         case 7:
-            CDX_LOGV("Sync head error at unknown Sampbit !");
+            LOGV("Sync head error at unknown Sampbit !");
             is_unparseable = CDX_TRUE;
             break;
         default:
@@ -436,7 +436,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
     /* check to make sure that reserved bit is 0 */
     if(raw_header[3] & 0x01) /* MAGIC NUMBER */
     {
-        CDX_LOGV("Sync head error at bit 31");
+        LOGV("Sync head error at bit 31");
         is_unparseable = CDX_TRUE;
     }
 
@@ -452,7 +452,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
         if(xx == (cdx_uint64)(0xffffffffffffffff))
         {
             /* i.e. non-UTF8 code... */
-            CDX_LOGV("Sync head error at variable blocksize uft64!");
+            LOGV("Sync head error at variable blocksize uft64!");
             return CDX_FALSE;
         }
     }
@@ -464,7 +464,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
         if(x == 0xffffffff)
         {
             /* i.e. non-UTF8 code... */
-            CDX_LOGV("Sync head error at fixed blocksize uft32!");
+            LOGV("Sync head error at fixed blocksize uft32!");
             return CDX_FALSE;
         }
     }
@@ -509,7 +509,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
     /*if blocksize has changed unexpected, we thouht it is a invalid frame*/
     if((impl->orgSampsPerFrm < impl->minBlocksize) || (impl->orgSampsPerFrm > impl->maxBlocksize))
     {
-        CDX_LOGD("orgSampsPerFrm : %d, min : %d, max : %d",
+        LOGD("orgSampsPerFrm : %d, min : %d, max : %d",
                 impl->orgSampsPerFrm, impl->minBlocksize, impl->maxBlocksize);
         return CDX_FALSE;
     }
@@ -519,7 +519,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
     crc8 = (cdx_uint8)x;
 
     if(Crc8(raw_header, raw_header_len) != crc8) {
-        CDX_LOGV("Sync head error at crc");
+        LOGV("Sync head error at crc");
         return CDX_FALSE;
     }
 
@@ -527,7 +527,7 @@ cdx_bool read_frame_header_(cdx_uint8 *src,FlacParserImplS *impl)
 
     */
     if(is_unparseable) {
-        CDX_LOGV("Sync head error at unparseable");
+        LOGV("Sync head error at unparseable");
         return CDX_FALSE;
     }
 
@@ -723,7 +723,7 @@ static int FlacInit(CdxParserT *flac_impl)
     }
     if(buf_end < impl->maxFramesize+INPUT_BUFFER_PADDING_SIZE)
     {
-        CDX_LOGE("First frame data not enough, failure and out!");
+        LOGE("First frame data not enough, failure and out!");
         if(impl->pktbuf)
         {
             free(impl->pktbuf);
@@ -734,7 +734,7 @@ static int FlacInit(CdxParserT *flac_impl)
     }
     if(!read_frame_header_(&impl->pktbuf[buf_ptr],impl))
     {
-        CDX_LOGD("After seek is not right header,we need resync!");
+        LOGD("After seek is not right header,we need resync!");
         while(1)
         {
             buf_ptr ++;
@@ -746,12 +746,12 @@ static int FlacInit(CdxParserT *flac_impl)
             }
             if(buf_ptr+2 >= buf_end)
             {
-                CDX_LOGE("Sync out of range, fail to open flac parser");
+                LOGE("Sync out of range, fail to open flac parser");
                 goto OPENFAILURE;
             }
             if(read_frame_header_(&impl->pktbuf[buf_ptr],impl))
             {
-                CDX_LOGE("find a valid frameheader, break out ");
+                LOGE("find a valid frameheader, break out ");
                 break;
             }
         }
@@ -760,7 +760,7 @@ static int FlacInit(CdxParserT *flac_impl)
 SUCESS:
     impl->data_offset = impl->file_offset;
     CdxStreamSeek(cdxStream, impl->data_offset,SEEK_SET);
-    CDX_LOGD("impl->extradata_size : %d, impl->extradata : %p, impl->file_offset :%lld",
+    LOGD("impl->extradata_size : %d, impl->extradata : %p, impl->file_offset :%lld",
             impl->extradata_size, impl->extradata, impl->file_offset);
 
     buffer=NULL;
@@ -770,7 +770,7 @@ SUCESS:
     return 0;
 
 OPENFAILURE:
-    CDX_LOGE("FlacOpenThread fail!!!");
+    LOGE("FlacOpenThread fail!!!");
     impl->mErrno = PSR_OPEN_FAIL;
     pthread_cond_signal(&impl->cond);
     return -1;
@@ -795,7 +795,7 @@ static cdx_int32 __FlacParserControl(CdxParserT *parser, cdx_int32 cmd, void *pa
             CdxStreamClrForceStop(impl->stream);
             break;
         default :
-            CDX_LOGW("not implement...(%d)", cmd);
+            LOGW("not implement...(%d)", cmd);
             break;
     }
     impl->flags = cmd;
@@ -816,12 +816,12 @@ static cdx_int32 __FlacParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
                                   impl->maxFramesize+INPUT_BUFFER_PADDING_SIZE);
     if(ret == 0)//< impl->maxFramesize + INPUT_BUFFER_PADDING_SIZE)
     {
-        CDX_LOGE("Not enough data!");
+        LOGE("Not enough data!");
         return CDX_FAILURE;
     }
     //insure that we snyc to the head
     if ((AV_RB16(impl->pktbuf) & 0xFFFE) != 0xFFF8) {
-        CDX_LOGW("Prefetch Frame Header, but NOT HERE");
+        LOGW("Prefetch Frame Header, but NOT HERE");
         while (buf_ptr+2 < buf_end && (AV_RB16(impl->pktbuf+buf_ptr) & 0xFFFE) != 0xFFF8)
         {
             buf_ptr++;
@@ -834,7 +834,7 @@ static cdx_int32 __FlacParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
         //we have to judge a right header
         if(!read_frame_header_(&impl->pktbuf[buf_ptr],impl))
         {
-            CDX_LOGE("First Frame invaild!");
+            LOGE("First Frame invaild!");
             return CDX_FAILURE;
         }
     }
@@ -842,7 +842,7 @@ static cdx_int32 __FlacParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     {
         if(!read_frame_header_(&impl->pktbuf[buf_ptr],impl))
         {
-            CDX_LOGW("After seek is not right header,we need resync!");
+            LOGW("After seek is not right header,we need resync!");
             while(1)
             {
                 buf_ptr ++;
@@ -854,12 +854,12 @@ static cdx_int32 __FlacParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
                 }
                 if(buf_ptr+2 >= buf_end)
                 {
-                    CDX_LOGE("Sync out of range while find 2nd frame");
+                    LOGE("Sync out of range while find 2nd frame");
                     return CDX_FAILURE;
                 }
                 if(read_frame_header_(&impl->pktbuf[buf_ptr],impl))
                 {
-                    CDX_LOGE("find a valid frameheader, break out ");
+                    LOGE("find a valid frameheader, break out ");
                     break;
                 }
             }
@@ -878,7 +878,7 @@ static cdx_int32 __FlacParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
         }
         if(buf_ptr+2 == buf_end)
         {
-            CDX_LOGW("Give up last frame!!");
+            LOGW("Give up last frame!!");
             return CDX_FAILURE;
         }
         if(read_frame_header_(&impl->pktbuf[buf_ptr],impl))
@@ -926,13 +926,13 @@ static cdx_int32 __FlacParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
     if(read_length < 0)
     {
-        CDX_LOGE("CdxStreamRead fail");
+        LOGE("CdxStreamRead fail");
         impl->mErrno = PSR_IO_ERR;
         return CDX_FAILURE;
     }
     else if(read_length == 0)
     {
-       CDX_LOGD("CdxStream EOS");
+       LOGD("CdxStream EOS");
        impl->mErrno = PSR_EOS;
        return CDX_FAILURE;
     }
@@ -953,7 +953,7 @@ static cdx_int32 __FlacParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *med
 
     if(impl->mErrno != PSR_OK)
     {
-        CDX_LOGE("audio parse status no PSR_OK");
+        LOGE("audio parse status no PSR_OK");
         return CDX_FAILURE;
     }
 
@@ -1002,7 +1002,7 @@ static cdx_int32 __FlacParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMo
         }
         if(CdxStreamSeek(impl->stream,offset,SEEK_SET))
         {
-            CDX_LOGE("CdxStreamSeek fail");
+            LOGE("CdxStreamSeek fail");
             return CDX_FAILURE;
         }
     }
@@ -1087,13 +1087,13 @@ static cdx_uint32 __FlacParserProbe(CdxStreamProbeDataT *probeData)
     CDX_CHECK(probeData);
     if(probeData->len < 4)
     {
-        CDX_LOGE("Probe Flac_header data is not enough.");
+        LOGE("Probe Flac_header data is not enough.");
         return 0;
     }
 
     if(!FlacProbe(probeData))
     {
-        CDX_LOGE("Flac probe failed.");
+        LOGE("Flac probe failed.");
         return 0;
     }
     return 100;

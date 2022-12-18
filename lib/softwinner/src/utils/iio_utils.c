@@ -685,13 +685,13 @@ static int _write_sysfs_int(const char *filename, const char *basedir, int val,
 
 		goto error_free;
 	}
-    // printf("ice line _write_sysfs_int : %d, maybe stop here, start.\r\n", __LINE__); // dead 2
+    // LOGI("ice line _write_sysfs_int : %d, maybe stop here, start.", __LINE__); // dead 2
     fflush(NULL); 
 	if (fclose(sysfsfp)) {
 		ret = -errno;
 		goto error_free;
 	}
-    // printf("ice line _write_sysfs_int : %d, maybe stop here, end.\r\n", __LINE__); // dead 2
+    // LOGI("ice line _write_sysfs_int : %d, maybe stop here, end.", __LINE__); // dead 2
 
 	if (verify) {
 		sysfsfp = fopen(temp, "r");

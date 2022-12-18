@@ -122,7 +122,7 @@ static int CallbackProcess(void* pUserData, int eMessageId, void* param)
             break;
         }
         default:
-            logw("ignore demux callback message, eMessageId = 0x%x.", eMessageId);
+            LOGW("ignore demux callback message, eMessageId = 0x%x.", eMessageId);
             break;
     }
     return 0;
@@ -167,7 +167,7 @@ static int httpCallbackProcess(void* pUserData, int eMessageId, void* param, int
                         (hdr1->pHttpHeader + i)->key = strdup((hdr->pHttpHeader + i)->key);
                         (hdr1->pHttpHeader + i)->val = strdup((hdr->pHttpHeader + i)->val);
 
-                        logd("hfs %s %s",
+                        LOGD("hfs %s %s",
                                   (hdr1->pHttpHeader + i)->key,(hdr1->pHttpHeader + i)->val);
                     }
                 }
@@ -184,7 +184,7 @@ static int httpCallbackProcess(void* pUserData, int eMessageId, void* param, int
                     resHdr = CdxHttpNewHeader();
                     if(resHdr == NULL)
                     {
-                        loge("new header fail.");
+                        LOGE("new header fail.");
                         pthread_mutex_unlock(&impl->lock);
                         return -1;
                     }
@@ -248,14 +248,14 @@ static int httpCallbackProcess(void* pUserData, int eMessageId, void* param, int
                 impl->sourceUri = Pstrdup(impl->pool, (cdx_char *)param);
                 if(impl->sourceUri == NULL)
                 {
-                    loge("strdup fail.");
+                    LOGE("strdup fail.");
                     pthread_mutex_unlock(&impl->lock);
                     return -1;
                 }
                 pthread_mutex_unlock(&impl->lock);
             }
             default:
-                logw("ignore demux callback message, eMessageId = 0x%x.", eMessageId);
+                LOGW("ignore demux callback message, eMessageId = 0x%x.", eMessageId);
                 return -1;
         }
     }
@@ -277,7 +277,7 @@ static int httpCallbackProcess(void* pUserData, int eMessageId, void* param, int
                 break;
             default:
             {
-                logw("ignore demux callback message, eMessageId = 0x%x.", eMessageId);
+                LOGW("ignore demux callback message, eMessageId = 0x%x.", eMessageId);
                 return -1;
             }
         }
@@ -314,7 +314,7 @@ static cdx_int32 CdxHttpSendRequest(DownloadCtxT *d, cdx_int64 pos)
     httpHdr = CdxHttpNewHeader();
     if(httpHdr == NULL)
     {
-        loge("httpHdr is NULL.");
+        LOGE("httpHdr is NULL.");
         return -1;
     }
 
@@ -343,13 +343,13 @@ static cdx_int32 CdxHttpSendRequest(DownloadCtxT *d, cdx_int64 pos)
             }
             if(strcasecmp("Range", d->pHttpHeader[i].key) == 0)//Range: bytes=%lld-%lld
             {
-                logd("attention!");
+                LOGD("attention!");
                 setRangeFlag = 1;
             }
             snprintf(str, sizeof(str), "%s: %s",d->pHttpHeader[i].key,
                                                 d->pHttpHeader[i].val);
             CdxHttpSetField(httpHdr, str);
-            logv("xxx http header key: %s, val:%s",
+            LOGV("xxx http header key: %s, val:%s",
             d->pHttpHeader[i].key, d->pHttpHeader[i].val);
         }
     }
@@ -379,7 +379,7 @@ static cdx_int32 CdxHttpSendRequest(DownloadCtxT *d, cdx_int64 pos)
     }
     else if(setRangeFlag == 1)
     {
-        logd("set range?");
+        LOGD("set range?");
     }
 
 #ifndef HTTP_KEEP_ALIVE
@@ -397,7 +397,7 @@ static cdx_int32 CdxHttpSendRequest(DownloadCtxT *d, cdx_int64 pos)
     httpHdr->httpMinorVersion = 1;
     if(CdxHttpBuildRequest(httpHdr) == NULL)
     {
-        loge("CdxHttpBuildRequest fail.");
+        LOGE("CdxHttpBuildRequest fail.");
         goto err_out;
     }
 
@@ -452,11 +452,11 @@ static cdx_int32 CdxHttpSendRequest(DownloadCtxT *d, cdx_int64 pos)
 
     if(ret < 0)
     {
-        loge("CdxStreamOpen failed. '%s'", tcpSource.uri);
+        LOGE("CdxStreamOpen failed. '%s'", tcpSource.uri);
 #if defined(CONF_CMCC)
         if(ret == -2)
         {
-            loge("network disconnect! ");
+            LOGE("network disconnect! ");
             int flag = 1;
             if(d->callback)
             {
@@ -487,7 +487,7 @@ static cdx_int32 CdxHttpSendRequest(DownloadCtxT *d, cdx_int64 pos)
     ret = CdxStreamWrite(d->pStream, httpHdr->buffer, httpHdr->bufferSize);
     if (ret < 0)
     {
-        loge("send error.");
+        LOGE("send error.");
         goto err_out;
     }
 
@@ -514,7 +514,7 @@ static CdxHttpHeaderT *CdxHttpReadResponse(DownloadCtxT *d)
 
     if (httpHdr == NULL)
     {
-        loge("CdxHttpNewHeader fail.");
+        LOGE("CdxHttpNewHeader fail.");
         return NULL;
     }
     cdx_int64 start, end;
@@ -523,7 +523,7 @@ static CdxHttpHeaderT *CdxHttpReadResponse(DownloadCtxT *d)
     {
         if(d->exit == 1)
         {
-            logw("force stop CdxHttpReadResponse.");
+            LOGW("force stop CdxHttpReadResponse.");
             goto err_out;
         }
 
@@ -531,13 +531,13 @@ static CdxHttpHeaderT *CdxHttpReadResponse(DownloadCtxT *d)
         {
             if(bufTmpSize >= (1 << 16))
             {
-                loge("size too big...");
+                LOGE("size too big...");
                 goto err_out;
             }
             buf = realloc(httpHdr->buffer, bufTmpSize+1024+1); //* attention, end with '\0'
             if(!buf)
             {
-                loge("realloc failed.");
+                LOGE("realloc failed.");
                 goto err_out;
             }
             httpHdr->buffer = buf;
@@ -547,7 +547,7 @@ static CdxHttpHeaderT *CdxHttpReadResponse(DownloadCtxT *d)
         i = CdxStreamRead(pStream, httpHdr->buffer+httpHdr->bufferSize, 1);
         if(i != 1)
         {
-            loge("read failed.");
+            LOGE("read failed.");
             goto err_out;
         }
         httpHdr->bufferSize++;
@@ -567,7 +567,7 @@ static CdxHttpHeaderT *CdxHttpReadResponse(DownloadCtxT *d)
 #endif
 
     end = GetNowUs();
-    logv("xxx get response header cost time: %lld", end-start);
+    LOGV("xxx get response header cost time: %lld", end-start);
     if (CdxHttpResponseParse(httpHdr) < 0)
     {
         CdxHttpFree(httpHdr);
@@ -663,7 +663,7 @@ static void MakeExtraDataContainer(DownloadCtxT *d, CdxHttpHeaderT* httpHdr)
             (num + d->nHttpHeaderSize) * sizeof(CdxHttpHeaderFieldT));
         if(!extraData || !pHttpHeader)
         {
-            loge("malloc fail.");
+            LOGE("malloc fail.");
             if (extraData)
                 free(extraData);
             if (pHttpHeader)
@@ -687,7 +687,7 @@ static void MakeExtraDataContainer(DownloadCtxT *d, CdxHttpHeaderT* httpHdr)
                 }
                 flag = 1;
                 j++;
-                logd("test Cookie: %s", d->pHttpHeader[i].val);
+                LOGD("test Cookie: %s", d->pHttpHeader[i].val);
             }
             else
             {
@@ -719,7 +719,7 @@ static cdx_int32 ReSetHeaderFields(CdxHttpHeaderFieldsT *pHdrs, DownloadCtxT *d)
 
     if(pHdrs == NULL || d == NULL)
     {
-        loge("check para");
+        LOGE("check para");
         return -1;
     }
 
@@ -745,7 +745,7 @@ static cdx_int32 ReSetHeaderFields(CdxHttpHeaderFieldsT *pHdrs, DownloadCtxT *d)
         sizeof(CdxHttpHeaderFieldT));
     if(d->pHttpHeader == NULL)
     {
-        loge("malloc failed.");
+        LOGE("malloc failed.");
         return -1;
     }
 
@@ -756,7 +756,7 @@ static cdx_int32 ReSetHeaderFields(CdxHttpHeaderFieldsT *pHdrs, DownloadCtxT *d)
         (d->pHttpHeader + i)->val = (const char *)Pstrdup(d->pool,
             (pHdrs->pHttpHeader + i)->val);
 
-        logv("extraDataContainer %s %s", (d->pHttpHeader + i)->key,
+        LOGV("extraDataContainer %s %s", (d->pHttpHeader + i)->key,
             (d->pHttpHeader + i)->val);
     }
 
@@ -812,7 +812,7 @@ static int handlePrepare(DownloadCtxT *d)
 
         if(d->exit)
         {
-            logd("forcestop");
+            LOGD("forcestop");
             goto err_out;
         }
         if (redirect == 1)
@@ -825,7 +825,7 @@ static int handlePrepare(DownloadCtxT *d)
         res = CdxHttpSendRequest(d, d->baseOffset);
         if(res < 0)
         {
-            loge("CdxHttpSendRequest failed.");
+            LOGE("CdxHttpSendRequest failed.");
             return -1;
         }
 
@@ -847,18 +847,18 @@ static int handlePrepare(DownloadCtxT *d)
         httpHdr = CdxHttpReadResponse(d);
         if (httpHdr == NULL)
         {
-            loge("Read http response failed.");
+            LOGE("Read http response failed.");
             return -1;
         }
 
         MakeExtraDataContainer(d, httpHdr);
-        logv("lbh request+read response: %lld ms", (CdxGetNowUs()-t0)/1000);
+        LOGV("lbh request+read response: %lld ms", (CdxGetNowUs()-t0)/1000);
 
         if(httpHdr->httpMinorVersion == 0)
             //http/1.0 not support range, but some http/1.0 server may not really http/1.0...
         {
             //seekable = 0;
-            logd("Http server version: HTTP/1.%u", httpHdr->httpMinorVersion);
+            LOGD("Http server version: HTTP/1.%u", httpHdr->httpMinorVersion);
         }
 
 #if defined(CONF_CMCC)
@@ -870,7 +870,7 @@ static int handlePrepare(DownloadCtxT *d)
             d->callback(d->pUserData, STREAM_EVT_CMCC_LOG_RECORD, (void*)cmccLog, 0);
         }
 #endif
-        logd("statusCode = %d", httpHdr->statusCode);
+        LOGD("statusCode = %d", httpHdr->statusCode);
         switch(httpHdr->statusCode)
         {
             case 200:
@@ -885,7 +885,7 @@ static int handlePrepare(DownloadCtxT *d)
                 contentLength = CdxHttpGetField(httpHdr, "Content-Length");
                 if (contentLength)
                 {
-                    logd("contentLength = %s",contentLength);
+                    LOGD("contentLength = %s",contentLength);
                     d->totalSize = atoll(contentLength);
                     d->chunkedFlag = 0;
                 }
@@ -898,12 +898,12 @@ static int handlePrepare(DownloadCtxT *d)
                         if(p != NULL)
                         {
                             d->totalSize = atoll(p + 1);
-                            logv("Content-Range: %s, totalSize(%lld)",
+                            LOGV("Content-Range: %s, totalSize(%lld)",
                                 contentRange, d->totalSize);
                         }
                         else
                         {
-                            logd("wrong Content-Range str->[%s]", p);
+                            LOGD("wrong Content-Range str->[%s]", p);
                             d->totalSize = -1;
                         }
                     }
@@ -914,7 +914,7 @@ static int handlePrepare(DownloadCtxT *d)
 
                     if ((transferEncoding = CdxHttpGetField(httpHdr, "Transfer-Encoding")))
                     {
-                        CDX_LOGI("transferEncoding = %s", transferEncoding);
+                        LOGI("transferEncoding = %s", transferEncoding);
                         d->chunkedFlag = 1;
                     }
                     else
@@ -930,7 +930,7 @@ static int handlePrepare(DownloadCtxT *d)
                     if (acceptRanges)
                     {
                         seekable = strncmp(acceptRanges,"none",4) == 0 ? 0 : 1;
-                        logv("xxx Accept-Ranges: bytes, seekable=%d", seekable);
+                        LOGV("xxx Accept-Ranges: bytes, seekable=%d", seekable);
                     }
                 }
                 d->seekAble = seekable;
@@ -945,17 +945,17 @@ static int handlePrepare(DownloadCtxT *d)
                         d->compressed = 1;
                         if(inflateInit2(&d->inflateStream, 32+15) != Z_OK)
                         {
-                            loge("inflateInit2 failed.");
+                            LOGE("inflateInit2 failed.");
                             goto err_out;
                         }
                         if(zlibCompileFlags() & (1 << 17))
                         {
-                            loge("not support, check.");
+                            LOGE("not support, check.");
                             goto err_out;
                         }
                         d->inflateBuffer = NULL;
 #else
-                        logw("(%s) need zlib support.", contentEncoding);
+                        LOGW("(%s) need zlib support.", contentEncoding);
                         goto err_out;
 #endif
                     }
@@ -966,7 +966,7 @@ static int handlePrepare(DownloadCtxT *d)
                 {
                     if (strcasecmp(conn, "Keep-Alive") == 0)
                     {
-                        logd("http keep alive");
+                        LOGD("http keep alive");
                         d->keepAlive = 1;
                     }
                 }
@@ -989,7 +989,7 @@ static int handlePrepare(DownloadCtxT *d)
             {
                 //RFC 2616, recommand to detect infinite redirection loops
                 nextUrl = CdxHttpGetField(httpHdr, "Location");
-                logv("xxx nextUrl:(%s)", nextUrl);
+                LOGV("xxx nextUrl:(%s)", nextUrl);
 #if defined(CONF_CMCC)
                 if(d->callback)
                 {
@@ -1005,7 +1005,7 @@ static int handlePrepare(DownloadCtxT *d)
                     d->urlT = CdxUrlRedirect(&url, nextUrl);//free old url and build new.
                     if(strcasecmp(url->protocol, "http") && strcasecmp(url->protocol, "https"))
                     {
-                        loge("Unsupported http %d redirect to %s protocol.",
+                        LOGE("Unsupported http %d redirect to %s protocol.",
                                       httpHdr->statusCode, url->protocol);
                         goto err_out;
                     }
@@ -1026,7 +1026,7 @@ static int handlePrepare(DownloadCtxT *d)
                 }
                 else
                 {
-                    logw("No redirect uri?");
+                    LOGW("No redirect uri?");
                     goto err_out;
                 }
 
@@ -1048,7 +1048,7 @@ static int handlePrepare(DownloadCtxT *d)
 #endif
                 if(CdxHttpAuthenticate(httpHdr, url, &authRetry)<0)
                 {
-                    loge("CdxHttpAuthenticate < 0.");
+                    LOGE("CdxHttpAuthenticate < 0.");
                     goto err_out;
                 }
                 redirect = 1;
@@ -1059,7 +1059,7 @@ static int handlePrepare(DownloadCtxT *d)
             case 500:
             default:
             {
-                loge("shoud not be here. statusCode(%d)", httpHdr->statusCode);
+                LOGE("shoud not be here. statusCode(%d)", httpHdr->statusCode);
                 if(d->callback)
                 {
 #if defined(CONF_CMCC)
@@ -1079,7 +1079,7 @@ static int handlePrepare(DownloadCtxT *d)
 out:
     if(httpHdr->cookies && d->pUserData != NULL)
     {
-        logv("xxxx test httpHdr->cookies=%s", httpHdr->cookies);
+        LOGV("xxxx test httpHdr->cookies=%s", httpHdr->cookies);
         d->callback(d->pUserData, HTTP_EXTRA_DATA, &d->hfsContainer, 1);
     }
 
@@ -1147,7 +1147,7 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
                 break;
             else
             {
-                logw("force stop CdxReadChunkedData.");
+                LOGW("force stop CdxReadChunkedData.");
                 return -2;
             }
         }
@@ -1182,7 +1182,7 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
             if(d->restChunkSize > 0)//last chunk not finished.
             {
                 needReadLen = d->restChunkSize;
-                logv("needRead len =%d", needReadLen);
+                LOGV("needRead len =%d", needReadLen);
             }
             else
             {
@@ -1193,23 +1193,23 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
                     {
                         if(ret == -2)
                         {
-                            logw("force stop CdxReadChunkedData while get crlf.");
+                            LOGW("force stop CdxReadChunkedData while get crlf.");
                             return -2;
                         }
 
-                        loge("Io error.");
+                        LOGE("Io error.");
                         d->dlState = DL_STATE_ERROR;
                         goto err_out;
                     }
                     else if(ret < d->dataCRLF)
                     {
-                        logw("force stop CdxReadChunkedData while get crlf.");
+                        LOGW("force stop CdxReadChunkedData while get crlf.");
                         d->dataCRLF -= ret;
                         return -2;
                     }
                     else
                     {
-                        logv("xxx crlfBuf %d %d", crlfBuf[0],crlfBuf[1]);
+                        LOGV("xxx crlfBuf %d %d", crlfBuf[0],crlfBuf[1]);
                         d->dataCRLF = 0;
                     }
                 }
@@ -1220,17 +1220,17 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
                     {
                         if(ret == -2)
                         {
-                            logw("force stop CdxReadChunkedData while get crlf.");
+                            LOGW("force stop CdxReadChunkedData while get crlf.");
                             return -2;
                         }
 
-                        loge("Io error.");
+                        LOGE("Io error.");
                         d->dlState = DL_STATE_ERROR;
                         goto err_out;
                     }
                     else
                     {
-                        //logv("xxx crlfBuf %d %d", crlfBuf[0],crlfBuf[1]);
+                        //LOGV("xxx crlfBuf %d %d", crlfBuf[0],crlfBuf[1]);
                         d->lenCRLF = 0;
                     }
                 }
@@ -1253,7 +1253,7 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
                         d->tmpChunkedSize = 0;
                         needReadLen = ReadChunkedSize(d->pStream, d->tmpChunkedLen,
                             &d->tmpChunkedSize);
-                        logv("xxxxxxx chunkSize=%d", needReadLen);
+                        LOGV("xxxxxxx chunkSize=%d", needReadLen);
                         if(needReadLen >= 0)
                         {
                             if(d->tmpChunkedSize > 0)
@@ -1265,7 +1265,7 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
                             needReadLen = strtol(chunkedLenChar, NULL, 16);
                             if(needReadLen == 0)
                             {
-                                logd("stream end.");
+                                LOGD("stream end.");
                                 d->dlState = DL_STATE_EOS;
                                 break;
                             }
@@ -1274,7 +1274,7 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
                         {
                             if(needReadLen == -2)
                             {
-                                logw("force stop CdxReadChunkedData while get len.");
+                                LOGW("force stop CdxReadChunkedData while get len.");
                                 d->tmpChunkedSize += chunkedSizeInt;
                                 strcat(chunkedLenChar, d->tmpChunkedLen);
                                 strcpy(d->tmpChunkedLen, chunkedLenChar);
@@ -1287,15 +1287,15 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
                                 d->chunkedLen = strtol(chunkedLenChar, NULL, 16);
                                 if(d->chunkedLen == 0)
                                 {
-                                    logd("stream end.");
+                                    LOGD("stream end.");
                                     d->dlState = DL_STATE_EOS;
                                     break;
                                 }
-                                logw("Forcestop, Next chunk will begin with LF, chunkedLen(%d)",
+                                LOGW("Forcestop, Next chunk will begin with LF, chunkedLen(%d)",
                                     d->chunkedLen);
                                 return -2;
                             }
-                            loge("Io error.");
+                            LOGE("Io error.");
                             d->dlState = DL_STATE_ERROR;
                             goto err_out;
                         }
@@ -1310,10 +1310,10 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
                         d->tmpChunkedSize = 0;
                         needReadLen = ReadChunkedSize(d->pStream, d->tmpChunkedLen,
                             &d->tmpChunkedSize);
-                        logv("xxxxxxx chunkSize=%d", needReadLen);
+                        LOGV("xxxxxxx chunkSize=%d", needReadLen);
                         if(needReadLen == 0)
                         {
-                            logd("stream end.");
+                            LOGD("stream end.");
                             d->dlState = DL_STATE_EOS;
                             break;
                         }
@@ -1322,7 +1322,7 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
                             if(needReadLen == -2)
                                 // force stop while get xxx\r, next time need to combine...
                             {
-                                logw("force stop CdxReadChunkedData while get len.");
+                                LOGW("force stop CdxReadChunkedData while get len.");
                                 return -2;
                             }
                             else if(needReadLen == -3) // need to skip \n in len\r\n.
@@ -1331,22 +1331,22 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
                                 d->chunkedLen = strtol(d->tmpChunkedLen, NULL, 16);
                                 if(d->chunkedLen == 0)
                                 {
-                                    logd("stream end.");
+                                    LOGD("stream end.");
                                     d->dlState = DL_STATE_EOS;
                                     break;
                                 }
-                                logw("Forcestop, Next chunk will begin with LF, chunkedLen(%d)",
+                                LOGW("Forcestop, Next chunk will begin with LF, chunkedLen(%d)",
                                     d->chunkedLen);
                                 return -2;
                             }
-                            loge("Io error.");
+                            LOGE("Io error.");
                             d->dlState = DL_STATE_ERROR;
                             goto err_out;
                         }
                         else
                         {
                             d->tmpChunkedSize = 0;
-                            //logv("xxx chunkedsize(0x%x)", needReadLen);
+                            //LOGV("xxx chunkedsize(0x%x)", needReadLen);
                         }
 
                     }
@@ -1364,7 +1364,7 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
             {
                 if(readLen <= -2)
                 {
-                    logw("force stop CdxReadChunkedData.");
+                    LOGW("force stop CdxReadChunkedData.");
                     return -2;
                 }
 #if 0
@@ -1383,11 +1383,11 @@ static int CdxReadChunkedData(DownloadCtxT *d,void* buf, int len)
 #endif
                 else if(readLen == 0)
                 {
-                    logd("EOS.");
+                    LOGD("EOS.");
                     d->dlState = DL_STATE_EOS;
                     return 0;
                 }
-                loge("Io error.");
+                LOGE("Io error.");
                 d->dlState = DL_STATE_ERROR;
                 goto err_out;
             }
@@ -1424,7 +1424,7 @@ static cdx_int32 StreamReadCompressed(DownloadCtxT *d, cdx_uint8 *buf, int size)
         d->inflateBuffer = malloc(DECOMPRESS_BUF_LEN);
         if(d->inflateBuffer == NULL)
         {
-            loge("malloc failed.");
+            LOGE("malloc failed.");
             return -1;
         }
     }
@@ -1441,7 +1441,7 @@ static cdx_int32 StreamReadCompressed(DownloadCtxT *d, cdx_uint8 *buf, int size)
         }
         if(readSize <= 0)
         {
-            logd("==== size(%lld), pos(%lld), readSize(%d)",
+            LOGD("==== size(%lld), pos(%lld), readSize(%d)",
                 d->totalSize, d->bufPos, readSize);
             return readSize;
         }
@@ -1456,7 +1456,7 @@ static cdx_int32 StreamReadCompressed(DownloadCtxT *d, cdx_uint8 *buf, int size)
     ret = inflate(&d->inflateStream, Z_SYNC_FLUSH);
     if (ret != Z_OK && ret != Z_STREAM_END)
     {
-        logd("inflate return: %d, %s; size: %d, %u", ret, d->inflateStream.msg,
+        LOGD("inflate return: %d, %s; size: %d, %u", ret, d->inflateStream.msg,
             size, d->inflateStream.avail_out);
     }
 
@@ -1477,14 +1477,14 @@ static cdx_int32 StreamRead(DownloadCtxT *d, void *buf, cdx_int32 len)
             size = StreamReadCompressed(d, buf, len);
             if(size <= 0)
             {
-                logd("======== size = %d", size);
+                LOGD("======== size = %d", size);
                 d->dlState = DL_STATE_EOS;
                 return 0;
             }
 
     #if __SAVE_BITSTREAMS
             fwrite((cdx_char *)buf, 1, size, d->fp_download);
-            logd("xxx readLen(%d)",size);
+            LOGD("xxx readLen(%d)",size);
             fsync(fileno(d->fp_download));
     #endif
 
@@ -1505,14 +1505,14 @@ static cdx_int32 StreamRead(DownloadCtxT *d, void *buf, cdx_int32 len)
             size = StreamReadCompressed(d, buf, len);
             if(size <= 0)
             {
-                logd("======== size = %d", size);
+                LOGD("======== size = %d", size);
                 d->dlState = DL_STATE_EOS;
                 return 0;
             }
 
 #if __SAVE_BITSTREAMS
             fwrite((cdx_char *)buf, 1, size, d->fp_download);
-            logd("xxx readLen(%d)",size);
+            LOGD("xxx readLen(%d)",size);
             fsync(fileno(d->fp_download));
 #endif
             d->dlState = DL_STATE_OK;
@@ -1524,14 +1524,14 @@ static cdx_int32 StreamRead(DownloadCtxT *d, void *buf, cdx_int32 len)
         {
             wantToReadLen = (len < d->totalSize - d->bufPos) ?
                             len : (d->totalSize - d->bufPos);
-            logv("wantToReadLen (%u), totalSize(%lld), bufPos(%lld), len(%u)",
+            LOGV("wantToReadLen (%u), totalSize(%lld), bufPos(%lld), len(%u)",
                                     wantToReadLen, d->totalSize, d->bufPos, len);
         }
         else
         {
             wantToReadLen = len;
         }
-        logv("d->pStream=%p, wantToReadLen=%d, d->totalSize=%lld, d->bufPos=%lld",
+        LOGV("d->pStream=%p, wantToReadLen=%d, d->totalSize=%lld, d->bufPos=%lld",
             d->pStream, wantToReadLen, d->totalSize, d->bufPos);
         size = CdxStreamRead(d->pStream, buf, wantToReadLen);
         if(size < 0)
@@ -1540,14 +1540,14 @@ static cdx_int32 StreamRead(DownloadCtxT *d, void *buf, cdx_int32 len)
             {
                 return size;
             }
-            logw("xxx CdxStreamRead failed.");
+            LOGW("xxx CdxStreamRead failed.");
             goto err_out;
         }
         else if(size == 0)
         {
             if(d->totalSize != -1)
             {
-                loge("xxx readLen=0, totalSize(%lld), bufPos(%lld).",
+                LOGE("xxx readLen=0, totalSize(%lld), bufPos(%lld).",
                     d->totalSize, d->bufPos);
                 goto err_out;
             }
@@ -1561,7 +1561,7 @@ static cdx_int32 StreamRead(DownloadCtxT *d, void *buf, cdx_int32 len)
         {
             if((d->totalSize > 0) && (d->bufPos + size == d->totalSize))
             {
-                logv("xxx EOS, impl->bufPos(%lld), readLen(%d), totsize(%lld)",
+                LOGV("xxx EOS, impl->bufPos(%lld), readLen(%d), totsize(%lld)",
                     d->bufPos, size, d->totalSize);
                 d->dlState = DL_STATE_EOS;
             }
@@ -1571,9 +1571,9 @@ static cdx_int32 StreamRead(DownloadCtxT *d, void *buf, cdx_int32 len)
             }
         }
 #if __SAVE_BITSTREAMS
-        logd("fp_download=%p", d->fp_download);
+        LOGD("fp_download=%p", d->fp_download);
         fwrite((cdx_char *)buf, 1, size, d->fp_download);
-        logd("xxx readLen(%d)",size);
+        LOGD("xxx readLen(%d)",size);
         fsync(fileno(d->fp_download));
 #endif
         return size;
@@ -1592,7 +1592,7 @@ static int handleRecv(DownloadCtxT *d)
 
     if(d->exit == 1)
     {
-        logd("exit handleRecv.");
+        LOGD("exit handleRecv.");
         return -1;
     }
 
@@ -1601,7 +1601,7 @@ static int handleRecv(DownloadCtxT *d)
     node.pData = (unsigned char *)calloc(1, recvSize);
     if(NULL == node.pData)
     {
-        loge("malloc fail, size(%d)", recvSize);
+        LOGE("malloc fail, size(%d)", recvSize);
         return -1;
     }
 
@@ -1612,7 +1612,7 @@ static int handleRecv(DownloadCtxT *d)
     }
     if(ret <= 0)
     {
-        loge("stream read fail.");
+        LOGE("stream read fail.");
         free(node.pData);
         node.pData = NULL;
         return ret;
@@ -1621,12 +1621,12 @@ static int handleRecv(DownloadCtxT *d)
     node.nLength = ret;
     if(CacheManagerAddData(d->cacheManager, d->httpCache, &node) < 0)
     {
-        loge("add data fail.");
+        LOGE("add data fail.");
         return -1;
     }
 
     d->bufPos += ret;
-    logv("cM=%p, d->bufPos=%lld, d->httpCache(%lld,%lld), size=%d", d->cacheManager, d->bufPos,
+    LOGV("cM=%p, d->bufPos=%lld, d->httpCache(%lld,%lld), size=%d", d->cacheManager, d->bufPos,
         d->httpCache->nStartPos, d->httpCache->nEndPos, d->httpCache->nWriteSize);
     d->tempSize = recvSize - node.nLength;
     if(d->tempSize > 0)
@@ -1766,7 +1766,7 @@ static int httpGetCacheState(struct StreamCacheStateS *cacheState, CdxStreamT *s
     else
         cacheState->nCacheSize = posMax - CacheManagerGetReqDataPos(impl->cacheManager);
 
-    logv("httpGetCacheState nCacheSize:%d, nCacheCapacity %d, nBandwidthKbps:%dkbps, percent:%d%%",
+    LOGV("httpGetCacheState nCacheSize:%d, nCacheCapacity %d, nBandwidthKbps:%dkbps, percent:%d%%",
           cacheState->nCacheSize, cacheState->nCacheCapacity,
           cacheState->nBandwidthKbps, cacheState->nPercentage);
     return 0;
@@ -1802,7 +1802,7 @@ static int dlCacheState(struct StreamCacheStateS *cacheState, DownloadCtxT *d)
     cacheState->nCacheCapacity = d->bufSize;
     cacheState->nCacheSize = d->bufPos;
 
-    logv("dlCacheState[%d], nCacheSize:%d, nCacheCapacity %d, nBandwidthKbps:%dkbps, percent:%d%%",
+    LOGV("dlCacheState[%d], nCacheSize:%d, nCacheCapacity %d, nBandwidthKbps:%dkbps, percent:%d%%",
              d->id, cacheState->nCacheSize, cacheState->nCacheCapacity,
             cacheState->nBandwidthKbps, cacheState->nPercentage);
 
@@ -1817,7 +1817,7 @@ void dlPrintCacheState(cdx_int32 mSec, cdx_int64 *lastNotifyTime, DownloadCtxT *
     if(GetNowUs() > *lastNotifyTime + mSec * 1000)
     {
         dlCacheState(&cacheState, d);
-        logv("dlCacheState[%d], nCacheSize:%d, nCacheCapacity %d, nBandwidthKbps:%dkbps,"
+        LOGV("dlCacheState[%d], nCacheSize:%d, nCacheCapacity %d, nBandwidthKbps:%dkbps,"
              "percent:%d%%", d->id, cacheState.nCacheSize, cacheState.nCacheCapacity,
                  cacheState.nBandwidthKbps, cacheState.nPercentage);
         *lastNotifyTime = GetNowUs();
@@ -1844,17 +1844,17 @@ static void *partDownload(void *pArg)
         get_message:
         if(AwMessageQueueGetMessage(dlCtx->mq, &msg) < 0)
         {
-            logw("get message fail.");
+            LOGW("get message fail.");
             continue;
         }
         process_message:
         startTimeUs = GetNowUs();
         pReplySem   = (sem_t*)msg.params[0];
         pReplyValue = (int*)msg.params[1];
-        logv("msg.messageId=%x",msg.messageId);
+        LOGV("msg.messageId=%x",msg.messageId);
         if(msg.messageId == HTTP_COMMAND_PREPARE)
         {
-            logd("process message HTTP_COMMAND_PREPARE.");
+            LOGD("process message HTTP_COMMAND_PREPARE.");
 
             dlCtx->dlState = DL_STATE_INVALID;
             dlCtx->bLastPartFin = 0;
@@ -1866,7 +1866,7 @@ static void *partDownload(void *pArg)
                 ret = CacheManagerRequestCache(dlCtx->cacheManager, &dlCtx->httpCache);
                 if(ret == -1)
                 {
-                    logv("no cache now, wait...");
+                    LOGV("no cache now, wait...");
                     ret = AwMessageQueueTryGetMessage(dlCtx->mq, &msg, 50);
                     if(ret == 0)//new message come, quit loop to process.
                     {
@@ -1888,13 +1888,13 @@ static void *partDownload(void *pArg)
             CacheManagerGetCacheRange(dlCtx->cacheManager, dlCtx->httpCache,
                                         &dlCtx->startPos, &dlCtx->endPos);
 
-            logv("dlCtx->startPos=%lld, dlCtx->endPos=%lld", dlCtx->startPos, dlCtx->endPos);
+            LOGV("dlCtx->startPos=%lld, dlCtx->endPos=%lld", dlCtx->startPos, dlCtx->endPos);
 #if __SAVE_BITSTREAMS
             sprintf(dlCtx->location, "/data/camera/http_%lld-%lld.dat", dlCtx->startPos, dlCtx->endPos);
             dlCtx->fp_download = fopen(dlCtx->location,"wb");
             if(NULL == dlCtx->fp_download)
             {
-                logw("fopen failed. errno=%d", errno);
+                LOGW("fopen failed. errno=%d", errno);
             }
 #endif
 
@@ -1903,7 +1903,7 @@ static void *partDownload(void *pArg)
             int retPrepared = 0;
             if(ret < 0)
             {
-                loge("handlePrepare fail.");
+                LOGE("handlePrepare fail.");
                 retPrepared = -1;
                 dlCtx->dlState = DL_STATE_ERROR;
                 dlCtx->callback(dlCtx->pUserData, HTTP_PREPARED, &retPrepared, 1);
@@ -1935,7 +1935,7 @@ static void *partDownload(void *pArg)
                 if(dlCtx->dlState == DL_STATE_ERROR)
                 {
                     //reconnect in HttpStreamRead.
-                    logw("DL_STATE_ERROR");
+                    LOGW("DL_STATE_ERROR");
                 }
                 delayTimeUs = GetNowUs() - startTimeUs;
                 BandwidthEst(dlCtx->bandWidthEst, 0, delayTimeUs);
@@ -1957,7 +1957,7 @@ static void *partDownload(void *pArg)
                     && dlCtx->chunkedFlag != 1 && dlCtx->compressed != 1) ||
                     dlCtx->bDlfcc == 1)
                 {
-                    logd("dl the last part finish.");
+                    LOGD("dl the last part finish.");
                     dlCtx->bLastPartFin = 1;
                     dlCtx->callback(dlCtx->pUserData, HTTP_LAST_PART_FIN,
                         &dlCtx->bLastPartFin, 1);
@@ -1967,7 +1967,7 @@ static void *partDownload(void *pArg)
                     if(dlCtx->callback)
                     {
 #if defined(CONF_CMCC)
-                        logv("eos set STREAM_EVT_DOWNLOAD_END impl->downloadTimeMs(%lld ms)",
+                        LOGV("eos set STREAM_EVT_DOWNLOAD_END impl->downloadTimeMs(%lld ms)",
                             dlCtx->downloadTimeMs);
                         ExtraDataContainerT httpExtradata;
                         httpExtradata.extraData = &(dlCtx->downloadTimeMs);
@@ -1986,10 +1986,10 @@ static void *partDownload(void *pArg)
                 {
                     if(dlCtx->oneThread == 1)
                     {
-                        logv("oneThread, go on request cache and download.");
+                        LOGV("oneThread, go on request cache and download.");
                         if(dlCtx->dlState == DL_STATE_EOS)
                         {
-                            CDX_LOGD("EOS...");
+                            LOGD("EOS...");
                             dlCtx->bLastPartFin = 1;
                             dlCtx->callback(dlCtx->pUserData, HTTP_LAST_PART_FIN,
                                 &dlCtx->bLastPartFin, 1);
@@ -2001,7 +2001,7 @@ static void *partDownload(void *pArg)
                             ret = CacheManagerRequestCache(dlCtx->cacheManager, &dlCtx->httpCache);
                             if(ret == -1)
                             {
-                                logv("no cache now, wait...");
+                                LOGV("no cache now, wait...");
                                 ret = AwMessageQueueTryGetMessage(dlCtx->mq, &msg, 50);
                                 if(ret == 0)//new message come, quit loop to process.
                                 {
@@ -2025,7 +2025,7 @@ static void *partDownload(void *pArg)
                     }
                     else
                     {
-                        logv("download next part.");
+                        LOGV("download next part.");
                         clrDownloadInfo(dlCtx);
                         dlCtx->bWorking = 0;
                         httpStreamPrepare(dlCtx);
@@ -2039,7 +2039,7 @@ static void *partDownload(void *pArg)
             }
             else
             {
-                logd("dlCtx->dlState(%d)", dlCtx->dlState);
+                LOGD("dlCtx->dlState(%d)", dlCtx->dlState);
             }
 
             delayTimeUs = GetNowUs() - startTimeUs;
@@ -2048,7 +2048,7 @@ static void *partDownload(void *pArg)
         }
         else if(msg.messageId == HTTP_COMMAND_PAUSE)
         {
-            logv("HTTP_COMMAND_PAUSE");
+            LOGV("HTTP_COMMAND_PAUSE");
             dlCtx->exit = 0;
             dlCtx->bWorking = 0;
             if(dlCtx->pStream != NULL)
@@ -2067,7 +2067,7 @@ static void *partDownload(void *pArg)
         }
         else if(msg.messageId == HTTP_COMMAND_QUIT)
         {
-            logd("HTTP_COMMAND_QUIT");
+            LOGD("HTTP_COMMAND_QUIT");
             dlCtx->exit = 0;
             dlCtx->bWorking = 0;
             if(dlCtx->pStream != NULL)
@@ -2117,14 +2117,14 @@ cdx_int32 CopyChunkSize(cdx_char *srcBuf, cdx_int32 *pNum)//pNum: length of "len
             byte = *tmpSrcBuf++;
             if(byte != '\n')
             {
-                logw("No lf after len flag.");
+                LOGW("No lf after len flag.");
                 return -1;
             }
             break;
         }
         else
         {
-            logw("check the content.");
+            LOGW("check the content.");
             return -2;
         }
     }
@@ -2160,7 +2160,7 @@ static cdx_int32 SetDataSourceFields(CdxDataSourceT * source, CdxHttpStreamImplT
                 sizeof(CdxHttpHeaderFieldT));
             if(impl->pHttpHeader == NULL)
             {
-                loge("Palloc failed.");
+                LOGE("Palloc failed.");
                 ClearDataSourceFields(impl);
                 return -1;
             }
@@ -2178,7 +2178,7 @@ static cdx_int32 SetDataSourceFields(CdxDataSourceT * source, CdxHttpStreamImplT
                 }
                 if(impl->pHttpHeader[i].key == NULL)
                 {
-                    loge("dup key failed.");
+                    LOGE("dup key failed.");
                     ClearDataSourceFields(impl);
                     return -1;
                 }
@@ -2186,11 +2186,11 @@ static cdx_int32 SetDataSourceFields(CdxDataSourceT * source, CdxHttpStreamImplT
                     pHttpHeaders->pHttpHeader[i].val);
                 if(impl->pHttpHeader[i].val == NULL)
                 {
-                    loge("dup val failed.");
+                    LOGE("dup val failed.");
                     ClearDataSourceFields(impl);
                     return -1;
                 }
-                logv("============ impl->pHttpHeader[i].val(%s):%s",
+                LOGV("============ impl->pHttpHeader[i].val(%s):%s",
                     impl->pHttpHeader[i].key, impl->pHttpHeader[i].val);
             }
         }
@@ -2233,7 +2233,7 @@ static int seekReconnect(CdxHttpStreamImplT *impl, cdx_int64 offset)
 {
     if(!impl->seekAble)
     {
-        logd("not seekable.");
+        LOGD("not seekable.");
         return -1;
     }
 
@@ -2293,7 +2293,7 @@ static cdx_int32 __CdxHttpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 l
                                         (cdx_uint8*)buf + readSize);
         if(ret < 0)
         {
-            loge("request data fail.");
+            LOGE("request data fail.");
             readSize = -1;
             goto __exit;
         }
@@ -2322,7 +2322,7 @@ static cdx_int32 __CdxHttpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 l
                     {
                         break;
                     }
-                    logd("reconnect at(%lld/%lld)", impl->readPos, impl->totalSize);
+                    LOGD("reconnect at(%lld/%lld)", impl->readPos, impl->totalSize);
                     while(1)
                     {
                         startTime = GetNowUs();
@@ -2355,12 +2355,12 @@ static cdx_int32 __CdxHttpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 l
                         }
                         if(tmpRet == 0)
                         {
-                            logd("reconnect ok, continue read.");
+                            LOGD("reconnect ok, continue read.");
                             break;
                         }
                         else
                         {
-                            logd("reconnect time: %lld s", totTime/1000000);
+                            LOGD("reconnect time: %lld s", totTime/1000000);
                             usleep(50000);
                         }
 
@@ -2368,7 +2368,7 @@ static cdx_int32 __CdxHttpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 l
                         totTime += (endTime - startTime);
                         if(totTime >= (cdx_int64)RE_CONNECT_TIME * 1000000)
                         {
-                            loge("reconnect failed, tried time:%d s, break.", RE_CONNECT_TIME);
+                            LOGE("reconnect failed, tried time:%d s, break.", RE_CONNECT_TIME);
                             readSize = -1;
 #if defined(CONF_CMCC)
                             if(impl->callback)
@@ -2384,7 +2384,7 @@ static cdx_int32 __CdxHttpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 l
                 }
                 else
                 {
-                    logv("readSize=%u, pos=%lld, totSize=%lld.",
+                    LOGV("readSize=%u, pos=%lld, totSize=%lld.",
                         readSize, pos, impl->totalSize);
                     usleep(5000);
                 }
@@ -2392,7 +2392,7 @@ static cdx_int32 __CdxHttpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 l
             else
             {
                 usleep(5000);
-                logv("impl->totalSize =%lld",impl->totalSize);
+                LOGV("impl->totalSize =%lld",impl->totalSize);
             }
         }
         readSize += ret;
@@ -2422,7 +2422,7 @@ static cdx_int32 CdxHttpStreamForceStop(CdxStreamT *stream)
     CDX_CHECK(stream);
     impl = CdxContainerOf(stream, CdxHttpStreamImplT, base);
 
-    logv("xxx begin http force stop.");
+    LOGV("xxx begin http force stop.");
 
     pthread_mutex_lock(&impl->lock);
     if(impl->forceStopFlag == 1)
@@ -2454,7 +2454,7 @@ static cdx_int32 CdxHttpStreamForceStop(CdxStreamT *stream)
 
     pthread_mutex_unlock(&impl->lock);
 
-    logv("xxx finish http force stop");
+    LOGV("xxx finish http force stop");
     return 0;
 }
 static cdx_int32 CdxHttpStreamClrForceStop(CdxStreamT *stream)
@@ -2518,7 +2518,7 @@ static int CdxGetProbeData(CdxHttpStreamImplT *impl)
     }
     else if(impl->probeSize > PROBE_DATA_LEN_MAX)
     {
-        logw("probe size(%u) too big.", impl->probeSize);
+        LOGW("probe size(%u) too big.", impl->probeSize);
         impl->probeData.len = PROBE_DATA_LEN_MAX;
     }
     else
@@ -2529,7 +2529,7 @@ static int CdxGetProbeData(CdxHttpStreamImplT *impl)
     tmpBuf = (cdx_char *)realloc(impl->probeData.buf, impl->probeData.len);
     if(tmpBuf == NULL)
     {
-        logw("realloc fail.");
+        LOGW("realloc fail.");
         goto err_out;
     }
     impl->probeData.buf = tmpBuf;
@@ -2538,14 +2538,14 @@ static int CdxGetProbeData(CdxHttpStreamImplT *impl)
     {
         if(impl->forceStopFlag == 1)
         {
-            logd("forceStop.");
+            LOGD("forceStop.");
             goto err_out;
         }
         ret = CacheManagerGetProbeData(impl->cacheManager,
                     impl->probeData.len - size, impl->probeData.buf + size);
         if(ret < 0)
         {
-            loge("get probe data fail.");
+            LOGE("get probe data fail.");
             goto err_out;
         }
         else if(ret == 0)
@@ -2563,7 +2563,7 @@ static int CdxGetProbeData(CdxHttpStreamImplT *impl)
                 {
                     if(size > 0)
                     {
-                        logd("download finish.");
+                        LOGD("download finish.");
                         impl->probeData.len = size;
                         pthread_mutex_unlock(&impl->lock);
                         break;
@@ -2578,11 +2578,11 @@ static int CdxGetProbeData(CdxHttpStreamImplT *impl)
             }
             continue;
         }
-        logv("get probe data need size=%d, size=%d, totSize=%lld",
+        LOGV("get probe data need size=%d, size=%d, totSize=%lld",
             impl->probeData.len - size, ret, impl->totalSize);
         size += ret;
     }
-    logd("probe data len %d", impl->probeData.len);
+    LOGD("probe data len %d", impl->probeData.len);
 #if __SAVE_BITSTREAMS
     FILE *fp = fopen("/data/camera/probe.dat", "wb");
     fwrite(impl->probeData.buf, 1, impl->probeData.len, fp);
@@ -2613,7 +2613,7 @@ static cdx_int32 __CdxHttpStreamControl(CdxStreamT *stream, cdx_int32 cmd, void 
             return httpGetCacheState((struct StreamCacheStateS *)param, stream);
 
         case STREAM_CMD_SET_FORCESTOP:
-            //logv("xxx STREAM_CMD_SET_FORCESTOP");
+            //LOGV("xxx STREAM_CMD_SET_FORCESTOP");
             return CdxHttpStreamForceStop(stream);
 
         case STREAM_CMD_CLR_FORCESTOP:
@@ -2627,7 +2627,7 @@ static cdx_int32 __CdxHttpStreamControl(CdxStreamT *stream, cdx_int32 cmd, void 
         }
         case STREAM_CMD_SET_ISHLS:
         {
-            logd("======= set ishls");
+            LOGD("======= set ishls");
             impl->isHls = 1;
             return 0;
         }
@@ -2684,7 +2684,7 @@ static cdx_int32 __CdxHttpStreamSeek(CdxStreamT *stream, cdx_int64 offset, cdx_i
             }
             else
             {
-                logw("bad fileLen, maybe live stream.");
+                LOGW("bad fileLen, maybe live stream.");
                 ret = -1;
                 goto out;
             }
@@ -2693,7 +2693,7 @@ static cdx_int32 __CdxHttpStreamSeek(CdxStreamT *stream, cdx_int64 offset, cdx_i
         }
         default:
         {
-            loge("should not be here.");
+            LOGE("should not be here.");
             ret = -1;
             goto out;
         }
@@ -2701,7 +2701,7 @@ static cdx_int32 __CdxHttpStreamSeek(CdxStreamT *stream, cdx_int64 offset, cdx_i
 
     if((fileLen > 0 && offset > fileLen) || offset < 0)
     {
-        loge("bad offset(%lld), fileLen(%lld), stream(%p)", offset, fileLen, stream);
+        LOGE("bad offset(%lld), fileLen(%lld), stream(%p)", offset, fileLen, stream);
         ret = -1;
         goto out;
     }
@@ -2709,20 +2709,20 @@ static cdx_int32 __CdxHttpStreamSeek(CdxStreamT *stream, cdx_int64 offset, cdx_i
     if(offset == impl->readPos)
     {
         ret = 0;
-        logv("offset == impl->readPos");
+        LOGV("offset == impl->readPos");
         goto out;
     }
 
     ret = CacheManagerSeekTo(impl->cacheManager, offset);
     if(ret < 0) //offset not in cache range, reconnect.
     {
-        logv("seek reconnect, offset=%lld.", offset);
+        LOGV("seek reconnect, offset=%lld.", offset);
         while(1)
         {
             ret = seekReconnect(impl, offset);
             if(ret < 0)
             {
-                logw("check.");
+                LOGW("check.");
                 goto out;
             }
             int tmpRet;
@@ -2751,7 +2751,7 @@ static cdx_int32 __CdxHttpStreamSeek(CdxStreamT *stream, cdx_int64 offset, cdx_i
     }
     else //offset is in cache range.
     {
-        logv("seek in cache, offset=%lld", offset);
+        LOGV("seek in cache, offset=%lld", offset);
         impl->readPos = offset;
         ret = 0;
         goto out;
@@ -2836,7 +2836,7 @@ static cdx_int32 __CdxHttpStreamGetMetaData(CdxStreamT *stream, const cdx_char *
     if(strcmp(key, "uri") == 0)
     {
         *pVal = impl->sourceUri;
-        logd("impl->sourceUri=%s", impl->sourceUri);
+        LOGD("impl->sourceUri=%s", impl->sourceUri);
         return 0;
     }
     else if(strcmp(key, "extra-data") == 0)
@@ -2853,9 +2853,9 @@ static cdx_int32 __CdxHttpStreamGetMetaData(CdxStreamT *stream, const cdx_char *
     {
         if(httpHdr)
         {
-            logd("++++++ statusCode in http: %d", httpHdr->statusCode);
+            LOGD("++++++ statusCode in http: %d", httpHdr->statusCode);
             *pVal = (void*)&httpHdr->statusCode;
-            logd("++++++ *pVal = %p", *pVal);
+            LOGD("++++++ *pVal = %p", *pVal);
         }
     }
     else
@@ -2894,7 +2894,7 @@ static int threadNum(CdxHttpStreamImplT *impl)
 
 #else
     ret = 1;
-    logd("ret = 1");
+    LOGD("ret = 1");
 #endif
 
     if(impl->baseOffset > 0)
@@ -2902,7 +2902,7 @@ static int threadNum(CdxHttpStreamImplT *impl)
         ret = 1;
     }
 
-    logd("===== cFlag=%d, totalSize=%lld, sFlag=%d, comFlag=%d, tNum=%d =========",
+    LOGD("===== cFlag=%d, totalSize=%lld, sFlag=%d, comFlag=%d, tNum=%d =========",
         impl->chunkedFlag, impl->totalSize, impl->seekAble, impl->compressed, ret);
     return ret;
 }
@@ -2917,7 +2917,7 @@ static int setHeaderToDlctx(DownloadCtxT *d, CdxHttpStreamImplT *impl)
     d->pHttpHeader = Palloc(impl->pool, d->nHttpHeaderSize * sizeof(CdxHttpHeaderFieldT));
     if(NULL == d->pHttpHeader)
     {
-        loge("calloc failed.");
+        LOGE("calloc failed.");
         return -1;
     }
     memset(d->pHttpHeader, 0x00, impl->nHttpHeaderSize * sizeof(CdxHttpHeaderFieldT));
@@ -2926,18 +2926,18 @@ static int setHeaderToDlctx(DownloadCtxT *d, CdxHttpStreamImplT *impl)
         d->pHttpHeader[i].key = (const char*)Pstrdup(impl->pool, pHttpHeader[i].key);
         if(d->pHttpHeader[i].key == NULL)
         {
-            loge("dup key failed.");
+            LOGE("dup key failed.");
             clearHttpHeader(d->pHttpHeader, d->nHttpHeaderSize, d->pool);
             return -1;
         }
         d->pHttpHeader[i].val = (const char*)Pstrdup(impl->pool, pHttpHeader[i].val);
         if(d->pHttpHeader[i].val == NULL)
         {
-            loge("dup val failed.");
+            LOGE("dup val failed.");
             clearHttpHeader(d->pHttpHeader, d->nHttpHeaderSize, d->pool);
             return -1;
         }
-        logv("============ impl->pHttpHeader[i].val(%s):%s",
+        LOGV("============ impl->pHttpHeader[i].val(%s):%s",
             d->pHttpHeader[i].key, d->pHttpHeader[i].val);
     }
     return 0;
@@ -2994,7 +2994,7 @@ static int setInfoToDlctx(DownloadCtxT *d, CdxHttpStreamImplT *impl)
     d->sourceUri = Pstrdup(impl->pool, impl->sourceUri); //should free
     if(d->sourceUri == NULL)
     {
-        loge("dup failed.");
+        LOGE("dup failed.");
         return -1;
     }
 
@@ -3003,7 +3003,7 @@ static int setInfoToDlctx(DownloadCtxT *d, CdxHttpStreamImplT *impl)
     i = setHeaderToDlctx(d, impl);
     if(i < 0)
     {
-        loge("set header failed.");
+        LOGE("set header failed.");
         Pfree(d->pool, d->sourceUri);
         d->sourceUri = NULL;
         return -1;
@@ -3012,7 +3012,7 @@ static int setInfoToDlctx(DownloadCtxT *d, CdxHttpStreamImplT *impl)
     d->urlT = calloc(1, sizeof(CdxUrlT));
     if(d->urlT == NULL)
     {
-        loge("malloc size=%d", (int)sizeof(CdxUrlT));
+        LOGE("malloc size=%d", (int)sizeof(CdxUrlT));
         clearHttpHeader(d->pHttpHeader, d->nHttpHeaderSize, d->pool);
         d->pHttpHeader = NULL;
         Pfree(d->pool, d->sourceUri);
@@ -3048,7 +3048,7 @@ static cdx_int32 __CdxHttpStreamConnect(CdxStreamT *stream)
     memset(&impl->dlct, 0x00, sizeof(DownloadCtxT));
     if(setInfoToDlctx(&impl->dlct, impl) < 0)
     {
-        loge("set info failed.");
+        LOGE("set info failed.");
         impl->ioState = CDX_IO_STATE_ERROR;
         goto __exit;
     }
@@ -3056,7 +3056,7 @@ static cdx_int32 __CdxHttpStreamConnect(CdxStreamT *stream)
     result = handlePrepare(&impl->dlct);
     if(result < 0)
     {
-        loge("handlePrepare failed.");
+        LOGE("handlePrepare failed.");
         impl->ioState = CDX_IO_STATE_ERROR;
         clrDownloadInfo(&impl->dlct);
         Pfree(impl->dlct.pool, impl->dlct.sourceUri);
@@ -3085,7 +3085,7 @@ static cdx_int32 __CdxHttpStreamConnect(CdxStreamT *stream)
     clrDownloadInfo(&impl->dlct);
 #endif
 
-    logv("impl->baseOffset=%lld", impl->baseOffset);
+    LOGV("impl->baseOffset=%lld", impl->baseOffset);
     cdx_int64 totSize = impl->totalSize;
     if(impl->compressed || impl->chunkedFlag)
         totSize = -1;
@@ -3093,7 +3093,7 @@ static cdx_int32 __CdxHttpStreamConnect(CdxStreamT *stream)
                                             totSize, CACHE_NODE_SIZE, 0/*impl->baseOffset*/);
     if(impl->cacheManager == NULL)
     {
-        loge("create cache manager fail.");
+        LOGE("create cache manager fail.");
         impl->ioState = CDX_IO_STATE_ERROR;
         goto __exit;
     }
@@ -3111,7 +3111,7 @@ static cdx_int32 __CdxHttpStreamConnect(CdxStreamT *stream)
         impl->dlCtx[i].mq = AwMessageQueueCreate(4, "httpDownload");
         if(impl->dlCtx[i].mq == NULL)
         {
-            loge("create message queue failed.");
+            LOGE("create message queue failed.");
             impl->ioState = CDX_IO_STATE_ERROR;
             goto __exit;
         }
@@ -3120,14 +3120,14 @@ static cdx_int32 __CdxHttpStreamConnect(CdxStreamT *stream)
         impl->dlCtx[i].bandWidthEst = CreateBandwidthEst(100);
         if(impl->dlCtx[i].bandWidthEst == NULL)
         {
-            loge("create bandwidthEst failed.");
+            LOGE("create bandwidthEst failed.");
             impl->ioState = CDX_IO_STATE_ERROR;
             goto __exit;
         }
 
         if(setInfoToDlctx(&(impl->dlCtx[i]), impl) < 0)
         {
-            logd("set info failed.");
+            LOGD("set info failed.");
             impl->ioState = CDX_IO_STATE_ERROR;
             goto __exit;
         }
@@ -3136,7 +3136,7 @@ static cdx_int32 __CdxHttpStreamConnect(CdxStreamT *stream)
                     &(impl->dlCtx[i]));
         if(result != 0)
         {
-            loge("create thread failed.");
+            LOGE("create thread failed.");
             if(impl->dlCtx[i].mq != NULL)
             {
                 AwMessageQueueDestroy(impl->dlCtx[i].mq);
@@ -3159,7 +3159,7 @@ static cdx_int32 __CdxHttpStreamConnect(CdxStreamT *stream)
     pthread_mutex_unlock(&impl->lock);
     if(tmpRet != 0)
     {
-        logw("partDownload failed.");
+        LOGW("partDownload failed.");
         impl->ioState = CDX_IO_STATE_ERROR;
         goto __exit;
     }
@@ -3168,11 +3168,11 @@ static cdx_int32 __CdxHttpStreamConnect(CdxStreamT *stream)
     result = CdxGetProbeData(impl);
     if(result < 0)
     {
-        loge("get probe data failed.");
+        LOGE("get probe data failed.");
         impl->ioState = CDX_IO_STATE_ERROR;
         goto __exit;
     }
-    logv("CdxGetProbeData time:%lld ms, %u Bytes", (CdxGetNowUs()-t0)/1000, impl->probeData.len);
+    LOGV("CdxGetProbeData time:%lld ms, %u Bytes", (CdxGetNowUs()-t0)/1000, impl->probeData.len);
 
 __exit:
     pthread_mutex_lock(&impl->lock);
@@ -3190,7 +3190,7 @@ static cdx_int32 __CdxHttpStreamClose(CdxStreamT *stream)
     CDX_CHECK(stream);
     impl = CdxContainerOf(stream, CdxHttpStreamImplT, base);
 
-    logv("xxxx http close begin. stream(%p)", stream);
+    LOGV("xxxx http close begin. stream(%p)", stream);
 
     CdxHttpStreamForceStop(stream);
 
@@ -3203,9 +3203,9 @@ static cdx_int32 __CdxHttpStreamClose(CdxStreamT *stream)
             impl->dlCtx[i].mq = NULL;
         }
         sem_destroy(&impl->dlCtx[i].semQuit);
-        logv("xxxx http close (%d)", i);
+        LOGV("xxxx http close (%d)", i);
         pthread_join(impl->dlCtx[i].threadId, NULL);
-        logv("xxxx http close end. (%d)", i);
+        LOGV("xxxx http close end. (%d)", i);
         clearHttpHeader(impl->dlCtx[i].pHttpHeader, impl->dlCtx[i].nHttpHeaderSize,
             impl->dlCtx[i].pool);
         impl->dlCtx[i].pHttpHeader = NULL;
@@ -3266,7 +3266,7 @@ static cdx_int32 __CdxHttpStreamClose(CdxStreamT *stream)
     }
     free(impl);
 
-    logv("xxxx http close finish.");
+    LOGV("xxxx http close finish.");
     return 0;
 }
 
@@ -3296,7 +3296,7 @@ static CdxHttpStreamImplT *CreateHttpStreamImpl(void)
     impl = (CdxHttpStreamImplT *)calloc(1, sizeof(*impl));
     if(!impl)
     {
-        loge("malloc failed, size(%d)", (int)sizeof(*impl));
+        LOGE("malloc failed, size(%d)", (int)sizeof(*impl));
         return NULL;
     }
 
@@ -3312,19 +3312,19 @@ CdxStreamT *__CdxHttpStreamCreate(CdxDataSourceT *source)
     cdx_int32 result;
     AwPoolT *pool;
 
-    logi("source uri:(%s)", source->uri);
+    LOGI("source uri:(%s)", source->uri);
 
     impl = CreateHttpStreamImpl();
     if(NULL == impl)
     {
-        loge("CreateHttpStreamImpl failed.");
+        LOGE("CreateHttpStreamImpl failed.");
         return NULL;
     }
 
     pool = AwPoolCreate(NULL);
     if(pool == NULL)
     {
-        loge("pool is NULL.");
+        LOGE("pool is NULL.");
         free(impl);
         return NULL;
     }
@@ -3334,7 +3334,7 @@ CdxStreamT *__CdxHttpStreamCreate(CdxDataSourceT *source)
     url = CdxUrlNew(source->uri);
     if(url == NULL)
     {
-        loge("CdxUrlNew failed.");
+        LOGE("CdxUrlNew failed.");
         goto err_out;
     }
     impl->url = url;
@@ -3342,7 +3342,7 @@ CdxStreamT *__CdxHttpStreamCreate(CdxDataSourceT *source)
     result = SetDataSourceFields(source, impl);
     if(result < 0)
     {
-        loge("Set datasource failed.");
+        LOGE("Set datasource failed.");
         goto err_out;
     }
 
@@ -3355,14 +3355,14 @@ CdxStreamT *__CdxHttpStreamCreate(CdxDataSourceT *source)
     if (strstr(url->file,"aw_dtmb_http.ts"))
     {
         impl->isDTMB = CDX_TRUE;
-        CDX_LOGD("It is a dtmb stream!");
+        LOGD("It is a dtmb stream!");
     }
 
     pthread_mutex_init(&impl->lock, NULL);
     pthread_cond_init(&impl->cond, NULL);
     pthread_cond_init(&impl->condPrepared, NULL);
 
-    logd("http stream open.");
+    LOGD("http stream open.");
     return &impl->base;
 
 err_out:

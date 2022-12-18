@@ -8,7 +8,7 @@
  *
  */
 
-#include <cdx_log.h>
+#include <log/log.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -55,7 +55,7 @@ AwMessageQueue* AwMessageQueueCreate__(int nMaxMessageNum, const char* pName,
     mqCtx = (MessageQueueContext*)malloc(sizeof(MessageQueueContext));
     if(mqCtx == NULL)
     {
-        loge("%s, allocate memory fail.", pName);
+        LOGE("%s, allocate memory fail.", pName);
         return NULL;
     }
     memset(mqCtx, 0, sizeof(MessageQueueContext));
@@ -66,7 +66,7 @@ AwMessageQueue* AwMessageQueueCreate__(int nMaxMessageNum, const char* pName,
     mqCtx->Nodes = (MessageNode*)calloc(nMaxMessageNum, sizeof(MessageNode));
     if(mqCtx->Nodes == NULL)
     {
-        loge("%s, allocate memory for message nodes fail.", mqCtx->pName);
+        LOGE("%s, allocate memory for message nodes fail.", mqCtx->pName);
         if(mqCtx->pName != NULL)
             free(mqCtx->pName);
         free(mqCtx);
@@ -137,7 +137,7 @@ int AwMessageQueuePostMessage(AwMessageQueue* mq, AwMessage* m)
 
     if(mqCtx->nCount >= mqCtx->nMaxMessageNum)
     {
-        loge("%s, message count exceed, current message count = %d, max message count = %d",
+        LOGE("%s, message count exceed, current message count = %d, max message count = %d",
                 mqCtx->pName, mqCtx->nCount, mqCtx->nMaxMessageNum);
         pthread_mutex_unlock(&mqCtx->mutex);
         return -1;
@@ -208,7 +208,7 @@ int AwMessageQueueTryGetMessage(AwMessageQueue* mq, AwMessage* m, int64_t timeou
 
     if(mqCtx->nCount <= 0)
     {
-        logv("%s, no message.", mqCtx->pName);
+        LOGV("%s, no message.", mqCtx->pName);
         pthread_mutex_unlock(&mqCtx->mutex);
         return -1;
     }
@@ -233,7 +233,7 @@ int AwMessageQueueFlush(AwMessageQueue* mq)
 
     mqCtx = (MessageQueueContext*)mq;
 
-    logi("%s, flush messages.", mqCtx->pName);
+    LOGI("%s, flush messages.", mqCtx->pName);
 
     pthread_mutex_lock(&mqCtx->mutex);
 

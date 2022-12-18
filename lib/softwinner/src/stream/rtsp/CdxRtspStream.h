@@ -13,7 +13,7 @@
 
 #include <stdint.h>
 #include <CdxTypes.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxStream.h>
 #include <adecoder.h>
 #include <vdecoder.h>

@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+#include <log/log.h>
+
 #include "ring_buffer.h"
 
 #define min(a, b)              \
@@ -40,7 +42,7 @@ static int rb_in(struct ring_buffer *rb_hd,
     struct ring_buffer_entity *rb_ent = rb_hd_to_ent(rb_hd);
 
     if (elem_num == 0 || elem_num > rb_ent->elem_cnt) {
-        nb_loge("wrong elem_num (%d)!!\r\n", elem_num);
+        LOGE("wrong elem_num (%d)!!", elem_num);
         return -1;
     }
 
@@ -79,7 +81,7 @@ static int rb_in_f(struct ring_buffer *rb_hd,
     // TODO: fix it check if can use <if (likely(val))>
     if (elem_num == 0 ||
         elem_num > rb_ent->elem_cnt) {
-        nb_loge("wrong elem_num (%d)!!\r\n", elem_num);
+        LOGE("wrong elem_num (%d)!!", elem_num);
         return -1;
     }
 
@@ -111,7 +113,7 @@ static int rb_out(struct ring_buffer *rb_hd,
 
     if (elem_num == 0 ||
         elem_num > rb_ent->elem_cnt) {
-        nb_loge("wrong elem_num (%d)!!\r\n", elem_num);
+        LOGE("wrong elem_num (%d)!!", elem_num);
         return -1;
     }
 
@@ -249,21 +251,21 @@ struct ring_buffer *ring_buffer_create
     struct ring_buffer *rb_hd;
 
     if (elem_size == 0 || elem_num == 0) {
-        nb_loge("wrong elem setting number:"
-            "(elem_size=%d, elem_num=%d)\r\n", elem_size, elem_num);
+        LOGE("wrong elem setting number:"
+            "(elem_size=%d, elem_num=%d)", elem_size, elem_num);
         return NULL;
     }
 
     rb_ent = malloc(sizeof(struct ring_buffer_entity));
     if (NULL == rb_ent) {
-        nb_loge("malloc struct ring_buffer_entity failed.\r\n");
+        LOGE("malloc struct ring_buffer_entity failed.");
         goto Ealloc_rb_ent;
     }
     memset(rb_ent, 0, sizeof(struct ring_buffer_entity));
 
     rb_ent->rb_buf = malloc(elem_size*elem_num);
     if (NULL == rb_ent->rb_buf) {
-        nb_loge("malloc ring buffer failed.\r\n");
+        LOGE("malloc ring buffer failed.");
         goto Ealloc_rb;
     }
     memset(rb_ent->rb_buf, 0, elem_size*elem_num);

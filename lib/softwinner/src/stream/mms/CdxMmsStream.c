@@ -74,7 +74,7 @@ int CdxMmsClose(aw_mms_inf_t* mmsStreamInf)
     CdxAtomicDec(&mmsStreamInf->ref);
     while((ret = CdxAtomicRead(&mmsStreamInf->ref)) != 0)
     {
-        CDX_LOGD("---- ret = %d", ret);
+        LOGD("---- ret = %d", ret);
         usleep(10000);
     }
 
@@ -82,7 +82,7 @@ int CdxMmsClose(aw_mms_inf_t* mmsStreamInf)
     {
         while(mmsStreamInf->eof == 0)
         {
-        CDX_LOGD("usleep");
+        LOGD("usleep");
             usleep(10000);
         }
 
@@ -223,7 +223,7 @@ int __MmsGetIoState(CdxStreamT * stream)
 cdx_uint32 __MmsAttribute(CdxStreamT * stream)
 {
     CDX_UNUSE(stream);
-    //CDX_LOGV(" how to get the attribute of mmsh or mmst ????? ---- It is not sure");
+    //LOGV(" how to get the attribute of mmsh or mmst ????? ---- It is not sure");
     return CDX_STREAM_FLAG_NET;
 }
 
@@ -269,7 +269,7 @@ int __MmsControl(CdxStreamT* stream, int cmd, void* param)
             return MmsGetCacheState((struct StreamCacheStateS *)param, stream);
 
         case STREAM_CMD_RESET_STREAM:
-            CDX_LOGD("mms playlist reset stream");
+            LOGD("mms playlist reset stream");
             pthread_mutex_lock(&mmsStreamInf->bufferMutex);
             mmsStreamInf->bufReadPtr    = mmsStreamInf->tmpReadPtr;
             mmsStreamInf->bufReleasePtr = mmsStreamInf->tmpReleasePtr;
@@ -301,7 +301,7 @@ int __MmsSeek(CdxStreamT* stream, cdx_int64 offset, int whence)
 
     CdxAtomicInc(&mmsStreamInf->ref);
     CdxAtomicSet(&mmsStreamInf->mState, MMS_STREAM_SEEKING);
-   // CDX_LOGD("mms seek(offset = %lld, whence = %d)", offset, whence);
+   // LOGD("mms seek(offset = %lld, whence = %d)", offset, whence);
 
     switch(whence)
     {
@@ -319,7 +319,7 @@ int __MmsSeek(CdxStreamT* stream, cdx_int64 offset, int whence)
 
     if(seekPos < 0)
     {
-        CDX_LOGW("we can not seek to this position!");
+        LOGW("we can not seek to this position!");
         CdxAtomicDec(&mmsStreamInf->ref);
         return -1;
     }
@@ -354,7 +354,7 @@ int __MmsSeek(CdxStreamT* stream, cdx_int64 offset, int whence)
     }
     else
     {
-        CDX_LOGW("maybe the buffer is overwride by the new data, \
+        LOGW("maybe the buffer is overwride by the new data, \
                so we can not support to seek to this position");
         pthread_mutex_lock(&mmsStreamInf->bufferMutex);
         mmsStreamInf->bufReadPtr += (seekPos - mmsStreamInf->dmx_read_pos);
@@ -387,7 +387,7 @@ int __MmsSeekToTime(CdxStreamT* stream, cdx_int64 timeUs)
 
     if(mmsStreamInf->mmsMode == PROTOCOL_MMS_T)
     {
-        CDX_LOGW("--- mmst cannot seek");
+        LOGW("--- mmst cannot seek");
         return -1;
     }
     if(mmsStreamInf->fileDuration <= 0)
@@ -446,7 +446,7 @@ static cdx_int64 __MmsTell(CdxStreamT* stream)
     aw_mms_inf_t* mmsStreamInf = (aw_mms_inf_t*)stream;
     pthread_mutex_lock(&mmsStreamInf->bufferMutex);
     int64_t ret = mmsStreamInf->dmx_read_pos;
-    //CDX_LOGD("--- mms tell %lld", ret);
+    //LOGD("--- mms tell %lld", ret);
     pthread_mutex_unlock(&mmsStreamInf->bufferMutex);
     return ret;
 }
@@ -459,7 +459,7 @@ static int __MmsConnect(CdxStreamT* stream)
     ret = pthread_create(&mmsStreamInf->downloadTid, NULL, CdxReadAsfStream, (void*)mmsStreamInf);
     if(ret != 0)
     {
-        CDX_LOGE("can not create parser send data thread.");
+        LOGE("can not create parser send data thread.");
         mmsStreamInf->downloadTid = (pthread_t)0;
     }
 
@@ -505,7 +505,7 @@ CdxStreamT* __MmsStreamOpen(CdxDataSourceT* dataSource)
     mmsStreamInf = (aw_mms_inf_t*)malloc(sizeof(aw_mms_inf_t));
     if(NULL == mmsStreamInf)
     {
-        CDX_LOGE("--- malloc error");
+        LOGE("--- malloc error");
         return NULL;
     }
     memset(mmsStreamInf, 0, sizeof(aw_mms_inf_t));

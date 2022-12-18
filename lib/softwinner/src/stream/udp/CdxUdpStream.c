@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CdxUdpStream"
 #include "CdxUdpStream.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 
 #include <unistd.h>
@@ -58,7 +58,7 @@ static cdx_int32 GetCacheState(CdxUdpStream *udpStream, struct StreamCacheStateS
     }
     else
     {
-        CDX_LOGW("udpStream->mBWCount < 2 || !udpStream->mBWTotalTimeCost");
+        LOGW("udpStream->mBWCount < 2 || !udpStream->mBWTotalTimeCost");
         cacheState->nBandwidthKbps = 200;
     }
     return 0;
@@ -107,7 +107,7 @@ static cdx_int32 UdpStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 len)
     cdx_uint32 size = udpStream->bufSize - 2 * SizeToReadEverytime;
     if(len > size)
     {
-        CDX_LOGW("UdpStreamRead len is too big!");
+        LOGW("UdpStreamRead len is too big!");
         len = size;
     }
 
@@ -189,14 +189,14 @@ static cdx_int32 UdpStreamConnect(CdxStreamT *stream)
     udpStream->socketFd = UdpSocketCreate(udpStream, udpStream->url);
     if(udpStream->socketFd < 0)
     {
-        CDX_LOGE("UdpSocketCreate fail!");
+        LOGE("UdpSocketCreate fail!");
         udpStream->ioState = CDX_IO_STATE_ERROR;
         goto _exit;
     }
     int ret = pthread_create(&udpStream->threadId, NULL, UdpDownloadThread, (void *)udpStream);
     if(ret != 0)
     {
-        CDX_LOGE("pthread_create fail, ret(%d)", ret);
+        LOGE("pthread_create fail, ret(%d)", ret);
         udpStream->ioState = CDX_IO_STATE_ERROR;
         goto _exit;
     }
@@ -222,7 +222,7 @@ static cdx_int32 UdpStreamClose(CdxStreamT *stream)
     CdxUdpStream *udpStream = (CdxUdpStream *)stream;
     udpStream->exitFlag = 1;
     UdpStreamForceStop(stream);
-    /*²»ÐèÒª£¬ÒòÎªcloseÊ±£¬UdpStreamRead¸ù±¾²»»áÍ¬Ê±ÔËÐÐ£¬closeºÍUdpStreamReadÊÇÔÚÍ¬Ò»Ïß³ÌµÄ*/
+    /*ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ÎªcloseÊ±ï¿½ï¿½UdpStreamReadï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¬Ê±ï¿½ï¿½ï¿½Ð£ï¿½closeï¿½ï¿½UdpStreamReadï¿½ï¿½ï¿½ï¿½Í¬Ò»ï¿½ß³Ìµï¿½*/
     if(udpStream->threadId)
     {
         pthread_join(udpStream->threadId, NULL);
@@ -288,7 +288,7 @@ static cdx_int32 UdpStreamControl(CdxStreamT *stream, cdx_int32 cmd, void *param
         case STREAM_CMD_SET_FORCESTOP:
             return UdpStreamForceStop(stream);
         default:
-            CDX_LOGW("not implement cmd(%d)", cmd);
+            LOGW("not implement cmd(%d)", cmd);
             break;
     }
     return 0;
@@ -300,7 +300,7 @@ static cdx_int32 UdpStreamSeek(CdxStreamT *stream, cdx_int64 offset, cdx_int32 w
     CDX_UNUSE(stream);
     CDX_UNUSE(offset);
     CDX_UNUSE(whence);
-    CDX_LOGI("not implement now...");
+    LOGI("not implement now...");
     return -1;
 }
 #endif
@@ -334,7 +334,7 @@ static cdx_int32 UdpStreamGetMetaData(CdxStreamT *stream, const cdx_char *key,
     }
     else
     {
-        CDX_LOGD("key = %s, is not supported by UdpStreamGetMetaData.", key);
+        LOGD("key = %s, is not supported by UdpStreamGetMetaData.", key);
         return -1;
     }
 }
@@ -362,7 +362,7 @@ int UdpSocketCreate(CdxUdpStream *udpStream, CdxUrlT *url)
     int socketFd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if(socketFd == -1)
     {
-        CDX_LOGE("create socket fail");
+        LOGE("create socket fail");
         return -1;
     }
     int ret = CdxSockSetBlocking(socketFd, 0);
@@ -371,7 +371,7 @@ int UdpSocketCreate(CdxUdpStream *udpStream, CdxUrlT *url)
     struct hostent *host = gethostbyname(url->hostname);
     if(!host)
     {
-        CDX_LOGE("gethostbyname fail");
+        LOGE("gethostbyname fail");
         goto _err;
     }
 
@@ -384,14 +384,14 @@ int UdpSocketCreate(CdxUdpStream *udpStream, CdxUrlT *url)
     int reuse = 0;
     if(setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)))
     {
-        CDX_LOGW("SO_REUSEADDR failed! ignore.");
+        LOGW("SO_REUSEADDR failed! ignore.");
     }
 
     /* Increase the socket rx buffer size to maximum -- this is UDP */
     int recvBufSize = 5*64*1024;
     if(setsockopt(socketFd, SOL_SOCKET, SO_RCVBUF, &recvBufSize, sizeof (recvBufSize)))
     {
-        CDX_LOGW("SO_RCVBUF failed!");
+        LOGW("SO_RCVBUF failed!");
     }
     if((ntohl(serverSockAddress.sin_addr.s_addr) >> 28) == 0xe)
     {
@@ -401,7 +401,7 @@ int UdpSocketCreate(CdxUdpStream *udpStream, CdxUrlT *url)
 
         if(setsockopt(socketFd, IPPROTO_IP, IP_ADD_MEMBERSHIP, multicast, sizeof(*multicast)))
         {
-            CDX_LOGE("IP_ADD_MEMBERSHIP fail, errno = %d, socketFd = %d, multicast = %x", errno,
+            LOGE("IP_ADD_MEMBERSHIP fail, errno = %d, socketFd = %d, multicast = %x", errno,
                 socketFd, (int)multicast->imr_multiaddr.s_addr);
             goto _err;
         }
@@ -412,7 +412,7 @@ int UdpSocketCreate(CdxUdpStream *udpStream, CdxUrlT *url)
     {
         if(bind(socketFd, (struct sockaddr *)&serverSockAddress, sizeof(serverSockAddress)) == -1)
         {
-            CDX_LOGE("bind fail, errno = %d, Address = %x", errno,
+            LOGE("bind fail, errno = %d, Address = %x", errno,
                 (int)serverSockAddress.sin_addr.s_addr);
             goto _err;
         }
@@ -422,7 +422,7 @@ int UdpSocketCreate(CdxUdpStream *udpStream, CdxUrlT *url)
         if(connect(socketFd, (struct sockaddr *)&serverSockAddress,
             sizeof(serverSockAddress)) == -1)
         {
-            CDX_LOGE("connect fail, errno = %d, Address = %x", errno,
+            LOGE("connect fail, errno = %d, Address = %x", errno,
                 (int)serverSockAddress.sin_addr.s_addr);
             goto _err;
         }
@@ -430,7 +430,7 @@ int UdpSocketCreate(CdxUdpStream *udpStream, CdxUrlT *url)
         if(sendto(socketFd, "hello", 5, 0, (struct sockaddr *)&serverSockAddress,
             sizeof(serverSockAddress)) == -1)
         {
-            CDX_LOGE("sendto fail, errno = %d, Address = %x", errno,
+            LOGE("sendto fail, errno = %d, Address = %x", errno,
                 (int)serverSockAddress.sin_addr.s_addr);
             goto _err;
         }
@@ -446,8 +446,8 @@ _err:
     return -1;
 }
 
-/*downloadSize¼ÇÂ¼¶Áµ½µÄÊý¾ÝÁ¿£¬return < 0³ö´í£¬> 0Õý³££¬
-¿É¼ÌÐøµ÷ÓÃ, ==0 socket is closed by peer?ÊÇ·ñ´æÔÚÕâÖÖÇé¿ö£¬Î´Öª*/
+/*downloadSizeï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½return < 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½> 0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ï¿½É¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ==0 socket is closed by peer?ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´Öª*/
 int UdpDownloadData(CdxUdpStream *udpStream, cdx_uint32 *downloadSize)
 {
     int ret, endPos;
@@ -477,7 +477,7 @@ int UdpDownloadData(CdxUdpStream *udpStream, cdx_uint32 *downloadSize)
 
         if(endPos - udpStream->validDataSize < SizeToReadEverytime)
         {
-            CDX_LOGW("Maybe Not all data is read.");
+            LOGW("Maybe Not all data is read.");
             ret = 1;
             break;
         }
@@ -493,13 +493,13 @@ int UdpDownloadData(CdxUdpStream *udpStream, cdx_uint32 *downloadSize)
             }
             else
             {
-                CDX_LOGE("recv err(%d)", errno);
+                LOGE("recv err(%d)", errno);
                 break;
             }
         }
         else if(ret == 0)
         {
-            CDX_LOGW("xxx errno(%d), socket is closed by peer?", errno);
+            LOGW("xxx errno(%d), socket is closed by peer?", errno);
             break;
         }
 #if SAVE_FILE
@@ -510,7 +510,7 @@ int UdpDownloadData(CdxUdpStream *udpStream, cdx_uint32 *downloadSize)
         }
         else
         {
-            CDX_LOGW("save file = NULL");
+            LOGW("save file = NULL");
         }
 #endif
         udpStream->validDataSize += ret;
@@ -523,7 +523,7 @@ int UdpDownloadData(CdxUdpStream *udpStream, cdx_uint32 *downloadSize)
 }
 void *UdpDownloadThread(void* parameter)
 {
-    CDX_LOGI("UdpDownloadThread start");
+    LOGI("UdpDownloadThread start");
     CdxUdpStream *udpStream = (CdxUdpStream *)parameter;
 
     int ret, probe = 1;
@@ -569,7 +569,7 @@ void *UdpDownloadThread(void* parameter)
                 UdpTransferMeasurement(udpStream, 0, totTime);
                 continue;
             }
-            CDX_LOGE("select err(%d)", errno);
+            LOGE("select err(%d)", errno);
             break;
         }
         else if (ret == 0)
@@ -582,15 +582,15 @@ void *UdpDownloadThread(void* parameter)
 
         if(FD_ISSET(udpStream->socketFd, &errs))
         {
-            CDX_LOGE("select errs");
+            LOGE("select errs");
             break;
         }
         if(!FD_ISSET(udpStream->socketFd, &rs))
         {
-            CDX_LOGE("select > 0, but sockfd is not ready?");
+            LOGE("select > 0, but sockfd is not ready?");
             break;
         }
-        CDX_LOGV("1UdpDownloadData");
+        LOGV("1UdpDownloadData");
         ret = UdpDownloadData(udpStream, &downloadSize);
 
         if(ret < 0)
@@ -601,7 +601,7 @@ void *UdpDownloadThread(void* parameter)
         endTime = CdxGetNowUs();
         totTime = endTime - startTime;
         UdpTransferMeasurement(udpStream, downloadSize, totTime);
-        CDX_LOGV("2UdpDownloadData, downloadSize = %u", downloadSize);
+        LOGV("2UdpDownloadData, downloadSize = %u", downloadSize);
         if(probe && udpStream->validDataSize >= ProbeDataLen)
         {
             memcpy(udpStream->probeData.buf, udpStream->bigBuf, ProbeDataLen);
@@ -617,7 +617,7 @@ void *UdpDownloadThread(void* parameter)
     udpStream->ioState = CDX_IO_STATE_ERROR;
     pthread_mutex_unlock(&udpStream->lock);
     pthread_cond_signal(&udpStream->cond);
-    CDX_LOGI("UdpDownloadThread end");
+    LOGI("UdpDownloadThread end");
     return NULL;
 }
 
@@ -626,7 +626,7 @@ CdxStreamT *UdpStreamCreate(CdxDataSourceT *dataSource)
     CdxUdpStream *udpStream = CdxMalloc(sizeof(CdxUdpStream));
     if(!udpStream)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         return NULL;
     }
     memset(udpStream, 0x00, sizeof(CdxUdpStream));
@@ -634,13 +634,13 @@ CdxStreamT *UdpStreamCreate(CdxDataSourceT *dataSource)
     udpStream->sourceUri = strdup(dataSource->uri);
     if(!udpStream->sourceUri)
     {
-        CDX_LOGE("strdup failed.");
+        LOGE("strdup failed.");
         goto _error;
     }
     udpStream->url = CdxUrlNew(dataSource->uri);
     if(!udpStream->url)
     {
-        CDX_LOGE("CdxUrlNew failed.");
+        LOGE("CdxUrlNew failed.");
         goto _error;
     }
     CdxUrlPrintf(udpStream->url);
@@ -649,7 +649,7 @@ CdxStreamT *UdpStreamCreate(CdxDataSourceT *dataSource)
     udpStream->bigBuf = CdxMalloc(udpStream->bufSize);
     if(!udpStream->bigBuf)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         goto _error;
     }
 
@@ -657,7 +657,7 @@ CdxStreamT *UdpStreamCreate(CdxDataSourceT *dataSource)
     udpStream->probeData.buf = CdxMalloc(ProbeDataLen);
     if(!udpStream->probeData.buf)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         goto _error;
     }
 
@@ -672,7 +672,7 @@ CdxStreamT *UdpStreamCreate(CdxDataSourceT *dataSource)
     file = fopen("/data/camera/save.dat", "wb+");
     if (!file)
     {
-        CDX_LOGE("open file failure errno(%d)", errno);
+        LOGE("open file failure errno(%d)", errno);
     }
 #endif
     udpStream->ioState = CDX_IO_STATE_INVALID;

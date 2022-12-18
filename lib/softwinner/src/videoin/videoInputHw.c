@@ -13,7 +13,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "videoInputHw"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <errno.h>
 #include <memory.h>
@@ -95,7 +95,7 @@ ERRORTYPE videoInputHw_Construct(int vipp_id)
     }
     gpVIDevManager->gpVippManager[vipp_id] = (viChnManager *)malloc(sizeof(viChnManager));
     if (NULL == gpVIDevManager->gpVippManager[vipp_id]) {
-        aloge("alloc viChnManager error(%s)!", strerror(errno));
+        LOGE("alloc viChnManager error(%s)!", strerror(errno));
         pthread_mutex_unlock(&gpVIDevManager->mManagerLock);
         return FAILURE;
     }
@@ -103,7 +103,7 @@ ERRORTYPE videoInputHw_Construct(int vipp_id)
 
     ret = pthread_mutex_init(&gpVIDevManager->gpVippManager[vipp_id]->mLock, NULL);
     if (ret != 0) {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         free(gpVIDevManager->gpVippManager[vipp_id]);
         gpVIDevManager->gpVippManager[vipp_id] = NULL;
         pthread_mutex_unlock(&gpVIDevManager->mManagerLock);
@@ -123,7 +123,7 @@ ERRORTYPE videoInputHw_Construct(int vipp_id)
         VippFrame *pNode = (VippFrame*)malloc(sizeof(VippFrame));
         if(NULL == pNode)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             break;
         }
         memset(pNode, 0, sizeof(VippFrame));
@@ -146,7 +146,7 @@ ERRORTYPE videoInputHw_Destruct(int vipp_id)
 
     if (gpVIDevManager->gpVippManager[vipp_id] != NULL) {
         if (!list_empty(&gpVIDevManager->gpVippManager[vipp_id]->mChnList)) {
-            aloge("fatal error! some vi channel still running when destroy vi device!");
+            LOGE("fatal error! some vi channel still running when destroy vi device!");
         }
         pthread_mutex_lock(&gpVIDevManager->gpVippManager[vipp_id]->mRegionLock);
         ChannelRegionInfo *pEntry, *pTmp;
@@ -168,10 +168,10 @@ ERRORTYPE videoInputHw_Destruct(int vipp_id)
             VippFrame *pEntry;
             list_for_each_entry(pEntry, &gpVIDevManager->gpVippManager[vipp_id]->mReadyFrameList, mList)
             {
-                aloge("fatal error! vipp[%d] frameBufId[%d] is not released?", pEntry->mVipp, pEntry->mFrameBufId);
+                LOGE("fatal error! vipp[%d] frameBufId[%d] is not released?", pEntry->mVipp, pEntry->mFrameBufId);
                 cnt++;
             }            
-            aloge("fatal error! There is %d frame is not release in vipp[%d]!", cnt, vipp_id);
+            LOGE("fatal error! There is %d frame is not release in vipp[%d]!", cnt, vipp_id);
             list_splice_tail_init(&gpVIDevManager->gpVippManager[vipp_id]->mReadyFrameList, &gpVIDevManager->gpVippManager[vipp_id]->mIdleFrameList);
         }
         VippFrame *pFrameEntry, *pFrameTmp;
@@ -191,7 +191,7 @@ ERRORTYPE videoInputHw_Destruct(int vipp_id)
         {
             if(gpVIDevManager->gpVippManager[vipp_id]->refs[i] != 0)
             {
-                aloge("fatal error! vipp[%d], idx[%d], ref[%d]!=0, check code!", vipp_id, i, gpVIDevManager->gpVippManager[vipp_id]->refs[i]);
+                LOGE("fatal error! vipp[%d], idx[%d], ref[%d]!=0, check code!", vipp_id, i, gpVIDevManager->gpVippManager[vipp_id]->refs[i]);
                 gpVIDevManager->gpVippManager[vipp_id]->refs[i] = 0;
             }
         }
@@ -240,7 +240,7 @@ ERRORTYPE videoInputHw_searchExistDevVirChn(VI_DEV vipp_id, VI_CHN ViChn, VI_CHN
     VI_CHN_MAP_S *pEntry;
 	int mVirviComVippChn = 0;
 	mVirviComVippChn = ((vipp_id << 16) & 0xFFFF0000) | (ViChn & 0x0000FFFF);
-	// printf("===== dev=%d, chn=%d, mVirviComVippChn=%x.\r\n", vipp_id, ViChn, mVirviComVippChn);
+	// LOGI("===== dev=%d, chn=%d, mVirviComVippChn=%x.", vipp_id, ViChn, mVirviComVippChn);
 
     pthread_mutex_lock(&gpVIDevManager->mManagerLock);
 
@@ -251,7 +251,7 @@ ERRORTYPE videoInputHw_searchExistDevVirChn(VI_DEV vipp_id, VI_CHN ViChn, VI_CHN
     pthread_mutex_lock(&gpVIDevManager->gpVippManager[vipp_id]->mLock);
     list_for_each_entry(pEntry, &gpVIDevManager->gpVippManager[vipp_id]->mChnList, mList)
     {
-    	// printf("-------%x,,,%x.\r\n", pEntry->mViChn , mVirviComVippChn);
+    	// LOGI("-------%x,,,%x.", pEntry->mViChn , mVirviComVippChn);
         if (pEntry->mViChn == mVirviComVippChn) {
             if (ppChn) {
                 *ppChn = pEntry;
@@ -318,7 +318,7 @@ ERRORTYPE videoInputHw_IncreaseLongShutterRef(VI_DEV Vipp_id)
     int bIsBusy = 0;
 
     if (gpVIDevManager->gpVippManager[Vipp_id] == NULL) {
-        aloge("No such video device %d", Vipp_id);
+        LOGE("No such video device %d", Vipp_id);
         goto failed;
     }
 
@@ -326,7 +326,7 @@ ERRORTYPE videoInputHw_IncreaseLongShutterRef(VI_DEV Vipp_id)
     if (gpVIDevManager->gpVippManager[Vipp_id]->iTakeLongExpRef < VI_VIRCHN_NUM_MAX)
         gpVIDevManager->gpVippManager[Vipp_id]->iTakeLongExpRef++;
     else
-        aloge("The reference has been got upper limit %d, vipp id %d", VI_VIPP_NUM_MAX, Vipp_id);
+        LOGE("The reference has been got upper limit %d, vipp id %d", VI_VIPP_NUM_MAX, Vipp_id);
     pthread_mutex_unlock(&gpVIDevManager->gpVippManager[Vipp_id]->mLongExpLock);
     return gpVIDevManager->gpVippManager[Vipp_id]->iTakeLongExpRef;
 failed:
@@ -338,7 +338,7 @@ ERRORTYPE videoInputHw_DecreaseLongShutterRef(VI_DEV Vipp_id)
     int bIsBusy = 0;
 
     if (gpVIDevManager->gpVippManager[Vipp_id] == NULL) {
-        aloge("No such video device %d", Vipp_id);
+        LOGE("No such video device %d", Vipp_id);
         goto failed;
     }
 
@@ -346,7 +346,7 @@ ERRORTYPE videoInputHw_DecreaseLongShutterRef(VI_DEV Vipp_id)
     if (gpVIDevManager->gpVippManager[Vipp_id]->iTakeLongExpRef > 0)
         gpVIDevManager->gpVippManager[Vipp_id]->iTakeLongExpRef--;
     else
-        aloge("The reference has been got lowwer limit 0, vipp id %d", Vipp_id);
+        LOGE("The reference has been got lowwer limit 0, vipp id %d", Vipp_id);
     pthread_mutex_unlock(&gpVIDevManager->gpVippManager[Vipp_id]->mLongExpLock);
     return gpVIDevManager->gpVippManager[Vipp_id]->iTakeLongExpRef;
 failed:
@@ -361,13 +361,13 @@ ERRORTYPE videoInputHw_SetVippShutterTime(VI_DEV Vipp_id, VI_SHUTTIME_CFG_S *pSh
     int time = pShutTime->iTime;
 
     if ((0 == time) && (VI_SHUTTIME_MODE_AUTO != pShutTime->eShutterMode)) {
-        aloge("Wrong shutter time value[%d]", time);
+        LOGE("Wrong shutter time value[%d]", time);
         goto failed;
     }
 
     if (gpVIDevManager->gpVippManager[Vipp_id] == NULL ||
             gpVIDevManager->media->video_dev[Vipp_id] == NULL) {
-        aloge("No such video device %d", Vipp_id);
+        LOGE("No such video device %d", Vipp_id);
         goto failed;
     }
     video = gpVIDevManager->media->video_dev[Vipp_id];
@@ -383,7 +383,7 @@ ERRORTYPE videoInputHw_SetVippShutterTime(VI_DEV Vipp_id, VI_SHUTTIME_CFG_S *pSh
     pthread_mutex_lock(&gpVIDevManager->gpVippManager[Vipp_id]->mLongExpLock);
     memset(&stConfig, 0, sizeof(struct sensor_config));
     if (isp_get_sensor_info(iIspId, &stConfig) < 0) {
-        aloge("Get isp sensor information failed, isp id %d", iIspId);
+        LOGE("Get isp sensor information failed, isp id %d", iIspId);
         goto failed;
     }
     iCurFps = stConfig.fps_fixed;
@@ -395,7 +395,7 @@ ERRORTYPE videoInputHw_SetVippShutterTime(VI_DEV Vipp_id, VI_SHUTTIME_CFG_S *pSh
 
             video_set_vin_reset_time(video, 0);
             if (isp_set_fps(iIspId, iCurFps) < 0) {
-                aloge("Set sensor fps %d failed, isp id %d", iCurFps, iIspId);
+                LOGE("Set sensor fps %d failed, isp id %d", iCurFps, iIspId);
                 goto failed;
             }
             gpVIDevManager->gpVippManager[Vipp_id]->bTakeLongExpPic = 0;
@@ -419,11 +419,11 @@ ERRORTYPE videoInputHw_SetVippShutterTime(VI_DEV Vipp_id, VI_SHUTTIME_CFG_S *pSh
                 if (video_set_control(video, V4L2_CID_EXPOSURE_ABSOLUTE, iExpNewTimeUs) < 0 ||
                     video_set_control(video, V4L2_CID_GAIN, iSensorGainVal) < 0)
                 {
-                    aloge("Set gain %d, exposure %d failed.", iSensorGainVal, iExpNewTimeUs);
+                    LOGE("Set gain %d, exposure %d failed.", iSensorGainVal, iExpNewTimeUs);
                     goto failed;
                 }
             } else {
-                aloge("wrong time value[%d] with <preview shutter mode>", time);
+                LOGE("wrong time value[%d] with <preview shutter mode>", time);
             }
         } break;
         case VI_SHUTTIME_MODE_NIGHT_VIEW: { /* night view mode */
@@ -456,12 +456,12 @@ ERRORTYPE videoInputHw_SetVippShutterTime(VI_DEV Vipp_id, VI_SHUTTIME_CFG_S *pSh
                 }
                 gpVIDevManager->gpVippManager[Vipp_id]->bTakeLongExpPic = 1;
             } else {
-                aloge("wrong time value[%d] with <night view mode>", time);
+                LOGE("wrong time value[%d] with <night view mode>", time);
             }
         } break;
 
         default: {
-            aloge("wrong shutter mode[%d], use[0~2]", pShutTime->eShutterMode);
+            LOGE("wrong shutter mode[%d], use[0~2]", pShutTime->eShutterMode);
             goto failed;
         } break;
     }
@@ -506,7 +506,7 @@ VI_CHN_MAP_S *videoInputHw_CHN_MAP_S_Construct()
 {
     VI_CHN_MAP_S *pChannel = (VI_CHN_MAP_S *)malloc(sizeof(VI_CHN_MAP_S));
     if (NULL == pChannel) {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pChannel, 0, sizeof(VI_CHN_MAP_S));
@@ -516,7 +516,7 @@ VI_CHN_MAP_S *videoInputHw_CHN_MAP_S_Construct()
 void videoInputHw_CHN_MAP_S_Destruct(VI_CHN_MAP_S *pChannel)
 {
     if (pChannel->mViComp) {
-        aloge("fatal error! Vi component need free before!");
+        LOGE("fatal error! Vi component need free before!");
         COMP_FreeHandle(pChannel->mViComp);
         pChannel->mViComp = NULL;
     }
@@ -530,19 +530,19 @@ ERRORTYPE videoInputHw_Open_Media() /*Open Media+ISP+CSI Device*/
     {
         if(gpVIDevManager->media)
         {
-            alogd("videoInputHw already open.");
+            LOGD("videoInputHw already open.");
             return SUCCESS;
         }
         else
         {
-            aloge("fatal error! media is not construct");
+            LOGE("fatal error! media is not construct");
         }
     }
 
     gpVIDevManager = (VIDevManager *)malloc(sizeof(VIDevManager));
     if(gpVIDevManager == NULL)
     {
-        aloge("error, gpVIDevManager can not be allocted");
+        LOGE("error, gpVIDevManager can not be allocted");
         return FAILURE;
     }
     int index;
@@ -554,7 +554,7 @@ ERRORTYPE videoInputHw_Open_Media() /*Open Media+ISP+CSI Device*/
 
     gpVIDevManager->media = isp_md_open(MEDIA_DEVICE);
     if (gpVIDevManager->media == NULL) {
-        alogd("error: unable to open media device %s\n", MEDIA_DEVICE);
+        LOGD("error: unable to open media device %s", MEDIA_DEVICE);
         return FAILURE;
     }
 
@@ -585,7 +585,7 @@ ERRORTYPE videoInputHw_ChnInit(int ViCh) /*Open /dev/video[0~3] node*/
 
     if(isp_video_open(gpVIDevManager->media, ViCh) < 0)
     {
-        aloge("error: isp video can not open, chn[%d]!", ViCh);
+        LOGE("error: isp video can not open, chn[%d]!", ViCh);
         pthread_mutex_unlock(&gpVIDevManager->mManagerLock);
         return FAILURE;
     }
@@ -595,11 +595,11 @@ ERRORTYPE videoInputHw_ChnInit(int ViCh) /*Open /dev/video[0~3] node*/
         struct isp_video_device *video = gpVIDevManager->media->video_dev[ViCh];
         if (video_set_top_clk(video, gpVIDevManager->mClockFrequency) < 0)
         {
-            aloge("Cuation:can not set ISP clock frequency!");
+            LOGE("Cuation:can not set ISP clock frequency!");
             pthread_mutex_unlock(&gpVIDevManager->mManagerLock);
             return FAILURE;
         }
-        alogw("Attention: the ISP clock frequecy had been set %f MHZ", gpVIDevManager->mClockFrequency / 1000000.0);
+        LOGW("Attention: the ISP clock frequecy had been set %f MHZ", gpVIDevManager->mClockFrequency / 1000000.0);
         gpVIDevManager->mSetFrequency = TRUE;
     }
 
@@ -616,7 +616,7 @@ ERRORTYPE videoInputHw_ChnExit(int ViCh) /*Close /dev/video[0~3] node*/
         int ret = overlay_update(gpVIDevManager->media->video_dev[ViCh], 0);
         if(ret != 0)
         {
-            aloge("fatal error! the vipp[%d] OSD can not closed!", ViCh);
+            LOGE("fatal error! the vipp[%d] OSD can not closed!", ViCh);
         }
     }
 
@@ -656,7 +656,7 @@ ERRORTYPE videoInputHw_SetChnAttr(VI_DEV ViCh, VI_ATTR_S *pstAttr) /*Set /dev/vi
     }
 
     if (video_set_fmt(video, &vfmt) < 0) {
-        aloge("video_set_fmt failed, chn[%d]", ViCh);
+        LOGE("video_set_fmt failed, chn[%d]", ViCh);
         return FAILURE;
     }
 
@@ -685,11 +685,11 @@ int videoInputHw_SetVIFreq(VI_DEV ViCh, int freq)
                 video = gpVIDevManager->media->video_dev[video_dev_index];
                 if (video_set_top_clk(video, freq) < 0)
                 {
-                    aloge("Cuation:can not set ISP clock frequency!");
+                    LOGE("Cuation:can not set ISP clock frequency!");
                     pthread_mutex_unlock(&gpVIDevManager->mManagerLock);
                     return FAILURE;
                 }
-                alogw("the isp clock freq had been set %f MHz", freq / 1000000.0);
+                LOGW("the isp clock freq had been set %f MHz", freq / 1000000.0);
                 gpVIDevManager->mSetFrequency = TRUE;
                 gpVIDevManager->mClockFrequency = freq;
                 pthread_mutex_unlock(&gpVIDevManager->mManagerLock);
@@ -698,11 +698,11 @@ int videoInputHw_SetVIFreq(VI_DEV ViCh, int freq)
         }
         gpVIDevManager->mSetFrequency = FALSE;
         gpVIDevManager->mClockFrequency = freq;
-        alogw("The Device do not open, and waitting to set the isp clock freq");
+        LOGW("The Device do not open, and waitting to set the isp clock freq");
     }
     else
     {
-        alogw("The isp clock frequency same as you wanted, the freq is %d MHz!!", gpVIDevManager->mClockFrequency / 1000000);
+        LOGW("The isp clock frequency same as you wanted, the freq is %d MHz!!", gpVIDevManager->mClockFrequency / 1000000);
     }
 
     pthread_mutex_unlock(&gpVIDevManager->mManagerLock);
@@ -742,7 +742,7 @@ ERRORTYPE videoInputHw_ChnEnable(int ViVipp) /*Enable /dev/video[0~3] node*/
     struct video_fmt vfmt;
     int i;
     if (ViVipp >= HW_VIDEO_DEVICE_NUM || NULL == gpVIDevManager->media->video_dev[ViVipp]) {
-        aloge("VIN CH[%d] number is invalid!\n", ViVipp);
+        LOGE("VIN CH[%d] number is invalid!", ViVipp);
         return ERR_VI_INVALID_CHNID;
     } else {
         video = gpVIDevManager->media->video_dev[ViVipp];
@@ -870,25 +870,25 @@ ERRORTYPE videoInputHw_DrawOSD(VI_DEV vipp_id)
             {
                 if(FALSE == pEntry->mbSetBmp)
                 {
-                    aloge("fatal error! bmp is not set");
+                    LOGE("fatal error! bmp is not set");
                 }
                 if(NULL == pEntry->mBmp.mpData)
                 {
-                    aloge("fatal error! bmpData is not set");
+                    LOGE("fatal error! bmpData is not set");
                 }
                 stOsdFmt.chromakey = map_PIXEL_FORMAT_E_to_V4L2_PIX_FMT(pEntry->mRgnAttr.unAttr.stOverlay.mPixelFmt);
                 stOsdFmt.global_alpha = MAX_GLOBAL_ALPHA;
                 if(pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.stInvColArea.Width%OVERLAY_INVERT_UNIT_WIDTH != 0
                     || pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.stInvColArea.Height%OVERLAY_INVERT_UNIT_HEIGHT != 0)
                 {
-                    aloge("fatal error! InvColArea[%dx%d] is not align to [%dx%d]", 
+                    LOGE("fatal error! InvColArea[%dx%d] is not align to [%dx%d]", 
                         pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.stInvColArea.Width,
                         pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.stInvColArea.Height,
                         OVERLAY_INVERT_UNIT_WIDTH, OVERLAY_INVERT_UNIT_HEIGHT);
                 }
                 if(stOsdFmt.clipcount >= 8)
                 {
-                    aloge("fatal error! why elem number[%d] >= 8?", stOsdFmt.clipcount);
+                    LOGE("fatal error! why elem number[%d] >= 8?", stOsdFmt.clipcount);
                 }
                 stOsdFmt.inv_w_rgn[stOsdFmt.clipcount] = pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.stInvColArea.Width/OVERLAY_INVERT_UNIT_WIDTH - 1;
 	            stOsdFmt.inv_h_rgn[stOsdFmt.clipcount] = pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.stInvColArea.Height/OVERLAY_INVERT_UNIT_HEIGHT - 1;
@@ -897,7 +897,7 @@ ERRORTYPE videoInputHw_DrawOSD(VI_DEV vipp_id)
                 if(pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.bInvColEn 
                     && pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.enChgMod != LESSTHAN_LUMDIFF_THRESH)
                 {
-                    alogd("Be careful! vipp invert color mode only support LESSTHAN_LUMDIFF_THRESH! But user set mode[0x%x]", pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.enChgMod);
+                    LOGD("Be careful! vipp invert color mode only support LESSTHAN_LUMDIFF_THRESH! But user set mode[0x%x]", pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.enChgMod);
                 }
                 stOsdFmt.bitmap[stOsdFmt.clipcount] = pEntry->mBmp.mpData;
                 stOsdFmt.region[stOsdFmt.clipcount].left = pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.X;
@@ -907,7 +907,7 @@ ERRORTYPE videoInputHw_DrawOSD(VI_DEV vipp_id)
                 stOsdFmt.clipcount++;
                 if(stOsdFmt.clipcount > MAX_OVERLAY_NUM)
                 {
-                    aloge("fatal error! clipcount[%d] exceed!", stOsdFmt.clipcount);
+                    LOGE("fatal error! clipcount[%d] exceed!", stOsdFmt.clipcount);
                 }
             }
         }
@@ -921,12 +921,12 @@ ERRORTYPE videoInputHw_DrawOSD(VI_DEV vipp_id)
         int ret2 = overlay_update(video, 1);
         if(ret1 != 0)
         {
-            aloge("fatal error! set overlay fail[%d]", ret1);
+            LOGE("fatal error! set overlay fail[%d]", ret1);
             ret = ERR_VI_NOT_SUPPORT;
         }
         if(ret2 != 0)
         {
-            aloge("fatal error! overlay update fail[%d]", ret2);
+            LOGE("fatal error! overlay update fail[%d]", ret2);
             ret = ERR_VI_NOT_SUPPORT;
         }
     }
@@ -942,12 +942,12 @@ ERRORTYPE videoInputHw_DrawOSD(VI_DEV vipp_id)
         int ret2 = overlay_update(video, 1);
         if(ret1 != 0)
         {
-            aloge("fatal error! set overlay fail[%d]", ret1);
+            LOGE("fatal error! set overlay fail[%d]", ret1);
             ret = ERR_VI_NOT_SUPPORT;
         }
         if(ret2 != 0)
         {
-            aloge("fatal error! overlay update fail[%d]", ret2);
+            LOGE("fatal error! overlay update fail[%d]", ret2);
             ret = ERR_VI_NOT_SUPPORT;
         }
     }
@@ -974,11 +974,11 @@ ERRORTYPE videoInputHw_DrawOSD(VI_DEV vipp_id)
                 }
                 else
                 {
-                    aloge("fatal error! coverType[0x%x] is not rect!", pEntry->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType);
+                    LOGE("fatal error! coverType[0x%x] is not rect!", pEntry->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType);
                 }
                 if(stOsdFmt.clipcount > MAX_COVER_NUM)
                 {
-                    aloge("fatal error! clipcount[%d] exceed!", stOsdFmt.clipcount);
+                    LOGE("fatal error! clipcount[%d] exceed!", stOsdFmt.clipcount);
                 }
             }
         }
@@ -986,12 +986,12 @@ ERRORTYPE videoInputHw_DrawOSD(VI_DEV vipp_id)
         int ret2 = overlay_update(video, 1);
         if(ret1 != 0)
         {
-            aloge("fatal error! set cover fail[%d]", ret1);
+            LOGE("fatal error! set cover fail[%d]", ret1);
             ret = ERR_VI_NOT_SUPPORT;
         }
         if(ret2 != 0)
         {
-            aloge("fatal error! cover update fail[%d]", ret2);
+            LOGE("fatal error! cover update fail[%d]", ret2);
             ret = ERR_VI_NOT_SUPPORT;
         }
     }
@@ -1005,12 +1005,12 @@ ERRORTYPE videoInputHw_DrawOSD(VI_DEV vipp_id)
         int ret2 = overlay_update(video, 1);
         if(ret1 != 0)
         {
-            aloge("fatal error! set cover fail[%d]", ret1);
+            LOGE("fatal error! set cover fail[%d]", ret1);
             ret = ERR_VI_NOT_SUPPORT;
         }
         if(ret2 != 0)
         {
-            aloge("fatal error! cover update fail[%d]", ret2);
+            LOGE("fatal error! cover update fail[%d]", ret2);
             ret = ERR_VI_NOT_SUPPORT;
         }
     }
@@ -1024,7 +1024,7 @@ static BOOL compareRegionPosition(const RGN_CHN_ATTR_S *pFirst, const RGN_CHN_AT
 {
     if(pFirst->enType != pSecond->enType)
     {
-        aloge("fatal error! why rgnType is not match[0x%x]!=[0x%x]", pFirst->enType, pSecond->enType);
+        LOGE("fatal error! why rgnType is not match[0x%x]!=[0x%x]", pFirst->enType, pSecond->enType);
         return FALSE;
     }
     if(OVERLAY_RGN == pFirst->enType)
@@ -1071,13 +1071,13 @@ static BOOL compareRegionPosition(const RGN_CHN_ATTR_S *pFirst, const RGN_CHN_AT
         }
         else
         {
-            aloge("fatal error! not support cover type[0x%x]", pFirst->unChnAttr.stCoverChn.enCoverType);
+            LOGE("fatal error! not support cover type[0x%x]", pFirst->unChnAttr.stCoverChn.enCoverType);
             return FALSE;
         }
     }
     else
     {
-        aloge("fatal error! unsupport rgnType[0x%x]", pFirst->enType);
+        LOGE("fatal error! unsupport rgnType[0x%x]", pFirst->enType);
         return FALSE;
     }
 }
@@ -1089,7 +1089,7 @@ static BOOL compareRegionPriority(const RGN_CHN_ATTR_S *pFirst, const RGN_CHN_AT
 {
     if(pFirst->enType != pSecond->enType)
     {
-        aloge("fatal error! why rgnType is not match[0x%x]!=[0x%x]", pFirst->enType, pSecond->enType);
+        LOGE("fatal error! why rgnType is not match[0x%x]!=[0x%x]", pFirst->enType, pSecond->enType);
         return FALSE;
     }
     if(OVERLAY_RGN == pFirst->enType)
@@ -1112,13 +1112,13 @@ static BOOL compareRegionPriority(const RGN_CHN_ATTR_S *pFirst, const RGN_CHN_AT
         }
         else
         {
-            aloge("fatal error! not support cover type[0x%x]", pFirst->unChnAttr.stCoverChn.enCoverType);
+            LOGE("fatal error! not support cover type[0x%x]", pFirst->unChnAttr.stCoverChn.enCoverType);
             return FALSE;
         }
     }
     else
     {
-        aloge("fatal error! unsupport rgnType[0x%x]", pFirst->enType);
+        LOGE("fatal error! unsupport rgnType[0x%x]", pFirst->enType);
         return FALSE;
     }
 }
@@ -1135,7 +1135,7 @@ BOOL checkRegionPositionValid(RGN_ATTR_S *pRgnAttr, RGN_CHN_ATTR_S *pRgnChnAttr)
             || pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.X%OVERLAY_INVERT_UNIT_WIDTH != 0
             || pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.Y%OVERLAY_INVERT_UNIT_HEIGHT != 0)
         {
-            aloge("fatal error! region position [%d,%d, %dx%d] is invalid!", 
+            LOGE("fatal error! region position [%d,%d, %dx%d] is invalid!", 
                 pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.X,pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.Y, 
                 pRgnAttr->unAttr.stOverlay.mSize.Width, pRgnAttr->unAttr.stOverlay.mSize.Height);
             bValid = FALSE;
@@ -1150,7 +1150,7 @@ ERRORTYPE videoInputHw_SetRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle, RGN_ATTR_
     ERRORTYPE ret = SUCCESS;
     if (vipp_id >= HW_VIDEO_DEVICE_NUM || vipp_id < 0)
     {
-        aloge("vipp[%d] is invalid!", vipp_id);
+        LOGE("vipp[%d] is invalid!", vipp_id);
         return ERR_VI_INVALID_CHNID;
     }
 
@@ -1163,7 +1163,7 @@ ERRORTYPE videoInputHw_SetRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle, RGN_ATTR_
     //check if region position and size fulfill the align request.
     if(FALSE == checkRegionPositionValid(pRgnAttr, pRgnChnAttr))
     {
-        aloge("fatal error! region position is invalid, ignore this region!");
+        LOGE("fatal error! region position is invalid, ignore this region!");
         return ERR_VI_INVALID_PARA;
     }
 
@@ -1174,7 +1174,7 @@ ERRORTYPE videoInputHw_SetRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle, RGN_ATTR_
     {
         if(RgnHandle == pEntry->mRgnHandle)
         {
-            aloge("fatal error! RgnHandle[%d] is already exist!", RgnHandle);
+            LOGE("fatal error! RgnHandle[%d] is already exist!", RgnHandle);
             ret = ERR_VI_EXIST;
             goto _err0;
         }
@@ -1183,7 +1183,7 @@ ERRORTYPE videoInputHw_SetRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle, RGN_ATTR_
     {
         if(RgnHandle == pEntry->mRgnHandle)
         {
-            aloge("fatal error! RgnHandle[%d] is already exist!", RgnHandle);
+            LOGE("fatal error! RgnHandle[%d] is already exist!", RgnHandle);
             ret = ERR_VI_EXIST;
             goto _err0;
         }
@@ -1191,7 +1191,7 @@ ERRORTYPE videoInputHw_SetRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle, RGN_ATTR_
     ChannelRegionInfo *pRegion = ChannelRegionInfo_Construct();
     if(NULL == pRegion)
     {
-        aloge("fatal error! malloc fail!");
+        LOGE("fatal error! malloc fail!");
         ret = ERR_VI_NOMEM;
         goto _err0;
     }
@@ -1206,7 +1206,7 @@ ERRORTYPE videoInputHw_SetRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle, RGN_ATTR_
         pRegion->mBmp.mpData = malloc(nSize);
         if(NULL == pRegion->mBmp.mpData)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             free(pRegion);
             ret = ERR_VI_NOMEM;
             goto _err0;
@@ -1271,7 +1271,7 @@ ERRORTYPE videoInputHw_SetRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle, RGN_ATTR_
     }
     else
     {
-        aloge("fatal error! unsupport rgnType[0x%x]", pRegion->mRgnAttr.enType);
+        LOGE("fatal error! unsupport rgnType[0x%x]", pRegion->mRgnAttr.enType);
         if(pRegion->mBmp.mpData)
         {
             free(pRegion->mBmp.mpData);
@@ -1319,7 +1319,7 @@ ERRORTYPE videoInputHw_SetRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle, RGN_ATTR_
         }
         else
         {
-            alogw("Be careful! can't draw osd during vipp disable!");
+            LOGW("Be careful! can't draw osd during vipp disable!");
         }
         pthread_mutex_unlock(&pVipp->mLock);
     }
@@ -1337,7 +1337,7 @@ ERRORTYPE videoInputHw_DeleteRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle)
     ERRORTYPE ret = SUCCESS;
     if (vipp_id >= HW_VIDEO_DEVICE_NUM || vipp_id < 0)
     {
-        aloge("vipp[%d] is invalid!", vipp_id);
+        LOGE("vipp[%d] is invalid!", vipp_id);
         return ERR_VI_INVALID_CHNID;
     }
 
@@ -1374,7 +1374,7 @@ ERRORTYPE videoInputHw_DeleteRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle)
     }
     if(FALSE == bFind)
     {
-        aloge("fatal error! can't find rgnHandle[%d]", RgnHandle);
+        LOGE("fatal error! can't find rgnHandle[%d]", RgnHandle);
         ret = ERR_VI_UNEXIST;
         goto _err0;
     }
@@ -1395,7 +1395,7 @@ ERRORTYPE videoInputHw_DeleteRegion(VI_DEV vipp_id, RGN_HANDLE RgnHandle)
         }
         else
         {
-            alogw("Be careful! can't draw osd during vipp disable!");
+            LOGW("Be careful! can't draw osd during vipp disable!");
         }
         pthread_mutex_unlock(&pVipp->mLock);
     }
@@ -1413,7 +1413,7 @@ ERRORTYPE videoInputHw_UpdateOverlayBitmap(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
     ERRORTYPE ret = SUCCESS;
     if (vipp_id >= HW_VIDEO_DEVICE_NUM || vipp_id < 0)
     {
-        aloge("vipp[%d] is invalid!", vipp_id);
+        LOGE("vipp[%d] is invalid!", vipp_id);
         return ERR_VI_INVALID_CHNID;
     }
 
@@ -1441,7 +1441,7 @@ ERRORTYPE videoInputHw_UpdateOverlayBitmap(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
     }
     if(pRegion->mRgnAttr.enType != OVERLAY_RGN)
     {
-        aloge("fatal error! rgn type[0x%x] is not overlay!", pRegion->mRgnAttr.enType);
+        LOGE("fatal error! rgn type[0x%x] is not overlay!", pRegion->mRgnAttr.enType);
         ret = ERR_VI_INVALID_PARA;
         goto _err0;
     }
@@ -1452,7 +1452,7 @@ ERRORTYPE videoInputHw_UpdateOverlayBitmap(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
         size0 = BITMAP_S_GetdataSize(&pRegion->mBmp);
         if(size0 != size1)
         {
-            aloge("fatal error! bmp size[%d]!=[%d]", size0, size1);
+            LOGE("fatal error! bmp size[%d]!=[%d]", size0, size1);
             free(pRegion->mBmp.mpData);
             pRegion->mBmp.mpData = NULL;
             pRegion->mbSetBmp = FALSE;
@@ -1464,14 +1464,14 @@ ERRORTYPE videoInputHw_UpdateOverlayBitmap(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
         pRegion->mBmp.mpData = malloc(size1);
         if(NULL == pRegion->mBmp.mpData)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
         }
         pRegion->mbSetBmp = TRUE;
     }
     memcpy(pRegion->mBmp.mpData, pBitmap->mpData, size1);
     if(pBitmap->mWidth != pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width || pBitmap->mHeight != pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height)
     {
-        alogw("Be careful! bitmap size[%dx%d] != region size[%dx%d], need update region size!", pBitmap->mWidth, pBitmap->mHeight, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height);
+        LOGW("Be careful! bitmap size[%dx%d] != region size[%dx%d], need update region size!", pBitmap->mWidth, pBitmap->mHeight, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height);
         pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width = pBitmap->mWidth;
         pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height = pBitmap->mHeight;
     }
@@ -1500,7 +1500,7 @@ ERRORTYPE videoInputHw_UpdateOverlayBitmap(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
         }
         else
         {
-            alogw("Be careful! can't draw osd during vipp disable!");
+            LOGW("Be careful! can't draw osd during vipp disable!");
         }
         pthread_mutex_unlock(&pVipp->mLock);
     }
@@ -1517,7 +1517,7 @@ ERRORTYPE videoInputHw_UpdateRegionChnAttr(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
     ERRORTYPE ret = SUCCESS;
     if (vipp_id >= HW_VIDEO_DEVICE_NUM || vipp_id < 0)
     {
-        aloge("vipp[%d] is invalid!", vipp_id);
+        LOGE("vipp[%d] is invalid!", vipp_id);
         return ERR_VI_INVALID_CHNID;
     }
 
@@ -1563,13 +1563,13 @@ ERRORTYPE videoInputHw_UpdateRegionChnAttr(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
         BOOL bUpdate = FALSE;
         if(pRegion->mRgnChnAttr.bShow != pRgnChnAttr->bShow)
         {
-            alogd("bShow change [%d]->[%d]", pRegion->mRgnChnAttr.bShow, pRgnChnAttr->bShow);
+            LOGD("bShow change [%d]->[%d]", pRegion->mRgnChnAttr.bShow, pRgnChnAttr->bShow);
             bUpdate = TRUE;
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.X != pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.X
             || pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.Y != pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.Y)
         {
-            alogd("stPoint change [%d,%d]->[%d,%d]",
+            LOGD("stPoint change [%d,%d]->[%d,%d]",
                 pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.X,
                 pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.Y,
                 pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.X,
@@ -1579,17 +1579,17 @@ ERRORTYPE videoInputHw_UpdateRegionChnAttr(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mFgAlpha != pRgnChnAttr->unChnAttr.stOverlayChn.mFgAlpha)
         {
-            alogd("FgAlpha change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mFgAlpha, pRgnChnAttr->unChnAttr.stOverlayChn.mFgAlpha);
+            LOGD("FgAlpha change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mFgAlpha, pRgnChnAttr->unChnAttr.stOverlayChn.mFgAlpha);
             bUpdate = TRUE;
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mLayer != pRgnChnAttr->unChnAttr.stOverlayChn.mLayer)
         {
-            alogd("overlay priority(mLayer) change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mLayer, pRgnChnAttr->unChnAttr.stOverlayChn.mLayer);
+            LOGD("overlay priority(mLayer) change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mLayer, pRgnChnAttr->unChnAttr.stOverlayChn.mLayer);
             bUpdate = TRUE;
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.bInvColEn != pRgnChnAttr->unChnAttr.stOverlayChn.stInvertColor.bInvColEn)
         {
-            alogd("overlay InvColEn change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.bInvColEn, pRgnChnAttr->unChnAttr.stOverlayChn.stInvertColor.bInvColEn);
+            LOGD("overlay InvColEn change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.bInvColEn, pRgnChnAttr->unChnAttr.stOverlayChn.stInvertColor.bInvColEn);
             bUpdate = TRUE;
         }
         pRegion->mRgnChnAttr = *pRgnChnAttr;
@@ -1619,7 +1619,7 @@ ERRORTYPE videoInputHw_UpdateRegionChnAttr(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
                 }
                 else
                 {
-                    alogw("Be careful! can't draw osd during vipp disable!");
+                    LOGW("Be careful! can't draw osd during vipp disable!");
                 }
                 pthread_mutex_unlock(&pVipp->mLock);
             }
@@ -1630,19 +1630,19 @@ ERRORTYPE videoInputHw_UpdateRegionChnAttr(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
         BOOL bUpdate = FALSE;
         if(pRegion->mRgnChnAttr.bShow != pRgnChnAttr->bShow)
         {
-            alogd("bShow change [%d]->[%d]", pRegion->mRgnChnAttr.bShow, pRgnChnAttr->bShow);
+            LOGD("bShow change [%d]->[%d]", pRegion->mRgnChnAttr.bShow, pRgnChnAttr->bShow);
             bUpdate = TRUE;
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType != pRgnChnAttr->unChnAttr.stCoverChn.enCoverType)
         {
-            aloge("fatal error! cover type change [0x%x]->[0x%x]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType, pRgnChnAttr->unChnAttr.stCoverChn.enCoverType);
+            LOGE("fatal error! cover type change [0x%x]->[0x%x]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType, pRgnChnAttr->unChnAttr.stCoverChn.enCoverType);
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.X != pRgnChnAttr->unChnAttr.stCoverChn.stRect.X
             || pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Y != pRgnChnAttr->unChnAttr.stCoverChn.stRect.Y
             || pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Width != pRgnChnAttr->unChnAttr.stCoverChn.stRect.Width
             || pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Height != pRgnChnAttr->unChnAttr.stCoverChn.stRect.Height)
         {
-            alogd("cover rect change [%d,%d,%d,%d]->[%d,%d,%d,%d]",
+            LOGD("cover rect change [%d,%d,%d,%d]->[%d,%d,%d,%d]",
                 pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.X, pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Y,
                 pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Width, pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Height,
                 pRgnChnAttr->unChnAttr.stCoverChn.stRect.X, pRgnChnAttr->unChnAttr.stCoverChn.stRect.Y,
@@ -1651,12 +1651,12 @@ ERRORTYPE videoInputHw_UpdateRegionChnAttr(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mColor != pRgnChnAttr->unChnAttr.stCoverChn.mColor)
         {
-            alogd("cover color change [0x%x]->[0x%x]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mColor, pRgnChnAttr->unChnAttr.stCoverChn.mColor);
+            LOGD("cover color change [0x%x]->[0x%x]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mColor, pRgnChnAttr->unChnAttr.stCoverChn.mColor);
             bUpdate = TRUE;
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mLayer != pRgnChnAttr->unChnAttr.stCoverChn.mLayer)
         {
-            alogd("cover priority(mLayer) change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mLayer, pRgnChnAttr->unChnAttr.stCoverChn.mLayer);
+            LOGD("cover priority(mLayer) change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mLayer, pRgnChnAttr->unChnAttr.stCoverChn.mLayer);
             bUpdate = TRUE;
         }
         pRegion->mRgnChnAttr = *pRgnChnAttr;
@@ -1684,14 +1684,14 @@ ERRORTYPE videoInputHw_UpdateRegionChnAttr(VI_DEV vipp_id, RGN_HANDLE RgnHandle,
             }
             else
             {
-                alogw("Be careful! can't draw osd during vipp disable!");
+                LOGW("Be careful! can't draw osd during vipp disable!");
             }
             pthread_mutex_unlock(&pVipp->mLock);
         }
     }
     else
     {
-        aloge("fatal error! rgn type[0x%x]", pRgnChnAttr->enType);
+        LOGE("fatal error! rgn type[0x%x]", pRgnChnAttr->enType);
     }
     pthread_mutex_unlock(&pVipp->mRegionLock);
     return ret;
@@ -1722,23 +1722,23 @@ ERRORTYPE videoInputHw_IspAe_SetMode(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
 	if (0 == value) {
-		printf("auto ae.\r\n");
+		LOGI("auto ae.");
 		video_set_control(video, V4L2_CID_EXPOSURE_AUTO, 0); // auto ae
 		video_set_control(video, V4L2_CID_AUTOGAIN, 1);
 	} else if (1 == value) {
-		printf("manual ae.\r\n");
+		LOGI("manual ae.");
 		video_set_control(video, V4L2_CID_EXPOSURE_AUTO, 1); // manual ae
 		video_set_control(video, V4L2_CID_AUTOGAIN, 0);
 	} else {
@@ -1765,14 +1765,14 @@ ERRORTYPE videoInputHw_IspAe_SetExposureBias(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if ((value < 0) || (value > 8))
@@ -1801,14 +1801,14 @@ ERRORTYPE videoInputHw_IspAe_SetExposure(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -1836,14 +1836,14 @@ ERRORTYPE videoInputHw_IspAe_SetISOSensitiveMode(int *pvipp_id, int mode)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -1872,14 +1872,14 @@ ERRORTYPE videoInputHw_IspAe_SetISOSensitive(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -1888,7 +1888,7 @@ ERRORTYPE videoInputHw_IspAe_SetISOSensitive(int *pvipp_id, int value)
     }
 
     if (value < 0 || value > 7) {
-        aloge("value range should be [1~7], value(%d)", value);
+        LOGE("value range should be [1~7], value(%d)", value);
         return ERR_VI_INVALID_PARA;
     }
 
@@ -1917,19 +1917,19 @@ ERRORTYPE videoInputHw_IspAe_SetMetering(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
     if ((value < 0) || (value > 3)) {
-        aloge("out of range, you shoule use [0~3], value(%d)", value);
+        LOGE("out of range, you shoule use [0~3], value(%d)", value);
         return FAILURE;
     }
 
@@ -1957,14 +1957,14 @@ ERRORTYPE videoInputHw_IspAe_SetGain(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -1992,14 +1992,14 @@ ERRORTYPE videoInputHw_IspAwb_SetMode(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
     if ((value != 0) && (value != 1))
@@ -2031,24 +2031,24 @@ ERRORTYPE videoInputHw_IspAwb_SetColorTemp(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
     if (value == 0 || value == 1) {
-        printf("Please use <videoInputHw_IspAwb_SetMode> to set AWB mode, value = [%d]\r\n", value);
+        LOGI("Please use <videoInputHw_IspAwb_SetMode> to set AWB mode, value = [%d]", value);
         return -1;
     }
 
     if (value < 0 || value > 9) {
-        printf("Please use <2~9> to set color temperature, value = [%d]\r\n", value);
+        LOGI("Please use <2~9> to set color temperature, value = [%d]", value);
         return ERR_VI_INVALID_CHNID;
     }
 
@@ -2076,14 +2076,14 @@ ERRORTYPE videoInputHw_Isp_SetFlicker(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -2155,14 +2155,14 @@ ERRORTYPE videoInputHw_Isp_SetBrightness(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -2191,14 +2191,14 @@ ERRORTYPE videoInputHw_Isp_SetContrast(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -2228,14 +2228,14 @@ ERRORTYPE videoInputHw_Isp_SetSaturation(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -2268,19 +2268,19 @@ ERRORTYPE videoInputHw_Isp_SetSharpness(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
     if ((value < -32) || (value > 32)) {
-        aloge("out of range, should be[-32~32], value(%d)", value);
+        LOGE("out of range, should be[-32~32], value(%d)", value);
         return FAILURE;
     }
 
@@ -2307,14 +2307,14 @@ ERRORTYPE videoInputHw_Isp_SetHue(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -2343,14 +2343,14 @@ ERRORTYPE videoInputHw_Isp_SetScene(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -2387,14 +2387,14 @@ ERRORTYPE videoInputHw_IspAe_GetMode(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
     if (video_get_control(video, V4L2_CID_EXPOSURE_AUTO, value) < 0) {
@@ -2420,14 +2420,14 @@ ERRORTYPE videoInputHw_IspAe_GetExposureBias(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
     if (video_get_control(video, V4L2_CID_AUTO_EXPOSURE_BIAS, value) < 0) {
@@ -2452,14 +2452,14 @@ ERRORTYPE videoInputHw_IspAe_GetExposure(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
     if (video_get_control(video, V4L2_CID_EXPOSURE_ABSOLUTE, value) < 0) {
@@ -2485,14 +2485,14 @@ ERRORTYPE videoInputHw_IspAe_GetISOSensitiveMode(int *pvipp_id, int *mode)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -2520,14 +2520,14 @@ ERRORTYPE videoInputHw_IspAe_GetISOSensitive(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -2565,14 +2565,14 @@ ERRORTYPE videoInputHw_IspAe_GetMetering(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
     if (video_get_control(video, V4L2_CID_EXPOSURE_METERING, value) < 0) {
@@ -2597,14 +2597,14 @@ ERRORTYPE videoInputHw_IspAe_GetGain(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -2631,14 +2631,14 @@ ERRORTYPE videoInputHw_IspAwb_GetMode(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
     if (video_get_control(video, V4L2_CID_AUTO_N_PRESET_WHITE_BALANCE, value) < 0) {
@@ -2669,14 +2669,14 @@ ERRORTYPE videoInputHw_IspAwb_GetColorTemp(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
     if (video_get_control(video, V4L2_CID_AUTO_N_PRESET_WHITE_BALANCE, value) < 0) {
@@ -2703,14 +2703,14 @@ ERRORTYPE videoInputHw_Isp_GetFlicker(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (video_get_control(video, V4L2_CID_POWER_LINE_FREQUENCY, value) < 0) {
@@ -2772,14 +2772,14 @@ ERRORTYPE videoInputHw_Isp_GetBrightness(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (video_get_control(video, V4L2_CID_BRIGHTNESS, value) < 0) {
@@ -2804,7 +2804,7 @@ ERRORTYPE videoInputHw_Isp_GetContrast(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
@@ -2812,7 +2812,7 @@ ERRORTYPE videoInputHw_Isp_GetContrast(int *pvipp_id, int *value)
     }
 
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (video_get_control(video, V4L2_CID_CONTRAST, value) < 0) {
@@ -2839,14 +2839,14 @@ ERRORTYPE videoInputHw_Isp_GetSaturation(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (video_get_control(video, V4L2_CID_SATURATION, value) < 0) {
@@ -2872,14 +2872,14 @@ ERRORTYPE videoInputHw_Isp_GetSharpness(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (video_get_control(video, V4L2_CID_SHARPNESS, value) < 0) {
@@ -2904,14 +2904,14 @@ ERRORTYPE videoInputHw_Isp_GetHue(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (video_get_control(video, V4L2_CID_HUE, value) < 0) {
@@ -2936,14 +2936,14 @@ ERRORTYPE videoInputHw_Isp_GetScene(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (video_get_control(video, V4L2_CID_SCENE_MODE, value) < 0) {
@@ -2973,14 +2973,14 @@ ERRORTYPE videoInputHw_Isp_SetWDR(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3009,14 +3009,14 @@ ERRORTYPE videoInputHw_Isp_GetWDR(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (isp_get_attr_cfg(isp_id, ISP_CTRL_PLTMWDR_STR, value) < 0) {
@@ -3041,14 +3041,14 @@ ERRORTYPE videoInputHw_Isp_SetNR(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3077,14 +3077,14 @@ ERRORTYPE videoInputHw_Isp_GetNR(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (isp_get_attr_cfg(isp_id, ISP_CTRL_DN_STR, value) < 0) {
@@ -3109,14 +3109,14 @@ ERRORTYPE videoInputHw_Isp_Set3DNR(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3145,14 +3145,14 @@ ERRORTYPE videoInputHw_Isp_Get3DNR(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                alogd("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGD("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (isp_get_attr_cfg(isp_id, ISP_CTRL_3DN_STR, value) < 0) {
@@ -3178,14 +3178,14 @@ ERRORTYPE videoInputHw_IspAwb_SetRGain(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3224,14 +3224,14 @@ ERRORTYPE videoInputHw_IspAwb_GetRGain(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3263,14 +3263,14 @@ ERRORTYPE videoInputHw_IspAwb_SetBGain(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3310,14 +3310,14 @@ ERRORTYPE videoInputHw_IspAwb_GetBGain(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3348,14 +3348,14 @@ ERRORTYPE videoInputHw_IspAwb_SetGrGain(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3394,14 +3394,14 @@ ERRORTYPE videoInputHw_IspAwb_GetGrGain(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3432,14 +3432,14 @@ ERRORTYPE videoInputHw_IspAwb_SetGbGain(int *pvipp_id, int value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3478,14 +3478,14 @@ ERRORTYPE videoInputHw_IspAwb_GetGbGain(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 
@@ -3517,14 +3517,14 @@ ERRORTYPE videoInputHw_IspAe_GetExposureLine(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                // printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                // LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
     if (video_get_control(video, V4L2_CID_EXPOSURE, value) < 0) {
@@ -3550,14 +3550,14 @@ ERRORTYPE videoInputHw_IspAwb_GetCurColorT(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                // printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                // LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (isp_get_attr_cfg(isp_id, ISP_CTRL_COLOR_TEMP, value) < 0) {
@@ -3583,14 +3583,14 @@ ERRORTYPE videoInputHw_IspAe_GetEvIdx(int *pvipp_id, int *value)
             }
             isp_id = video_to_isp_id(gpVIDevManager->media->video_dev[i]);
             if (isp_id == ViCh) {
-                // printf("isp[%d]2vipp[%d].\r\n", ViCh, i);
+                // LOGI("isp[%d]2vipp[%d].", ViCh, i);
                 found = 1;
                 break;
             }
         }
     }
     if (0 == found) {
-        printf("No find video open @ isp[%d].\r\n", ViCh);
+        LOGI("No find video open @ isp[%d].", ViCh);
         return -1;
     }
 	if (isp_get_attr_cfg(isp_id, ISP_CTRL_EV_IDX, value) < 0) {
@@ -3651,7 +3651,7 @@ static ERRORTYPE videoInputHw_GetData(int *pvipp_id, VIDEO_FRAME_INFO_S *pstFram
     pthread_mutex_lock(&pVippInfo->mFrameListLock);
     if(list_empty(&pVippInfo->mIdleFrameList))
     {
-        alogw("impossible, idle frame list is empty, malloc one");
+        LOGW("impossible, idle frame list is empty, malloc one");
         VippFrame *pNode = (VippFrame*)malloc(sizeof(VippFrame));
         if(pNode != NULL)
         {
@@ -3660,7 +3660,7 @@ static ERRORTYPE videoInputHw_GetData(int *pvipp_id, VIDEO_FRAME_INFO_S *pstFram
         }
         else
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
         }
     }
     if(!list_empty(&pVippInfo->mIdleFrameList))
@@ -3687,7 +3687,7 @@ static ERRORTYPE videoInputHw_ReleaseData(int *pvipp_id, VIDEO_FRAME_INFO_S *pst
         video = gpVIDevManager->media->video_dev[ViCh];
     }
 	if (video_queue_buffer(video, pstFrameInfo->mId) < 0) {
-        aloge("fatal error! vipp[%d] queue bufferId[%d] fail!", ViCh, pstFrameInfo->mId);
+        LOGE("fatal error! vipp[%d] queue bufferId[%d] fail!", ViCh, pstFrameInfo->mId);
         return FAILURE;
     }
     pthread_mutex_lock(&gpVIDevManager->gpVippManager[ViCh]->mFrameListLock);
@@ -3699,7 +3699,7 @@ static ERRORTYPE videoInputHw_ReleaseData(int *pvipp_id, VIDEO_FRAME_INFO_S *pst
         {
             if(pEntry->mVipp != ViCh)
             {
-                aloge("fatal error! vipp[%d]!=[%d], check code!", pEntry->mVipp, ViCh);
+                LOGE("fatal error! vipp[%d]!=[%d], check code!", pEntry->mVipp, ViCh);
             }
             nMatchNum++;
             list_move_tail(&pEntry->mList, &gpVIDevManager->gpVippManager[ViCh]->mIdleFrameList);
@@ -3707,7 +3707,7 @@ static ERRORTYPE videoInputHw_ReleaseData(int *pvipp_id, VIDEO_FRAME_INFO_S *pst
     }
     if(nMatchNum != 1)
     {
-        aloge("fatal error! matchNum[%d]!=1, vipp[%d]frameBufId[%d]", nMatchNum, ViCh, pstFrameInfo->mId);
+        LOGE("fatal error! matchNum[%d]!=1, vipp[%d]frameBufId[%d]", nMatchNum, ViCh, pstFrameInfo->mId);
     }
     pthread_mutex_unlock(&gpVIDevManager->gpVippManager[ViCh]->mFrameListLock);
 
@@ -3726,7 +3726,7 @@ ERRORTYPE videoInputHw_RefsReduceAndRleaseData(int vipp_id, VIDEO_FRAME_INFO_S *
     pthread_mutex_lock(&gpVIDevManager->gpVippManager[vipp_id]->mRefsLock);
     if(gpVIDevManager->gpVippManager[vipp_id]->refs[pstFrameInfo->mId] <= 0)
     {
-        aloge("fatal error! vipp[%d], idx[%d]: ref=[%d] when reduce refs, check code!", vipp_id, pstFrameInfo->mId,
+        LOGE("fatal error! vipp[%d], idx[%d]: ref=[%d] when reduce refs, check code!", vipp_id, pstFrameInfo->mId,
             gpVIDevManager->gpVippManager[vipp_id]->refs[pstFrameInfo->mId]);
     }
     gpVIDevManager->gpVippManager[vipp_id]->refs[pstFrameInfo->mId]--;
@@ -3755,15 +3755,15 @@ void * VideoInputHw_CapThread(void *pThreadData)
 
     if(attr.fps > VI_HIGH_FRAMERATE_STANDARD)
     {
-        //alogd("high frame rate[%d], use burst policy!", attr.fps);
+        //LOGD("high frame rate[%d], use burst policy!", attr.fps);
         //nMilliSec = 0;
-        //alogw("Be careful! high frame rate[%d], but don't use burst policy!", attr.fps);
+        //LOGW("Be careful! high frame rate[%d], but don't use burst policy!", attr.fps);
     }
     int i;
     int iDropFrameNum = attr.drop_frame_num;
 
 	prctl(PR_SET_NAME, "VICaptureThread", 0, 0, 0);
-	printf("loop VideoInputHw_CapThread vipp_id = %d, buf_num=%d.\r\n", vipp_id, num_buf);
+	LOGI("loop VideoInputHw_CapThread vipp_id = %d, buf_num=%d.", vipp_id, num_buf);
     while ( 1 ) {
 		videoInputHw_searchVippStatus(vipp_id, &status);
 		if (0 == status) {
@@ -3772,12 +3772,12 @@ void * VideoInputHw_CapThread(void *pThreadData)
                     break;
                 }
                 usleep(10000);
-                alogd("Virvi Com not exit !!!\r\n");
+                LOGD("Virvi Com not exit !!!");
             }
 
             for (i = 0; i < num_buf; i++) {
                 if (0 != gpVIDevManager->gpVippManager[vipp_id]->refs[num_buf]) {
-                    alogd("fatal error! Virvi Com not return all yuv frame !!!, frame id(%d)", num_buf);
+                    LOGD("fatal error! Virvi Com not return all yuv frame !!!, frame id(%d)", num_buf);
                     videoInputHw_ReleaseData(&vipp_id,
                         &gpVIDevManager->gpVippManager[vipp_id]->VideoFrameInfo[num_buf]);
                     gpVIDevManager->gpVippManager[vipp_id]->refs[num_buf] = 0;
@@ -3790,8 +3790,8 @@ void * VideoInputHw_CapThread(void *pThreadData)
 
         // gpVIDevManager->gpVippManager[ViVipp]->mProcessStep = 2;
 		if (0 == videoInputHw_GetData(&vipp_id, &pstFrameInfo, nMilliSec)) { /* success : get yuv data */
-			// printf("addr = %p, vipp_id = %d.\r\n", pstFrameInfo.VFrame.mpVirAddr[0], vipp_id);
-			/*printf("VideoInputHw_CapThread:%d,%d,%d,%d;%d,%d",
+			// LOGI("addr = %p, vipp_id = %d.", pstFrameInfo.VFrame.mpVirAddr[0], vipp_id);
+			/*LOGI("VideoInputHw_CapThread:%d,%d,%d,%d;%d,%d",
 				pstFrameInfo.VFrame.mOffsetTop,
 				pstFrameInfo.VFrame.mOffsetLeft,
 				pstFrameInfo.VFrame.mOffsetRight,
@@ -3799,7 +3799,7 @@ void * VideoInputHw_CapThread(void *pThreadData)
 				pstFrameInfo.VFrame.mWidth,
 				pstFrameInfo.VFrame.mHeight);*/
             if (iDropFrameNum > 0) {
-                alogd("should drop %d frames, now still has %d frames should be droped",
+                LOGD("should drop %d frames, now still has %d frames should be droped",
                     attr.drop_frame_num, iDropFrameNum);
                 iDropFrameNum--;
                 videoInputHw_ReleaseData(&vipp_id, &pstFrameInfo);
@@ -3814,7 +3814,7 @@ void * VideoInputHw_CapThread(void *pThreadData)
             */
 			if (0 == gpVIDevManager->gpVippManager[vipp_id]->refs[pstFrameInfo.mId]) {
 				if (list_empty(&gpVIDevManager->gpVippManager[vipp_id]->mChnList)) {
-					alogw("VIPP[%d], No Virvi Component, drop this one yuv data.\r\n", vipp_id);
+					LOGW("VIPP[%d], No Virvi Component, drop this one yuv data.", vipp_id);
 					videoInputHw_ReleaseData(&vipp_id, &pstFrameInfo);
 					pthread_mutex_unlock(&gpVIDevManager->gpVippManager[vipp_id]->mLock);
 					continue ;
@@ -3827,7 +3827,7 @@ void * VideoInputHw_CapThread(void *pThreadData)
 					COMP_BUFFERHEADERTYPE bufferHeader;
 		            bufferHeader.nInputPortIndex = VI_CHN_PORT_INDEX_CAP_IN; // VI_CHN_PORT_INDEX_CAP_IN;
 		            bufferHeader.pOutputPortPrivate = &pstFrameInfo;
-					// alogv("VideoInputHw_CapThread, %p.\r\n", pstFrameInfo.VFrame.mpVirAddr[0]);
+					// LOGV("VideoInputHw_CapThread, %p.", pstFrameInfo.VFrame.mpVirAddr[0]);
 					pthread_mutex_lock(&gpVIDevManager->gpVippManager[vipp_id]->mRefsLock);
 					gpVIDevManager->gpVippManager[vipp_id]->refs[pstFrameInfo.mId]++;
                     pthread_mutex_unlock(&gpVIDevManager->gpVippManager[vipp_id]->mRefsLock);
@@ -3841,13 +3841,13 @@ void * VideoInputHw_CapThread(void *pThreadData)
 				}
 //                if(0 == gpVippManager[vipp_id]->refs[pstFrameInfo.mId])
 //                {
-//                    aloge("fatal error, call virvi component emptybuffer fail, buf id = %d.\r\n",
+//                    LOGE("fatal error, call virvi component emptybuffer fail, buf id = %d.",
 //                        gpVippManager[vipp_id]->refs[pstFrameInfo.mId]);
 //                    videoInputHw_ReleaseData(&vipp_id, &pstFrameInfo);
 //                }
                 videoInputHw_RefsReduceAndRleaseData(vipp_id, &pstFrameInfo);
 			} else {
-				alogw("fatal error, buf not return, refs id = %d, y_addr=%p, drop this yuv data, buffer index=%d .\r\n",
+				LOGW("fatal error, buf not return, refs id = %d, y_addr=%p, drop this yuv data, buffer index=%d .",
                     gpVIDevManager->gpVippManager[vipp_id]->refs[pstFrameInfo.mId],
                     pstFrameInfo.VFrame.mpVirAddr[0], pstFrameInfo.mId);
 				videoInputHw_ReleaseData(&vipp_id, &pstFrameInfo);
@@ -3862,18 +3862,18 @@ void * VideoInputHw_CapThread(void *pThreadData)
             {
                 if(pEntry->mVipp != vipp_id)
                 {
-                    aloge("fatal error! vipp[%d]!=[%d], check code!", pEntry->mVipp, vipp_id);
+                    LOGE("fatal error! vipp[%d]!=[%d], check code!", pEntry->mVipp, vipp_id);
                 }
                 num++;
-                alogw("vipp[%d] get frame fail! frameBufId[%d] is not release", pEntry->mVipp, pEntry->mFrameBufId);
+                LOGW("vipp[%d] get frame fail! frameBufId[%d] is not release", pEntry->mVipp, pEntry->mFrameBufId);
             }
             if(num > 0)
             {
-                alogw("vipp[%d] get frame fail! [%d]frames are not release", vipp_id, num);
+                LOGW("vipp[%d] get frame fail! [%d]frames are not release", vipp_id, num);
             }
             else
             {
-                aloge("fatal error! vipp[%d] get frame fail, but all frames are release!", vipp_id);
+                LOGE("fatal error! vipp[%d] get frame fail, but all frames are release!", vipp_id);
             }
             pthread_mutex_unlock(&gpVIDevManager->gpVippManager[vipp_id]->mFrameListLock);
 			usleep(40000);
@@ -3886,7 +3886,7 @@ void * VideoInputHw_CapThread(void *pThreadData)
 	for ()
 		videoInputHw_ReleaseData(&vipp_id, &pstFrameInfo);
 */
-    // printf("debug exit virvi thread.\r\n");fflush(NULL);sleep(2);
+    // LOGI("debug exit virvi thread.");fflush(NULL);sleep(2);
 	return NULL;
 }
 

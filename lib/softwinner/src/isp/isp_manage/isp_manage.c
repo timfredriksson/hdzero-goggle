@@ -21,6 +21,8 @@
 #include "isp_base.h"
 #include "isp_math/isp_math_util.h"
 
+#include <log/log.h>
+
 unsigned int isp_lib_log_param = 0;//0xffffffff;
 
 void isp_get_saved_regs(struct isp_lib_context *isp_gen)
@@ -985,25 +987,25 @@ int __isp_alloc_reg_tbl(struct isp_lib_context *isp_gen)
 int __isp_dump_reg(struct isp_lib_context *isp_gen)
 {
 	int i, *reg;
-	printf("dump ISP%d regs :\n", isp_gen->isp_id);
+	LOGI("dump ISP%d regs :\n", isp_gen->isp_id);
 	for(i = 0; i < 0x40; i = i + 4)
 	{
 		reg = (int*)(isp_gen->load_reg_base + i);
 		if(i % 0x10 == 0)
-			printf("0x%08x:  ", i);
-		printf("0x%08x, ", reg[0]);
+			LOGI("0x%08x:  ", i);
+		LOGI("0x%08x, ", reg[0]);
 		if(i % 0x10 == 0xc)
-			printf("\n");
+			LOGI("\n");
 	}
 	for(i = 0x40; i < 0x400; i = i + 4)
 	{
 		reg = (int*)(isp_gen->load_reg_base + i);
 
 		if(i % 0x10 == 0)
-			printf("0x%08x:  ", i);
-		printf("0x%08x, ", reg[0]);
+			LOGI("0x%08x:  ", i);
+		LOGI("0x%08x, ", reg[0]);
 		if(i % 0x10 == 0xc)
-			printf("\n");
+			LOGI("\n");
 	}
 
 	return 0;

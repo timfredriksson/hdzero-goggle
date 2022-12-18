@@ -11,14 +11,14 @@
 #ifndef CDX_BUFFER_H
 #define CDX_BUFFER_H
 #include <CdxTypes.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMeta.h>
 #include <CdxList.h>
 #include <string.h>
 
 /*
-  *下面函数，返回失败的时候，对应的buf 还是合法，
-  *可以继续使用，当然也要正常释放。
+  *锟斤拷锟芥函锟斤拷锟斤拷锟斤拷锟斤拷失锟杰碉拷时锟津，讹拷应锟斤拷buf 锟斤拷锟角合凤拷锟斤拷
+  *锟斤拷锟皆硷拷锟斤拷使锟矫ｏ拷锟斤拷然也要锟斤拷锟斤拷锟酵放★拷
   */
 
 struct CdxBufferItemS

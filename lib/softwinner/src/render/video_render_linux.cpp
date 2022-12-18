@@ -18,7 +18,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "video_render_linux"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <assert.h> 
@@ -95,7 +95,7 @@ CdxPixelFormat convertPixelFormatVdec2Cdx(EPIXELFORMAT format)
     }
     else
     {
-        alogw("fatal error! format=0x%x", format);
+        LOGW("fatal error! format=0x%x", format);
         return CDX_PIXEL_FORMAT_AW_MB420;    //* format should be CEDARV_PIXEL_FORMAT_MB_UV_COMBINED_YUV420, VIRTUAL_HWC_FORMAT_MBYUV420
     }
 }
@@ -103,7 +103,7 @@ CdxPixelFormat convertPixelFormatVdec2Cdx(EPIXELFORMAT format)
 int config_libhwclayerpara_t(libhwclayerpara_t *pHwcPara, VIDEO_FRAME_INFO_S *pVPic, struct ScMemOpsS *pMemOps)
 {
     memset(pHwcPara, 0, sizeof(libhwclayerpara_t));
-    //ALOGD("(f:%s, l:%d) printVideoPicture:[%d][%p][%p][%p][%p]", __FUNCTION__, __LINE__, pVPic->ePixelFormat, pVPic->pData0, pVPic->pData1, pVPic->pData2, pVPic->pData3);
+    //LOGD("(f:%s, l:%d) printVideoPicture:[%d][%p][%p][%p][%p]", __FUNCTION__, __LINE__, pVPic->ePixelFormat, pVPic->pData0, pVPic->pData1, pVPic->pData2, pVPic->pData3);
     pHwcPara->number = pVPic->mId;
 //    pHwcPara->top_y  = (unsigned long)(intptr_t)CdcMemGetPhysicAddressCpu(pMemOps, pVPic->pData0);
 //    pHwcPara->top_c  = (unsigned long)(intptr_t)CdcMemGetPhysicAddressCpu(pMemOps, pVPic->pData1);
@@ -144,7 +144,7 @@ static int vr4l_init(struct CDX_VideoRenderHAL *handle, int nRenderMode, void *p
 {
     if(handle->mPriv != NULL)
     {
-        aloge("fatal error! CDX_VideoRenderHAL->mPriv[%p] is not null!", handle->mPriv);
+        LOGE("fatal error! CDX_VideoRenderHAL->mPriv[%p] is not null!", handle->mPriv);
         delete (VR4LData*)handle->mPriv;
         handle->mPriv = NULL;
     }
@@ -197,7 +197,7 @@ static int vr4l_init(struct CDX_VideoRenderHAL *handle, int nRenderMode, void *p
     }
     else
     {
-        aloge("fatal error! what render mode[%d]?", nRenderMode);
+        LOGE("fatal error! what render mode[%d]?", nRenderMode);
         return CDX_ERROR;
     }
 
@@ -217,10 +217,10 @@ static int vr4l_init(struct CDX_VideoRenderHAL *handle, int nRenderMode, void *p
     if(nRenderMode == VideoRender_HW)//HWC_FORMAT_YUV420PLANAR, HAL_PIXEL_FORMAT_YV12)
     {
 #if (CDXCFG_HW_DISPLAY == OPTION_HW_DISPLAY_ENABLE)
-        alogd("mDisplayFormat[0x%x], new CedarXNativeRenderer", nDisplayFormat);
+        LOGD("mDisplayFormat[0x%x], new CedarXNativeRenderer", nDisplayFormat);
         pVR4LData->mVideoRenderer = new CedarXNativeRenderer(nVideoLayerId, meta);
 #else
-        aloge("fatal error! renderMode is HW, why CDXCFG HW DISPLAY is not OPTION_HW_DISPLAY_ENABLE?");
+        LOGE("fatal error! renderMode is HW, why CDXCFG HW DISPLAY is not OPTION_HW_DISPLAY_ENABLE?");
         assert(0);
 #endif
         
@@ -228,10 +228,10 @@ static int vr4l_init(struct CDX_VideoRenderHAL *handle, int nRenderMode, void *p
     else if(nRenderMode == VideoRender_SW)
     {
 #if (CDXCFG_HW_DISPLAY == OPTION_HW_DISPLAY_DISABLE)
-        alogd("mDisplayFormat[0x%x], new CedarXSoftwareRenderer", nDisplayFormat);
+        LOGD("mDisplayFormat[0x%x], new CedarXSoftwareRenderer", nDisplayFormat);
         pVR4LData->mVideoRenderer = new CedarXSoftwareRenderer(mNativeWindow, meta);
 #else
-        aloge("fatal error! renderMode is SW, why CDXCFG HW DISPLAY is not OPTION_HW_DISPLAY_DISABLE?");
+        LOGE("fatal error! renderMode is SW, why CDXCFG HW DISPLAY is not OPTION_HW_DISPLAY_DISABLE?");
         assert(0);
 #endif
         
@@ -239,17 +239,17 @@ static int vr4l_init(struct CDX_VideoRenderHAL *handle, int nRenderMode, void *p
     else if(nRenderMode == VideoRender_GUI)
     {
 #if (CDXCFG_HW_DISPLAY == OPTION_HW_DISPLAY_DISABLE)
-        alogd("mDisplayFormat[0x%x], new CedarXNativeWindowRenderer", mDisplayFormat);
+        LOGD("mDisplayFormat[0x%x], new CedarXNativeWindowRenderer", mDisplayFormat);
         pVR4LData->mVideoRenderer = new CedarXNativeWindowRenderer(mNativeWindow, meta, mIonFd);
         pVR4LData->mVideoRenderer->control(VIDEORENDER_CMD_GET_ANATIVEWINDOWBUFFERS, 0, pOut);
 #else
-        aloge("fatal error! renderMode is GUI, why CDXCFG HW DISPLAY is not OPTION_HW_DISPLAY_DISABLE?");
+        LOGE("fatal error! renderMode is GUI, why CDXCFG HW DISPLAY is not OPTION_HW_DISPLAY_DISABLE?");
         assert(0);
 #endif
     }
     else
     {
-        aloge("fatal error! unknown renderMode[%d]", nRenderMode);
+        LOGE("fatal error! unknown renderMode[%d]", nRenderMode);
         assert(0);
     }
     //pVR4LData->mVideoRenderer->control(VIDEORENDER_CMD_SET_SCALING_MODE, nVideoScalingMode, NULL);
@@ -269,7 +269,7 @@ static void vr4l_exit(struct CDX_VideoRenderHAL *handle)
     }
     else
     {
-        alogd("VideoRenderHal not init when exit.");
+        LOGD("VideoRenderHal not init when exit.");
     }
 }
 
@@ -294,11 +294,11 @@ static int vr4l_render(struct CDX_VideoRenderHAL *handle, void *frame_info, int 
     }
     else
     {
-        alogd("mVideoRenderer=NULL");
+        LOGD("mVideoRenderer=NULL");
     }
 #else
     //#error "renderMode is GUI, why call StagefrightVideoRenderData()?"
-    aloge("fatal error! renderMode is GUI, why call StagefrightVideoRenderData()?");
+    LOGE("fatal error! renderMode is GUI, why call StagefrightVideoRenderData()?");
 #endif
 
 
@@ -319,11 +319,11 @@ static int vr4l_set_showflag(struct CDX_VideoRenderHAL *handle, int bShowFlag)
     }
     else
     {
-        alogd("mVideoRenderer=NULL");
+        LOGD("mVideoRenderer=NULL");
     }
 #else
     //#error "renderMode is GUI, why call StagefrightVideoRenderData()?"
-    aloge("fatal error! renderMode is GUI, why call StagefrightVideoRenderData()?");
+    LOGE("fatal error! renderMode is GUI, why call StagefrightVideoRenderData()?");
 #endif
 
 
@@ -342,10 +342,10 @@ static int vr4l_update_display_size(struct CDX_VideoRenderHAL *handle, void *pFr
     }
     else
     {
-        alogd("mVideoRenderer=NULL");
+        LOGD("mVideoRenderer=NULL");
     }
 #else
-    aloge("fatal error! renderMode is GUI, not implement");
+    LOGE("fatal error! renderMode is GUI, not implement");
 #endif
     return CDX_OK;
 }
