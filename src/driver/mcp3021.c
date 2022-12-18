@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include "../core/common.hh"
+#include "../core/common.h"
 sys_battery_t g_battery;
 
 /*
@@ -35,7 +35,7 @@ int mcp_read_vatage(void)
 	if(!fp) {
       static bool bFirst = true;
       if(bFirst) {
-		   Printf("mcp_read_vatage: open error.\n");
+		   LOGI("mcp_read_vatage: open error.");
          bFirst = false;
       }
 		return -1;

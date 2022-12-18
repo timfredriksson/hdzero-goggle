@@ -19,7 +19,7 @@
 #include <unistd.h>  /* UNIX Standard Definitions 	   */
 #include <errno.h>   /* ERROR Number Definitions           */
 
- #include "../core/common.hh"
+ #include "../core/common.h"
   #include "../page/page_common.h"
 #include "dm5680.h"
 #include "uart.h"
@@ -48,18 +48,18 @@ static void *pthread_recv_esp32(void *arg)
 		while(FD_ISSET(fd_esp32,&rd))
 		{
 		  if(select(fd_esp32+1,&rd,NULL,NULL,NULL) < 0)
-			Printf("UART3:select error!\n");
+			LOGI("UART3:select error!");
 		  else
 		  {
 			len = uart_read(fd_esp32, buffer, 128);
-			//if(len) Printf("(UART3-%d)\n",len);
+			//if(len) LOGI("(UART3-%d)",len);
 			for(i=0;i<len;i++)
 			{
 				uart3_buffer[uart3_wptr] = buffer[i];
 				uart3_wptr++; 
 
 				if(uart3_wptr == uart3_rptr) 
-					Printf("UART3 fifo full!\n");
+					LOGI("UART3 fifo full!");
 			}
 			if(len) 
 				esp32_rx();
@@ -108,7 +108,7 @@ void esp32_rx()
                 hello[5] = 0;
                 if(strcmp(hello,"hello") == 0) {
                     bFirst = false;
-                    Printf("[Pass] ESP32\n");
+                    LOGI("[Pass] ESP32");
                     beep();
                 }
 				set_gpio(GPIO_ESP32_EN,0); //disable ESP32

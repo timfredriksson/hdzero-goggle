@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <sys/time.h>
-#include "common.hh"
+#include "common.h"
  #include "lvgl.h"
 #include "msp_displayport.h"
 #include "../driver/mcp3021.h"
@@ -49,7 +49,7 @@ void confirm_recording()
 		if(fp) {
 			fscanf(fp,"%d",&ret);
 			fclose(fp);
-			//printf("SD card %d\n",ret);
+			//LOGI("SD card %d",ret);
 		}
 		if(ret != 1)
 			osd_rec_update(false);
@@ -135,7 +135,7 @@ void rbtn_click(bool is_short, int mode)
 {
 	bool start_rec;
 	
-	Printf("rbtn_click: sdcard=%d, recording=%d, mode=%d\n",g_sdcard_enable,is_recording,mode);
+	LOGI("rbtn_click: sdcard=%d, recording=%d, mode=%d",g_sdcard_enable,is_recording,mode);
 
 	if(is_short) { // short press right button
 		if(!g_sdcard_enable) return;
@@ -578,7 +578,7 @@ int load_fc_osd_font_bmp(const char *file)
 	int boundry_width;
 	int line_size;
 
-	Printf("load_fc_osd_font_bmp: %s...", file);
+	LOGI("load_fc_osd_font_bmp: %s...", file);
 	fd = open(file, O_RDONLY);
 	if(fd < 0) return -1;
 	
@@ -665,11 +665,11 @@ void load_fc_osd_font(void)
 	{
 		if(!load_fc_osd_font_bmp(fp[i]))
 		{
-			Printf(" succecss!\n");
+			LOGI(" succecss!");
 			return;
 		}
 		else
-			Printf(" failed!\n");
+			LOGI(" failed!");
 	}
 }
 ///////////////////////////////////////////////////////////////////////////////

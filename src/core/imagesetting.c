@@ -5,7 +5,7 @@
 #include "page_common.h"
 #include "../minIni/minIni.h"
 #include "hardware.h"
-#include "common.hh"
+#include "common.h"
 ///////////////////////////////////////////////////////////////////////////////
 // locals
 static lv_obj_t *canvas_ims;
@@ -201,7 +201,7 @@ uint8_t ims_key(uint8_t key)
 {
     int16_t value;
     uint8_t ret = 0;
-    Printf("ims_key (%d),%d -%d\n",key,ims_state,ims_page.selection);
+    LOGI("ims_key (%d),%d -%d",key,ims_state,ims_page.selection);
 
     if(ims_state == 0) ims_state=1;
 

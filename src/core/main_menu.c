@@ -4,7 +4,7 @@
 
 #include "style.h"
 #include "porting.h"
-#include "common.hh"
+#include "common.h"
 #include "../page/page_scannow.h"
 #include "../page/page_source.h"
 #include "../page/page_imagesettings.h"
@@ -161,7 +161,7 @@ void submenu_enter(void)
 
 	if(pp == &pp_scannow) { 
 		auto_scaned_cnt = scan();
-		Printf("scan return :%d\n", auto_scaned_cnt);
+		LOGI("scan return :%d", auto_scaned_cnt);
 
 		if(auto_scaned_cnt == 1) {
 			if(!g_autoscan_exit)
@@ -227,7 +227,7 @@ void submenu_nav(uint8_t key)
 
 void submenu_exit()
 {
-	Printf("submenu_exit\n");
+	LOGI("submenu_exit");
 	g_menu_op = OPLEVEL_MAINMENU;
 
 	page_pack_t *pp = find_pp(lv_menu_get_cur_main_page(menu));
@@ -316,7 +316,7 @@ void submenu_fun(void)
 void menu_nav(uint8_t key)
 {
 	static int8_t selected = 0;
-	printf("menu_nav: key = %d,sel = %d\n", key, selected);
+	LOGI("menu_nav: key = %d,sel = %d", key, selected);
 	if(key == DIAL_KEY_DOWN) {
 		selected--;
 		if(selected <0)
@@ -427,12 +427,12 @@ static void ui_create_rootpage(lv_obj_t * parent)
 
 static void menu_reinit(void)
 {
-	Printf("reinit\n");
+	LOGI("reinit");
 	page_pack_t *pp = find_pp(lv_menu_get_cur_main_page(menu));
 	if(!pp)
 		return;
 
-	//Printf("set select item\n");
+	//LOGI("set select item");
 
 	if((pp == &pp_scannow) )
 	{
@@ -533,7 +533,7 @@ void progress_bar_update()
 				lv_obj_add_flag(menu, LV_OBJ_FLAG_HIDDEN);
 				lv_obj_clear_flag(progress_bar.bar, LV_OBJ_FLAG_HIDDEN);
 				progress_bar.val = 0;
-				//Printf("Progress bar start\n");
+				//LOGI("Progress bar start");
 			}
 			break;
 
@@ -543,7 +543,7 @@ void progress_bar_update()
 				lv_obj_clear_flag(menu, LV_OBJ_FLAG_HIDDEN);
 				lv_obj_add_flag(progress_bar.bar, LV_OBJ_FLAG_HIDDEN);
 				progress_bar.val = 0;
-				//Printf("Progress bar end\n");
+				//LOGI("Progress bar end");
 			}
 			break;
 	}
@@ -562,7 +562,7 @@ void autoscan_exit(void)
 {
 	if(!g_autoscan_exit)
 	{
-		Printf("autoscan_exit, lelve=1\n");
+		LOGI("autoscan_exit, lelve=1");
 		g_autoscan_exit = true;
 		if(auto_scaned_cnt >1)
 			g_menu_op = OPLEVEL_SUBMENU;

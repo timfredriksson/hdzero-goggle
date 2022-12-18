@@ -6,16 +6,20 @@
 #include <fcntl.h>
 #include <string.h>
 #include <pthread.h>
- #include "lvgl.h"
+
+#include <log/log.h>
+
+#include "lvgl.h"
 #include "self_test.h"
 #include "main_menu.h"
 #include "statusbar.h"
-#include "common.hh"
+#include "common.h"
 #include "input_device.h"
 #include "osd.h"
 #include "thread.h"
 #include "imagesetting.h"
 #include "ht.h"
+
 #include "../driver/hardware.h"
 #include "../driver/porting.h"
 #include "../driver/fans.h"
@@ -233,6 +237,8 @@ void lvgl_init()
 
 int main(int argc, char* argv[])
 {
+	log_init(argv[0]);
+
 	pthread_mutex_init(&lvgl_mutex, NULL);
 
 	gpio_init();

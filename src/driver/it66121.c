@@ -5,7 +5,7 @@
 #include "i2c.h"
 #include "dm5680.h"
 #include "it66121.h"
-#include "../core/common.hh"
+#include "../core/common.h"
 
 void IT66121_close()
 {

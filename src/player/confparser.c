@@ -19,7 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "plat_log.h"
+#include <log/log.h>
 #include "confparser.h"
 
 #define INI_INVALID_KEY     ((char*)-1)
@@ -28,7 +28,7 @@
 NOTICE: parse the config file, get the specific parameter string or val,
         according to defined name str.
         config file content format as following
-        [never use "\r\n" as change line, just "\n"].
+        [never use "\r\n" as change line, just "].
 
 [parameter]
 src_file = "/mnt/extsd/1080p.yuv"
@@ -45,19 +45,19 @@ int createConfParser(const char *conf_path, CONFPARSER_S *pCfg)
 {
     if (pCfg==NULL || conf_path==NULL)
     {
-        aloge("cfgParserInit para error");
+        LOGE("cfgParserInit para error");
         return -1;
     }
 
     pCfg->pDict = iniparser_load(conf_path);
     if (pCfg->pDict == NULL)
     {
-        aloge("cannot parse file: %s\n", conf_path);
+        LOGE("cannot parse file: %s", conf_path);
         return -1 ;
     }
     else
     {
-        alogd("load conf file %s ok!\n", conf_path);
+        LOGD("load conf file %s ok!", conf_path);
     }
 
     return 0;
@@ -79,7 +79,7 @@ int GetConfParaInt(CONFPARSER_S *pCfg, const char * key,int notfound)
 
     if (pCfg==NULL || pCfg->pDict==NULL)
     {
-        aloge("cfg pointer error");
+        LOGE("cfg pointer error");
         return 0;
     }
     else
@@ -96,7 +96,7 @@ unsigned int GetConfParaUInt(CONFPARSER_S *pCfg, const char * key,int notfound)
 
     if (pCfg==NULL || pCfg->pDict==NULL)
     {
-        aloge("cfg pointer error");
+        LOGE("cfg pointer error");
         return 0;
     }
     else
@@ -117,7 +117,7 @@ const char *GetConfParaString(CONFPARSER_S *pCfg, const char *key, const char *d
 
     if (pCfg==NULL || pCfg->pDict==NULL)
     {
-        aloge("cfg pointer error");
+        LOGE("cfg pointer error");
         return NULL;
     }
     else
@@ -133,7 +133,7 @@ double GetConfParaDouble(CONFPARSER_S *pCfg, const char *key, double notfound)
 
     if (pCfg==NULL || pCfg->pDict==NULL)
     {
-        aloge("cfg pointer error");
+        LOGE("cfg pointer error");
         return (double)0.0;
     }
     else
@@ -149,7 +149,7 @@ BOOL GetConfParaBoolean(CONFPARSER_S *pCfg, const char *key, int notfound)
 
     if (pCfg==NULL || pCfg->pDict==NULL)
     {
-        aloge("cfg pointer error");
+        LOGE("cfg pointer error");
         return FALSE;
     }
     else
