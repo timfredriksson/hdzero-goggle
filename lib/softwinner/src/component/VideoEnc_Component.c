@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "VideoEnc_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <unistd.h>
@@ -87,7 +87,7 @@ static VIDEOENCBUFFERMANAGER *VideoEncBufferInit(void)
     manager = (VIDEOENCBUFFERMANAGER*)malloc(sizeof(VIDEOENCBUFFERMANAGER));
     if (NULL == manager)
     {
-        aloge("Failed to alloc VIDEOENCBUFFERMANAGER(%s)", strerror(errno));
+        LOGE("Failed to alloc VIDEOENCBUFFERMANAGER(%s)", strerror(errno));
         return NULL;
     }
     memset(manager, 0, sizeof(VIDEOENCBUFFERMANAGER));
@@ -95,7 +95,7 @@ static VIDEOENCBUFFERMANAGER *VideoEncBufferInit(void)
     manager->buffer = (unsigned char*)malloc(COMPRESSED_SRC_ENC_BUF_LEN * sizeof(unsigned char));
     if (NULL == manager->buffer)
     {
-        aloge("Failed to alloc buffer(%s)", strerror(errno));
+        LOGE("Failed to alloc buffer(%s)", strerror(errno));
         free(manager);
         return NULL;
     }
@@ -124,7 +124,7 @@ static ERRORTYPE VideoEncBufferPushFrame(VIDEOENCBUFFERMANAGER *manager, FRAMEDA
 
     if (manager == NULL)
     {
-        aloge("Buffer manager is NULL!");
+        LOGE("Buffer manager is NULL!");
         return ERR_VENC_NULL_PTR;
     }
 
@@ -166,7 +166,7 @@ static ERRORTYPE VideoEncBufferPushFrame(VIDEOENCBUFFERMANAGER *manager, FRAMEDA
             }
             else
             {
-                alogw("Buffer full, %d frames, writePos=%d, readPos=%d, frame_size=%d!",
+                LOGW("Buffer full, %d frames, writePos=%d, readPos=%d, frame_size=%d!",
                     manager->count, manager->writePos, manager->readPos, frame->info.size);
                 eError = ERR_VENC_BUF_FULL;
             }
@@ -189,7 +189,7 @@ static ERRORTYPE VideoEncBufferPushFrame(VIDEOENCBUFFERMANAGER *manager, FRAMEDA
         }
         else
         {
-            alogw("Buffer full, %d frames, writePos=%d, readPos=%d, frame_size=%d!",
+            LOGW("Buffer full, %d frames, writePos=%d, readPos=%d, frame_size=%d!",
                 manager->count, manager->writePos, manager->readPos, frame->info.size);
             eError = ERR_VENC_BUF_FULL;
         }
@@ -200,7 +200,7 @@ static ERRORTYPE VideoEncBufferPushFrame(VIDEOENCBUFFERMANAGER *manager, FRAMEDA
         {
             if(manager->mUnprefetchFrameNum != 0)
             {
-                aloge("fatal error! unprefetchNum[%d]!=0", manager->mUnprefetchFrameNum);
+                LOGE("fatal error! unprefetchNum[%d]!=0", manager->mUnprefetchFrameNum);
             }
             manager->readPos = manager->prefetchPos = 0;
             ptr_ori = ptr = manager->buffer;
@@ -216,7 +216,7 @@ static ERRORTYPE VideoEncBufferPushFrame(VIDEOENCBUFFERMANAGER *manager, FRAMEDA
         }
         else
         {
-            alogw("Buffer full, %d frames, writePos=%d, readPos=%d, frame_size=%d!",
+            LOGW("Buffer full, %d frames, writePos=%d, readPos=%d, frame_size=%d!",
                 manager->count, manager->writePos, manager->readPos, frame->info.size);
             eError = ERR_VENC_BUF_FULL;
         }
@@ -231,7 +231,7 @@ static ERRORTYPE VideoEncBufferGetFrame(VIDEOENCBUFFERMANAGER *manager, FRAMEDAT
 
     if (manager == NULL)
     {
-        aloge("Buffer manager is NULL!");
+        LOGE("Buffer manager is NULL!");
         return ERR_VENC_ILLEGAL_PARAM;
     }
 
@@ -267,7 +267,7 @@ static ERRORTYPE VideoEncBufferGetFrame(VIDEOENCBUFFERMANAGER *manager, FRAMEDAT
     }
     else
     {
-        //alogw("Buffer empty!");
+        //LOGW("Buffer empty!");
         eError = ERR_VENC_BUF_EMPTY;
     }
     pthread_mutex_unlock(&manager->lock);
@@ -281,7 +281,7 @@ static ERRORTYPE VideoEncBufferReleaseFrame(VIDEOENCBUFFERMANAGER *manager, FRAM
 
     if (manager == NULL)
     {
-        aloge("Buffer manager is NULL!");
+        LOGE("Buffer manager is NULL!");
         return ERR_VENC_ILLEGAL_PARAM;
     }
 
@@ -305,7 +305,7 @@ static ERRORTYPE VideoEncBufferReleaseFrame(VIDEOENCBUFFERMANAGER *manager, FRAM
         }
         if(flag != FRAME_BEGIN_FLAG)
         {
-            aloge("fatal error! data header flag[0x%x] wrong", flag);
+            LOGE("fatal error! data header flag[0x%x] wrong", flag);
         }
         manager->readPos += sizeof(unsigned int);
         memcpy(&frame.info, manager->buffer + manager->readPos, sizeof(FRAMEINFOTYPE));
@@ -315,7 +315,7 @@ static ERRORTYPE VideoEncBufferReleaseFrame(VIDEOENCBUFFERMANAGER *manager, FRAM
             || releaseFrame->info.bufferId!=frame.info.bufferId
             || releaseFrame->info.size!=frame.info.size)
         {
-            aloge("fatal error! frame not match!addrY[%p]timeStamp[%lld]bufferId[%d]size[%d]!=[%p][%lld][%d][%d]", 
+            LOGE("fatal error! frame not match!addrY[%p]timeStamp[%lld]bufferId[%d]size[%d]!=[%p][%lld][%d][%d]", 
                 releaseFrame->addrY, releaseFrame->info.timeStamp, releaseFrame->info.bufferId, releaseFrame->info.size,
                 frame.addrY, frame.info.timeStamp, frame.info.bufferId, frame.info.size);
         }
@@ -324,8 +324,8 @@ static ERRORTYPE VideoEncBufferReleaseFrame(VIDEOENCBUFFERMANAGER *manager, FRAM
     }
     else
     {
-        //alogw("Buffer empty!");
-        aloge("fatal error! count==0, check code!");
+        //LOGW("Buffer empty!");
+        LOGE("fatal error! count==0, check code!");
         eError = ERR_VENC_BUF_EMPTY;
     }
     pthread_mutex_unlock(&manager->lock);
@@ -347,7 +347,7 @@ static ERRORTYPE configVencSuperFrameConfigByVENC_SUPERFRAME_CFG_S(VencSuperFram
             pDst->eSuperFrameMode = VENC_SUPERFRAME_REENCODE;
             break;
         default:
-            aloge("fatal error! wrong superFrmMode[0x%x]", pSrc->enSuperFrmMode);
+            LOGE("fatal error! wrong superFrmMode[0x%x]", pSrc->enSuperFrmMode);
             pDst->eSuperFrameMode = VENC_SUPERFRAME_NONE;
             break;
     }
@@ -431,7 +431,7 @@ static int estimateBitRate(VENC_CHN_ATTR_S *pVEncChnAttr)
     }
     else
     {
-        aloge("fatal error! unsupport rc mode[0x%x], use default[%d]Kbit/s", pVEncChnAttr->RcAttr.mRcMode, bitRateKb);
+        LOGE("fatal error! unsupport rc mode[0x%x], use default[%d]Kbit/s", pVEncChnAttr->RcAttr.mRcMode, bitRateKb);
     }
     return bitRateKb;
 }
@@ -469,7 +469,7 @@ static int setVbvBufferConfig(VideoEncoder *pCedarV, VIDEOENCDATATYPE *pVideoEnc
     }
     else
     {
-        alogw("unsupported venc type:0x%x, calculate minSize!", pVideoEncData->mEncChnAttr.VeAttr.Type);
+        LOGW("unsupported venc type:0x%x, calculate minSize!", pVideoEncData->mEncChnAttr.VeAttr.Type);
         nMinSize = pVideoEncData->mEncChnAttr.VeAttr.AttrH264e.PicWidth*pVideoEncData->mEncChnAttr.VeAttr.AttrH264e.PicHeight*3/2;
         nThreshSize = pVideoEncData->mEncChnAttr.VeAttr.AttrH264e.PicWidth*pVideoEncData->mEncChnAttr.VeAttr.AttrH264e.PicHeight;
         nUsrStreamBufSize = pVideoEncData->mEncChnAttr.VeAttr.AttrH264e.BufSize;
@@ -477,7 +477,7 @@ static int setVbvBufferConfig(VideoEncoder *pCedarV, VIDEOENCDATATYPE *pVideoEnc
     }
     if(nThreshSize > 7*1024*1024)
     {
-        alogw("Be careful! threshSize[%d]bytes too large, reduce to 7MB", nThreshSize);
+        LOGW("Be careful! threshSize[%d]bytes too large, reduce to 7MB", nThreshSize);
         nThreshSize = 7*1024*1024;
 
     }
@@ -487,7 +487,7 @@ static int setVbvBufferConfig(VideoEncoder *pCedarV, VIDEOENCDATATYPE *pVideoEnc
     if (pVideoEncData->mVbvBufTime > 0)
     {
         nBufferSeconds = pVideoEncData->mVbvBufTime;
-        alogd("set vbv buffer to %lfs", nBufferSeconds);
+        LOGD("set vbv buffer to %lfs", nBufferSeconds);
     }
 
     unsigned int nBitRate;
@@ -498,7 +498,7 @@ static int setVbvBufferConfig(VideoEncoder *pCedarV, VIDEOENCDATATYPE *pVideoEnc
     }
     else
     {
-        alogd("bitRate=0, maybe rc mode[0x%x] is fixqp", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
+        LOGD("bitRate=0, maybe rc mode[0x%x] is fixqp", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
         bitRateKb = estimateBitRate(&pVideoEncData->mEncChnAttr);
     }
     nCacheSize = (bitRateKb*nBufferSeconds)*(1024/8);
@@ -510,7 +510,7 @@ static int setVbvBufferConfig(VideoEncoder *pCedarV, VIDEOENCDATATYPE *pVideoEnc
     }
     if(nUsrStreamBufSize > 0)
     {
-        alogd("user set stream buffer size[%d]bytes", nUsrStreamBufSize);
+        LOGD("user set stream buffer size[%d]bytes", nUsrStreamBufSize);
         vbvSize = nUsrStreamBufSize;
     }
     if(vbvSize%1024 != 0)
@@ -520,34 +520,34 @@ static int setVbvBufferConfig(VideoEncoder *pCedarV, VIDEOENCDATATYPE *pVideoEnc
 
     if(nUsrThreshSize > 0)
     {
-        alogd("user set threshSize[%d]bytes", nUsrThreshSize);
+        LOGD("user set threshSize[%d]bytes", nUsrThreshSize);
         nThreshSize = nUsrThreshSize;
     }
     #if (AWCHIP == AW_V5)
     if(vbvSize + nThreshSize > VEValidSizeScope)
     {
-        alogw("Be careful! vbvSize[%d] + threshSize[%d] > [%d]", vbvSize, nThreshSize, VEValidSizeScope);
+        LOGW("Be careful! vbvSize[%d] + threshSize[%d] > [%d]", vbvSize, nThreshSize, VEValidSizeScope);
         vbvSize = VEValidSizeScope - nThreshSize;
         if(vbvSize%1024 != 0)
         {
             vbvSize = (vbvSize/1024)*1024;
         }
-        alogw("Be careful! decrease vbvSize to [%d]", vbvSize);
+        LOGW("Be careful! decrease vbvSize to [%d]", vbvSize);
     }
     #elif (AWCHIP == AW_V316)
     #else
     #endif
     if(vbvSize <= nThreshSize)
     {
-        aloge("fatal error! vbvSize[%d] <= nThreshSize[%d]", vbvSize, nThreshSize);
+        LOGE("fatal error! vbvSize[%d] <= nThreshSize[%d]", vbvSize, nThreshSize);
     }
 
 //    if (vbvSize > 24*1024*1024) 
 //    {
-//        alogw("Be careful! vbvSize[%d] too large, exceed 24M byte", vbvSize);
+//        LOGW("Be careful! vbvSize[%d] too large, exceed 24M byte", vbvSize);
 //        vbvSize = 24*1024*1024;
 //    }
-    alogd("bit rate is %dKb, set encode vbv size %d, frame length threshold %d", bitRateKb, vbvSize, nThreshSize);
+    LOGD("bit rate is %dKb, set encode vbv size %d, frame length threshold %d", bitRateKb, vbvSize, nThreshSize);
     VideoEncSetParameter(pCedarV, VENC_IndexParamSetVbvSize, &vbvSize);
     VideoEncSetParameter(pCedarV, VENC_IndexParamSetFrameLenThreshold, &nThreshSize);
     return 0;
@@ -573,10 +573,10 @@ VENC_H264PROFILETYPE map_VENC_ATTR_H264_S_Profile_to_VENC_H264PROFILETYPE(unsign
             vencProfileType = VENC_H264ProfileHigh;
             break;
         case 3:
-            aloge("fatal error! not support SVC-T!");
+            LOGE("fatal error! not support SVC-T!");
             break;
         default:
-            aloge("fatal error! unknown h264 profile");
+            LOGE("fatal error! unknown h264 profile");
             break;
     }
     return vencProfileType;
@@ -654,7 +654,7 @@ VENC_H265PROFILETYPE map_VENC_ATTR_H265_S_Profile_to_VENC_H264PROFILETYPE(unsign
             vencProfileType = VENC_H265ProfileMainStill;
             break;
         default:
-            aloge("fatal error! unknown h265 profile");
+            LOGE("fatal error! unknown h265 profile");
             break;
     }
     return vencProfileType;
@@ -740,7 +740,7 @@ VENC_PIXEL_FMT map_PIXEL_FORMAT_E_to_VENC_PIXEL_FMT(PIXEL_FORMAT_E pixelFormat)
             vencPixelFormat = VENC_PIXEL_YUV422SP;
             break;
         default:
-            aloge("fatal error! unsupported temporary! pixelForamt[0x%x]", pixelFormat);
+            LOGE("fatal error! unsupported temporary! pixelForamt[0x%x]", pixelFormat);
             break;
     }
     return vencPixelFormat;
@@ -769,7 +769,7 @@ static inline int map_ROTATE_E_to_VENC_Rotate_Angle(ROTATE_E rotate)
 
         case ROTATE_BUTT:
         default:
-            aloge("fatal error! unsupported roate angle!");
+            LOGE("fatal error! unsupported roate angle!");
             break;
     }
     return angle;
@@ -787,7 +787,7 @@ static VENC_COLOR_SPACE map_v4l2_colorspace_to_VENC_COLOR_SPACE(enum v4l2_colors
 			eVencCsc = VENC_BT709;
 			break;
         default:
-            aloge("fatal error! unsupported v4l2 color space[0x%x]!", eV4l2Csc);
+            LOGE("fatal error! unsupported v4l2 color space[0x%x]!", eV4l2Csc);
             eVencCsc = VENC_YCC;
             break;
     }
@@ -841,7 +841,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
             }
             default:
             {
-                aloge("fatal error! wrong mjpeg rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
+                LOGE("fatal error! wrong mjpeg rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
                 break;
             }
         }
@@ -906,12 +906,12 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
                 int maxQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Vbr.mMaxQp;
                 if (!(minQp>=10 && minQp<=20))
                 {
-                    alogw("h264vbr minQp should in range:[10,20]! but usr_SetVal: %d! change it to default: 10", minQp);
+                    LOGW("h264vbr minQp should in range:[10,20]! but usr_SetVal: %d! change it to default: 10", minQp);
                     pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Vbr.mMinQp = 10;
                 }
                 if (!(maxQp>=30 && maxQp<=45))
                 {
-                    alogw("h264vbr maxQp should in range:[30,45]! but usr_SetVal: %d! change it to default: 40", maxQp);
+                    LOGW("h264vbr maxQp should in range:[30,45]! but usr_SetVal: %d! change it to default: 40", maxQp);
                     pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Vbr.mMaxQp = 40;
                 }
                 h264Param.sQPRange.nMinqp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Vbr.mMinQp;
@@ -942,7 +942,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
             }
             case VENC_RC_MODE_H264QPMAP:
             {
-                aloge("fatal error! not support qp map mode temp!");
+                LOGE("fatal error! not support qp map mode temp!");
                 /*
                 VencMBModeCtrl *pCtrl;
                 unsigned int width, heigth;
@@ -958,13 +958,13 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
                 pCtrl->p_info = (VencMBModeCtrlInfo *)malloc(sizeof(VencMBModeCtrlInfo) * mb_num);
                 if (pCtrl->p_info == NULL)
                 {
-                    aloge("QPmap buffer malloc fail!!");
+                    LOGE("QPmap buffer malloc fail!!");
                     pCtrl->mode_ctrl_en = 0;
                     pVideoEncData->mMBmode.mb_num = 0;
                     break;
                 }
 
-                alogd("h264 QPMAP mode");
+                LOGD("h264 QPMAP mode");
 
                 int i; //for init
                 for (i = 0; i < mb_num / 2; i++)
@@ -984,7 +984,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
             }
             default:
             {
-                aloge("fatal error! wrong h264 rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
+                LOGE("fatal error! wrong h264 rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
                 break;
             }
         }
@@ -1013,7 +1013,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
         }
         else
         {
-            aloge("Sorry, this version do not support [%d] GopMode snd set VENC_GOPMODE_NORMALP GopMode!", pVideoEncData->mEncChnAttr.GopAttr.enGopMode);
+            LOGE("Sorry, this version do not support [%d] GopMode snd set VENC_GOPMODE_NORMALP GopMode!", pVideoEncData->mEncChnAttr.GopAttr.enGopMode);
             h264Param.sGopParam.bUseGopCtrlEn = 1;
             h264Param.sGopParam.eGopMode = AW_NORMALP;
         }
@@ -1084,12 +1084,12 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
                 int maxQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Vbr.mMaxQp;
                 if (!(minQp>=10 && minQp<=20))
                 {
-                    alogw("h265vbr minQp should in range:[10,20]! but usr_SetVal: %d! change it to default: 10", minQp);
+                    LOGW("h265vbr minQp should in range:[10,20]! but usr_SetVal: %d! change it to default: 10", minQp);
                     pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Vbr.mMinQp = 10;
                 }
                 if (!(maxQp>=30 && maxQp<=45))
                 {
-                    alogw("h265vbr maxQp should in range:[30,45]! but usr_SetVal: %d! change it to default: 40", maxQp);
+                    LOGW("h265vbr maxQp should in range:[30,45]! but usr_SetVal: %d! change it to default: 40", maxQp);
                     pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Vbr.mMaxQp = 40;
                 }
                 h265Param.sQPRange.nMinqp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Vbr.mMinQp;
@@ -1112,21 +1112,21 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
                 int minRatio = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinStaticPercent;
                 if (!(minRatio>=20 && minRatio<=50))
                 {
-                    alogw("nMinStaticPercent should be in [20,50]! usr_SetVal:%d, change to defaultVal:40!", minRatio);
+                    LOGW("nMinStaticPercent should be in [20,50]! usr_SetVal:%d, change to defaultVal:40!", minRatio);
                     pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinStaticPercent = 40;
                 }
                 h265Param.sRcParam.nMinStaticPercent = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinStaticPercent;
                 int maxIQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMaxIQp;
                 if (!(maxIQp>=32 && maxIQp<=45))
                 {
-                    alogw("uMaxIQp should be in [32,45]! usr_SetVal:%d, change to defaultVal:40!", maxIQp);
+                    LOGW("uMaxIQp should be in [32,45]! usr_SetVal:%d, change to defaultVal:40!", maxIQp);
                     pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMaxIQp = 40;
                 }
                 h265Param.sRcParam.uMaxIQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMaxIQp;
                 int minIQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinIQp;
                 if (!(minIQp>=25 && minIQp<=32))
                 {
-                    alogw("uMinIQp should be in [25,32]! usr_SetVal:%d, change to defaultVal:30!", minIQp);
+                    LOGW("uMinIQp should be in [25,32]! usr_SetVal:%d, change to defaultVal:30!", minIQp);
                     pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinIQp = 30;
                 }
                 h265Param.sRcParam.uMinIQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinIQp;
@@ -1134,7 +1134,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
             }
             case VENC_RC_MODE_H265QPMAP:
             {
-                aloge("fatal error! not support qp map mode temp!");
+                LOGE("fatal error! not support qp map mode temp!");
                 /*
                 VencMBModeCtrl *pCtrl;
                 unsigned int width, heigth;
@@ -1150,7 +1150,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
                 pCtrl->p_info = (VencMBModeCtrlInfo *)malloc(sizeof(VencMBModeCtrlInfo) * mb_num);
                 if (pCtrl->p_info == NULL)
                 {
-                    aloge("QPmap buffer malloc fail!!");
+                    LOGE("QPmap buffer malloc fail!!");
                     pCtrl->mode_ctrl_en = 0;
                     pVideoEncData->mMBmode.mb_num = 0;
                     break;
@@ -1174,7 +1174,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
             }
             default:
             {
-                aloge("fatal error! wrong h264 rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
+                LOGE("fatal error! wrong h264 rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
                 break;
             }
         }
@@ -1198,7 +1198,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
         h265Param.nGopSize = pVideoEncData->mEncChnAttr.VeAttr.MaxKeyInterval;
         h265Param.nQPInit = 26;
 
-        //alogd("h265 rcMode[%d], fps[%d], bitRate[%d]", h265Param.sRcParam.eRcMode, h265Param.nFramerate, h265Param.nBitrate);
+        //LOGD("h265 rcMode[%d], fps[%d], bitRate[%d]", h265Param.sRcParam.eRcMode, h265Param.nFramerate, h265Param.nBitrate);
 
         if(VENC_GOPMODE_NORMALP == pVideoEncData->mEncChnAttr.GopAttr.enGopMode)
         {
@@ -1215,7 +1215,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
         }
         else
         {
-            aloge("Sorry, this version do not support [%d] GopMode snd set VENC_GOPMODE_NORMALP GopMode!", pVideoEncData->mEncChnAttr.GopAttr.enGopMode);
+            LOGE("Sorry, this version do not support [%d] GopMode snd set VENC_GOPMODE_NORMALP GopMode!", pVideoEncData->mEncChnAttr.GopAttr.enGopMode);
             h265Param.bLongTermRef = 0;
         }
 
@@ -1240,12 +1240,12 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
     }
     else
     {
-        aloge("fatal error! unknown venc type:0x%x", pVideoEncData->mEncChnAttr.VeAttr.Type);
+        LOGE("fatal error! unknown venc type:0x%x", pVideoEncData->mEncChnAttr.VeAttr.Type);
     }
 #if 0
     if(pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth != nSrcStride)
     {
-        aloge("fatal error! srcWidth[%d]!=srcStride[%d]", pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth, nSrcStride);
+        LOGE("fatal error! srcWidth[%d]!=srcStride[%d]", pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth, nSrcStride);
     }
 #ifdef ENABLE_ENCODE_STATISTICS
     unsigned char bEnableStatistics = 1;
@@ -1277,7 +1277,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
 
     if(pVideoEncData->mVEFreq)
     {
-        alogd("venc init VE freq to [%d]MHz", pVideoEncData->mVEFreq);
+        LOGD("venc init VE freq to [%d]MHz", pVideoEncData->mVEFreq);
         //CdcVeSetSpeed(baseConfig.veOpsS, baseConfig.pVeOpsSelf, pVideoEncData->mVEFreq);
         VideoEncoderSetFreq(pVideoEncData->pCedarV, pVideoEncData->mVEFreq);
     }
@@ -1292,7 +1292,7 @@ static int CedarvEncInit(VIDEOENCDATATYPE *pVideoEncData)
     ve_proc_set.nProcFreq = nDstFrameRate;
     if( -1 == VideoEncSetParameter(pCedarV, VENC_IndexParamProcSet, (void*)&ve_proc_set))
     {
-         aloge("error:=========> can not open proc <============");
+         LOGE("error:=========> can not open proc <============");
     }
 
     //init color2grey, 3dnr
@@ -1365,20 +1365,20 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamBitrate, (void*)&nBitRate);
                     VencBitRateRange bitRateRange = {nBitRate, nBitRate};
                     VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamSetBitRateRange, (void*)&bitRateRange);
-                    alogd("mjpeg set init Qfactor:%d", pVideoEncData->mJpegParam.Qfactor);
+                    LOGD("mjpeg set init Qfactor:%d", pVideoEncData->mJpegParam.Qfactor);
                     VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamJpegQuality, (void*)&pVideoEncData->mJpegParam.Qfactor);
                     break;
                 }
                 case VENC_RC_MODE_MJPEGFIXQP:
                 {
-                    alogw("not support temporary!");
+                    LOGW("not support temporary!");
                     int jpegQuality = pVideoEncData->mEncChnAttr.RcAttr.mAttrMjpegeFixQp.mQfactor;  //70
                     VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamJpegQuality, &jpegQuality);
                     break;
                 }
                 default:
                 {
-                    aloge("fatal error! wrong mjpeg rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
+                    LOGE("fatal error! wrong mjpeg rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
                     break;
                 }
             }
@@ -1441,12 +1441,12 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     int maxQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Cbr.mMaxQp;
                     if (!(minQp>=1 && minQp<=51))
                     {
-                        alogw("h264CBR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
+                        LOGW("h264CBR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Cbr.mMinQp = 1;
                     }
                     if (!(maxQp>=minQp && maxQp>=1 && maxQp<=51))
                     {
-                        alogw("h264CBR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
+                        LOGW("h264CBR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Cbr.mMaxQp = 51;
                     }
                     h264Param.sQPRange.nMinqp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Cbr.mMinQp;
@@ -1460,12 +1460,12 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     int maxQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Vbr.mMaxQp;
                     if (!(minQp>=1 && minQp<=51))
                     {
-                        alogw("h264VBR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
+                        LOGW("h264VBR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Vbr.mMinQp = 1;
                     }
                     if (!(maxQp>=minQp && maxQp>=1 && maxQp<=51))
                     {
-                        alogw("h264VBR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
+                        LOGW("h264VBR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Vbr.mMaxQp = 51;
                     }
                     h264Param.sQPRange.nMinqp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Vbr.mMinQp;
@@ -1483,12 +1483,12 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     int PQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264FixQp.mPQp;
                     if (!(IQp>=1 && IQp<=51))
                     {
-                        alogw("h264FixQp IQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 30!", IQp);
+                        LOGW("h264FixQp IQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 30!", IQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH264FixQp.mIQp = 30;
                     }
                     if (!(PQp>=1 && PQp<=51))
                     {
-                        alogw("h264FixQp PQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 30!", PQp);
+                        LOGW("h264FixQp PQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 30!", PQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH264FixQp.mPQp = 30;
                     }
                     h264Param.sRcParam.sFixQp.nIQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264FixQp.mIQp;
@@ -1502,12 +1502,12 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     int maxQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Abr.mMaxQp;
                     if (!(minQp>=1 && minQp<=51))
                     {
-                        alogw("h264ABR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
+                        LOGW("h264ABR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Abr.mMinQp = 1;
                     }
                     if (!(maxQp>=minQp && maxQp>=1 && maxQp<=51))
                     {
-                        alogw("h264ABR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
+                        LOGW("h264ABR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Abr.mMaxQp = 51;
                     }
                     h264Param.sQPRange.nMinqp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Abr.mMinQp;
@@ -1515,7 +1515,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     int minIQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Abr.mMinIQp;
                     if (!(minIQp>=20 && minIQp<=40))
                     {
-                        alogw("uMinIQp should be in [20,40]! usr_SetVal:%d, change to defaultVal:30!", minIQp);
+                        LOGW("uMinIQp should be in [20,40]! usr_SetVal:%d, change to defaultVal:30!", minIQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Abr.mMinIQp = 30;
                     }
                     h264Param.sRcParam.uMinIQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH264Abr.mMinIQp;
@@ -1526,7 +1526,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                 }
                 case VENC_RC_MODE_H264QPMAP:
                 {
-                    aloge("fatal error! not support qp map mode temp!");
+                    LOGE("fatal error! not support qp map mode temp!");
                     /*
                     VencMBModeCtrl *pCtrl;
                     unsigned int width, heigth;
@@ -1542,13 +1542,13 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     pCtrl->p_info = (VencMBModeCtrlInfo *)malloc(sizeof(VencMBModeCtrlInfo) * mb_num);
                     if (pCtrl->p_info == NULL)
                     {
-                        aloge("QPmap buffer malloc fail!!");
+                        LOGE("QPmap buffer malloc fail!!");
                         pCtrl->mode_ctrl_en = 0;
                         pVideoEncData->mMBmode.mb_num = 0;
                         break;
                     }
 
-                    alogd("h264 QPMAP mode");
+                    LOGD("h264 QPMAP mode");
 
                     int i; //for init
                     for (i = 0; i < mb_num / 2; i++)
@@ -1568,7 +1568,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                 }
                 default:
                 {
-                    aloge("fatal error! wrong h264 rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
+                    LOGE("fatal error! wrong h264 rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
                     break;
                 }
             }
@@ -1598,7 +1598,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
             }
             else
             {
-                aloge("Sorry, this version do not support [%d] GopMode snd set VENC_GOPMODE_NORMALP GopMode!", pVideoEncData->mEncChnAttr.GopAttr.enGopMode);
+                LOGE("Sorry, this version do not support [%d] GopMode snd set VENC_GOPMODE_NORMALP GopMode!", pVideoEncData->mEncChnAttr.GopAttr.enGopMode);
                 h264Param.sGopParam.bUseGopCtrlEn = 1;
                 h264Param.sGopParam.eGopMode = AW_NORMALP;
             }
@@ -1616,7 +1616,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
             //{
             //    pVideoEncData->mRefParam.bAdvancedRefEn = 1;
             //    pVideoEncData->mRefParam.bRefBaseEn = 0;//do not support base frame ref base frame
-            //    alogd("the AdvancedRef Base = %d   Enhance = %d, RefBaseEn = %d ",
+            //    LOGD("the AdvancedRef Base = %d   Enhance = %d, RefBaseEn = %d ",
             //                        pVideoEncData->mRefParam.nBase ,
             //                        pVideoEncData->mRefParam.nEnhance,
             //                        pVideoEncData->mRefParam.bRefBaseEn);
@@ -1672,12 +1672,12 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     int maxQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Cbr.mMaxQp;
                     if (!(minQp>=1 && minQp<=51))
                     {
-                        alogw("h265CBR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
+                        LOGW("h265CBR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Cbr.mMinQp = 1;
                     }
                     if (!(maxQp>=minQp && maxQp>=1 && maxQp<=51))
                     {
-                        alogw("h265CBR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
+                        LOGW("h265CBR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Cbr.mMaxQp = 51;
                     }
                     h265Param.sQPRange.nMinqp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Cbr.mMinQp;
@@ -1691,12 +1691,12 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     int maxQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Vbr.mMaxQp;
                     if (!(minQp>=1 && minQp<=51))
                     {
-                        alogw("h265VBR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
+                        LOGW("h265VBR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Vbr.mMinQp = 1;
                     }
                     if (!(maxQp>=minQp && maxQp>=1 && maxQp<=51))
                     {
-                        alogw("h265VBR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
+                        LOGW("h265VBR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Vbr.mMaxQp = 51;
                     }
                     h265Param.sQPRange.nMinqp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Vbr.mMinQp;
@@ -1714,12 +1714,12 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     int PQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265FixQp.mPQp;
                     if (!(IQp>=1 && IQp<=51))
                     {
-                        alogw("h265FixQp IQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 30!", IQp);
+                        LOGW("h265FixQp IQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 30!", IQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH265FixQp.mIQp = 30;
                     }
                     if (!(PQp>=1 && PQp<=51))
                     {
-                        alogw("h265FixQp PQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 30!", PQp);
+                        LOGW("h265FixQp PQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 30!", PQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH265FixQp.mPQp = 30;
                     }
                     h265Param.sRcParam.sFixQp.nIQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265FixQp.mIQp;
@@ -1733,12 +1733,12 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     int maxQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMaxQp;
                     if (!(minQp>=1 && minQp<=51))
                     {
-                        alogw("h265ABR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
+                        LOGW("h265ABR minQp should in range:[1,51]! but usr_SetVal: %d! change it to default: 1", minQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinQp = 1;
                     }
                     if (!(maxQp>=minQp && maxQp>=1 && maxQp<=51))
                     {
-                        alogw("h265ABR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
+                        LOGW("h265ABR maxQp should in range:[minQp,51]! but usr_SetVal: %d! change it to default: 51", maxQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMaxQp = 51;
                     }
                     h265Param.sQPRange.nMinqp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinQp;
@@ -1746,7 +1746,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     int minIQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinIQp;
                     if (!(minIQp>=20 && minIQp<=40))
                     {
-                        alogw("uMinIQp should be in [20,40]! usr_SetVal:%d, change to defaultVal:30!", minIQp);
+                        LOGW("uMinIQp should be in [20,40]! usr_SetVal:%d, change to defaultVal:30!", minIQp);
                         pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinIQp = 30;
                     }
                     h265Param.sRcParam.uMinIQp = pVideoEncData->mEncChnAttr.RcAttr.mAttrH265Abr.mMinIQp;
@@ -1757,7 +1757,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                 }
                 case VENC_RC_MODE_H265QPMAP:
                 {
-                    aloge("fatal error! not support qp map mode temp!");
+                    LOGE("fatal error! not support qp map mode temp!");
                     /*
                     VencMBModeCtrl *pCtrl;
                     unsigned int width, heigth;
@@ -1773,7 +1773,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                     pCtrl->p_info = (VencMBModeCtrlInfo *)malloc(sizeof(VencMBModeCtrlInfo) * mb_num);
                     if (pCtrl->p_info == NULL)
                     {
-                        aloge("QPmap buffer malloc fail!!");
+                        LOGE("QPmap buffer malloc fail!!");
                         pCtrl->mode_ctrl_en = 0;
                         pVideoEncData->mMBmode.mb_num = 0;
                         break;
@@ -1797,7 +1797,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
                 }
                 default:
                 {
-                    aloge("fatal error! wrong h264 rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
+                    LOGE("fatal error! wrong h264 rc mode[0x%x], check code!", pVideoEncData->mEncChnAttr.RcAttr.mRcMode);
                     break;
                 }
             }
@@ -1821,7 +1821,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
             h265Param.nGopSize = pVideoEncData->mEncChnAttr.GopAttr.mGopSize;
             if(h265Param.nGopSize <= 0)
             {
-                alogw("user set invalid gopSize[%d], use idr interval[%d] as default.", h265Param.nGopSize, h265Param.idr_period);
+                LOGW("user set invalid gopSize[%d], use idr interval[%d] as default.", h265Param.nGopSize, h265Param.idr_period);
                 h265Param.nGopSize = h265Param.idr_period;
             }
             h265Param.nQPInit = 26;
@@ -1848,7 +1848,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
             }
             else
             {
-                aloge("Sorry, this version do not support [%d] GopMode snd set VENC_GOPMODE_NORMALP GopMode!", pVideoEncData->mEncChnAttr.GopAttr.enGopMode);
+                LOGE("Sorry, this version do not support [%d] GopMode snd set VENC_GOPMODE_NORMALP GopMode!", pVideoEncData->mEncChnAttr.GopAttr.enGopMode);
                 //h265Param.bLongTermRef = 0;
                 h265Param.sGopParam.bUseGopCtrlEn = 1;
                 h265Param.sGopParam.eGopMode = AW_NORMALP;
@@ -1881,12 +1881,12 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
         }
         else
         {
-            aloge("fatal error! unknown venc type:0x%x", pVideoEncData->mEncChnAttr.VeAttr.Type);
+            LOGE("fatal error! unknown venc type:0x%x", pVideoEncData->mEncChnAttr.VeAttr.Type);
         }
 
         if(pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth != nSrcStride)
         {
-            aloge("fatal error! srcWidth[%d]!=srcStride[%d]", pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth, nSrcStride);
+            LOGE("fatal error! srcWidth[%d]!=srcStride[%d]", pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth, nSrcStride);
         }
 #ifdef ENABLE_ENCODE_STATISTICS
         unsigned char bEnableStatistics = 1;
@@ -1932,7 +1932,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
         ret = VideoEncInit(pVideoEncData->pCedarV, &baseConfig); 
         if(VENC_RESULT_OK != ret)
         {
-            aloge("fatal error VideoEncInit fail:%x",ret);
+            LOGE("fatal error VideoEncInit fail:%x",ret);
             if(VENC_RESULT_EFUSE_ERROR == ret)		
             {
                 return ERR_VENC_EFUSE_ERROR;
@@ -1956,7 +1956,7 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
 
         if(pVideoEncData->mVEFreq)
         {
-            alogd("venc init VE freq to [%d]MHz", pVideoEncData->mVEFreq);
+            LOGD("venc init VE freq to [%d]MHz", pVideoEncData->mVEFreq);
             //CdcVeSetSpeed(baseConfig.veOpsS, baseConfig.pVeOpsSelf, pVideoEncData->mVEFreq);
             VideoEncoderSetFreq(pVideoEncData->pCedarV, pVideoEncData->mVEFreq);
         }
@@ -1968,18 +1968,18 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
 		{
 			if(VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamSaveBSFile, (void*)&pVideoEncData->mSaveBSFile) != 0)
 			{
-				aloge("fatal error! can not save bs file!");
+				LOGE("fatal error! can not save bs file!");
 			}
 		}
 
         //open the proc to catch parame of VE.
         if(VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamProcSet, (void*)&pVideoEncData->mProcSet) != 0)
         {
-            aloge("fatal error! can not open proc info!");
+            LOGE("fatal error! can not open proc info!");
         }
         if(VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamChannelNum, (void*)&pVideoEncData->mMppChnInfo.mChnId) != 0)
         {
-            aloge("fatal error! set channel num[%d] fail", pVideoEncData->mMppChnInfo.mChnId);
+            LOGE("fatal error! set channel num[%d] fail", pVideoEncData->mMppChnInfo.mChnId);
         }
 
         //init color2grey, 3dnr
@@ -1991,12 +1991,12 @@ static int CedarvVideoEncInit(VIDEOENCDATATYPE *pVideoEncData)
             VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParam3DFilter,(void*)&n3DFilterLevel);
         }
 
-        alogv("vencChn[%d] had init!", pVideoEncData->mMppChnInfo.mChnId);
+        LOGV("vencChn[%d] had init!", pVideoEncData->mMppChnInfo.mChnId);
 
     }
     else
     {
-        aloge("the video encoder do not creat!!");
+        LOGE("the video encoder do not creat!!");
     }
     return ret;
 }
@@ -2005,7 +2005,7 @@ static ERRORTYPE config_VENC_STREAM_S_by_EncodedStream(VENC_STREAM_S *pDst, Enco
 {
     if(pDst->mPackCount<1 || NULL==pDst->mpPack)
     {
-        aloge("fatal error! wrong param[%d],[%p]!", pDst->mPackCount, pDst->mpPack);
+        LOGE("fatal error! wrong param[%d],[%p]!", pDst->mPackCount, pDst->mpPack);
         return ERR_VENC_ILLEGAL_PARAM;
     }
     pDst->mpPack[0].mpAddr0 = pSrc->pBuffer;
@@ -2030,7 +2030,7 @@ static ERRORTYPE config_VENC_STREAM_S_by_EncodedStream(VENC_STREAM_S *pDst, Enco
     }
     else
     {
-        alogw("fatal error! unsupported temporary!");
+        LOGW("fatal error! unsupported temporary!");
     }
     pDst->mpPack[0].mOffset = 0;
     pDst->mpPack[0].mDataNum = 0;
@@ -2054,7 +2054,7 @@ static ERRORTYPE config_VENC_STREAM_S_by_EncodedStream(VENC_STREAM_S *pDst, Enco
     }
     else
     {
-        alogw("fatal error! unsupported temporary!");
+        LOGW("fatal error! unsupported temporary!");
     }
     return SUCCESS;
 }
@@ -2063,7 +2063,7 @@ static ERRORTYPE config_VencOutputBuffer_By_EncodedStream(VencOutputBuffer* pDst
 {
     if (pDst == NULL || pSrc == NULL)
     {
-        aloge("fatal error! Empty pointer in config_VencOutputBuffer_By_EncodedStream");
+        LOGE("fatal error! Empty pointer in config_VencOutputBuffer_By_EncodedStream");
         return ERR_VENC_ILLEGAL_PARAM;
     }
 
@@ -2097,7 +2097,7 @@ static ERRORTYPE config_EncodedStream_By_VencOutputBuffer(EncodedStream* pDst, V
 {
     if (pDst == NULL || pSrc == NULL)
     {
-        aloge("fatal error! Empty pointer in config_EncodedStream_By_VencOutputBuffer");
+        LOGE("fatal error! Empty pointer in config_EncodedStream_By_VencOutputBuffer");
         return ERR_VENC_ILLEGAL_PARAM;
     }
 
@@ -2161,7 +2161,7 @@ static ERRORTYPE VideoEncSendBackInputFrame(VIDEOENCDATATYPE *pVideoEncData, VID
         BufferHeader.nInputPortIndex = pVideoEncData->sInPortTunnelInfo.nPortIndex;
         COMP_FillThisBuffer(pVideoEncData->sInPortTunnelInfo.hTunnel, &BufferHeader);
     }
-    alogv("release input FrameId[%d]", pFrameInfo->mId);
+    LOGV("release input FrameId[%d]", pFrameInfo->mId);
     return SUCCESS;
 }
 
@@ -2172,7 +2172,7 @@ static ERRORTYPE VideoEncConfigVencInputBufferRoiParam(VIDEOENCDATATYPE *pVideoE
 
     if (!list_empty(&pVideoEncData->mRoiCfgList))
     {
-        //alogd("set frame roi");
+        //LOGD("set frame roi");
         VEncRoiCfgNode *pEntry, *pTemp;
         list_for_each_entry_safe(pEntry, pTemp, &pVideoEncData->mRoiCfgList, mList)
         {
@@ -2202,7 +2202,7 @@ static ERRORTYPE checkMbMode(PARAM_IN VIDEOENCDATATYPE *pVideoEncData)
     if (((PT_H265 == pVideoEncData->mEncChnAttr.VeAttr.Type) || (PT_H264 == pVideoEncData->mEncChnAttr.VeAttr.Type)) \
         && pVideoEncData->mMBmode.mMBmodeCtrl.mode_ctrl_en && pVideoEncData->mMBmode.mb_num)
     {
-        //alogd("checkmb mode,num=%d", pVideoEncData->mMBmode.mb_num);
+        //LOGD("checkmb mode,num=%d", pVideoEncData->mMBmode.mb_num);
         if (pVideoEncData->pCedarV)
         {
             VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamMBModeCtrl, &pVideoEncData->mMBmode.mMBmodeCtrl);
@@ -2334,14 +2334,14 @@ static ERRORTYPE VideoEncUpdateQp(
             }
             default:
             {
-                //alogd("fatal error! other rc mode[0x%x] don't need set qp!", pChnAttr->RcAttr.mRcMode);
+                //LOGD("fatal error! other rc mode[0x%x] don't need set qp!", pChnAttr->RcAttr.mRcMode);
                 break;
             }
         }
     }
     else
     {
-        aloge("fatal error! DstRcMode[0x%x]!=Cur[0x%x], wrong setting!", pChnAttr->RcAttr.mRcMode, pCurAttr->RcAttr.mRcMode);
+        LOGE("fatal error! DstRcMode[0x%x]!=Cur[0x%x], wrong setting!", pChnAttr->RcAttr.mRcMode, pCurAttr->RcAttr.mRcMode);
     }
     return SUCCESS;
 }
@@ -2546,7 +2546,7 @@ ERRORTYPE VideoEncSetChnAttr(
                     {
                         //unsigned int nVirIFrameInterval = pChnAttr->VeAttr.AttrH264e.mVirtualIFrameInterval;
                         //VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamVirtualIFrame, (void*)&nVirIFrameInterval);
-                        aloge("fata error! gopSize can not be set after init, and it had be ignored!!");
+                        LOGE("fata error! gopSize can not be set after init, and it had be ignored!!");
                     }
                 }
                // else if(PT_H265 == pChnAttr->VeAttr.Type)
@@ -2568,7 +2568,7 @@ ERRORTYPE VideoEncSetChnAttr(
                 if ((pCurAttr->VeAttr.AttrJpeg.PicWidth  != pChnAttr->VeAttr.AttrJpeg.PicWidth)
                     || (pCurAttr->VeAttr.AttrJpeg.PicHeight != pChnAttr->VeAttr.AttrJpeg.PicHeight))
                 {
-                    alogd(" PT_JPEG change encode Picture size from w*h [%d*%d] to w*h [%d*%d] ."
+                    LOGD(" PT_JPEG change encode Picture size from w*h [%d*%d] to w*h [%d*%d] ."
                           ,pCurAttr->VeAttr.AttrJpeg.PicWidth
                           ,pCurAttr->VeAttr.AttrJpeg.PicHeight
                           ,pChnAttr->VeAttr.AttrJpeg.PicWidth
@@ -2582,7 +2582,7 @@ ERRORTYPE VideoEncSetChnAttr(
                     }
                     else
                     {
-                        aloge("fatal error! Invalid picture size w*h [%d * %d]",iPicEncDstWidth ,iPicEncDstHeight);
+                        LOGE("fatal error! Invalid picture size w*h [%d * %d]",iPicEncDstWidth ,iPicEncDstHeight);
                         pChnAttr->VeAttr.AttrJpeg.PicWidth = pCurAttr->VeAttr.AttrJpeg.PicWidth;
                         pChnAttr->VeAttr.AttrJpeg.PicHeight = pCurAttr->VeAttr.AttrJpeg.PicHeight;
                         //return ERR_VENC_NOT_SUPPORT;
@@ -2594,7 +2594,7 @@ ERRORTYPE VideoEncSetChnAttr(
                 if ((pCurAttr->VeAttr.AttrMjpeg.mPicWidth  != pChnAttr->VeAttr.AttrMjpeg.mPicWidth)
                     || (pCurAttr->VeAttr.AttrMjpeg.mPicHeight != pChnAttr->VeAttr.AttrMjpeg.mPicHeight))
                 {
-                    alogd(" PT_MJPEG change encode Picture size from w*h [%d*%d] to w*h [%d*%d] ."
+                    LOGD(" PT_MJPEG change encode Picture size from w*h [%d*%d] to w*h [%d*%d] ."
                           ,pCurAttr->VeAttr.AttrMjpeg.mPicWidth
                           ,pCurAttr->VeAttr.AttrMjpeg.mPicHeight
                           ,pChnAttr->VeAttr.AttrMjpeg.mPicWidth
@@ -2608,7 +2608,7 @@ ERRORTYPE VideoEncSetChnAttr(
                     }
                     else
                     {
-                        aloge("fatal error! Invalid picture size w*h [%d * %d]", iPicEncDstWidth, iPicEncDstHeight);
+                        LOGE("fatal error! Invalid picture size w*h [%d * %d]", iPicEncDstWidth, iPicEncDstHeight);
                         pChnAttr->VeAttr.AttrMjpeg.mPicWidth = pCurAttr->VeAttr.AttrMjpeg.mPicWidth;
                         pChnAttr->VeAttr.AttrMjpeg.mPicHeight = pCurAttr->VeAttr.AttrMjpeg.mPicHeight;
                         //return ERR_VENC_NOT_SUPPORT;
@@ -2634,7 +2634,7 @@ ERRORTYPE VideoEncSetChnAttr(
         }
         else
         {
-            aloge("fatal error! venc type [0x%x]!=[0x%x]!", pChnAttr->VeAttr.Type, pVideoEncData->mEncChnAttr.VeAttr.Type);
+            LOGE("fatal error! venc type [0x%x]!=[0x%x]!", pChnAttr->VeAttr.Type, pVideoEncData->mEncChnAttr.VeAttr.Type);
             eError = ERR_VENC_NOT_SUPPORT;
         }
     }
@@ -2645,7 +2645,7 @@ ERRORTYPE VideoEncSetChnAttr(
     }
     if(MM_PIXEL_FORMAT_BUTT == pVideoEncData->mEncChnAttr.VeAttr.PixelFormat)
     {
-        alogd("VEnc component will be in compress mode!");
+        LOGD("VEnc component will be in compress mode!");
         pVideoEncData->is_compress_source = 1;
     }
     else
@@ -2676,7 +2676,7 @@ ERRORTYPE VideoEncGetVencChnState(
         pChnStat->mLeftPics = LeftPicsCounts;
         pthread_mutex_unlock(&pVideoEncData->mutex_fifo_ops_lock);
 
-        aloge("need implement mLeftStreamBytes!");
+        LOGE("need implement mLeftStreamBytes!");
         VbvInfo vbvInfo;
         memset(&vbvInfo, 0, sizeof(VbvInfo));
         VideoEncGetParameter(pVideoEncData->pCedarV, VENC_IndexParamVbvInfo, (void*)&vbvInfo);
@@ -2690,7 +2690,7 @@ ERRORTYPE VideoEncGetVencChnState(
         pthread_mutex_lock(&pVideoEncData->mRecvPicControlLock);
         if(TRUE == pVideoEncData->mLimitedFramesFlag)
         {
-            aloge("unsupported temporary!");
+            LOGE("unsupported temporary!");
             pChnStat->mLeftRecvPics = pVideoEncData->mRecvPicParam.mRecvPicNum - pVideoEncData->mCurRecvPicNum; //
             pChnStat->mLeftEncPics = pChnStat->mLeftRecvPics + pChnStat->mLeftPics; //
         }
@@ -2721,17 +2721,17 @@ ERRORTYPE VideoEncGetStream(
     VIDEOENCDATATYPE *pVideoEncData = (VIDEOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(COMP_StateIdle != pVideoEncData->state && COMP_StateExecuting != pVideoEncData->state)
     {
-        alogw("call getStream in wrong state[0x%x]", pVideoEncData->state);
+        LOGW("call getStream in wrong state[0x%x]", pVideoEncData->state);
         return ERR_VENC_NOT_PERM;
     }
     if(pVideoEncData->mOutputPortTunnelFlag)
     {
-        aloge("fatal error! can't call getStream() in tunnel mode!");
+        LOGE("fatal error! can't call getStream() in tunnel mode!");
         return ERR_VENC_NOT_PERM;
     }
     if(pStream->mPackCount<1 || NULL==pStream->mpPack)
     {
-        aloge("fatal error! wrong param[%d],[%p]!", pStream->mPackCount, pStream->mpPack);
+        LOGE("fatal error! wrong param[%d],[%p]!", pStream->mPackCount, pStream->mpPack);
         return ERR_VENC_ILLEGAL_PARAM;
     }
     pthread_mutex_lock(&pVideoEncData->mOutFrameListMutex);
@@ -2767,7 +2767,7 @@ _TryToGetOutFrame:
             ret = pthread_cond_wait_timeout(&pVideoEncData->mOutFrameCondition, &pVideoEncData->mOutFrameListMutex, nMilliSec);
             if(ETIMEDOUT == ret)
             {
-                aloge("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
+                LOGE("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
                 eError = ERR_VENC_BUF_EMPTY;
                 pVideoEncData->mWaitOutFrameFlag = FALSE;
             }
@@ -2778,7 +2778,7 @@ _TryToGetOutFrame:
             }
             else
             {
-                aloge("fatal error! pthread cond wait timeout ret[%d]", ret);
+                LOGE("fatal error! pthread cond wait timeout ret[%d]", ret);
                 eError = ERR_VENC_BUF_EMPTY;
                 pVideoEncData->mWaitOutFrameFlag = FALSE;
             }
@@ -2796,17 +2796,17 @@ ERRORTYPE VideoEncReleaseStream(
     VIDEOENCDATATYPE *pVideoEncData = (VIDEOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(COMP_StateIdle != pVideoEncData->state && COMP_StateExecuting != pVideoEncData->state)
     {
-        alogw("call getStream in wrong state[0x%x]", pVideoEncData->state);
+        LOGW("call getStream in wrong state[0x%x]", pVideoEncData->state);
         return ERR_VENC_NOT_PERM;
     }
     if(pVideoEncData->mOutputPortTunnelFlag)
     {
-        aloge("fatal error! can't call getStream() in tunnel mode!");
+        LOGE("fatal error! can't call getStream() in tunnel mode!");
         return ERR_VENC_NOT_PERM;
     }
     if(pStream->mPackCount<1 || NULL==pStream->mpPack)
     {
-        aloge("fatal error! wrong param[%d],[%p]!", pStream->mPackCount, pStream->mpPack);
+        LOGE("fatal error! wrong param[%d],[%p]!", pStream->mPackCount, pStream->mpPack);
         return ERR_VENC_ILLEGAL_PARAM;
     }
     pthread_mutex_lock(&pVideoEncData->mOutFrameListMutex);
@@ -2827,7 +2827,7 @@ ERRORTYPE VideoEncReleaseStream(
             }
             else
             {
-                aloge("fatal error! venc stream[%p][%p] is not match UsedOutFrameList first entry[%p][%p]",
+                LOGE("fatal error! venc stream[%p][%p] is not match UsedOutFrameList first entry[%p][%p]",
                     pStream->mpPack[0].mpAddr0, pStream->mpPack[0].mpAddr1,
                     pEntry->stEncodedStream.pBuffer, pEntry->stEncodedStream.pBufferExtra);
                 eError = ERR_VENC_ILLEGAL_PARAM;
@@ -2848,13 +2848,13 @@ ERRORTYPE VideoEncReleaseStream(
                 eError = VideoEncBufferReleaseFrame(pVideoEncData->buffer_manager, &frame);
                 if(eError != SUCCESS)
                 {
-                   aloge("fatal error! videoEncBufferReleaseFrame fail[%d]", eError);
+                   LOGE("fatal error! videoEncBufferReleaseFrame fail[%d]", eError);
                 }
                 list_add_tail(&pEntry->mList, &pVideoEncData->mIdleOutFrameList);
             }
             else
             {
-                aloge("fatal error! venc stream[%p] is not match UsedOutFrameList first entry[%p]",
+                LOGE("fatal error! venc stream[%p] is not match UsedOutFrameList first entry[%p]",
                     pStream->mpPack[0].mpAddr0, pEntry->stEncodedStream.pBuffer);
                 eError = ERR_VENC_ILLEGAL_PARAM;
             }
@@ -2890,7 +2890,7 @@ ERRORTYPE VideoEncReleaseStream(
     }
     else
     {
-        alogw("Be careful! venc stream[%p][%p] is not find, maybe reset channel before call this function?", pStream->mpPack[0].mpAddr0, pStream->mpPack[0].mpAddr1);
+        LOGW("Be careful! venc stream[%p][%p] is not find, maybe reset channel before call this function?", pStream->mpPack[0].mpAddr0, pStream->mpPack[0].mpAddr1);
         eError = ERR_VENC_ILLEGAL_PARAM;
     }
     pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
@@ -2970,7 +2970,7 @@ ERRORTYPE VideoEncSetRoiCfg(
     if ((pRoiCfg->Rect.X%16!=0) || (pRoiCfg->Rect.Y%16!=0) || (pRoiCfg->Rect.Width%16!=0) || (pRoiCfg->Rect.Height%16!=0)
         || (pRoiCfg->Rect.X+pRoiCfg->Rect.Width > SrcPicWidth) || (pRoiCfg->Rect.Y+pRoiCfg->Rect.Height > SrcPicHeight))
     {
-        aloge("ROI area setting is wrong with (%d,%d,%d,%d)! They must be integral multiple of 16 and is in SrcPic's internal area!",
+        LOGE("ROI area setting is wrong with (%d,%d,%d,%d)! They must be integral multiple of 16 and is in SrcPic's internal area!",
             pRoiCfg->Rect.X, pRoiCfg->Rect.Y, pRoiCfg->Rect.Width, pRoiCfg->Rect.Height);
         return FAILURE;
     }
@@ -3021,7 +3021,7 @@ ERRORTYPE VideoEncSetQPMap(
 
     if ((PT_H264 != pVideoEncData->mEncChnAttr.VeAttr.Type) && (PT_H265 != pVideoEncData->mEncChnAttr.VeAttr.Type))
     {
-        aloge("encoder type not support QPmap method");
+        LOGE("encoder type not support QPmap method");
         return ERR_VENC_ILLEGAL_PARAM;
     }
     VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamMBModeCtrl, (void*)&pQPmapParam);
@@ -3036,7 +3036,7 @@ ERRORTYPE VideoEncSetQPMapMBInfoOutput(
 
     if ((PT_H264 != pVideoEncData->mEncChnAttr.VeAttr.Type) && (PT_H265 != pVideoEncData->mEncChnAttr.VeAttr.Type))
     {
-        aloge("encoder type not support QPmap method");
+        LOGE("encoder type not support QPmap method");
         return ERR_VENC_ILLEGAL_PARAM;
     }
     VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamMBInfoOutput, (void*)&pQPMapMBInfoOutput);
@@ -3051,7 +3051,7 @@ ERRORTYPE VideoEncGetQPMapMBSumInfoOutput(
 
     if ((PT_H264 != pVideoEncData->mEncChnAttr.VeAttr.Type) && (PT_H265 != pVideoEncData->mEncChnAttr.VeAttr.Type))
     {
-        aloge("encoder type not support QPmap method");
+        LOGE("encoder type not support QPmap method");
         return ERR_VENC_ILLEGAL_PARAM;
     }
     VideoEncGetParameter(pVideoEncData->pCedarV, VENC_IndexParamMBSumInfoOutput, (void*)&pQPMapMBSumInfoOutput);
@@ -3115,7 +3115,7 @@ static ERRORTYPE VideoEncSetOsd(
     VIDEOENCDATATYPE *pVideoEncData = (VIDEOENCDATATYPE*) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if (NULL == pOverlayInfo)
     {
-        aloge("null pointer in function para");
+        LOGE("null pointer in function para");
         return FAILURE;
     }
 
@@ -3134,7 +3134,7 @@ static ERRORTYPE VideoEncSetVEFreq(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN
     {
         if(pVideoEncData->mVeOpsS && pVideoEncData->mpVeOpsSelf)
         {
-            alogd("venc set VE freq to [%d]MHz", nFreq);
+            LOGD("venc set VE freq to [%d]MHz", nFreq);
             //CdcVeSetSpeed(pVideoEncData->mVeOpsS, pVideoEncData->mpVeOpsSelf, nFreq);
             VideoEncoderSetFreq(pVideoEncData->pCedarV, nFreq);
         }
@@ -3160,13 +3160,13 @@ ERRORTYPE VideoEncSetJpegParam(
     {
         if(pVideoEncData->mJpegParam.Qfactor != pJpegParam->Qfactor)
         {
-            alogd("jpeg Qfactor is change[%d]->[%d]", pVideoEncData->mJpegParam.Qfactor, pJpegParam->Qfactor);
+            LOGD("jpeg Qfactor is change[%d]->[%d]", pVideoEncData->mJpegParam.Qfactor, pJpegParam->Qfactor);
             VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamJpegQuality, &pJpegParam->Qfactor);
         }
     }
     else
     {
-        aloge("fatal error! vencLib is not create?");
+        LOGE("fatal error! vencLib is not create?");
     }
     memcpy(&pVideoEncData->mJpegParam, pJpegParam, sizeof(VENC_PARAM_JPEG_S));
     return SUCCESS;
@@ -3190,7 +3190,7 @@ ERRORTYPE VideoEncSetJpegExifInfo(
     {
         if(0!=memcmp(&pVideoEncData->mJpegExifInfo, pJpegExifInfo, sizeof(VENC_EXIFINFO_S)))
         {
-            alogd("jpeg exif info is not match.");
+            LOGD("jpeg exif info is not match.");
             EXIFInfo stExifInfo;
             memset(&stExifInfo, 0, sizeof(EXIFInfo));
             memcpy(stExifInfo.CameraMake, pJpegExifInfo->CameraMake, INFO_LENGTH);
@@ -3226,7 +3226,7 @@ ERRORTYPE VideoEncSetJpegExifInfo(
     }
     else
     {
-        aloge("fatal error! vencLib is not create?");
+        LOGE("fatal error! vencLib is not create?");
     }
     memcpy(&pVideoEncData->mJpegExifInfo, pJpegExifInfo, sizeof(VENC_EXIFINFO_S));
     return SUCCESS;
@@ -3247,7 +3247,7 @@ ERRORTYPE VideoEncGetJpegThumbBuffer(
     }
     else
     {
-        aloge("fatal error! vencLib is not create?");
+        LOGE("fatal error! vencLib is not create?");
     }
     return SUCCESS;
 }
@@ -3275,7 +3275,7 @@ ERRORTYPE VideoEncSetFrameRate(
     memcpy(&pVideoEncData->mFrameRateInfo, pFrameRate, sizeof(VENC_FRAME_RATE_S));
     if (pVideoEncData->mFrameRateInfo.DstFrmRate < pVideoEncData->mFrameRateInfo.SrcFrmRate)
     {
-        alogd("Low framerate mode, dst:%d, src:%d, enable soft frame rate control!", pVideoEncData->mFrameRateInfo.DstFrmRate, pVideoEncData->mFrameRateInfo.SrcFrmRate);
+        LOGD("Low framerate mode, dst:%d, src:%d, enable soft frame rate control!", pVideoEncData->mFrameRateInfo.DstFrmRate, pVideoEncData->mFrameRateInfo.SrcFrmRate);
         pVideoEncData->mSoftFrameRateCtrl.enable = TRUE;
         pVideoEncData->mSoftFrameRateCtrl.mBasePts = -1;
     }
@@ -3284,14 +3284,14 @@ ERRORTYPE VideoEncSetFrameRate(
         SoftFrameRateCtrlDestroy(&pVideoEncData->mSoftFrameRateCtrl);
         if(pVideoEncData->mFrameRateInfo.DstFrmRate > pVideoEncData->mFrameRateInfo.SrcFrmRate)
         {
-            alogd("Be careful! dstFrameRate[%d] > srcFrameRate[%d]", pVideoEncData->mFrameRateInfo.DstFrmRate, pVideoEncData->mFrameRateInfo.SrcFrmRate);
+            LOGD("Be careful! dstFrameRate[%d] > srcFrameRate[%d]", pVideoEncData->mFrameRateInfo.DstFrmRate, pVideoEncData->mFrameRateInfo.SrcFrmRate);
             //pVideoEncData->mFrameRateInfo.DstFrmRate = pVideoEncData->mFrameRateInfo.SrcFrmRate;
         }
     }
     if(pVideoEncData->timeLapseEnable)
     {
         pVideoEncData->mCapTimeLapse.videoFrameIntervalUs = (double)1000000/pVideoEncData->mFrameRateInfo.DstFrmRate;
-        alogd("Be careful! DstFrameRate is set now. Dst frame interval[%lf]us, timeLapseMode[%d]", pVideoEncData->mCapTimeLapse.videoFrameIntervalUs, pVideoEncData->mCapTimeLapse.recType);
+        LOGD("Be careful! DstFrameRate is set now. Dst frame interval[%lf]us, timeLapseMode[%d]", pVideoEncData->mCapTimeLapse.videoFrameIntervalUs, pVideoEncData->mCapTimeLapse.recType);
     }
 
     if (pVideoEncData->pCedarV != NULL)
@@ -3299,7 +3299,7 @@ ERRORTYPE VideoEncSetFrameRate(
         //if ((PT_H264 == pVideoEncData->mEncChnAttr.VeAttr.Type) || (PT_H265 == pVideoEncData->mEncChnAttr.VeAttr.Type))
         {
             int nDstFrameRate = pFrameRate->DstFrmRate;
-            alogd("set new framrate:%d", nDstFrameRate);
+            LOGD("set new framrate:%d", nDstFrameRate);
             VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamFramerate, &nDstFrameRate);
         }
     }
@@ -3342,11 +3342,11 @@ ERRORTYPE VideoEncSetTimeLapse(
         else
         {
             pVideoEncData->mCapTimeLapse.videoFrameIntervalUs = 40000;
-            alogd("Be careful! timeLapseMode is [0x%x]! DstFrameRate is not set now, when set it, calculate dst frame interval!", pVideoEncData->mCapTimeLapse.recType);
+            LOGD("Be careful! timeLapseMode is [0x%x]! DstFrameRate is not set now, when set it, calculate dst frame interval!", pVideoEncData->mCapTimeLapse.recType);
         }
         pVideoEncData->mCapTimeLapse.lastCapTimeUs = 0;
         pVideoEncData->mCapTimeLapse.lastTimeStamp = 0;
-        alogd("SetTimeLapse: captureIntervalUs=%lf, dstFrameIntervalUs=%lf, recType=%d",
+        LOGD("SetTimeLapse: captureIntervalUs=%lf, dstFrameIntervalUs=%lf, recType=%d",
             pVideoEncData->mCapTimeLapse.capFrameIntervalUs, pVideoEncData->mCapTimeLapse.videoFrameIntervalUs, pVideoEncData->mCapTimeLapse.recType);
     }
     else
@@ -3378,7 +3378,7 @@ ERRORTYPE VideoEncSetCropCfg(
     if ((pCropCfg->Rect.X%16!=0) || (pCropCfg->Rect.Y%8!=0) || (pCropCfg->Rect.Width%16!=0) || (pCropCfg->Rect.Height%8!=0)
         || (pCropCfg->Rect.X+pCropCfg->Rect.Width > SrcPicWidth) || (pCropCfg->Rect.Y+pCropCfg->Rect.Height > SrcPicHeight))
     {
-        aloge("CropCfg is wrong with (%d,%d,%d,%d)! Must be multiple of 16, srcPicSize[%dx%d]!", pCropCfg->Rect.X, pCropCfg->Rect.Y,
+        LOGE("CropCfg is wrong with (%d,%d,%d,%d)! Must be multiple of 16, srcPicSize[%dx%d]!", pCropCfg->Rect.X, pCropCfg->Rect.Y,
             pCropCfg->Rect.Width, pCropCfg->Rect.Height, SrcPicWidth, SrcPicHeight);
         return FAILURE;
     }
@@ -3397,12 +3397,12 @@ ERRORTYPE VideoEncGetStreamBufInfo(
     VIDEOENCDATATYPE *pVideoEncData = (VIDEOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(pVideoEncData->pCedarV)
     {
-        alogw("need implement streamBufInfo");
+        LOGW("need implement streamBufInfo");
         eError = ERR_VENC_NOT_SUPPORT;
     }
     else
     {
-        aloge("fatal error! video encoder lib is not build currently!");
+        LOGE("fatal error! video encoder lib is not build currently!");
         eError = ERR_VENC_NOT_PERM;
     }
     return eError;
@@ -3431,7 +3431,7 @@ ERRORTYPE VideoEncSetSuperFrameCfg(
     }
     else
     {
-        aloge("fatal error! why venclib is NULL?");
+        LOGE("fatal error! why venclib is NULL?");
         eError = ERR_VENC_SYS_NOTREADY;
     }
     pVideoEncData->mSuperFrmParam = *pSuperFrmParam;
@@ -3465,12 +3465,12 @@ ERRORTYPE VideoEncSetIntraRefreshParam(
         }
         else
         {
-            aloge("fatal error! encodeType[0x%x] don't support intraRefresh", pVideoEncData->mEncChnAttr.VeAttr.Type);
+            LOGE("fatal error! encodeType[0x%x] don't support intraRefresh", pVideoEncData->mEncChnAttr.VeAttr.Type);
         }
     }
     else
     {
-        aloge("fatal error! why venclib is NULL?");
+        LOGE("fatal error! why venclib is NULL?");
     }
     return eError;
 }
@@ -3499,12 +3499,12 @@ ERRORTYPE VideoEncSetSmartPParam(
         }
         else
         {
-            aloge("fatal error! encodeType[0x%x] don't support smartP", pVideoEncData->mEncChnAttr.VeAttr.Type);
+            LOGE("fatal error! encodeType[0x%x] don't support smartP", pVideoEncData->mEncChnAttr.VeAttr.Type);
         }
     }
     else
     {
-        aloge("fatal error! why venclib is NULL?");
+        LOGE("fatal error! why venclib is NULL?");
     }
     return eError;
 }
@@ -3533,12 +3533,12 @@ ERRORTYPE VideoEncSetBrightness(
         }
         else
         {
-            aloge("fatal error! encodeType[0x%x] don't support to set brightness", pVideoEncData->mEncChnAttr.VeAttr.Type);
+            LOGE("fatal error! encodeType[0x%x] don't support to set brightness", pVideoEncData->mEncChnAttr.VeAttr.Type);
         }
     }
     else
     {
-        aloge("fatal error! why venclib is NULL?");
+        LOGE("fatal error! why venclib is NULL?");
     }
     return eError;
 }
@@ -3559,7 +3559,7 @@ ERRORTYPE VideoEncExtraData(
             eError = CedarvVideoEncInit(pVideoEncData);
             if(eError != SUCCESS)
             {
-                aloge("fatal error! vdeclib init fail[0x%x]", eError);
+                LOGE("fatal error! vdeclib init fail[0x%x]", eError);
                 pthread_mutex_unlock(&pVideoEncData->mCedarvVideoEncInitFlagLock);
                 goto _exit0;
             }
@@ -3577,7 +3577,7 @@ ERRORTYPE VideoEncExtraData(
         }
         else
         {
-            alogd("not support other venc type[0x%x]", pVideoEncData->mEncChnAttr.VeAttr.Type);
+            LOGD("not support other venc type[0x%x]", pVideoEncData->mEncChnAttr.VeAttr.Type);
         }
         if(vencRet == VENC_RESULT_OK)
         {
@@ -3592,7 +3592,7 @@ ERRORTYPE VideoEncExtraData(
                     }
                     else
                     {
-                        aloge("fatal error! malloc fail!");
+                        LOGE("fatal error! malloc fail!");
                     }
                 }
                 if(pVideoEncData->mpVencHeaderData)
@@ -3612,7 +3612,7 @@ ERRORTYPE VideoEncExtraData(
                     }
                     else
                     {
-                        aloge("fatal error! malloc fail!");
+                        LOGE("fatal error! malloc fail!");
                     }
                 }
             }
@@ -3645,7 +3645,7 @@ ERRORTYPE VideoEncResetChannel(PARAM_IN COMP_HANDLETYPE hComponent, BOOL bForceR
     VIDEOENCDATATYPE *pVideoEncData = (VIDEOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(pVideoEncData->state != COMP_StateIdle)
     {
-        aloge("fatal error! must reset channel in stateIdle!");
+        LOGE("fatal error! must reset channel in stateIdle!");
         return ERR_VENC_NOT_PERM;
     }
     //return input frames
@@ -3655,7 +3655,7 @@ ERRORTYPE VideoEncResetChannel(PARAM_IN COMP_HANDLETYPE hComponent, BOOL bForceR
         VideoFrameInfoNode *pEntry, *pTmp;
         list_for_each_entry_safe(pEntry, pTmp, &pVideoEncData->mBufQ.mReadyFrameList, mList)
         {
-            //alogd("buf_unused[%d]", pVideoEncData->mBufQ.buf_unused);
+            //LOGD("buf_unused[%d]", pVideoEncData->mBufQ.buf_unused);
             VideoEncSendBackInputFrame(pVideoEncData, &pEntry->VFrame);
             list_move_tail(&pEntry->mList, &pVideoEncData->mBufQ.mIdleFrameList);
             pVideoEncData->mBufQ.buf_unused++;
@@ -3680,7 +3680,7 @@ ERRORTYPE VideoEncResetChannel(PARAM_IN COMP_HANDLETYPE hComponent, BOOL bForceR
         {
             if(bForceReleaseOutFrameInNonTunnelMode)
             {
-                alogd("Be careful! non-tunnel mode, force release usedOutFrameList");
+                LOGD("Be careful! non-tunnel mode, force release usedOutFrameList");
                 ENCODER_NODE_T *pEntry, *pTmp;
                 list_for_each_entry_safe(pEntry, pTmp, &pVideoEncData->mUsedOutFrameList, mList)
                 {
@@ -3692,14 +3692,14 @@ ERRORTYPE VideoEncResetChannel(PARAM_IN COMP_HANDLETYPE hComponent, BOOL bForceR
             }
             else
             {
-                alogd("Be careful! non-tunnel mode, usedOutFrameList is not empty, need wait in future.");
+                LOGD("Be careful! non-tunnel mode, usedOutFrameList is not empty, need wait in future.");
             }
         }
         if(!list_empty(&pVideoEncData->mReadyOutFrameList))
         {
             if(bForceReleaseOutFrameInNonTunnelMode)
             {
-                alogd("Be careful! non-tunnel mode, force release readyOutFrameList");
+                LOGD("Be careful! non-tunnel mode, force release readyOutFrameList");
                 ENCODER_NODE_T *pEntry, *pTmp;
                 list_for_each_entry_safe(pEntry, pTmp, &pVideoEncData->mReadyOutFrameList, mList)
                 {
@@ -3711,7 +3711,7 @@ ERRORTYPE VideoEncResetChannel(PARAM_IN COMP_HANDLETYPE hComponent, BOOL bForceR
             }
             else
             {
-                alogd("Be careful! non-tunnel mode, readyOutFrameList is not empty, need wait in future.");
+                LOGD("Be careful! non-tunnel mode, readyOutFrameList is not empty, need wait in future.");
             }
         }
         pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
@@ -3723,11 +3723,11 @@ ERRORTYPE VideoEncResetChannel(PARAM_IN COMP_HANDLETYPE hComponent, BOOL bForceR
         pthread_mutex_lock(&pVideoEncData->mOutFrameListMutex);
         if(!list_empty(&pVideoEncData->mUsedOutFrameList))
         {
-            alogd("Be careful! venc usedOutFrameList is not empty in tunnel mode!");
+            LOGD("Be careful! venc usedOutFrameList is not empty in tunnel mode!");
         }
         if(!list_empty(&pVideoEncData->mReadyOutFrameList))
         {
-            aloge("fatal error! venc mReadyOutFrameList is not empty in tunnel mode!");
+            LOGE("fatal error! venc mReadyOutFrameList is not empty in tunnel mode!");
         }
         int cnt = 0;
         struct list_head *pList;
@@ -3737,7 +3737,7 @@ ERRORTYPE VideoEncResetChannel(PARAM_IN COMP_HANDLETYPE hComponent, BOOL bForceR
         }
         if(cnt != pVideoEncData->mFrameNodeNum)
         {
-            alogw("Be careful! venc output frames count not match [%d]!=[%d]", cnt, pVideoEncData->mFrameNodeNum);
+            LOGW("Be careful! venc output frames count not match [%d]!=[%d]", cnt, pVideoEncData->mFrameNodeNum);
         }
         pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
     }
@@ -3808,7 +3808,7 @@ ERRORTYPE VideoEncSetRefParam(
     }
     else
     {
-        aloge("CAUTION: the video encoder had init, the set refparam is not work!!!");
+        LOGE("CAUTION: the video encoder had init, the set refparam is not work!!!");
         eError = ERR_VENC_INCORRECT_STATE_OPERATION;
     }
     pthread_mutex_unlock(&pVideoEncData->mCedarvVideoEncInitFlagLock);
@@ -3855,7 +3855,7 @@ ERRORTYPE VideoEncSetColor2Grey(
             unsigned char OpenColor2Grey = pRecvPicParam->bColor2Grey?1:0;
             if(0 == VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamChmoraGray,(void*)&OpenColor2Grey))
             {
-                //alogd("set Color2Grey [%d], in Venchn[%d]", OpenColor2Grey, pVideoEncData->mMppChnInfo.mChnId);
+                //LOGD("set Color2Grey [%d], in Venchn[%d]", OpenColor2Grey, pVideoEncData->mMppChnInfo.mChnId);
                 pVideoEncData->mColor2GreyParam.bColor2Grey = pRecvPicParam->bColor2Grey;
                 eError = SUCCESS;
             }
@@ -3866,7 +3866,7 @@ ERRORTYPE VideoEncSetColor2Grey(
         }
         else
         {
-            alogd("the Color2Grey only support H264 and H265!");
+            LOGD("the Color2Grey only support H264 and H265!");
             eError = ERR_VENC_NOT_SUPPORT; // no support to jpeg mjpeg.
         }
     }
@@ -3902,7 +3902,7 @@ ERRORTYPE VideoEncSet3DNR(
             unsigned char nNew3DFilterLevel = (unsigned char)b3DNRFlag;
             if(0 == VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParam3DFilter,(void*)&nNew3DFilterLevel))
             {
-                //alogd("set 3D noise reduce(3DNR) level [%d], in Venchn[%d]", nNew3DFilterLevel, pVideoEncData->mMppChnInfo.mChnId);
+                //LOGD("set 3D noise reduce(3DNR) level [%d], in Venchn[%d]", nNew3DFilterLevel, pVideoEncData->mMppChnInfo.mChnId);
                 pVideoEncData->m3DNRFlag= (int)nNew3DFilterLevel;
                 eError = SUCCESS;
             }
@@ -3913,7 +3913,7 @@ ERRORTYPE VideoEncSet3DNR(
         }
         else
         {
-            alogd("the 3D noise reduce(3DNR) only support H264 and H265!");
+            LOGD("the 3D noise reduce(3DNR) only support H264 and H265!");
             eError = ERR_VENC_NOT_SUPPORT; // no support to jpeg mjpeg.
         }
     }
@@ -3947,7 +3947,7 @@ ERRORTYPE VideoEncSetHorizonFlip(
         unsigned int OpenHorizonFlip = bHorizonFlipFlag?1:0;
         if(0 == VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamHorizonFlip, (void*)&OpenHorizonFlip))
         {
-            //alogd("set HorizonFlip [%d], in Venchn[%d]", OpenHorizonFlip, pVideoEncData->mMppChnInfo.mChnId);
+            //LOGD("set HorizonFlip [%d], in Venchn[%d]", OpenHorizonFlip, pVideoEncData->mMppChnInfo.mChnId);
             pVideoEncData->mHorizonFlipFlag = bHorizonFlipFlag;
             eError = SUCCESS;
         }
@@ -3979,7 +3979,7 @@ ERRORTYPE VideoEncSetAdaptiveIntraInP(
             unsigned char OpenAdaptiveIntraInPFlag = bAdaptiveIntraInPFlag?1:0;
             if(0 == VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamAdaptiveIntraInP, (void*)&OpenAdaptiveIntraInPFlag))
             {
-                //alogd("set AdaptiveIntraInP [%d], in Venchn[%d]", OpenAdaptiveIntraInPFlag, pVideoEncData->mMppChnInfo.mChnId);
+                //LOGD("set AdaptiveIntraInP [%d], in Venchn[%d]", OpenAdaptiveIntraInPFlag, pVideoEncData->mMppChnInfo.mChnId);
                 pVideoEncData->mAdaptiveIntraInPFlag = bAdaptiveIntraInPFlag;
                 eError = SUCCESS;
             }
@@ -3990,7 +3990,7 @@ ERRORTYPE VideoEncSetAdaptiveIntraInP(
         }
         else
         {
-           aloge("fatal error, the AdaptiveIntraInP just for H265!");
+           LOGE("fatal error, the AdaptiveIntraInP just for H265!");
            eError = ERR_VENC_NOT_SUPPORT;
         }
     }
@@ -4019,13 +4019,13 @@ ERRORTYPE VideoEncEnableNullSkip(
         }
         else
         {
-            aloge("fatal error, vencType[0x%x] don't support nullSkip!", pVideoEncData->mEncChnAttr.VeAttr.Type);
+            LOGE("fatal error, vencType[0x%x] don't support nullSkip!", pVideoEncData->mEncChnAttr.VeAttr.Type);
             eError = ERR_VENC_BUSY;
         }
     }
     else
     {
-        aloge("fatal error, venclib is not created!");
+        LOGE("fatal error, venclib is not created!");
         eError = ERR_VENC_NULL_PTR;
     }
 
@@ -4048,13 +4048,13 @@ ERRORTYPE VideoEncEnablePSkip(
         }
         else
         {
-            aloge("fatal error, vencType[0x%x] don't support pSkip!", pVideoEncData->mEncChnAttr.VeAttr.Type);
+            LOGE("fatal error, vencType[0x%x] don't support pSkip!", pVideoEncData->mEncChnAttr.VeAttr.Type);
             eError = ERR_VENC_BUSY;
         }
     }
     else
     {
-        aloge("fatal error, venclib is not created!");
+        LOGE("fatal error, venclib is not created!");
         eError = ERR_VENC_NULL_PTR;
     }
 
@@ -4124,7 +4124,7 @@ ERRORTYPE VideoEncSaveBSFile(
     {
         if (memcmp(&pVideoEncData->mSaveBSFile, pSaveParam, sizeof(VencSaveBSFile)) == 0)
         {
-            aloge("user set the same SaveBSFile => filename:%s, enable:%u, start_time:%u, end_time:%u", pSaveParam->filename,
+            LOGE("user set the same SaveBSFile => filename:%s, enable:%u, start_time:%u, end_time:%u", pSaveParam->filename,
                 pSaveParam->save_bsfile_flag, pSaveParam->save_start_time, pSaveParam->save_end_time);
             eError = ERR_VENC_ILLEGAL_PARAM;
         }
@@ -4135,7 +4135,7 @@ ERRORTYPE VideoEncSaveBSFile(
             {
                 if(VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamSaveBSFile, (void*)pSaveParam) != 0)
                 {
-                    aloge("update VE SaveBsFile fail!");
+                    LOGE("update VE SaveBsFile fail!");
                     eError = ERR_VENC_BUSY;
                 }
             }
@@ -4159,7 +4159,7 @@ ERRORTYPE VideoEncUpdateProcSet(
     {
         if (memcmp(&pVideoEncData->mProcSet, pVeProcSet, sizeof(VeProcSet)) == 0)
         {
-            aloge("user set the same VeProcSet => enable:%u, freq:%u, BTTime:%u, FRTime:%u", pVeProcSet->bProcEnable,
+            LOGE("user set the same VeProcSet => enable:%u, freq:%u, BTTime:%u, FRTime:%u", pVeProcSet->bProcEnable,
                 pVeProcSet->nProcFreq, pVeProcSet->nStatisBitRateTime, pVeProcSet->nStatisFrRateTime);
             eError = ERR_VENC_ILLEGAL_PARAM;
         }
@@ -4171,7 +4171,7 @@ ERRORTYPE VideoEncUpdateProcSet(
                 //update proc set to catch parame of VE.
                 if(VideoEncSetParameter(pVideoEncData->pCedarV, VENC_IndexParamProcSet, (void*)pVeProcSet) != 0)
                 {
-                    aloge("update VE proc set fail!");
+                    LOGE("update VE proc set fail!");
                     eError = ERR_VENC_BUSY;
                 }
             }
@@ -4198,7 +4198,7 @@ ERRORTYPE VideoEncSendCommand(
     ERRORTYPE eError = SUCCESS;
     message_t msg;
 
-    alogv("VideoEncSendCommand: %d", Cmd);
+    LOGV("VideoEncSendCommand: %d", Cmd);
 
     pVideoEncData = (VIDEOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(!pVideoEncData)
@@ -4223,7 +4223,7 @@ ERRORTYPE VideoEncSendCommand(
             break;
 
         default:
-            alogw("impossible comp_command[0x%x]", Cmd);
+            LOGW("impossible comp_command[0x%x]", Cmd);
             eCmd = -1;
             break;
     }
@@ -4311,7 +4311,7 @@ ERRORTYPE VideoEncGetConfig(
         }
         case COMP_IndexVendorVencChnPriority:
         {
-            alogw("unsupported temporary get venc chn priority!");
+            LOGW("unsupported temporary get venc chn priority!");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
@@ -4338,49 +4338,49 @@ ERRORTYPE VideoEncGetConfig(
         }
         case COMP_IndexVendorVencH264SliceSplit:
         {
-            alogw("need implement H264SliceSplit");
+            LOGW("need implement H264SliceSplit");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264InterPred:
         {
-            alogw("need implement H264InterPred");
+            LOGW("need implement H264InterPred");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264IntraPred:
         {
-            alogw("need implement H264IntraPred");
+            LOGW("need implement H264IntraPred");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264Trans:
         {
-            alogw("need implement H264Trans");
+            LOGW("need implement H264Trans");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264Entropy:
         {
-            alogw("need implement H264Entropy");
+            LOGW("need implement H264Entropy");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264Poc:
         {
-            alogw("need implement H264Poc");
+            LOGW("need implement H264Poc");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264Dblk:
         {
-            alogw("need implement H264Dblk");
+            LOGW("need implement H264Dblk");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264Vui:
         {
-            alogw("need implement H264Vui");
+            LOGW("need implement H264Vui");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
@@ -4401,7 +4401,7 @@ ERRORTYPE VideoEncGetConfig(
         }
         case COMP_IndexVendorVencMjpegParam:
         {
-            alogw("need implement MjpegParam");
+            LOGW("need implement MjpegParam");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
@@ -4417,20 +4417,20 @@ ERRORTYPE VideoEncGetConfig(
         }
         case COMP_IndexVendorVencRcParam:
         {
-            alogw("need implement RcParam");
+            LOGW("need implement RcParam");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencRefParam:
         {
-            //alogw("need implement RefParam");
+            //LOGW("need implement RefParam");
             //eError = ERR_VENC_NOT_SUPPORT;
             eError = VideoEncGetRefParam(hComponent, (VENC_PARAM_REF_S *) pComponentConfigStructure);
             break;
         }
         case COMP_IndexVendorVencColor2Grey:
         {
-            //alogw("need implement Color2Grey");
+            //LOGW("need implement Color2Grey");
             eError = VideoEncGetColor2Grey(hComponent, (VENC_COLOR2GREY_S *)pComponentConfigStructure);
             break;
         }
@@ -4446,55 +4446,55 @@ ERRORTYPE VideoEncGetConfig(
         }
         case COMP_IndexVendorVencRcPriority:
         {
-            alogw("unsupported temporary: VencRcPriority");
+            LOGW("unsupported temporary: VencRcPriority");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265SliceSplit:
         {
-            alogw("need implement H265SliceSplit");
+            LOGW("need implement H265SliceSplit");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265PredUnit:
         {
-            alogw("need implement H265PredUnit");
+            LOGW("need implement H265PredUnit");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265Trans:
         {
-            alogw("need implement H265Trans");
+            LOGW("need implement H265Trans");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265Entropy:
         {
-            alogw("need implement H265Entropy");
+            LOGW("need implement H265Entropy");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265Dblk:
         {
-            alogw("need implement H265Dblk");
+            LOGW("need implement H265Dblk");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265Sao:
         {
-            alogw("need implement H265Dblk");
+            LOGW("need implement H265Dblk");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265Timing:
         {
-            alogw("need implement H265Timing");
+            LOGW("need implement H265Timing");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencFrameLostStrategy:
         {
-            alogw("need implement FrameLostStrategy");
+            LOGW("need implement FrameLostStrategy");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
@@ -4545,7 +4545,7 @@ ERRORTYPE VideoEncGetConfig(
         }
         default:
         {
-            aloge("fatal error! unknown getConfig Index[0x%x]", nIndex);
+            LOGE("fatal error! unknown getConfig Index[0x%x]", nIndex);
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
@@ -4585,7 +4585,7 @@ ERRORTYPE VideoEncSetConfig(
         }
         case COMP_IndexVendorVencChnPriority:
         {
-            alogw("unsupported temporary set venc chn priority!");
+            LOGW("unsupported temporary set venc chn priority!");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
@@ -4606,7 +4606,7 @@ ERRORTYPE VideoEncSetConfig(
         }
         case COMP_IndexVendorVencUserData:
         {
-            alogw("need implement Insert UserData?");
+            LOGW("need implement Insert UserData?");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
@@ -4637,49 +4637,49 @@ ERRORTYPE VideoEncSetConfig(
         }
         case COMP_IndexVendorVencH264SliceSplit:
         {
-            alogw("need implement H264SliceSplit");
+            LOGW("need implement H264SliceSplit");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264InterPred:
         {
-            alogw("need implement H264InterPred");
+            LOGW("need implement H264InterPred");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264IntraPred:
         {
-            alogw("need implement H264IntraPred");
+            LOGW("need implement H264IntraPred");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264Trans:
         {
-            alogw("need implement H264Trans");
+            LOGW("need implement H264Trans");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264Entropy:
         {
-            alogw("need implement H264Entropy");
+            LOGW("need implement H264Entropy");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264Poc:
         {
-            alogw("need implement H264Poc");
+            LOGW("need implement H264Poc");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264Dblk:
         {
-            alogw("need implement H264Dblk");
+            LOGW("need implement H264Dblk");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH264Vui:
         {
-            alogw("need implement H264Vui");
+            LOGW("need implement H264Vui");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
@@ -4695,7 +4695,7 @@ ERRORTYPE VideoEncSetConfig(
         }
         case COMP_IndexVendorVencMjpegParam:
         {
-            alogw("need implement MjpegParam");
+            LOGW("need implement MjpegParam");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
@@ -4711,20 +4711,20 @@ ERRORTYPE VideoEncSetConfig(
         }
         case COMP_IndexVendorVencRcParam:
         {
-            alogw("need implement RcParam");
+            LOGW("need implement RcParam");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencRefParam:
         {
-            //alogw("need implement RefParam");
+            //LOGW("need implement RefParam");
             //eError = ERR_VENC_NOT_SUPPORT;
             eError = VideoEncSetRefParam(hComponent, (VENC_PARAM_REF_S *) pComponentConfigStructure);
             break;
         }
         case COMP_IndexVendorVencColor2Grey:
         {
-            //alogw("need implement Color2Grey");
+            //LOGW("need implement Color2Grey");
             eError = VideoEncSetColor2Grey(hComponent, (VENC_COLOR2GREY_S *)pComponentConfigStructure);
             break;
         }
@@ -4735,61 +4735,61 @@ ERRORTYPE VideoEncSetConfig(
         }
         case COMP_IndexVendorVencEnableIDR:
         {
-            alogw("need implement Color2Grey");
+            LOGW("need implement Color2Grey");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencRcPriority:
         {
-            alogw("need implement RcPriority");
+            LOGW("need implement RcPriority");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265SliceSplit:
         {
-            alogw("need implement H265SliceSplit");
+            LOGW("need implement H265SliceSplit");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265PredUnit:
         {
-            alogw("need implement H265PredUnit");
+            LOGW("need implement H265PredUnit");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265Trans:
         {
-            alogw("need implement H265Trans");
+            LOGW("need implement H265Trans");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265Entropy:
         {
-            alogw("need implement H265Entropy");
+            LOGW("need implement H265Entropy");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265Dblk:
         {
-            alogw("need implement H265Dblk");
+            LOGW("need implement H265Dblk");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265Sao:
         {
-            alogw("need implement H265Sao");
+            LOGW("need implement H265Sao");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencH265Timing:
         {
-            alogw("need implement H265Timing");
+            LOGW("need implement H265Timing");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
         case COMP_IndexVendorVencFrameLostStrategy:
         {
-            alogw("need implement FrameLostStrategy");
+            LOGW("need implement FrameLostStrategy");
             eError = ERR_VENC_NOT_SUPPORT;
             break;
         }
@@ -4865,7 +4865,7 @@ ERRORTYPE VideoEncSetConfig(
         }
         default:
         {
-            aloge("unknown Index[0x%x]", nIndex);
+            LOGE("unknown Index[0x%x]", nIndex);
             eError = ERR_VENC_ILLEGAL_PARAM;
             break;
         }
@@ -4885,11 +4885,11 @@ ERRORTYPE VideoEncComponentTunnelRequest(
     VIDEOENCDATATYPE *pVideoEncData = (VIDEOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if (pVideoEncData->state == COMP_StateExecuting)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if(pVideoEncData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request can't be in state[0x%x]", pVideoEncData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]", pVideoEncData->state);
         eError = ERR_VENC_INCORRECT_STATE_OPERATION;
         goto COMP_CMD_FAIL;
     }
@@ -4915,7 +4915,7 @@ ERRORTYPE VideoEncComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_VENC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -4936,7 +4936,7 @@ ERRORTYPE VideoEncComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_VENC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -4953,7 +4953,7 @@ ERRORTYPE VideoEncComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_VENC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -4964,7 +4964,7 @@ ERRORTYPE VideoEncComponentTunnelRequest(
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup)
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         if(pPortDef->eDir == COMP_DirOutput)
         {
@@ -4979,7 +4979,7 @@ ERRORTYPE VideoEncComponentTunnelRequest(
     if(pPortDef->eDir == COMP_DirOutput)
     {
         if (pVideoEncData->mOutputPortTunnelFlag) {
-            aloge("VEnc_Comp outport already bind, why bind again?!");
+            LOGE("VEnc_Comp outport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -4990,7 +4990,7 @@ ERRORTYPE VideoEncComponentTunnelRequest(
     else
     {
         if (pVideoEncData->mInputPortTunnelFlag) {
-            aloge("VEnc_Comp inport already bind, why bind again?!");
+            LOGE("VEnc_Comp inport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -5001,7 +5001,7 @@ ERRORTYPE VideoEncComponentTunnelRequest(
         ((MM_COMPONENTTYPE*)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput)
         {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_VENC_ILLEGAL_PARAM;
             goto COMP_CMD_FAIL;
         }
@@ -5010,7 +5010,7 @@ ERRORTYPE VideoEncComponentTunnelRequest(
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
         {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -5041,7 +5041,7 @@ ERRORTYPE VideoEncEmptyThisBuffer(
 
     if (pVideoEncData->state != COMP_StateExecuting)
     {
-        alogw("send frame when venc state[0x%x] isn not executing", pVideoEncData->state);
+        LOGW("send frame when venc state[0x%x] isn not executing", pVideoEncData->state);
         //eError = COMP_ErrorInvalidState;
         //goto ERROR;
     }
@@ -5049,7 +5049,7 @@ ERRORTYPE VideoEncEmptyThisBuffer(
     pthread_mutex_lock(&pVideoEncData->mRecvPicControlLock);
     if(pVideoEncData->mLimitedFramesFlag && pVideoEncData->mCurRecvPicNum >= pVideoEncData->mRecvPicParam.mRecvPicNum)
     {
-        alogd("the venc cahnnel[%d] had received %d frame, it is enough!", pVideoEncData->mMppChnInfo.mChnId, pVideoEncData->mCurRecvPicNum);
+        LOGD("the venc cahnnel[%d] had received %d frame, it is enough!", pVideoEncData->mMppChnInfo.mChnId, pVideoEncData->mCurRecvPicNum);
         eError = ERR_VENC_SYS_NOTREADY;
         goto ERROR;
     }
@@ -5069,16 +5069,16 @@ ERRORTYPE VideoEncEmptyThisBuffer(
         pthread_mutex_lock(&pVideoEncData->mutex_fifo_ops_lock);
         if(list_empty(&pVideoEncData->mBufQ.mIdleFrameList))
         {
-            alogw("Low probability! venc idle frame is empty!");
+            LOGW("Low probability! venc idle frame is empty!");
             if(pVideoEncData->mBufQ.buf_unused!=0)
             {
-                aloge("fatal error! buf_unused must be zero!");
+                LOGE("fatal error! buf_unused must be zero!");
             }
             VideoFrameInfoNode *pNode = (VideoFrameInfoNode*)malloc(sizeof(VideoFrameInfoNode));
             if(NULL == pNode)
             {
                 pthread_mutex_unlock(&pVideoEncData->mutex_fifo_ops_lock);
-                aloge("fatal error! malloc fail!");
+                LOGE("fatal error! malloc fail!");
                 eError = ERR_VENC_NOMEM;
                 goto ERROR;
             }
@@ -5097,19 +5097,19 @@ ERRORTYPE VideoEncEmptyThisBuffer(
             int64_t tm1 = CDX_GetSysTimeUsMonotonic();
             if(1920 == pEncFrame->VFrame.mWidth && 1080 == pEncFrame->VFrame.mHeight)//(pVideoEncData == g_pVideoEncData[0])
             {
-                alogw("avsync_first video frame pts[%lld]us,tm1[%lld]us, vSize[%dx%d]", 
+                LOGW("avsync_first video frame pts[%lld]us,tm1[%lld]us, vSize[%dx%d]", 
                     pEncFrame->VFrame.mpts, tm1, pEncFrame->VFrame.mWidth, pEncFrame->VFrame.mHeight);
             }
         }
         if(pEncFrame->VFrame.mpts - pVideoEncData->mPrevInputPts >= 300*1000)
         {
-            alogd("Be careful! vencInputPts[%lld]-[%lld]=[%lld]us, vBufSize[%dx%d]",
+            LOGD("Be careful! vencInputPts[%lld]-[%lld]=[%lld]us, vBufSize[%dx%d]",
                 pEncFrame->VFrame.mpts, pVideoEncData->mPrevInputPts, pEncFrame->VFrame.mpts - pVideoEncData->mPrevInputPts,
                 pEncFrame->VFrame.mWidth, pEncFrame->VFrame.mHeight);
         }
         pVideoEncData->mPrevInputPts = pEncFrame->VFrame.mpts;
         memcpy(pDstEncFrame, pEncFrame, sizeof(VIDEO_FRAME_INFO_S));
-        alogv("wr buf_id: %d, nTimeStamp: [%lld]us", pDstEncFrame->mId, pDstEncFrame->VFrame.mpts);
+        LOGV("wr buf_id: %d, nTimeStamp: [%lld]us", pDstEncFrame->mId, pDstEncFrame->VFrame.mpts);
         pVideoEncData->mBufQ.buf_unused--;
         list_move_tail(&pFirstNode->mList, &pVideoEncData->mBufQ.mReadyFrameList);
         /*int cnt = 0;
@@ -5119,7 +5119,7 @@ ERRORTYPE VideoEncEmptyThisBuffer(
         {
             int idleCnt = 0;
             list_for_each(pList, &pVideoEncData->mBufQ.mIdleFrameList){idleCnt++;}
-            alogd("Be careful! venc [%d]inReady, [%d]inIdle", cnt, idleCnt);
+            LOGD("Be careful! venc [%d]inReady, [%d]inIdle", cnt, idleCnt);
         }*/
         if(pVideoEncData->mNoInputFrameFlag)
         {
@@ -5152,7 +5152,7 @@ ERRORTYPE VideoEncEmptyThisBuffer(
         eError = VideoEncBufferPushFrame(pVideoEncData->buffer_manager, &frame);
         if (eError != SUCCESS)
         {
-            alogw("Be careful! current buffer queue is full!");
+            LOGW("Be careful! current buffer queue is full!");
             pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
             goto ERROR;
         }
@@ -5211,7 +5211,7 @@ ERRORTYPE VideoEncFillThisBuffer(
         if (!bFind)
         {
             pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
-            aloge("fatal error:try to release one output buffer that never be used! ID = %d", pOutFrame->nID);
+            LOGE("fatal error:try to release one output buffer that never be used! ID = %d", pOutFrame->nID);
             return ERR_VENC_ILLEGAL_PARAM;
         }
 
@@ -5223,7 +5223,7 @@ ERRORTYPE VideoEncFillThisBuffer(
             ret = FreeOneBitStreamFrame(pVideoEncData->pCedarV, &stOutputBuffer);
             if (ret != 0)
             {
-                aloge("fatal error! freeOneBitStreamFrame fail[%d]", ret);
+                LOGE("fatal error! freeOneBitStreamFrame fail[%d]", ret);
             }
 
             list_move_tail(&pEntry->mList, &pVideoEncData->mIdleOutFrameList);
@@ -5261,7 +5261,7 @@ ERRORTYPE VideoEncFillThisBuffer(
             releaseOmxRet = VideoEncBufferReleaseFrame(pVideoEncData->buffer_manager, &frame);
             if(releaseOmxRet != SUCCESS)
             {
-                aloge("fatal error! videoEncBufferReleaseFrame fail[%d]", releaseOmxRet);
+                LOGE("fatal error! videoEncBufferReleaseFrame fail[%d]", releaseOmxRet);
             }
 
             list_move_tail(&pEntry->mList, &pVideoEncData->mIdleOutFrameList);
@@ -5284,7 +5284,7 @@ ERRORTYPE VideoEncFillThisBuffer(
     }
     else
     {
-        aloge("fatal error! outPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pVideoEncData->sOutPortDef.nPortIndex);
+        LOGE("fatal error! outPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pVideoEncData->sOutPortDef.nPortIndex);
     }
 //ERROR:
     return eError;
@@ -5298,19 +5298,19 @@ ERRORTYPE VideoEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     CompInternalMsgType eCmd = Stop;
     message_t msg;
     //int i = 0;
-    alogv("VideoEnc Component DeInit");
+    LOGV("VideoEnc Component DeInit");
     pVideoEncData = (VIDEOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
 
     if(pVideoEncData->mDiscardFrameCnt > 0)
     {
         unsigned int nBitRate = GetBitRateFromVENC_CHN_ATTR_S(&pVideoEncData->mEncChnAttr);
-        alogw("Be careful! venc chn[%d] type[%d] vBufSize[%dx%d]: discard [%d]frames! bitRate[%d]Mbit",
+        LOGW("Be careful! venc chn[%d] type[%d] vBufSize[%dx%d]: discard [%d]frames! bitRate[%d]Mbit",
             pVideoEncData->mMppChnInfo.mChnId, pVideoEncData->mEncChnAttr.VeAttr.Type,
             pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth, pVideoEncData->mEncChnAttr.VeAttr.SrcPicHeight,
             pVideoEncData->mDiscardFrameCnt, nBitRate/(1000*1000));
     }
   #ifdef VIDEO_ENC_TIME_DEBUG
-    alogd("venc chn[%d] type[%d] vBufSize[%dx%d]: encodeSuccess Duration[%lld]ms, FrameCount[%d], averagePerFrame[%lld]ms",
+    LOGD("venc chn[%d] type[%d] vBufSize[%dx%d]: encodeSuccess Duration[%lld]ms, FrameCount[%d], averagePerFrame[%lld]ms",
         pVideoEncData->mMppChnInfo.mChnId, pVideoEncData->mEncChnAttr.VeAttr.Type,
         pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth, pVideoEncData->mEncChnAttr.VeAttr.SrcPicHeight,
         pVideoEncData->mTotalEncodeSuccessDuration/1000, pVideoEncData->mEncodeSuccessCount, 
@@ -5319,7 +5319,7 @@ ERRORTYPE VideoEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     SIZE_S dstPicSize;
     if (SUCCESS == getPicSizeFromVENC_ATTR_S(&pVideoEncData->mEncChnAttr.VeAttr, &dstPicSize))
     {
-        alogd("vencChn[%d],type[%d],vSrcSize[%dx%d],vDstSize[%dx%d]: max frameSize of this encoding process is [%d]Byte([%f]MB)",
+        LOGD("vencChn[%d],type[%d],vSrcSize[%dx%d],vDstSize[%dx%d]: max frameSize of this encoding process is [%d]Byte([%f]MB)",
             pVideoEncData->mMppChnInfo.mChnId, pVideoEncData->mEncChnAttr.VeAttr.Type,
             pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth, pVideoEncData->mEncChnAttr.VeAttr.SrcPicHeight,
             dstPicSize.Width, dstPicSize.Height, 
@@ -5327,7 +5327,7 @@ ERRORTYPE VideoEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     else
     {
-        aloge("fatal error! get dst size fail! check code!");
+        LOGE("fatal error! get dst size fail! check code!");
     }
     int cnt = 0;
     struct list_head *pList;
@@ -5337,11 +5337,11 @@ ERRORTYPE VideoEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if(pVideoEncData->mBufQ.buf_unused != cnt)
     {
-        aloge("fatal error! inputFrames[%d]<[%d] must return all before!", ENC_FIFO_LEVEL-pVideoEncData->mBufQ.buf_unused, cnt);
+        LOGE("fatal error! inputFrames[%d]<[%d] must return all before!", ENC_FIFO_LEVEL-pVideoEncData->mBufQ.buf_unused, cnt);
     }
     if(!list_empty(&pVideoEncData->mBufQ.mReadyFrameList))
     {
-        aloge("fatal error! why readyInputFrame is not empty?");
+        LOGE("fatal error! why readyInputFrame is not empty?");
     }
     if(!list_empty(&pVideoEncData->mBufQ.mIdleFrameList))
     {
@@ -5377,7 +5377,7 @@ ERRORTYPE VideoEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     put_message(&pVideoEncData->cmd_queue, &msg);
     //cdx_sem_up(&pVideoEncData->cdx_sem_wait_message);
 
-    alogv("wait VideoEnc component exit!...");
+    LOGV("wait VideoEnc component exit!...");
     // Wait for thread to exit so we can get the status into "error"
     pthread_join(pVideoEncData->thread_id, (void*) &eError);
 
@@ -5400,11 +5400,11 @@ ERRORTYPE VideoEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pthread_mutex_lock(&pVideoEncData->mOutFrameListMutex);
     if(!list_empty(&pVideoEncData->mUsedOutFrameList))
     {
-        aloge("fatal error! outUsedFrame must be 0!");
+        LOGE("fatal error! outUsedFrame must be 0!");
     }
     if(!list_empty(&pVideoEncData->mReadyOutFrameList))
     {
-        aloge("fatal error! outReadyFrame must be 0!");
+        LOGE("fatal error! outReadyFrame must be 0!");
     }
     int nodeNum = 0;
     if(!list_empty(&pVideoEncData->mIdleOutFrameList))
@@ -5419,11 +5419,11 @@ ERRORTYPE VideoEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if(nodeNum!=pVideoEncData->mFrameNodeNum)
     {
-        aloge("fatal error! frame node number is not match[%d][%d]", nodeNum, pVideoEncData->mFrameNodeNum);
+        LOGE("fatal error! frame node number is not match[%d][%d]", nodeNum, pVideoEncData->mFrameNodeNum);
     }
     if(pVideoEncData->mFrameNodeNum != BITSTREAM_FRAME_SIZE)
     {
-        alogw("Low probability! VEncComp idle out frame total num: %d -> %d!", BITSTREAM_FRAME_SIZE, pVideoEncData->mFrameNodeNum);
+        LOGW("Low probability! VEncComp idle out frame total num: %d -> %d!", BITSTREAM_FRAME_SIZE, pVideoEncData->mFrameNodeNum);
     }
     pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
     pthread_cond_destroy(&pVideoEncData->mOutFrameFullCondition);
@@ -5465,7 +5465,7 @@ ERRORTYPE VideoEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         }
 #endif
 
-    alogd("VideoEnc component exited!");
+    LOGD("VideoEnc component exited!");
 
     return eError;
 }
@@ -5499,7 +5499,7 @@ ERRORTYPE VideoEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         VideoFrameInfoNode *pNode = (VideoFrameInfoNode*)malloc(sizeof(VideoFrameInfoNode));
         if(NULL == pNode)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             eError = ERR_VENC_NOMEM;
             goto EXIT;
         }
@@ -5558,7 +5558,7 @@ ERRORTYPE VideoEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
         if(NULL == pNode)
         {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             break;
         }
         memset(pNode, 0, sizeof(ENCODER_NODE_T));
@@ -5568,7 +5568,7 @@ ERRORTYPE VideoEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pVideoEncData->mOutFrameListMutex, NULL);
     if(err!=0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_VENC_NOMEM;
         goto EXIT;
     }
@@ -5578,7 +5578,7 @@ ERRORTYPE VideoEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_cond_init(&pVideoEncData->mOutFrameFullCondition, &condAttr);
     if(err!=0)
     {
-        aloge("pthread cond init fail!");
+        LOGE("pthread cond init fail!");
         eError = ERR_VENC_NOMEM;
         goto EXIT;
     }
@@ -5632,7 +5632,7 @@ ERRORTYPE VideoEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if (message_create(&pVideoEncData->cmd_queue)<0)
     {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_VENC_NOMEM;
         goto EXIT;
     }
@@ -5652,14 +5652,14 @@ ERRORTYPE VideoEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     assert (rs == 0);
     if(curPolicy != newPolicy)
     {
-        alogd("we will change venc thread sched policy [%d]->[%d]", curPolicy, newPolicy);
+        LOGD("we will change venc thread sched policy [%d]->[%d]", curPolicy, newPolicy);
     }
     /* get priority scope of SCHED_FIFO policy */
     int maxPriority = sched_get_priority_max(newPolicy);
     assert(maxPriority != -1);
     int minPriority = sched_get_priority_min(newPolicy);
     assert(minPriority != -1);
-    alogd("priority[%d] scope[%d, %d]", newPolicy, minPriority, maxPriority);
+    LOGD("priority[%d] scope[%d, %d]", newPolicy, minPriority, maxPriority);
     /* set sched policy SCHED_FIFO */
     rs = pthread_attr_setschedpolicy(&attr, newPolicy);
     assert (rs == 0);
@@ -5674,7 +5674,7 @@ ERRORTYPE VideoEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         rs = pthread_attr_setschedparam(&attr, &schedParam);
         assert (rs == 0);
     }
-    alogd("in schedPolicy[%d], change venc thread priority [%d]->[%d]", newPolicy, curSchedPriority, newSchedPriority);
+    LOGD("in schedPolicy[%d], change venc thread priority [%d]->[%d]", newPolicy, curSchedPriority, newSchedPriority);
     #endif
     err = pthread_create(&pVideoEncData->thread_id, &attr, ComponentThread, pVideoEncData);
     /* destroy pthread_attr_t */
@@ -5711,7 +5711,7 @@ static BOOL VideoEncAnalyseCompressedFrame(VIDEOENCDATATYPE* pVideoEncData, FRAM
     }
     else if(PT_H264 == pVideoEncData->mEncChnAttr.VeAttr.Type)
     {
-        aloge("fatal error! need analyse h264 data!");
+        LOGE("fatal error! need analyse h264 data!");
         bKeyFrame = TRUE;
         if(NULL == pVideoEncData->mpVencHeaderData)
         {
@@ -5720,7 +5720,7 @@ static BOOL VideoEncAnalyseCompressedFrame(VIDEOENCDATATYPE* pVideoEncData, FRAM
     }
     else if(PT_H265 == pVideoEncData->mEncChnAttr.VeAttr.Type)
     {
-        aloge("fatal error! need analyse h265 data!");
+        LOGE("fatal error! need analyse h265 data!");
         bKeyFrame = TRUE;
         if(NULL == pVideoEncData->mpVencHeaderData)
         {
@@ -5729,7 +5729,7 @@ static BOOL VideoEncAnalyseCompressedFrame(VIDEOENCDATATYPE* pVideoEncData, FRAM
     }
     else
     {
-        aloge("fatal error! unknown encodeType[0x%x]", pVideoEncData->mEncChnAttr.VeAttr.Type);
+        LOGE("fatal error! unknown encodeType[0x%x]", pVideoEncData->mEncChnAttr.VeAttr.Type);
         bKeyFrame = FALSE;
     }
     return bKeyFrame;
@@ -5750,7 +5750,7 @@ static void* ComponentThread(void* pThreadData)
     message_t cmd_msg;
     //int64_t tm1, tm2, tm3, itl;
 
-    alogv("VideoEncoder ComponentThread start run...");
+    LOGV("VideoEncoder ComponentThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"VEncComp", 0, 0, 0);
     #if 0
     {
@@ -5778,7 +5778,7 @@ static void* ComponentThread(void* pThreadData)
         int ret;
         unsigned int flags = 0;
 
-        alogd("deadline thread started [%ld]\n", gettid());
+        LOGD("deadline thread started [%ld]", gettid());
 
         attr.size = sizeof(attr);
         attr.sched_flags = 0;
@@ -5793,7 +5793,7 @@ static void* ComponentThread(void* pThreadData)
         ret = sched_setattr(0, &attr, flags);
         if (ret < 0)
         {
-            alogd("sched_setattr error!");
+            LOGD("sched_setattr error!");
         }
         assert(ret == 0);
     }
@@ -5804,7 +5804,7 @@ static void* ComponentThread(void* pThreadData)
         struct sched_param stSchedPara;
         stSchedPara.sched_priority = 20;
         if (pthread_setschedparam(pthread_self(), SCHED_RR, &stSchedPara))
-            aloge("Set EIS_CompStabThread into SCHED_RR failed, %s.", strerror(errno));
+            LOGE("Set EIS_CompStabThread into SCHED_RR failed, %s.", strerror(errno));
     }
 #endif
 
@@ -5816,7 +5816,7 @@ PROCESS_MESSAGE:
             cmd = cmd_msg.command;
             cmddata = (unsigned int)cmd_msg.para0;
 
-            alogv("VideoEnc ComponentThread get_message cmd:%d", cmd);
+            LOGV("VideoEnc ComponentThread get_message cmd:%d", cmd);
 
             // State transition command
             if (cmd == SetState)
@@ -5863,7 +5863,7 @@ PROCESS_MESSAGE:
                                         0,
                                         NULL);
                             }
-                            alogv("OMX_StateLoaded begin");
+                            LOGV("OMX_StateLoaded begin");
                             //MM_COMPONENTTYPE *InputTunnelComp = (MM_COMPONENTTYPE *)(pVideoEncData->sInPortTunnelInfo.hTunnel);
                             VideoEncResetChannel(pVideoEncData->hSelf, FALSE);
 
@@ -5891,9 +5891,9 @@ PROCESS_MESSAGE:
                                 }
                                 if(cnt+cnt1<pVideoEncData->mFrameNodeNum)
                                 {
-                                    alogw("wait Venc idleOutFrameList full:%d-%d-%d-%d",cnt,cnt1,cnt2,pVideoEncData->mFrameNodeNum);
+                                    LOGW("wait Venc idleOutFrameList full:%d-%d-%d-%d",cnt,cnt1,cnt2,pVideoEncData->mFrameNodeNum);
                                     pthread_cond_wait(&pVideoEncData->mOutFrameFullCondition, &pVideoEncData->mOutFrameListMutex);
-                                    alogw("wait Venc idleOutFrameList full_done"); 
+                                    LOGW("wait Venc idleOutFrameList full_done"); 
                                 }
                                 else
                                 {
@@ -5926,13 +5926,13 @@ PROCESS_MESSAGE:
                             }
                             if(cnt<pVideoEncData->mFrameNodeNum)
                             {
-                                aloge("fatal error wait Venc idleOutFrameList full:%d-%d",cnt,pVideoEncData->mFrameNodeNum);
+                                LOGE("fatal error wait Venc idleOutFrameList full:%d-%d",cnt,pVideoEncData->mFrameNodeNum);
                             }
 
                             
                             pVideoEncData->mWaitOutFrameFullFlag = FALSE;
                             pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
-                            alogv("wait Venc idleOutFrameList full done");
+                            LOGV("wait Venc idleOutFrameList full done");
                             pVideoEncData->state = COMP_StateLoaded;
                             pVideoEncData->pCallbacks->EventHandler(
                                     pVideoEncData->hSelf, pVideoEncData->pAppData,
@@ -5940,7 +5940,7 @@ PROCESS_MESSAGE:
                                     COMP_CommandStateSet,
                                     pVideoEncData->state,
                                     NULL);
-                            alogd("OMX_StateLoaded ok");
+                            LOGD("OMX_StateLoaded ok");
                             break;
                         }
                         case COMP_StateIdle:
@@ -5948,7 +5948,7 @@ PROCESS_MESSAGE:
                             if(pVideoEncData->state == COMP_StateLoaded)
                             {
                                 //pVideoEncData->mMemOps = MemAdapterGetOpsS();
-                                alogv("video encoder: loaded->idle ...");
+                                LOGV("video encoder: loaded->idle ...");
                                 //create vdeclib!
                                 if(pVideoEncData->is_compress_source == 0)
                                 {
@@ -5956,7 +5956,7 @@ PROCESS_MESSAGE:
                                 }
                                 else
                                 {
-                                    alogd("VEnc component is in compress mode, create buffer manager.");
+                                    LOGD("VEnc component is in compress mode, create buffer manager.");
                                     if (pVideoEncData->buffer_manager == NULL)
                                     {
                                         pVideoEncData->buffer_manager = VideoEncBufferInit();
@@ -5973,7 +5973,7 @@ PROCESS_MESSAGE:
                             }
                             else if(pVideoEncData->state == COMP_StatePause || pVideoEncData->state == COMP_StateExecuting)
                             {
-                                alogv("video encoder: pause/executing[0x%x]->idle ...", pVideoEncData->state);
+                                LOGV("video encoder: pause/executing[0x%x]->idle ...", pVideoEncData->state);
 
                             #ifdef ENABLE_ENCODE_STATISTICS
                                 VencEncodeTimeS stEncodeStatistics;
@@ -5981,7 +5981,7 @@ PROCESS_MESSAGE:
                                 if(pVideoEncData->pCedarV)
                                 {
                                     VideoEncGetParameter(pVideoEncData->pCedarV, VENC_IndexParamGetEncodeTime, (void*)&stEncodeStatistics);
-                                    alogd("video encode statistics: avrIdleTime[%d]us, avrEncTime[%d]us, maxIdleTime[%d]us, maxEncTime[%d]us; totalFrame:[%d]",
+                                    LOGD("video encode statistics: avrIdleTime[%d]us, avrEncTime[%d]us, maxIdleTime[%d]us, maxEncTime[%d]us; totalFrame:[%d]",
                                         stEncodeStatistics.avr_empty_time, stEncodeStatistics.avr_enc_time,
                                         stEncodeStatistics.max_empty_time, stEncodeStatistics.max_enc_time, stEncodeStatistics.frame_num);
                                 }
@@ -5997,7 +5997,7 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                aloge("fatal error! current state[0x%x] can't turn to idle!", pVideoEncData->state);
+                                LOGE("fatal error! current state[0x%x] can't turn to idle!", pVideoEncData->state);
                                 pVideoEncData->pCallbacks->EventHandler(
                                         pVideoEncData->hSelf,
                                         pVideoEncData->pAppData,
@@ -6025,7 +6025,7 @@ PROCESS_MESSAGE:
                                         }
                                         else
                                         {
-                                            aloge("fatal error! vdeclib init fail[0x%x]", eError);
+                                            LOGE("fatal error! vdeclib init fail[0x%x]", eError);
                                         }
                                     }
                                     pthread_mutex_unlock(&pVideoEncData->mCedarvVideoEncInitFlagLock);
@@ -6103,7 +6103,7 @@ PROCESS_MESSAGE:
             {
                 if(0 == pVideoEncData->mNoInputFrameFlag)
                 {
-                    //alogd("BeCareful! noInputFrameFlag already 0");
+                    //LOGD("BeCareful! noInputFrameFlag already 0");
                 }
                 pVideoEncData->mNoInputFrameFlag = 0;
             }
@@ -6140,7 +6140,7 @@ PROCESS_MESSAGE:
                     //jpeg encoder can also support multi frames now, so need not reset encoder.
                     //VideoEncoderReset(pVideoEncData->pCedarV);
                 }
-                //alogd(" buffer.frameNum=%d", buffer.frameNum);
+                //LOGD(" buffer.frameNum=%d", buffer.frameNum);
                 memset((void*)&encBuf, 0, sizeof(VencInputBuffer));
                 encBuf.nID = pFrameNode->VFrame.mId;
                 encBuf.nPts = (long long)pFrameNode->VFrame.VFrame.mpts/* - pVideoEncData->csi_base_time*/;
@@ -6232,7 +6232,7 @@ PROCESS_MESSAGE:
                         if(pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth != pFrameNode->VFrame.VFrame.mWidth
                             || pVideoEncData->mEncChnAttr.VeAttr.SrcPicHeight != pFrameNode->VFrame.VFrame.mHeight)
                         {
-                            alogw("fatal error! enc src_size[%dx%d]!= frameSize[%dx%d]!",
+                            LOGW("fatal error! enc src_size[%dx%d]!= frameSize[%dx%d]!",
                                 pVideoEncData->mEncChnAttr.VeAttr.SrcPicWidth,
                                 pVideoEncData->mEncChnAttr.VeAttr.SrcPicHeight,
                                 pFrameNode->VFrame.VFrame.mWidth,
@@ -6251,7 +6251,7 @@ PROCESS_MESSAGE:
                 result = AddOneInputBuffer(pCedarV, &encBuf);
                 if(result != 0)
                 {
-                    aloge("fatal error! AddOneInputBuffer fail[%d]", result);
+                    LOGE("fatal error! AddOneInputBuffer fail[%d]", result);
                 }
 
                 //checkMbMode(pVideoEncData);
@@ -6264,7 +6264,7 @@ PROCESS_MESSAGE:
                 MPP_AtraceEnd(ATRACE_TAG_MPP_VENC);
                 pVideoEncData->mDbgEncodeCnt++;
 
-                //alogd("encodeRet[0x%x]", ret);
+                //LOGD("encodeRet[0x%x]", ret);
 #ifdef VIDEO_ENC_TIME_DEBUG
                 int64_t timeIntervalUs = (CDX_GetSysTimeUsMonotonic() - time0);
                 if (timeIntervalUs > 200 * 1000)
@@ -6275,7 +6275,7 @@ PROCESS_MESSAGE:
                     list_for_each(pList, &pVideoEncData->mBufQ.mReadyFrameList){cnt++;}
                     int idleCnt = 0;
                     list_for_each(pList, &pVideoEncData->mBufQ.mIdleFrameList){idleCnt++;}
-                    alogd("Be careful! vencChn[%d], encodeType[%d] too long to [%lld]us, ret[0x%x], bufferId[%d], vBufSize[%dx%d], readylist[%d], idlelist[%d]",
+                    LOGD("Be careful! vencChn[%d], encodeType[%d] too long to [%lld]us, ret[0x%x], bufferId[%d], vBufSize[%dx%d], readylist[%d], idlelist[%d]",
                         pVideoEncData->mMppChnInfo.mChnId, pVideoEncData->mEncChnAttr.VeAttr.Type, timeIntervalUs, ret, pFrameNode->VFrame.mId,
                         pFrameNode->VFrame.VFrame.mWidth, pFrameNode->VFrame.VFrame.mHeight, cnt, idleCnt);
                     pthread_mutex_unlock(&pVideoEncData->mutex_fifo_ops_lock);
@@ -6286,22 +6286,22 @@ PROCESS_MESSAGE:
                 VideoEncGetParameter(pVideoEncData->pCedarV, VENC_IndexParamGetEncodeTime, (void*)&stEncodeStatistics);
                 if(stEncodeStatistics.curr_enc_time > 30*1000)
                 {
-                    alogd("videoFrameNum[%d] encode [%d]us > 30*1000", stEncodeStatistics.frame_num, stEncodeStatistics.curr_enc_time);
+                    LOGD("videoFrameNum[%d] encode [%d]us > 30*1000", stEncodeStatistics.frame_num, stEncodeStatistics.curr_enc_time);
                 }
 #endif
                 // return input frame immediately!
                 result = AlreadyUsedInputBuffer(pCedarV,&encBuf);
                 if(result != 0)
                 {
-                    aloge("fatal error! AlreadyUsedInputBuffer fail[%d]", result);
+                    LOGE("fatal error! AlreadyUsedInputBuffer fail[%d]", result);
                 }
                 if((int)encBuf.nID != pFrameNode->VFrame.mId)
                 {
-                    aloge("fatal error! encBuf.nID[%ld] != pVideoEncData->buf_id[%d]", encBuf.nID, pFrameNode->VFrame.mId);
+                    LOGE("fatal error! encBuf.nID[%ld] != pVideoEncData->buf_id[%d]", encBuf.nID, pFrameNode->VFrame.mId);
                 }
                 if(VENC_RESULT_ERROR == ret)
                 {
-                    aloge("pixelFormat[0x%x] encode wrong! frameId[%d], [%lldus]", pFrameNode->VFrame.VFrame.mPixelFormat, pFrameNode->VFrame.mId, pFrameNode->VFrame.VFrame.mpts);
+                    LOGE("pixelFormat[0x%x] encode wrong! frameId[%d], [%lldus]", pFrameNode->VFrame.VFrame.mPixelFormat, pFrameNode->VFrame.mId, pFrameNode->VFrame.VFrame.mpts);
                     pVideoEncData->mEncodeTimeoutCnt++;
                     //send callback message to notify encode error
                     pVideoEncData->pCallbacks->EventHandler(
@@ -6335,11 +6335,11 @@ PROCESS_MESSAGE:
                                     snprintf(DbgStoreFilePath, 256, "/mnt/extsd/pic[%d][id%d][%lldus].lbc10x", pVideoEncData->mDbgEncodeCnt, pFrameNode->VFrame.mId, pFrameNode->VFrame.VFrame.mpts);
                                     break;
                                 default:
-                                    aloge("fatal error! check code! vpixel format!");
+                                    LOGE("fatal error! check code! vpixel format!");
                                     break;
                             }
                             
-                            alogd("prepare store frame in file[%s], timeoutCnt[%d]", DbgStoreFilePath, pVideoEncData->mEncodeTimeoutCnt);
+                            LOGD("prepare store frame in file[%s], timeoutCnt[%d]", DbgStoreFilePath, pVideoEncData->mEncodeTimeoutCnt);
                             FILE *dbgFp = fopen(DbgStoreFilePath, "wb");
                             if(dbgFp != NULL)
                             {
@@ -6351,18 +6351,18 @@ PROCESS_MESSAGE:
                                     if(pFrameNode->VFrame.VFrame.mpVirAddr[i] != NULL)
                                     {
                                         fwrite(pFrameNode->VFrame.VFrame.mpVirAddr[i], 1, yuvSize[i], dbgFp);
-                                        alogd("virAddr[%d]=[%p], length=[%d]", i, pFrameNode->VFrame.VFrame.mpVirAddr[i], yuvSize[i]);
+                                        LOGD("virAddr[%d]=[%p], length=[%d]", i, pFrameNode->VFrame.VFrame.mpVirAddr[i], yuvSize[i]);
                                     }
                                 }
                                 fclose(dbgFp);
-                                alogd("store frame in file[%s]", DbgStoreFilePath);
+                                LOGD("store frame in file[%s]", DbgStoreFilePath);
                             }
                         }
                         else if(MM_PIXEL_FORMAT_YVU_SEMIPLANAR_420 == pVideoEncData->mEncChnAttr.VeAttr.PixelFormat)
                         {
                             char DbgStoreFilePath[256];
                             snprintf(DbgStoreFilePath, 256, "/tmp/pic[%d][id%d][%lldus].nv21", pVideoEncData->mDbgEncodeCnt, pFrameNode->VFrame.mId, pFrameNode->VFrame.VFrame.mpts);
-                            alogd("prepare store frame in file[%s]", DbgStoreFilePath);
+                            LOGD("prepare store frame in file[%s]", DbgStoreFilePath);
                             FILE *dbgFp = fopen(DbgStoreFilePath, "wb");
                             if(dbgFp != NULL)
                             {
@@ -6374,11 +6374,11 @@ PROCESS_MESSAGE:
                                     if(pFrameNode->VFrame.VFrame.mpVirAddr[i] != NULL)
                                     {
                                         fwrite(pFrameNode->VFrame.VFrame.mpVirAddr[i], 1, yuvSize[i], dbgFp);
-                                        alogd("virAddr[%d]=[%p], length=[%d]", i, pFrameNode->VFrame.VFrame.mpVirAddr[i], yuvSize[i]);
+                                        LOGD("virAddr[%d]=[%p], length=[%d]", i, pFrameNode->VFrame.VFrame.mpVirAddr[i], yuvSize[i]);
                                     }
                                 }
                                 fclose(dbgFp);
-                                alogd("store frame in file[%s]", DbgStoreFilePath);
+                                LOGD("store frame in file[%s]", DbgStoreFilePath);
                             }
                         }
                     }
@@ -6404,12 +6404,12 @@ PROCESS_MESSAGE:
                         unsigned int nBitRate = GetBitRateFromVENC_CHN_ATTR_S(&pVideoEncData->mEncChnAttr);
                         if(0 == pVideoEncData->bitStreamBufFullCnt)
                         {
-                            alogw("vencChn[%d] fail BsFull[%d], validFrames[%d], bitRate[%d]Mbit", 
+                            LOGW("vencChn[%d] fail BsFull[%d], validFrames[%d], bitRate[%d]Mbit", 
                                 pVideoEncData->mMppChnInfo.mChnId, ret, ValidBitstreamFrameNum(pVideoEncData->pCedarV), nBitRate/(1000*1000));
                         }
                         if(0 == pVideoEncData->bitStreamBufFullCnt%30)
                         {
-                            //alogw("vbv full contiguous count:%d", pVideoEncData->bitStreamBufFullCnt);
+                            //LOGW("vbv full contiguous count:%d", pVideoEncData->bitStreamBufFullCnt);
                             pVideoEncData->pCallbacks->EventHandler(
                                 pVideoEncData->hSelf,
                                 pVideoEncData->pAppData,
@@ -6424,7 +6424,7 @@ PROCESS_MESSAGE:
                     {
                         //pVideoEncData->bitStreamBufFullCnt = 0;
                         delayTime = 0;  //10*1000;
-                        aloge("encode return %d, wait[%d]ms", ret, delayTime/1000);
+                        LOGE("encode return %d, wait[%d]ms", ret, delayTime/1000);
                     }
 
                     if(delayTime > 0)
@@ -6436,9 +6436,9 @@ PROCESS_MESSAGE:
                         pthread_mutex_lock(&pVideoEncData->mOutFrameListMutex);
                         pVideoEncData->mWaitOutFrameReturnFlag = TRUE;
                         pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
-                        alogw("venc_wait_out_buff");
+                        LOGW("venc_wait_out_buff");
                         TMessage_WaitQueueNotEmpty(&pVideoEncData->cmd_queue, 0); 
-                        alogw("venc_wait_out_buff_msg");
+                        LOGW("venc_wait_out_buff_msg");
                         goto PROCESS_MESSAGE;
                     }
                 }
@@ -6447,7 +6447,7 @@ PROCESS_MESSAGE:
                     if(pVideoEncData->bitStreamBufFullCnt != 0)
                     {
                         unsigned int nBitRate = GetBitRateFromVENC_CHN_ATTR_S(&pVideoEncData->mEncChnAttr);
-                        alogw("vencChn[%d] fail BsFull[%d] contiguous count:%d, send vbvFull msg [%d]times, validFrames[%d], bitRate[%d]Mbit", 
+                        LOGW("vencChn[%d] fail BsFull[%d] contiguous count:%d, send vbvFull msg [%d]times, validFrames[%d], bitRate[%d]Mbit", 
                             pVideoEncData->mMppChnInfo.mChnId, ret, pVideoEncData->bitStreamBufFullCnt, pVideoEncData->bitStreamBufFullCnt/30+1,
                             ValidBitstreamFrameNum(pVideoEncData->pCedarV), nBitRate/(1000*1000));
                         pVideoEncData->bitStreamBufFullCnt = 0;
@@ -6465,7 +6465,7 @@ PROCESS_MESSAGE:
                         pthread_mutex_lock(&pVideoEncData->mOutFrameListMutex);
                         if(list_empty(&pVideoEncData->mIdleOutFrameList))
                         {
-                            alogv("Low probability! VEncComp idle out frame list is empty, curNum[%d], malloc more!", pVideoEncData->mFrameNodeNum);
+                            LOGV("Low probability! VEncComp idle out frame list is empty, curNum[%d], malloc more!", pVideoEncData->mFrameNodeNum);
                             ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
                             if(pNode)
                             {
@@ -6475,7 +6475,7 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                aloge("fatal error! malloc fail[%s]!", strerror(errno));
+                                LOGE("fatal error! malloc fail[%s]!", strerror(errno));
                                 pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
                                 if(TMessage_WaitQueueNotEmpty(&pVideoEncData->cmd_queue, 200) > 0)
                                 {
@@ -6493,12 +6493,12 @@ PROCESS_MESSAGE:
                         getRet = GetOneBitstreamFrame(pCedarV, &stOutputBuffer);
                         if (getRet != 0)
                         {
-                            //aloge("fatal error! GetOneBitstreamFrame fail after encode ok, check code!");
+                            //LOGE("fatal error! GetOneBitstreamFrame fail after encode ok, check code!");
                             pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
                             break;
                         }
                         //int64_t tm2 = CDX_GetSysTimeUsMonotonic();
-                        //alogd("encoded frame pts[%lld]us, tm2[%lld]us", stOutputBuffer.nPts, tm2);
+                        //LOGD("encoded frame pts[%lld]us, tm2[%lld]us", stOutputBuffer.nPts, tm2);
                         config_EncodedStream_By_VencOutputBuffer(&pEntry->stEncodedStream, &stOutputBuffer);
 
 #ifdef STORE_BITSTREAM_FILE
@@ -6521,18 +6521,18 @@ PROCESS_MESSAGE:
                             unsigned int outSize = stOutputBuffer.nSize0 + stOutputBuffer.nSize1;
                             if (outSize > dstPicSize.Width*dstPicSize.Height*3/4)
                             {
-                                alogw("Impossible! large frameSize[%d]Byte([%f]MB), [%d][%d], dstSize[%dx%d]!", outSize, (float)outSize/(1024*1024), stOutputBuffer.nSize0, stOutputBuffer.nSize1, dstPicSize.Width, dstPicSize.Height);
+                                LOGW("Impossible! large frameSize[%d]Byte([%f]MB), [%d][%d], dstSize[%dx%d]!", outSize, (float)outSize/(1024*1024), stOutputBuffer.nSize0, stOutputBuffer.nSize1, dstPicSize.Width, dstPicSize.Height);
                             }
                             if (outSize > pVideoEncData->mStatMaxFrameSize)
                             {
                                 pVideoEncData->mStatMaxFrameSize = outSize;
-                                alogd("current max frameSize[%d]Byte([%f]MB), dstSize[%dx%d]!", outSize, (float)outSize/(1024*1024), dstPicSize.Width, dstPicSize.Height);
+                                LOGD("current max frameSize[%d]Byte([%f]MB), dstSize[%dx%d]!", outSize, (float)outSize/(1024*1024), dstPicSize.Width, dstPicSize.Height);
                             }
                         }
-                        //alogd("encode outPts[%lld]us, flag[0x%x], [%p][%d][%p][%d]", pOutFrame->mOutBuf.nPts, pOutFrame->mOutBuf.nFlag, pOutFrame->mOutBuf.pData0, pOutFrame->mOutBuf.nSize0, pOutFrame->mOutBuf.pData1, pOutFrame->mOutBuf.nSize1);
+                        //LOGD("encode outPts[%lld]us, flag[0x%x], [%p][%d][%p][%d]", pOutFrame->mOutBuf.nPts, pOutFrame->mOutBuf.nFlag, pOutFrame->mOutBuf.pData0, pOutFrame->mOutBuf.nSize0, pOutFrame->mOutBuf.pData1, pOutFrame->mOutBuf.nSize1);
                         //if(pOutFrame->mOutBuf.nFlag & VENC_BUFFERFLAG_KEYFRAME)
                         //{
-                        //    alogw("encode key frame[0x%x]!", pOutFrame->mOutBuf.nFlag);
+                        //    LOGW("encode key frame[0x%x]!", pOutFrame->mOutBuf.nFlag);
                         //}
 
                         if (pVideoEncData->mOutputPortTunnelFlag)
@@ -6552,11 +6552,11 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                alogd("Be careful! VEnc output frame fail[0x%x], return frame to venc!", omxRet);
+                                LOGD("Be careful! VEnc output frame fail[0x%x], return frame to venc!", omxRet);
                                 releaseRet = FreeOneBitStreamFrame(pCedarV, &stOutputBuffer);
                                 if(releaseRet != 0)
                                 {
-                                    aloge("fatal error! freeOneBitStreamFrame fail[%d]", releaseRet);
+                                    LOGE("fatal error! freeOneBitStreamFrame fail[%d]", releaseRet);
                                 }
                                 pthread_mutex_lock(&pVideoEncData->mOutFrameListMutex);
                                 list_move_tail(&pEntry->mList, &pVideoEncData->mIdleOutFrameList);
@@ -6585,7 +6585,7 @@ PROCESS_MESSAGE:
                 pthread_mutex_lock(&pVideoEncData->mOutFrameListMutex);
                 if(list_empty(&pVideoEncData->mIdleOutFrameList))
                 {
-                    aloge("fatal error! why idleOutFrameList is empty when in compressed source? wait 200ms");
+                    LOGE("fatal error! why idleOutFrameList is empty when in compressed source? wait 200ms");
                     pthread_mutex_unlock(&pVideoEncData->mOutFrameListMutex);
                     usleep(200*1000);
                     continue;
@@ -6606,7 +6606,7 @@ PROCESS_MESSAGE:
                     }
                     pEntry->stEncodedStream.nTimeStamp = frame.info.timeStamp/* - pVideoEncData->csi_base_time*/;
                     pEntry->stEncodedStream.nID = frame.info.bufferId;
-                    alogv("rd buf_id: %d, nTimeStamp: %lld", pEntry->stEncodedStream.nID, pEntry->stEncodedStream.nTimeStamp);
+                    LOGV("rd buf_id: %d, nTimeStamp: %lld", pEntry->stEncodedStream.nID, pEntry->stEncodedStream.nTimeStamp);
 
                     if (pVideoEncData->mOutputPortTunnelFlag)
                     {
@@ -6625,7 +6625,7 @@ PROCESS_MESSAGE:
                                     }
                                     else
                                     {
-                                        aloge("fatal error! why set spspps fail[0x%x]?", ret);
+                                        LOGE("fatal error! why set spspps fail[0x%x]?", ret);
                                     }
                                 }
                             }
@@ -6642,11 +6642,11 @@ PROCESS_MESSAGE:
                         }
                         else
                         {
-                            aloge("fatal error! VEnc output frame fail, return frame to buffer_manager!");
+                            LOGE("fatal error! VEnc output frame fail, return frame to buffer_manager!");
                             releaseOmxRet = VideoEncBufferReleaseFrame(pVideoEncData->buffer_manager, &frame);
                             if (releaseOmxRet != SUCCESS)
                             {
-                                aloge("fatal error! videoEncBufferReleaseFrame fail[%d]", releaseOmxRet);
+                                LOGE("fatal error! videoEncBufferReleaseFrame fail[%d]", releaseOmxRet);
                             }
                             pthread_mutex_lock(&pVideoEncData->mOutFrameListMutex);
                             list_move_tail(&pEntry->mList, &pVideoEncData->mIdleOutFrameList);
@@ -6675,12 +6675,12 @@ PROCESS_MESSAGE:
         }
         else
         {
-            alogv("Encoder ComponentThread not OMX_StateExecuting\n");
+            LOGV("Encoder ComponentThread not OMX_StateExecuting");
             TMessage_WaitQueueNotEmpty(&pVideoEncData->cmd_queue, 0);
         }
     }
 EXIT:
-    alogv("VideoEncoder ComponentThread stopped");
+    LOGV("VideoEncoder ComponentThread stopped");
     return (void*) SUCCESS;
 }
 

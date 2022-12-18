@@ -7,7 +7,7 @@
 * History :
 *   Author  : Khan <chengkan@allwinnertech.com>
 *   Date    : 2014/12/08
-*   Comment : ´´½¨³õÊ¼°æ±¾£¬ÊµÏÖ ID3_tag µÄ½âÎö¹¦ÄÜ
+*   Comment : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½æ±¾ï¿½ï¿½Êµï¿½ï¿½ ID3_tag ï¿½Ä½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 */
 
 #include <CdxTypes.h>
@@ -45,7 +45,7 @@ static int Id3v2Init(CdxParserT *id3_impl)
     impl->id3v2 = GenerateId3(impl->stream, NULL, 0, ktrue);
     if(!impl->id3v2)
     {
-        CDX_LOGW("get id3 handle fail!");
+        LOGW("get id3 handle fail!");
         goto OPENFAILURE;
     }
 
@@ -54,19 +54,19 @@ static int Id3v2Init(CdxParserT *id3_impl)
 
     if(impl->id3v2->mIsValid)
     {
-        CDX_LOGD("Parser id3 success");
+        LOGD("Parser id3 success");
     }
     else
     {
-        CDX_LOGD("Id3_v2 parser get fail? Joking me....");
+        LOGD("Id3_v2 parser get fail? Joking me....");
         goto OPENFAILURE;
     }
 
     CdxStreamProbeDataT *probeData = CdxStreamGetProbeData(impl->stream);
 
-    CDX_LOGD("From(%lld) skip to post id3 location(%lld), totally skip (%lld + %d)...",
+    LOGD("From(%lld) skip to post id3 location(%lld), totally skip (%lld + %d)...",
 impl->cur_id3_offset, impl->cur_id3_offset + offset, probeData->sync_pos, impl->id3v2->mRawSize);
-    CDX_LOGD("Now actually offset %lld", CdxStreamTell(impl->stream));
+    LOGD("Now actually offset %lld", CdxStreamTell(impl->stream));
 
     impl->cur_id3_offset += offset;
 
@@ -86,13 +86,13 @@ impl->cur_id3_offset, impl->cur_id3_offset + offset, probeData->sync_pos, impl->
         impl->cdxDataSource.offset = impl->cur_id3_offset;
     }
 
-    logd("impl->newurl(%s), impl->file_offset(%lld)", impl->newurl, impl->cur_id3_offset);
+    LOGD("impl->newurl(%s), impl->file_offset(%lld)", impl->newurl, impl->cur_id3_offset);
     impl->cdxDataSource.uri = impl->newurl;
 
     if (probeData->len > offset + PROBE_PREOTECTION)
     {
         probeData->len -= offset;
-        CDX_LOGD("Id3 probe data is enough at absolutive pos(%lld), reuse(sync_pos(%lld), skip(%d),\
+        LOGD("Id3 probe data is enough at absolutive pos(%lld), reuse(sync_pos(%lld), skip(%d),\
  left(%d))", impl->fdoffset, probeData->sync_pos, offset, probeData->len);
         probeData->sync_pos = 0;
         memmove(probeData->buf, probeData->buf + offset, probeData->len);
@@ -104,24 +104,24 @@ impl->cur_id3_offset, impl->cur_id3_offset + offset, probeData->sync_pos, impl->
             impl->mErrno = PSR_OK;
             return 0;
         }
-        CDX_LOGE("Reuse the father's probe data, but open child parser fail...");
+        LOGE("Reuse the father's probe data, but open child parser fail...");
         goto OPENFAILURE;
     }
-    CDX_LOGD("Id3 probe data is not enough at absolutive pos(%lld), probe has(%d), need skip(%d)\
+    LOGD("Id3 probe data is not enough at absolutive pos(%lld), probe has(%d), need skip(%d)\
  + %d bytes protection, reopen stream and fill probe data...",
             impl->fdoffset, probeData->len, offset, PROBE_PREOTECTION);
     ret = CdxParserPrepare(&impl->cdxDataSource, NO_NEED_DURATION|DO_NOT_EXTRACT_ID3_METADATA,
         &impl->lock, &impl->forceStop, &impl->child, &impl->childStream, NULL, NULL);
     if(ret < 0)
     {
-        CDX_LOGE("CdxParserPrepare fail");
+        LOGE("CdxParserPrepare fail");
         goto OPENFAILURE;
     }
 
     impl->mErrno = PSR_OK;
     return 0;
 OPENFAILURE:
-    CDX_LOGE("Id3OpenThread fail!!!");
+    LOGE("Id3OpenThread fail!!!");
     EraseId3(&impl->id3v2);
     impl->mErrno = PSR_OPEN_FAIL;
     return -1;
@@ -147,7 +147,7 @@ static cdx_int32 __Id3v2ParserControl(CdxParserT *parser, cdx_int32 cmd, void *p
             CdxParserClrForceStop(impl->child);
             break;
         default :
-            CDX_LOGD("Default success to child processing...");
+            LOGD("Default success to child processing...");
             CdxParserControl(impl->child, cmd, param);
             break;
     }
@@ -190,7 +190,7 @@ static cdx_int32 __Id3v2ParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *me
     {
         if(impl->id3v2 && impl->id3v2->mIsValid)
         {
-            CDX_LOGD("id3v2 has vaild parsed...");
+            LOGD("id3v2 has vaild parsed...");
             mediaInfo->id3v2HadParsed = 1;
             Id3BaseGetMetaData(mediaInfo, impl->id3v2);
             Id3BaseExtraAlbumPic(mediaInfo, impl->id3v2);
@@ -250,7 +250,7 @@ static cdx_int32 __Id3v2ParserClose(CdxParserT *parser)
         if(thiz->addr!=NULL)
         {
             free(thiz->addr);
-            CDX_LOGE("FREE PIC");
+            LOGE("FREE PIC");
             thiz->addr = NULL;
         }
         tmp = thiz;
@@ -259,19 +259,19 @@ static cdx_int32 __Id3v2ParserClose(CdxParserT *parser)
         {
             free(tmp);
             impl->pAlbumArtid--;
-            CDX_LOGE("FREE PIC COMPLETE impl->pAlbumArtid:%d",impl->pAlbumArtid);
+            LOGE("FREE PIC COMPLETE impl->pAlbumArtid:%d",impl->pAlbumArtid);
             tmp = NULL;
         }
     }
 #endif
     if(impl->stream && !(impl->id3Attributes & SUCCESS_STREAM_TO_CHILD)){
-        CDX_LOGD("id3v2 close stream it self...");
+        LOGD("id3v2 close stream it self...");
         CdxStreamClose(impl->stream);
         impl->stream = NULL;
     }
     else
     {
-        CDX_LOGD("id3v2 success stream to its child, child close stream!");
+        LOGD("id3v2 success stream to its child, child close stream!");
     }
 
     if(impl->child)
@@ -307,7 +307,7 @@ static cdx_uint32 __Id3v2ParserProbe(CdxStreamProbeDataT *probeData)
     CDX_CHECK(probeData);
     if(probe_max_len < 10)
     {
-        CDX_LOGE("Probe ID3_header data is not enough.");
+        LOGE("Probe ID3_header data is not enough.");
         return 0;
     }
 
@@ -330,11 +330,11 @@ static cdx_uint32 __Id3v2ParserProbe(CdxStreamProbeDataT *probeData)
         score -= 1;
         if(i >= probe_max_len - 10)
         {
-            CDX_LOGE("Probe ID3_header loss sync...");
+            LOGE("Probe ID3_header loss sync...");
             return 0;
         }
     }
-    CDX_LOGD("Id3v2 probe score : %d, offset : %d", score, i);
+    LOGD("Id3v2 probe score : %d, offset : %d", score, i);
     probeData->sync_pos = i;
     return score;
 }

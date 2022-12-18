@@ -15,7 +15,7 @@
 */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "FsCache"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <errno.h>
@@ -79,7 +79,7 @@ static ssize_t FsCacheThreadWrite(FsWriter *thiz, const char *buf, size_t size)
             }
             else
             {
-                aloge("fatal error! at lease left one byte! check code!");
+                LOGE("fatal error! at lease left one byte! check code!");
             }
 
             nFreeSize = nFreeSizeSection1+nFreeSizeSection2;
@@ -95,7 +95,7 @@ static ssize_t FsCacheThreadWrite(FsWriter *thiz, const char *buf, size_t size)
                     }
                     else if(pWtPtr > pCtx->mpCache+pCtx->mCacheSize)
                     {
-                        aloge("fatal error! check code!");
+                        LOGE("fatal error! check code!");
                     }
                 }
                 else
@@ -110,12 +110,12 @@ static ssize_t FsCacheThreadWrite(FsWriter *thiz, const char *buf, size_t size)
             else
             {
 				int64_t tm1, tm2;
-				alogd("codecID[%d], nFreeSize[%d]<size[%d], wait begin", pCtx->mVideoCodecId, nFreeSize, size);
+				LOGD("codecID[%d], nFreeSize[%d]<size[%d], wait begin", pCtx->mVideoCodecId, nFreeSize, size);
                 tm1 = CDX_GetSysTimeUsMonotonic();
                 cdx_sem_up_unique(&pCtx->mWriteStartSem);
 				cdx_sem_wait(&pCtx->mWriteDoneSem);
                 tm2 = CDX_GetSysTimeUsMonotonic();
-				alogd("codecID[%d], nFreeSize[%d]<size[%d], wait end [%lld]ms", pCtx->mVideoCodecId, nFreeSize, size, (tm2-tm1)/1000);
+				LOGD("codecID[%d], nFreeSize[%d]<size[%d], wait end [%lld]ms", pCtx->mVideoCodecId, nFreeSize, size, (tm2-tm1)/1000);
             }
         }
         else    //pWtPtr < pRdPtr
@@ -131,12 +131,12 @@ static ssize_t FsCacheThreadWrite(FsWriter *thiz, const char *buf, size_t size)
             else
             {
 				int64_t tm1, tm2;
-				alogd("codecID[%d], nFreeSize[%d]<size[%d], wait begin", pCtx->mVideoCodecId, nFreeSize, size);
+				LOGD("codecID[%d], nFreeSize[%d]<size[%d], wait begin", pCtx->mVideoCodecId, nFreeSize, size);
                 tm1 = CDX_GetSysTimeUsMonotonic();
 		        cdx_sem_up_unique(&pCtx->mWriteStartSem);
 				cdx_sem_wait(&pCtx->mWriteDoneSem);
                 tm2 = CDX_GetSysTimeUsMonotonic();
-				alogd("codecID[%d], nFreeSize[%d]<size[%d], wait end [%lld]ms", pCtx->mVideoCodecId, nFreeSize, size, (tm2-tm1)/1000);
+				LOGD("codecID[%d], nFreeSize[%d]<size[%d], wait end [%lld]ms", pCtx->mVideoCodecId, nFreeSize, size, (tm2-tm1)/1000);
             }
         }
     }
@@ -199,10 +199,10 @@ static int FsCacheThreadFlush(FsWriter *thiz)
     pWtPtr = (char*)pCtx->mWritePtr;
     if(pRdPtr != pWtPtr)
     {
-        aloge("fatal error! Flush fail[%p][%p]?", pRdPtr, pWtPtr);
+        LOGE("fatal error! Flush fail[%p][%p]?", pRdPtr, pWtPtr);
         return -1;
     }
-	alogd("mpCache=%p, mReadPtr=%p, mWritePtr=%p, mCacheSize=%d", pCtx->mpCache, pCtx->mReadPtr, pCtx->mWritePtr, pCtx->mCacheSize);
+	LOGD("mpCache=%p, mReadPtr=%p, mWritePtr=%p, mCacheSize=%d", pCtx->mpCache, pCtx->mReadPtr, pCtx->mWritePtr, pCtx->mCacheSize);
     return 0;
 }
 
@@ -217,7 +217,7 @@ static void* FsCacheWriteThread(void* pThreadData)
     size_t nValidSizeSection2;
     size_t nWriteBlockNum;
 
-    alogv("FsCacheWriteThread[%d] started", pCtx->mThreadId);
+    LOGV("FsCacheWriteThread[%d] started", pCtx->mThreadId);
     while (1) 
     {
 		cdx_sem_down(&pCtx->mWriteStartSem);
@@ -240,12 +240,12 @@ static void* FsCacheWriteThread(void* pThreadData)
         {
             if(nWriteBlockNum>1)
             {
-                alogv("nValidSize[%d]kB, nWriteBlockNum[%d], maybe write slow?", nValidSize/1024, nWriteBlockNum);
+                LOGV("nValidSize[%d]kB, nWriteBlockNum[%d], maybe write slow?", nValidSize/1024, nWriteBlockNum);
             }
         }
         else
         {
-            alogv("nValidSize[%d]kB is not enough!", nValidSize/1024);
+            LOGV("nValidSize[%d]kB is not enough!", nValidSize/1024);
         }
         //(2) start to fwrite()
         while(1)
@@ -286,13 +286,13 @@ static void* FsCacheWriteThread(void* pThreadData)
                     }
                     else if(pRdPtr > pCtx->mpCache + pCtx->mCacheSize)
                     {
-                        aloge("fatal error! cache overflow![%p][%p][%d]", pRdPtr, pCtx->mpCache, pCtx->mCacheSize);
+                        LOGE("fatal error! cache overflow![%p][%p][%d]", pRdPtr, pCtx->mpCache, pCtx->mCacheSize);
                     }
                     pCtx->mReadPtr = pRdPtr;
                 }
                 else
                 {
-                    aloge("fatal error! Cache status has something wrong, need check[%p][%p][%p][%d][%d]", 
+                    LOGE("fatal error! Cache status has something wrong, need check[%p][%p][%p][%d][%d]", 
                         pRdPtr, pWtPtr, pCtx->mpCache, pCtx->mCacheSize, nValidSizeSection2);
                     fileWriter(pCtx->mpStream, pRdPtr, nValidSizeSection2);
                     pRdPtr = pCtx->mpCache;
@@ -333,7 +333,7 @@ static void* FsCacheWriteThread(void* pThreadData)
                 }
                 else
                 {
-                    aloge("fatal error! nValidSizeSection2==0!");
+                    LOGE("fatal error! nValidSizeSection2==0!");
                 }
                 if(nValidSizeSection1 > 0)
                 {
@@ -349,7 +349,7 @@ static void* FsCacheWriteThread(void* pThreadData)
             }
             else
             {
-                aloge("fatal error! rdPtr[%p]!=wtPtr[%p]!", pCtx->mReadPtr, pCtx->mWritePtr);
+                LOGE("fatal error! rdPtr[%p]!=wtPtr[%p]!", pCtx->mReadPtr, pCtx->mWritePtr);
             }
             cdx_sem_up(&pCtx->mFlushDoneSem);
             pCtx->mFlushFlag = 0;
@@ -387,7 +387,7 @@ static void* FsCacheWriteThread(void* pThreadData)
                 }
                 else
                 {
-                    aloge("fatal error! nValidSizeSection2==0!");
+                    LOGE("fatal error! nValidSizeSection2==0!");
                 }
                 if(nValidSizeSection1 > 0)
                 {
@@ -404,7 +404,7 @@ static void* FsCacheWriteThread(void* pThreadData)
 	}
 
 EXIT:
-    alogv("FsCacheWriteThread[%d] will quit now.", pCtx->mThreadId);	
+    LOGV("FsCacheWriteThread[%d] will quit now.", pCtx->mThreadId);	
 	return NULL;
 }
 
@@ -415,12 +415,12 @@ FsWriter *initFsCacheThreadContext(struct cdx_stream_info *pStream, char *pCache
 	
     FsWriter *pFsWriter = (FsWriter*)malloc(sizeof(FsWriter));
 	if (NULL == pFsWriter) {
-        aloge("Failed to alloc FsWriter(%s)", strerror(errno));
+        LOGE("Failed to alloc FsWriter(%s)", strerror(errno));
 		return NULL;
 	}
     FsCacheThreadContext *pContext = (FsCacheThreadContext*)malloc(sizeof(FsCacheThreadContext));
 	if (NULL == pContext) {
-        aloge("Failed to alloc FsCacheThreadContext(%s)", strerror(errno));
+        LOGE("Failed to alloc FsCacheThreadContext(%s)", strerror(errno));
 		goto ERROR0;
 	}
     pContext->mpStream = pStream;
@@ -428,7 +428,7 @@ FsWriter *initFsCacheThreadContext(struct cdx_stream_info *pStream, char *pCache
     pContext->mpCache = pCache;
     if(NULL == pContext->mpCache)
     {
-        alogw("fatal error! malloc [%d]kByte fail.", nCacheSize/1024);
+        LOGW("fatal error! malloc [%d]kByte fail.", nCacheSize/1024);
         goto ERROR1;
     }
     pContext->mThreadExitFlag = 0;
@@ -438,32 +438,32 @@ FsWriter *initFsCacheThreadContext(struct cdx_stream_info *pStream, char *pCache
     err = pthread_mutex_init(&pContext->mFlushLock, NULL);
     if(err)
     {
-        aloge("err[%d]", err);
+        LOGE("err[%d]", err);
         goto ERROR2;
     }
     err = cdx_sem_init(&pContext->mWriteStartSem,0);
     if(err)
     {
-        aloge("err[%d]", err);
+        LOGE("err[%d]", err);
         goto ERROR3;
     }
     err = cdx_sem_init(&pContext->mFlushDoneSem,0);
     if(err)
     {
-        aloge("err[%d]", err);
+        LOGE("err[%d]", err);
         goto ERROR4;
     }
 	err = cdx_sem_init(&pContext->mWriteDoneSem, 0);
     if(err)
     {
-        aloge("err[%d]", err);
+        LOGE("err[%d]", err);
         goto ERROR5;
     }
     
     // Create writer thread
 	err = pthread_create(&pContext->mThreadId, NULL, FsCacheWriteThread, pContext);
 	if (err || !pContext->mThreadId) {
-		aloge("FsCacheThread create writer thread err");
+		LOGE("FsCacheThread create writer thread err");
         goto ERROR6;
 	}
 
@@ -497,12 +497,12 @@ int deinitFsCacheThreadContext(FsWriter *pFsWriter)
 {
     int eError = 0;
 	if (NULL == pFsWriter) {
-        aloge("pFsWriter is NULL!!");
+        LOGE("pFsWriter is NULL!!");
 		return -1;
 	}
 	FsCacheThreadContext *pContext = (FsCacheThreadContext*)pFsWriter->mPriv;
 	if (NULL == pContext) {
-        aloge("pContext is NULL!!");
+        LOGE("pContext is NULL!!");
 		return -1;
 	}
     pContext->mThreadExitFlag = 1;

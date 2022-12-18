@@ -12,7 +12,7 @@
 ******************************************************************************/
 
 #define LOG_TAG "VideoEIS_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <errno.h>
@@ -166,7 +166,7 @@ ERRORTYPE DoVideoEisGetTunnelInfo(PARAM_IN COMP_HANDLETYPE hComponent,
         }
     }
     if(i == EIS_CHN_MAX_PORTS) {
-        aloge("No such port index[%d] in EIS[%d].", pTunnelInfo->nPortIndex, pVideoEISData->mMppChnInfo.mChnId);
+        LOGE("No such port index[%d] in EIS[%d].", pTunnelInfo->nPortIndex, pVideoEISData->mMppChnInfo.mChnId);
         eError = ERR_EIS_INVALID_PARA;
     }
 
@@ -194,11 +194,11 @@ static void DoVideoEisStoreProcessedFrm(VIDEOEISDATATYPE* pVideoEISData, VIDEO_F
     for(int i = 0; i < 3; i++) {
         if(SFrame->VFrame.mpVirAddr[i] != NULL) {
             fwrite(SFrame->VFrame.mpVirAddr[i], 1, yuvSize[i], dbgFp);
-            alogd("virAddr[%d]=[%p], length=[%d]", i, SFrame->VFrame.mpVirAddr[i], yuvSize[i]);
+            LOGD("virAddr[%d]=[%p], length=[%d]", i, SFrame->VFrame.mpVirAddr[i], yuvSize[i]);
         }
     }
     fclose(dbgFp);
-    alogd("Store EIS frame in file[%s]", pVideoEISData->mDbgStoreFrameFilePath);
+    LOGD("Store EIS frame in file[%s]", pVideoEISData->mDbgStoreFrameFilePath);
 }
 
 ERRORTYPE DoVideoEisGetData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT EIS_PARAMS_S *pstParams, PARAM_IN int nMilliSec)
@@ -206,14 +206,14 @@ ERRORTYPE DoVideoEisGetData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT EIS_P
     ERRORTYPE eError = SUCCESS;
     VIDEOEISDATATYPE *pVideoEISData = (VIDEOEISDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (COMP_StateIdle != pVideoEISData->state && COMP_StateExecuting != pVideoEISData->state) {
-        alogw("call getStream in wrong state[0x%x]", pVideoEISData->state);
+        LOGW("call getStream in wrong state[0x%x]", pVideoEISData->state);
         return ERR_VI_NOT_PERM;
     }
     int ret;
 
     /* not support get data in Tunnel mode for app */
     if (TRUE == pVideoEISData->bOutputPortTunnelFlag) {
-        aloge("You are in output bind mode, do not get data in yourself.");
+        LOGE("You are in output bind mode, do not get data in yourself.");
         return ERR_VI_NOT_PERM;
     }
 
@@ -252,7 +252,7 @@ _TryToGetFrame:
                 pVideoEISData->bWaitingOutFrmFlag = FALSE;
                 goto _TryToGetFrame;
             } else {
-                aloge("Fatal error! EIS[%d] pthread cond wait timeout ret[%d]", pVideoEISData->mMppChnInfo.mChnId, ret);
+                LOGE("Fatal error! EIS[%d] pthread cond wait timeout ret[%d]", pVideoEISData->mMppChnInfo.mChnId, ret);
                 eError = ERR_EIS_BUF_EMPTY;
                 pVideoEISData->bWaitingOutFrmFlag = FALSE;
             }
@@ -266,11 +266,11 @@ ERRORTYPE DoVideoEisReleaseData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN EI
 {
     VIDEOEISDATATYPE *pVideoEISData = (VIDEOEISDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (COMP_StateIdle != pVideoEISData->state && COMP_StateExecuting != pVideoEISData->state) {
-        alogw("Call getStream in wrong state[0x%x]", pVideoEISData->state);
+        LOGW("Call getStream in wrong state[0x%x]", pVideoEISData->state);
         return ERR_EIS_INVALIDSTATE;
     }
     if (TRUE == pVideoEISData->bOutputPortTunnelFlag) { /* Tunnel mode */
-        aloge("You are in output bind mode, do not get data in yourself.");
+        LOGE("You are in output bind mode, do not get data in yourself.");
         return ERR_EIS_NOT_PERM;
     }
 
@@ -293,7 +293,7 @@ ERRORTYPE DoVideoEisReleaseData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN EI
         list_move_tail(&pVFrmList->mList, &pVideoEISData->mOutIdleList);
         pVideoEISData->iOutFrmIdleCnt++;
     } else {
-        aloge("No such video frame Id[%d] is using, please check it.", pstFrameInfo->mId);
+        LOGE("No such video frame Id[%d] is using, please check it.", pstFrameInfo->mId);
         pthread_mutex_unlock(&pVideoEISData->mOutFrmListLock);
         return ERR_EIS_INVALID_PARA;
     }
@@ -307,7 +307,7 @@ ERRORTYPE DoVideoEisStoreFrameOpr(PARAM_IN COMP_HANDLETYPE hComponent, const cha
     VIDEOEISDATATYPE *pVideoEISData = (VIDEOEISDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
 
     if (!pVideoEISData->bOutputPortTunnelFlag) {
-        alogw("in non-tunnel mode, you should store frame by your self, we don't do it\n");
+        LOGW("in non-tunnel mode, you should store frame by your self, we don't do it");
         return ERR_EIS_NOT_SUPPORT;
     }
 
@@ -328,7 +328,7 @@ ERRORTYPE VideoEISSendCommand(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
     ERRORTYPE eError = SUCCESS;
     message_t msg;
 
-    alogv("VideoEISSendCommand: %d", Cmd);
+    LOGV("VideoEISSendCommand: %d", Cmd);
 
     pVideoEISData = (VIDEOEISDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (!pVideoEISData) {
@@ -350,7 +350,7 @@ ERRORTYPE VideoEISSendCommand(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
             break;
 
         default:
-            alogw("impossible comp_command[0x%x]", Cmd);
+            LOGW("impossible comp_command[0x%x]", Cmd);
             eCmd = -1;
             eError = ERR_EIS_NOT_SUPPORT;
             goto ENotSupport;
@@ -415,12 +415,12 @@ ERRORTYPE DoVideoEisChnConfigOpr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_INOU
             if (pEisAttr)
                 memcpy(pEisAttr, &pVideoEISData->mEISAttr, sizeof(EIS_ATTR_S));
             else {
-                aloge("You input a NULL pointer to store EIS attribution, fix it.");
+                LOGE("You input a NULL pointer to store EIS attribution, fix it.");
                 eError = ERR_EIS_INVALID_NULL_PTR;
             }
         } break;
         default: {
-            aloge("Wrong config operation[%d].", eConfOpr);
+            LOGE("Wrong config operation[%d].", eConfOpr);
             eError = ERR_EIS_NOT_SUPPORT;
         } break;
     }
@@ -437,14 +437,14 @@ ERRORTYPE DoSetEisChnAlgoModeOpr(PARAM_IN COMP_HANDLETYPE hComponent,
     pVideoEISData = (VIDEOEISDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
 
     if (NULL == pEisAttr) {
-        aloge("You input a NULL pointer to store EIS attribution, fix it.");
+        LOGE("You input a NULL pointer to store EIS attribution, fix it.");
         eError = ERR_EIS_INVALID_NULL_PTR;
         goto ENullPtr;
     }
 
     pthread_mutex_lock(&pVideoEISData->mStateLock);
     if (pVideoEISData->state != COMP_StateIdle && pVideoEISData->state != COMP_StateLoaded) {
-        aloge("Send frame when EIS component state[0x%x].", pVideoEISData->state);
+        LOGE("Send frame when EIS component state[0x%x].", pVideoEISData->state);
         eError = ERR_EIS_NOT_PERM;
         goto EState;
     }
@@ -465,13 +465,13 @@ ERRORTYPE DoSetEisChnVFmtOpr(PARAM_IN COMP_HANDLETYPE hComponent,
     pVideoEISData = (VIDEOEISDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
 
     if (NULL == pEisAttr) {
-        aloge("You input a NULL pointer to store EIS attribution, fix it.");
+        LOGE("You input a NULL pointer to store EIS attribution, fix it.");
         eError = ERR_EIS_INVALID_NULL_PTR;
         goto ENullPtr;
     }
     pthread_mutex_lock(&pVideoEISData->mStateLock);
     if (pVideoEISData->state != COMP_StateIdle && pVideoEISData->state != COMP_StateLoaded) {
-        aloge("Send frame when EIS component state[0x%x].", pVideoEISData->state);
+        LOGE("Send frame when EIS component state[0x%x].", pVideoEISData->state);
         eError = ERR_EIS_NOT_PERM;
         goto EState;
     }
@@ -500,13 +500,13 @@ ERRORTYPE DoSetEisChnDataProcOpr(PARAM_IN COMP_HANDLETYPE hComponent,
     pVideoEISData = (VIDEOEISDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
 
     if (NULL == pEisAttr) {
-        aloge("You input a NULL pointer to store EIS attribution, fix it.");
+        LOGE("You input a NULL pointer to store EIS attribution, fix it.");
         eError = ERR_EIS_INVALID_NULL_PTR;
         goto ENullPtr;
     }
     pthread_mutex_lock(&pVideoEISData->mStateLock);
     if (pVideoEISData->state != COMP_StateIdle && pVideoEISData->state != COMP_StateLoaded) {
-        aloge("Send frame when EIS component state[0x%x].", pVideoEISData->state);
+        LOGE("Send frame when EIS component state[0x%x].", pVideoEISData->state);
         eError = ERR_EIS_NOT_PERM;
         goto EState;
     }
@@ -536,13 +536,13 @@ ERRORTYPE DoSetEisChnGyroOpr(PARAM_IN COMP_HANDLETYPE hComponent,
     pVideoEISData = (VIDEOEISDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
 
     if (NULL == pEisAttr) {
-        aloge("You input a NULL pointer to store EIS attribution, fix it.");
+        LOGE("You input a NULL pointer to store EIS attribution, fix it.");
         eError = ERR_EIS_INVALID_NULL_PTR;
         goto ENullPtr;
     }
     pthread_mutex_lock(&pVideoEISData->mStateLock);
     if (pVideoEISData->state != COMP_StateIdle && pVideoEISData->state != COMP_StateLoaded) {
-        aloge("Send frame when EIS component state[0x%x].", pVideoEISData->state);
+        LOGE("Send frame when EIS component state[0x%x].", pVideoEISData->state);
         eError = ERR_EIS_NOT_PERM;
         goto EState;
     }
@@ -567,13 +567,13 @@ ERRORTYPE DoSetEisChnKmatOpr(PARAM_IN COMP_HANDLETYPE hComponent,
     pVideoEISData = (VIDEOEISDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
 
     if (NULL == pEisAttr) {
-        aloge("You input a NULL pointer to store EIS attribution, fix it.");
+        LOGE("You input a NULL pointer to store EIS attribution, fix it.");
         eError = ERR_EIS_INVALID_NULL_PTR;
         goto ENullPtr;
     }
     pthread_mutex_lock(&pVideoEISData->mStateLock);
     if (pVideoEISData->state != COMP_StateIdle && pVideoEISData->state != COMP_StateLoaded) {
-        aloge("Send frame when EIS component state[0x%x].", pVideoEISData->state);
+        LOGE("Send frame when EIS component state[0x%x].", pVideoEISData->state);
         eError = ERR_EIS_NOT_PERM;
         goto EState;
     }
@@ -604,7 +604,7 @@ ERRORTYPE DoVideoEisMPPChannelInfoOpr(PARAM_IN COMP_HANDLETYPE hComponent,
             copy_MPP_CHN_S(pstInfo, &pVideoEISData->mMppChnInfo);
         } break;
         default: {
-            aloge("Wrong config operation[%d].", eConfOpr);
+            LOGE("Wrong config operation[%d].", eConfOpr);
             eError = ERR_EIS_NOT_SUPPORT;
         } break;
     }
@@ -622,19 +622,19 @@ ERRORTYPE _EisEnableGyroDeviceMulElem(VIDEOEISDATATYPE *pVideoEISData, int iEnab
             /* Online mode, then create and open the gyro device. */
             pVideoEISData->pGyroIns = create_gyro_inst();
             if (NULL == pVideoEISData->pGyroIns) {
-                aloge("Create gyro instance failed.");
+                LOGE("Create gyro instance failed.");
                 eError = ERR_EIS_NOMEM;
                 goto ECrtIns;
             }
 
             iRet = gyro_ins_open(pVideoEISData->pGyroIns, &pVideoEISData->mGyroAttr);
             if (0 != iRet) {
-                aloge("FFFFFFatal error, open gyro instance failed, we will use \"zero\" datas as valid gyro datas.");
+                LOGE("FFFFFFatal error, open gyro instance failed, we will use \"zero\" datas as valid gyro datas.");
                 pVideoEISData->bHasGyroDev = 0;
                 pVideoEISData->GryoRingBufHd = ring_buffer_create(sizeof(EIS_GYRO_PACKET_S),
                     pVideoEISData->mEISAttr.iGyroPoolSize, RB_FL_NONE);
                 if (NULL == pVideoEISData->GryoRingBufHd) {
-                    aloge("Create ring buffer for gyro buffers failed.");
+                    LOGE("Create ring buffer for gyro buffers failed.");
                     eError = ERR_EIS_NOMEM;
                     goto EOpenIns;
                 }
@@ -649,7 +649,7 @@ ERRORTYPE _EisEnableGyroDeviceMulElem(VIDEOEISDATATYPE *pVideoEISData, int iEnab
             if (pVideoEISData->bByPassMode) {
                 pVideoEISData->bGyroRunFlag = 1;
                 if (pthread_create(&pVideoEISData->mGyroTrd, NULL, EIS_CompGyroThread, pVideoEISData)) {
-                    aloge("create EIS_CompGyroThread failed!");
+                    LOGE("create EIS_CompGyroThread failed!");
                     eError = ERR_EIS_FAILED_NOTENABLE;
                     pVideoEISData->bGyroRunFlag = 0;
                     goto ECrtThread;
@@ -660,7 +660,7 @@ ERRORTYPE _EisEnableGyroDeviceMulElem(VIDEOEISDATATYPE *pVideoEISData, int iEnab
             pVideoEISData->GryoRingBufHd = ring_buffer_create(sizeof(EIS_GYRO_PACKET_S),
                 pVideoEISData->mEISAttr.iGyroPoolSize, RB_FL_NONE);
             if (NULL == pVideoEISData->GryoRingBufHd) {
-                aloge("Create ring buffer for gyro buffers failed.");
+                LOGE("Create ring buffer for gyro buffers failed.");
                 eError = ERR_EIS_NOMEM;
                 goto ECrtBuffer;
             }
@@ -680,7 +680,7 @@ ERRORTYPE _EisEnableGyroDeviceMulElem(VIDEOEISDATATYPE *pVideoEISData, int iEnab
                 gyro_ins_close(pVideoEISData->pGyroIns);
                 destory_gyro_inst(pVideoEISData->pGyroIns);
             } else {
-                aloge("You have not enable gyro device yet.");
+                LOGE("You have not enable gyro device yet.");
                 eError = ERR_EIS_NOT_PERM;
             }
         } else {
@@ -718,18 +718,18 @@ ERRORTYPE DoVideoEisChnEnableOpr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN i
             if (*iEnableFlag + pVideoEISData->bEnableFlag == 1) {
                 eError = _EisEnableGyroDeviceMulElem(pVideoEISData, *iEnableFlag);
                 if (eError != SUCCESS) {
-                    aloge("Do enable or disable Gyro device failed. ret 0x%x.", eError);
+                    LOGE("Do enable or disable Gyro device failed. ret 0x%x.", eError);
                     goto EEnable;
                 }
                 pVideoEISData->bEnableFlag = *iEnableFlag;
             } else
-                alogw("EIS[%d] has already been enabled or disabled.", pVideoEISData->mMppChnInfo.mChnId);
+                LOGW("EIS[%d] has already been enabled or disabled.", pVideoEISData->mMppChnInfo.mChnId);
         } break;
         case EIS_CHN_CONF_GET: {
             *iEnableFlag = pVideoEISData->bEnableFlag;
         } break;
         default: {
-            aloge("Wrong config operation[%d].", eConfOpr);
+            LOGE("Wrong config operation[%d].", eConfOpr);
             eError = ERR_EIS_NOT_SUPPORT;
         } break;
     }
@@ -757,7 +757,7 @@ ERRORTYPE DoVideoEisFreqOpr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN int* i
             *iFreqVal = pVideoEISData->iEisHwFreq;
         } break;
         default: {
-            aloge("Wrong config operation[%d].", eConfOpr);
+            LOGE("Wrong config operation[%d].", eConfOpr);
             eError = ERR_EIS_NOT_SUPPORT;
         } break;
     }
@@ -793,7 +793,7 @@ ERRORTYPE DoVideoEisPortDefinitionOpr(PARAM_IN COMP_HANDLETYPE hComponent,
                 memcpy(pPortDef, &pVideoEisData->sPortDef[i], sizeof(COMP_PARAM_PORTDEFINITIONTYPE));
             } break;
             default: {
-                aloge("Wrong config operation[%d].", eConfOpr);
+                LOGE("Wrong config operation[%d].", eConfOpr);
                 eError = ERR_EIS_NOT_SUPPORT;
             } break;
         }
@@ -830,7 +830,7 @@ ERRORTYPE DoVideoEisCompBufferSupplierOpr(PARAM_IN COMP_HANDLETYPE hComponent,
                     sizeof(COMP_PARAM_BUFFERSUPPLIERTYPE));
             } break;
             default: {
-                aloge("Wrong config operation[%d].", eConfOpr);
+                LOGE("Wrong config operation[%d].", eConfOpr);
                 eError = ERR_EIS_NOT_SUPPORT;
             } break;
         }
@@ -876,7 +876,7 @@ ERRORTYPE VideoEISGetConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_I
         } break;
 
         default: {
-            aloge("fatal error! unknown getConfig Index[0x%x]", nIndex);
+            LOGE("fatal error! unknown getConfig Index[0x%x]", nIndex);
             eError = ERR_VI_NOT_SUPPORT;
         } break;
     }
@@ -943,7 +943,7 @@ ERRORTYPE VideoEISSetConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_I
         } break;
 
         default: {
-            aloge("Unknown EIS configuration index[0x%x]", nIndex);
+            LOGE("Unknown EIS configuration index[0x%x]", nIndex);
             eError = ERR_EIS_NOT_SUPPORT;
         } break;
     }
@@ -966,9 +966,9 @@ ERRORTYPE VideoEISComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
     *but better not do this in Executing state
     */
     if (pVideoEISData->state == COMP_StateExecuting) {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     } else if (pVideoEISData->state != COMP_StateIdle) {
-        aloge("Fatal error! tunnel request can't be in state[0x%x]",pVideoEISData->state);
+        LOGE("Fatal error! tunnel request can't be in state[0x%x]",pVideoEISData->state);
         eError = ERR_EIS_INCORRECT_STATE_OPERATION;
         goto EBind;
     }
@@ -980,7 +980,7 @@ ERRORTYPE VideoEISComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         }
     }
     if (i == EIS_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_EIS_INVALID_PARA;
         goto EBind;
     }
@@ -992,7 +992,7 @@ ERRORTYPE VideoEISComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         }
     }
     if (i == EIS_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_EIS_INVALID_PARA;
         goto EBind;
     }
@@ -1004,7 +1004,7 @@ ERRORTYPE VideoEISComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         }
     }
     if (i == EIS_CHN_MAX_PORTS) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_EIS_INVALID_PARA;
         goto EBind;
     }
@@ -1016,7 +1016,7 @@ ERRORTYPE VideoEISComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     /* When all the parameters is zero, we unbind it, it is a engage */
     if(NULL == hTunneledComp && 0 == nTunneledPort && NULL == pTunnelSetup) {
-        alogd("Receive a cancel setup tunnel request on port[%d]", nPort);
+        LOGD("Receive a cancel setup tunnel request on port[%d]", nPort);
         pPortTunnelInfo->hTunnel = NULL;
 
         if(pPortDef->eDir == COMP_DirOutput)
@@ -1029,7 +1029,7 @@ ERRORTYPE VideoEISComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 
     if(pPortDef->eDir == COMP_DirOutput) {
         if (pVideoEISData->bOutputPortTunnelFlag) {
-            aloge("EIS component[%d] output port has already binded, why bind again?!",
+            LOGE("EIS component[%d] output port has already binded, why bind again?!",
                 pVideoEISData->mMppChnInfo.mChnId);
             eError = ERR_EIS_NOT_PERM;
             goto EBind;
@@ -1038,13 +1038,13 @@ ERRORTYPE VideoEISComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         pVideoEISData->bOutputPortTunnelFlag = TRUE;
     } else if (pPortDef->eDir == COMP_DirInput && pVideoEISData->mEISAttr.bSimuOffline){
-            aloge("EIS component[%d] input port can't be bind in offline simulation mode.",
+            LOGE("EIS component[%d] input port can't be bind in offline simulation mode.",
                 pVideoEISData->mMppChnInfo.mChnId);
             eError = ERR_EIS_NOT_PERM;
             goto EBind;
     } else if (pPortDef->eDir == COMP_DirInput) {
         if (pVideoEISData->bInputPortTunnelFlag) {
-            aloge("EIS component[%d] input port has already binded, why bind again?!",
+            LOGE("EIS component[%d] input port has already binded, why bind again?!",
                 pVideoEISData->mMppChnInfo.mChnId);
             eError = ERR_EIS_NOT_PERM;
             goto EBind;
@@ -1055,14 +1055,14 @@ ERRORTYPE VideoEISComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         stTunnelPortDef.nPortIndex = nTunneledPort;
         COMP_GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &stTunnelPortDef);
         if(stTunnelPortDef.eDir != COMP_DirOutput) {
-            aloge("Fatal error! you are binding a input tunnel port[index%d] to an input port[index%d].",
+            LOGE("Fatal error! you are binding a input tunnel port[index%d] to an input port[index%d].",
                 nTunneledPort, pPortDef->nPortIndex);
             eError = ERR_EIS_INVALID_PARA;
             goto EBind;
         }
 #if 0
         if (strcmp((const char*)&pPortDef->format, (const char*)&stTunnelPortDef.format)) {
-            aloge("Fatal error! you are binding a output tunnel port[fmt%d] to an input port[fmt%d].",
+            LOGE("Fatal error! you are binding a output tunnel port[fmt%d] to an input port[fmt%d].",
                 stTunnelPortDef.format, pPortDef->format);
             eError = ERR_EIS_INVALID_PARA;
             goto EBind;
@@ -1070,7 +1070,7 @@ ERRORTYPE VideoEISComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 #endif
         /* The component B informs component A about the final result of negotiation. */
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier) {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!",
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!",
                 nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
@@ -1101,7 +1101,7 @@ static void DoVideoEisSendBackInputFrame
         BufferHeader.nOutputPortIndex = pVideoEisData->sPortTunnelInfo[EIS_CHN_PORT_INDEX_VIDEO_IN].nTunnelPortIndex;
         COMP_FillThisBuffer(pTunnelComp, &BufferHeader);
     }
-    alogv("Release input FrameId[%d].", pFrameInfo->mId);
+    LOGV("Release input FrameId[%d].", pFrameInfo->mId);
 }
 
 static void DoVideoEisReturnBackAllInputFrames(VIDEOEISDATATYPE *pVideoEisData)
@@ -1116,7 +1116,7 @@ static void DoVideoEisReturnBackAllInputFrames(VIDEOEISDATATYPE *pVideoEisData)
         stFrameInfoRet = *pFrameInfo;
         DoVideoEisSendBackInputFrame(pVideoEisData, &stFrameInfoRet);
     }
-    alogw("Return all input frames done, EIS Chn[%d].", pVideoEisData->mMppChnInfo.mChnId);
+    LOGW("Return all input frames done, EIS Chn[%d].", pVideoEisData->mMppChnInfo.mChnId);
 }
 
 ERRORTYPE VideoEISEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_BUFFERHEADERTYPE *pBuffer)
@@ -1125,7 +1125,7 @@ ERRORTYPE VideoEISEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
     VIDEOEISDATATYPE *pVideoEISData = (VIDEOEISDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     pthread_mutex_lock(&pVideoEISData->mStateLock);
     if (pVideoEISData->state != COMP_StateExecuting) {
-        alogw("Send frame when EIS component state[0x%x] isn not executing", pVideoEISData->state);
+        LOGW("Send frame when EIS component state[0x%x] isn not executing", pVideoEISData->state);
         eError = ERR_EIS_NOT_PERM;
         pthread_mutex_unlock(&pVideoEISData->mStateLock);
         goto EState;
@@ -1143,12 +1143,12 @@ ERRORTYPE VideoEISEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
 
         eError = VideoBufMgrPushFrame(pVideoEISData->pInputBufMgr, pVInputFrm);
         if (eError != SUCCESS) {
-            aloge("Failed to push this frame, it will be droped\n");
+            LOGE("Failed to push this frame, it will be droped");
             eError =  ERR_EIS_BUF_FULL;
             goto EPushFrm;
         }
 
-        alogv("VideoEisEmptyThisBuffer pushFrame process, %p.\r\n", pVInputFrm->VFrame.mpVirAddr[0]);
+        LOGV("VideoEisEmptyThisBuffer pushFrame process, %p.", pVInputFrm->VFrame.mpVirAddr[0]);
 
         if (pVideoEISData->bWaitingInputFrmFlag) {
             message_t msg;
@@ -1165,12 +1165,12 @@ ERRORTYPE VideoEISEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
 
         if (ring_buffer_full(pVideoEISData->GryoRingBufHd)) {
             EIS_GYRO_PACKET_S stGyroPktOut;
-            aloge("Gyro ring buffer is full, drop the oldest gyro data.");
+            LOGE("Gyro ring buffer is full, drop the oldest gyro data.");
             ring_buffer_out(pVideoEISData->GryoRingBufHd, &stGyroPktOut, pBuffer->nFilledLen);
         }
         ring_buffer_in(pVideoEISData->GryoRingBufHd, pVInputGyroPkt, pBuffer->nFilledLen);
     } else {
-        aloge("fatal error! inputPortIndex[%d] match nothing!", pBuffer->nOutputPortIndex);
+        LOGE("fatal error! inputPortIndex[%d] match nothing!", pBuffer->nOutputPortIndex);
     }
 
 EPushFrm:
@@ -1191,7 +1191,7 @@ ERRORTYPE VideoEISFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
 
     /* First of all, this interface can be used only in bind mode. */
     if (!pVideoEISData->bOutputPortTunnelFlag) {
-        aloge("You can not invoke this interface in non-tunnel out port mode.");
+        LOGE("You can not invoke this interface in non-tunnel out port mode.");
         eError = ERR_EIS_NOT_PERM;
     }
 
@@ -1215,13 +1215,13 @@ ERRORTYPE VideoEISFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
             list_move_tail(&pVFrmList->mList, &pVideoEISData->mOutIdleList);
             pVideoEISData->iOutFrmIdleCnt++;
         } else {
-            aloge("No such video frame Id[%d]VirAddr[%p] is using, please check it.",
+            LOGE("No such video frame Id[%d]VirAddr[%p] is using, please check it.",
                 pstFrameInfo->mId, pstFrameInfo->VFrame.mpVirAddr[0]);
             eError = ERR_EIS_INVALID_PARA;
         }
         pthread_mutex_unlock(&pVideoEISData->mOutFrmListLock);
     } else {
-        aloge("Fatal error! outputPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pVideoEISData->sPortDef[EIS_CHN_PORT_INDEX_OUT].nPortIndex);
+        LOGE("Fatal error! outputPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pVideoEISData->sPortDef[EIS_CHN_PORT_INDEX_OUT].nPortIndex);
     }
 
     return eError;
@@ -1237,7 +1237,7 @@ static void _EisTraverOutputBufPool(VIDEOEISDATATYPE *pVideoEISData)
         list_for_each_entry_safe(EisOutFrmCur, EisOutFrmTmp, &pVideoEISData->mOutUsedList, mList)
         {
             if (EisOutFrmCur) {
-                aloge("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
+                LOGE("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
                     EisOutFrmCur->mFrame.VFrame.mpVirAddr[0], EisOutFrmCur->mFrame.VFrame.mpVirAddr[1]);
             }
         }
@@ -1248,7 +1248,7 @@ static void _EisTraverOutputBufPool(VIDEOEISDATATYPE *pVideoEISData)
         list_for_each_entry_safe(EisOutFrmCur, EisOutFrmTmp, &pVideoEISData->mOutValidList, mList)
         {
             if (EisOutFrmCur) {
-                aloge("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
+                LOGE("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
                     EisOutFrmCur->mFrame.VFrame.mpVirAddr[0], EisOutFrmCur->mFrame.VFrame.mpVirAddr[1]);
             }
         }
@@ -1259,7 +1259,7 @@ static void _EisTraverOutputBufPool(VIDEOEISDATATYPE *pVideoEISData)
         list_for_each_entry_safe(EisOutFrmCur, EisOutFrmTmp, &pVideoEISData->mOutIdleList, mList)
         {
             if (EisOutFrmCur) {
-                aloge("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
+                LOGE("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
                     EisOutFrmCur->mFrame.VFrame.mpVirAddr[0], EisOutFrmCur->mFrame.VFrame.mpVirAddr[1]);
             }
         }
@@ -1325,7 +1325,7 @@ void _EisDestroyOutputBufPool(VIDEOEISDATATYPE *pVideoEISData)
         list_for_each_entry_safe(EisOutFrmCur, EisOutFrmTmp, &pVideoEISData->mOutUsedList, mList)
         {
             if (EisOutFrmCur) {
-                aloge("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
+                LOGE("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
                     EisOutFrmCur->mFrame.VFrame.mpVirAddr[0], EisOutFrmCur->mFrame.VFrame.mpVirAddr[1]);
                 ion_freeMem(EisOutFrmCur->mFrame.VFrame.mpVirAddr[0]);
                 ion_freeMem(EisOutFrmCur->mFrame.VFrame.mpVirAddr[1]);
@@ -1339,7 +1339,7 @@ void _EisDestroyOutputBufPool(VIDEOEISDATATYPE *pVideoEISData)
         list_for_each_entry_safe(EisOutFrmCur, EisOutFrmTmp, &pVideoEISData->mOutValidList, mList)
         {
             if (EisOutFrmCur) {
-                aloge("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
+                LOGE("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
                     EisOutFrmCur->mFrame.VFrame.mpVirAddr[0], EisOutFrmCur->mFrame.VFrame.mpVirAddr[1]);
                 ion_freeMem(EisOutFrmCur->mFrame.VFrame.mpVirAddr[0]);
                 ion_freeMem(EisOutFrmCur->mFrame.VFrame.mpVirAddr[1]);
@@ -1353,7 +1353,7 @@ void _EisDestroyOutputBufPool(VIDEOEISDATATYPE *pVideoEISData)
         list_for_each_entry_safe(EisOutFrmCur, EisOutFrmTmp, &pVideoEISData->mOutIdleList, mList)
         {
             if (EisOutFrmCur) {
-                aloge("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
+                LOGE("Release video input frame[%d], vir addr[%p][%p].", EisOutFrmCur->mFrame.mId,
                     EisOutFrmCur->mFrame.VFrame.mpVirAddr[0], EisOutFrmCur->mFrame.VFrame.mpVirAddr[1]);
                 ion_freeMem(EisOutFrmCur->mFrame.VFrame.mpVirAddr[0]);
                 ion_freeMem(EisOutFrmCur->mFrame.VFrame.mpVirAddr[1]);
@@ -1369,64 +1369,64 @@ void _EisDestroyOutputBufPool(VIDEOEISDATATYPE *pVideoEISData)
 
 static void _EisDumpHardwareLibConfigs(EISE_CFG_PARA *pEisCfg)
 {
-    printf("Dump EIS hardware driver config:\r\n");
-    printf("\t in_w:\t%d\r\n", pEisCfg->in_w);
-    printf("\t in_h:\t%d\r\n", pEisCfg->in_h);
-    printf("\t out_h:\t%d\r\n", pEisCfg->out_h);
-    printf("\t out_w:\t%d\r\n", pEisCfg->out_w);
-    printf("\t hor_off:\t%d\r\n", pEisCfg->hor_off);
-    printf("\t vor_off:\t%d\r\n", pEisCfg->ver_off);
+    LOGI("Dump EIS hardware driver config:");
+    LOGI("\t in_w:\t%d", pEisCfg->in_w);
+    LOGI("\t in_h:\t%d", pEisCfg->in_h);
+    LOGI("\t out_h:\t%d", pEisCfg->out_h);
+    LOGI("\t out_w:\t%d", pEisCfg->out_w);
+    LOGI("\t hor_off:\t%d", pEisCfg->hor_off);
+    LOGI("\t vor_off:\t%d", pEisCfg->ver_off);
 
     if (pEisCfg->in_yuv_type == YUV420) {
-        printf("\t in_yuv_type:\tYUV420\r\n");
+        LOGI("\t in_yuv_type:\tYUV420");
     } else if (pEisCfg->in_yuv_type == YVU420) {
-        printf("\t in_yuv_type:\tYVU420\r\n");
+        LOGI("\t in_yuv_type:\tYVU420");
     }
 
     if (pEisCfg->out_yuv_type == YUV420)
-        printf("\t out_yuv_type:\tYUV420\r\n");
+        LOGI("\t out_yuv_type:\tYUV420");
     else if (pEisCfg->out_yuv_type == YVU420)
-        printf("\t out_yuv_type:\tYVU420\r\n");
+        LOGI("\t out_yuv_type:\tYVU420");
 
-    printf("\t in_luma_pitch:\t%d\r\n", pEisCfg->in_luma_pitch);
-    printf("\t in_chroma_pitch:\t%d\r\n", pEisCfg->in_chroma_pitch);
-    printf("\t out_luma_pitch:\t%d\r\n", pEisCfg->out_luma_pitch);
-    printf("\t out_chroma_pitch:\t%d\r\n", pEisCfg->out_chroma_pitch);
-    printf("\t src_width:\t%d\r\n", pEisCfg->src_width);
-    printf("\t src_height:\t%d\r\n", pEisCfg->src_height);
-    printf("\t cut_height:\t%d\r\n", pEisCfg->cut_height);
-    printf("\t rt:\t%f\r\n", pEisCfg->rt);
-    printf("\t k_matrix[0]:\t%f\r\n", pEisCfg->k_matrix[0]);
-    printf("\t k_matrix[1]:\t%f\r\n", pEisCfg->k_matrix[2]);
-    printf("\t k_matrix[2]:\t%f\r\n", pEisCfg->k_matrix[4]);
-    printf("\t k_matrix[3]:\t%f\r\n", pEisCfg->k_matrix[5]);
+    LOGI("\t in_luma_pitch:\t%d", pEisCfg->in_luma_pitch);
+    LOGI("\t in_chroma_pitch:\t%d", pEisCfg->in_chroma_pitch);
+    LOGI("\t out_luma_pitch:\t%d", pEisCfg->out_luma_pitch);
+    LOGI("\t out_chroma_pitch:\t%d", pEisCfg->out_chroma_pitch);
+    LOGI("\t src_width:\t%d", pEisCfg->src_width);
+    LOGI("\t src_height:\t%d", pEisCfg->src_height);
+    LOGI("\t cut_height:\t%d", pEisCfg->cut_height);
+    LOGI("\t rt:\t%f", pEisCfg->rt);
+    LOGI("\t k_matrix[0]:\t%f", pEisCfg->k_matrix[0]);
+    LOGI("\t k_matrix[1]:\t%f", pEisCfg->k_matrix[2]);
+    LOGI("\t k_matrix[2]:\t%f", pEisCfg->k_matrix[4]);
+    LOGI("\t k_matrix[3]:\t%f", pEisCfg->k_matrix[5]);
 
-    printf("\t k_matrix[8]:\t%f\r\n", pEisCfg->k_matrix[8]);
-    printf("\t ts:\t%f\r\n", pEisCfg->ts);
-    printf("\t td:\t%f\r\n", pEisCfg->td);
-    printf("\t stable_anglev[0]:\t%f\r\n", pEisCfg->stable_anglev[0]);
-    printf("\t stable_anglev[1]:\t%f\r\n", pEisCfg->stable_anglev[1]);
-    printf("\t stable_anglev[2]:\t%f\r\n", pEisCfg->stable_anglev[2]);
+    LOGI("\t k_matrix[8]:\t%f", pEisCfg->k_matrix[8]);
+    LOGI("\t ts:\t%f", pEisCfg->ts);
+    LOGI("\t td:\t%f", pEisCfg->td);
+    LOGI("\t stable_anglev[0]:\t%f", pEisCfg->stable_anglev[0]);
+    LOGI("\t stable_anglev[1]:\t%f", pEisCfg->stable_anglev[1]);
+    LOGI("\t stable_anglev[2]:\t%f", pEisCfg->stable_anglev[2]);
 
-    printf("\t angle_th[0]:\t%f\r\n", pEisCfg->angle_th[0]);
-    printf("\t angle_th[1]:\t%f\r\n", pEisCfg->angle_th[1]);
-    printf("\t angle_th[2]:\t%f\r\n", pEisCfg->angle_th[2]);
+    LOGI("\t angle_th[0]:\t%f", pEisCfg->angle_th[0]);
+    LOGI("\t angle_th[1]:\t%f", pEisCfg->angle_th[1]);
+    LOGI("\t angle_th[2]:\t%f", pEisCfg->angle_th[2]);
 
-    printf("\t radius[0]:\t%d\r\n", pEisCfg->radius[0]);
-    printf("\t radius[1]:\t%d\r\n", pEisCfg->radius[1]);
-    printf("\t radius[2]:\t%d\r\n", pEisCfg->radius[2]);
+    LOGI("\t radius[0]:\t%d", pEisCfg->radius[0]);
+    LOGI("\t radius[1]:\t%d", pEisCfg->radius[1]);
+    LOGI("\t radius[2]:\t%d", pEisCfg->radius[2]);
 
-    printf("\t video fps:\t%d\r\n", pEisCfg->fps);
-    printf("\t filter_type:\t%d\r\n", pEisCfg->filter_type);
-    printf("\t xy_exchange_en:\t%d\r\n", pEisCfg->xy_exchange_en);
-    printf("\t rolling_shutter:\t%d\r\n", pEisCfg->rolling_shutter);
-    printf("\t rs_correction_en:\t%d\r\n", pEisCfg->rs_correction_en);
-    printf("\t frame_rotation_en:\t%d\r\n", pEisCfg->frame_rotation_en);
-    printf("\t fast_mode:\t%d\r\n", pEisCfg->fast_mode);
-    printf("\t g_en_angle_filter:\t%d\r\n", pEisCfg->g_en_angle_filter);
-    printf("\t g_interlace:\t%d\r\n", pEisCfg->g_interlace);
-    printf("\t max_frm_buf:\t%d\r\n", pEisCfg->max_frm_buf);
-    printf("\t max_next_frm:\t%d\r\n", pEisCfg->max_next_frm);
+    LOGI("\t video fps:\t%d", pEisCfg->fps);
+    LOGI("\t filter_type:\t%d", pEisCfg->filter_type);
+    LOGI("\t xy_exchange_en:\t%d", pEisCfg->xy_exchange_en);
+    LOGI("\t rolling_shutter:\t%d", pEisCfg->rolling_shutter);
+    LOGI("\t rs_correction_en:\t%d", pEisCfg->rs_correction_en);
+    LOGI("\t frame_rotation_en:\t%d", pEisCfg->frame_rotation_en);
+    LOGI("\t fast_mode:\t%d", pEisCfg->fast_mode);
+    LOGI("\t g_en_angle_filter:\t%d", pEisCfg->g_en_angle_filter);
+    LOGI("\t g_interlace:\t%d", pEisCfg->g_interlace);
+    LOGI("\t max_frm_buf:\t%d", pEisCfg->max_frm_buf);
+    LOGI("\t max_next_frm:\t%d", pEisCfg->max_next_frm);
 }
 
 static void VideoEisSetHwCfgs(VIDEOEISDATATYPE *pVideoEISData)
@@ -1545,7 +1545,7 @@ static void VideoEisSetHwCfgs(VIDEOEISDATATYPE *pVideoEISData)
             pVideoEISData->iVideoLineTime = 30;
             pVideoEISData->mEisCfg.g_interlace = 1;
 
-            aloge("You set a wrong operation mode[%d], use EIS_OPR_1080P30 by default.", pVideoEISData->mEISAttr.eOperationMode);
+            LOGE("You set a wrong operation mode[%d], use EIS_OPR_1080P30 by default.", pVideoEISData->mEISAttr.eOperationMode);
         } break;
     }
 
@@ -1602,7 +1602,7 @@ static void VideoEisSetHwCfgs(VIDEOEISDATATYPE *pVideoEISData)
 		pVideoEISData->mEisCfg.radius[0] = pVideoEISData->mEISAttr.iEisFilterWidth
                                             -pVideoEISData->mEisCfg.radius[1]-pVideoEISData->mEisCfg.radius[2];
         if (pVideoEISData->mEisCfg.radius[0] < pVideoEISData->mEisCfg.radius[1]) {
-            aloge("You set a wrong input buffer[%d], use [%d] by default.", pVideoEISData->mEisCfg.radius[1]);
+            LOGE("You set a wrong input buffer[%d], use [%d] by default.", pVideoEISData->mEisCfg.radius[1]);
             pVideoEISData->mEisCfg.radius[0] = pVideoEISData->mEisCfg.radius[1];
 		}
         break;
@@ -1678,57 +1678,57 @@ static void VideoEisSetHwCfgs(VIDEOEISDATATYPE *pVideoEISData)
 #if 0
 static void _EisDumpSoftwareLibConfigs(EISE_CFG_PARA *pEisCfg)
 {
-    printf("Dump EIS hardware driver config:\r\n");
-    printf("\t in_w:\t%d\r\n", pEisCfg->in_w);
-    printf("\t in_h:\t%d\r\n", pEisCfg->in_h);
-    printf("\t out_h:\t%d\r\n", pEisCfg->out_h[0]);
-    printf("\t out_w:\t%d\r\n", pEisCfg->out_w[0]);
+    LOGI("Dump EIS hardware driver config:");
+    LOGI("\t in_w:\t%d", pEisCfg->in_w);
+    LOGI("\t in_h:\t%d", pEisCfg->in_h);
+    LOGI("\t out_h:\t%d", pEisCfg->out_h[0]);
+    LOGI("\t out_w:\t%d", pEisCfg->out_w[0]);
 
     if (pEisCfg->in_yuv_type == YUV420) {
-        printf("\t in_yuv_type:\tYUV420\r\n");
+        LOGI("\t in_yuv_type:\tYUV420");
     } else if (pEisCfg->in_yuv_type == YVU420) {
-        printf("\t in_yuv_type:\tYVU420\r\n");
+        LOGI("\t in_yuv_type:\tYVU420");
     }
 
     if (pEisCfg->out_yuv_type == YUV420) {
-        printf("\t out_yuv_type:\tYUV420\r\n");
+        LOGI("\t out_yuv_type:\tYUV420");
     } else if (pEisCfg->out_yuv_type == YVU420) {
-        printf("\t out_yuv_type:\tYVU420\r\n");
+        LOGI("\t out_yuv_type:\tYVU420");
     }
-    printf("\t in_luma_pitch:\t%d\r\n", pEisCfg->in_luma_pitch);
-    printf("\t in_chroma_pitch:\t%d\r\n", pEisCfg->in_chroma_pitch);
-    printf("\t out_luma_pitch:\t%d\r\n", pEisCfg->out_luma_pitch[0]);
-    printf("\t out_chroma_pitch:\t%d\r\n", pEisCfg->out_chroma_pitch[0]);
-    printf("\t input_width:\t%d\r\n", pEisCfg->input_width);
-    printf("\t output_width:\t%d\r\n", pEisCfg->output_width);
-    printf("\t output_height:\t%d\r\n", pEisCfg->output_height);
-    printf("\t src_width:\t%d\r\n", pEisCfg->src_width);
-    printf("\t src_height:\t%d\r\n", pEisCfg->src_height);
-    printf("\t cut_height:\t%d\r\n", pEisCfg->cut_height);
-    printf("\t rt:\t%f\r\n", pEisCfg->rt);
-    printf("\t k_matrix[0]:\t%f\r\n", pEisCfg->k_matrix[0]);
-    printf("\t k_matrix[1]:\t%f\r\n", pEisCfg->k_matrix[1]);
-    printf("\t k_matrix[2]:\t%f\r\n", pEisCfg->k_matrix[2]);
-    printf("\t k_matrix[3]:\t%f\r\n", pEisCfg->k_matrix[3]);
+    LOGI("\t in_luma_pitch:\t%d", pEisCfg->in_luma_pitch);
+    LOGI("\t in_chroma_pitch:\t%d", pEisCfg->in_chroma_pitch);
+    LOGI("\t out_luma_pitch:\t%d", pEisCfg->out_luma_pitch[0]);
+    LOGI("\t out_chroma_pitch:\t%d", pEisCfg->out_chroma_pitch[0]);
+    LOGI("\t input_width:\t%d", pEisCfg->input_width);
+    LOGI("\t output_width:\t%d", pEisCfg->output_width);
+    LOGI("\t output_height:\t%d", pEisCfg->output_height);
+    LOGI("\t src_width:\t%d", pEisCfg->src_width);
+    LOGI("\t src_height:\t%d", pEisCfg->src_height);
+    LOGI("\t cut_height:\t%d", pEisCfg->cut_height);
+    LOGI("\t rt:\t%f", pEisCfg->rt);
+    LOGI("\t k_matrix[0]:\t%f", pEisCfg->k_matrix[0]);
+    LOGI("\t k_matrix[1]:\t%f", pEisCfg->k_matrix[1]);
+    LOGI("\t k_matrix[2]:\t%f", pEisCfg->k_matrix[2]);
+    LOGI("\t k_matrix[3]:\t%f", pEisCfg->k_matrix[3]);
 
-    printf("\t k_matrix[8]:\t%f\r\n", pEisCfg->k_matrix[8]);
-    printf("\t ts:\t%f\r\n", pEisCfg->ts);
-    printf("\t td:\t%f\r\n", pEisCfg->td);
-    printf("\t stable_anglev[0]:\t%f\r\n", pEisCfg->stable_anglev[0]);
-    printf("\t stable_anglev[1]:\t%f\r\n", pEisCfg->stable_anglev[1]);
-    printf("\t stable_anglev[2]:\t%f\r\n", pEisCfg->stable_anglev[2]);
+    LOGI("\t k_matrix[8]:\t%f", pEisCfg->k_matrix[8]);
+    LOGI("\t ts:\t%f", pEisCfg->ts);
+    LOGI("\t td:\t%f", pEisCfg->td);
+    LOGI("\t stable_anglev[0]:\t%f", pEisCfg->stable_anglev[0]);
+    LOGI("\t stable_anglev[1]:\t%f", pEisCfg->stable_anglev[1]);
+    LOGI("\t stable_anglev[2]:\t%f", pEisCfg->stable_anglev[2]);
 
-    printf("\t angle_th[0]:\t%f\r\n", pEisCfg->angle_th[0]);
-    printf("\t angle_th[1]:\t%f\r\n", pEisCfg->angle_th[1]);
-    printf("\t angle_th[2]:\t%f\r\n", pEisCfg->angle_th[2]);
+    LOGI("\t angle_th[0]:\t%f", pEisCfg->angle_th[0]);
+    LOGI("\t angle_th[1]:\t%f", pEisCfg->angle_th[1]);
+    LOGI("\t angle_th[2]:\t%f", pEisCfg->angle_th[2]);
 
-    printf("\t radius[0]:\t%d\r\n", pEisCfg->radius[0]);
-    printf("\t radius[1]:\t%d\r\n", pEisCfg->radius[1]);
-    printf("\t radius[2]:\t%d\r\n", pEisCfg->radius[2]);
+    LOGI("\t radius[0]:\t%d", pEisCfg->radius[0]);
+    LOGI("\t radius[1]:\t%d", pEisCfg->radius[1]);
+    LOGI("\t radius[2]:\t%d", pEisCfg->radius[2]);
 
-    printf("\t filter_type:\t%d\r\n", pEisCfg->filter_type);
-    printf("\t xy_exchange_en:\t%d\r\n", pEisCfg->xy_exchange_en);
-    printf("\t rolling_shutter:\t%d\r\n", pEisCfg->rolling_shutter);
+    LOGI("\t filter_type:\t%d", pEisCfg->filter_type);
+    LOGI("\t xy_exchange_en:\t%d", pEisCfg->xy_exchange_en);
+    LOGI("\t rolling_shutter:\t%d", pEisCfg->rolling_shutter);
 }
 
 static void VideoEisSetSwCfgs(VIDEOEISDATATYPE *pVideoEISData)
@@ -1790,7 +1790,7 @@ ERRORTYPE _VideoEisCreate(VIDEOEISDATATYPE *pVideoEISData)
     int i = 0;
 
     if (pVideoEISData->mEisHd && (EIS_ALGO_MODE_BP != pVideoEISData->mEISAttr.eEisAlgoMode)) {
-        alogd("You have already create the EIS handle.");
+        LOGD("You have already create the EIS handle.");
         return SUCCESS;
     }
 
@@ -1805,30 +1805,30 @@ ERRORTYPE _VideoEisCreate(VIDEOEISDATATYPE *pVideoEISData)
 
     pBufferInfo[pVideoEISData->mMppChnInfo.mChnId] = fopen(pBufferTmp, "w+");
     if (pBufferInfo[pVideoEISData->mMppChnInfo.mChnId] == NULL) {
-        aloge("open file /mnt/extsd/gyro_buffer_info[%d].txt failed!!", pVideoEISData->mMppChnInfo.mChnId);
+        LOGE("open file /mnt/extsd/gyro_buffer_info[%d].txt failed!!", pVideoEISData->mMppChnInfo.mChnId);
         return eError;
     }
 #endif
 
     pVideoEISData->pInputBufMgr = VideoBufMgrCreate(pVideoEISData->mEISAttr.iInputBufNum, 0);
     if (NULL == pVideoEISData->pInputBufMgr) {
-        aloge("Create EIS video input buffer manager failed.");
+        LOGE("Create EIS video input buffer manager failed.");
         goto ECrtInput;
     }
     eError = _EisCreateOutputBufPool(pVideoEISData);
     if (SUCCESS != eError) {
-        aloge("Create EIS video output buffer pool failed.");
+        LOGE("Create EIS video output buffer pool failed.");
         goto ECrtOutputPool;
     }
 
     switch (pVideoEISData->mEISAttr.eEisAlgoMode) {
         case EIS_ALGO_MODE_SW: {
-            aloge("You choice the software EIS, but it can't be use now, so use hardware EIS process.");
+            LOGE("You choice the software EIS, but it can't be use now, so use hardware EIS process.");
         }
         case EIS_ALGO_MODE_HW: {
             pVideoEISData->pstEISPkt = malloc(pVideoEISData->mEISAttr.iInputBufNum*sizeof(EISE_FrameData));
             if (NULL == pVideoEISData->pstEISPkt) {
-                aloge("Alloc EIS process packet failed, errno %d.", errno);
+                LOGE("Alloc EIS process packet failed, errno %d.", errno);
                 goto EAllocPkts;
             }
 
@@ -1841,7 +1841,7 @@ ERRORTYPE _VideoEisCreate(VIDEOEISDATATYPE *pVideoEISData)
             VideoEisSetHwCfgs(pVideoEISData);
             iRet = EIS_Create(&pVideoEISData->mEisCfg, &pVideoEISData->mEisHd);
             if (iRet < 0) {
-                aloge("Create EIS hardware handle failed. ret %d.", iRet);
+                LOGE("Create EIS hardware handle failed. ret %d.", iRet);
                 eError = ERR_EIS_FAILED_NOTENABLE;
                 goto EEisCrt;
             }
@@ -1858,7 +1858,7 @@ ERRORTYPE _VideoEisCreate(VIDEOEISDATATYPE *pVideoEISData)
             char *pTmp = &pBufferTmp[0];
             static int iBPTestCnt = 0;
 
-            alogw("You choice the by pass EIS mode, I will output the origin gyro and video buffer with no process.");
+            LOGW("You choice the by pass EIS mode, I will output the origin gyro and video buffer with no process.");
             pVideoEISData->bByPassMode = 1;
             pVideoEISData->pBPDataSavePath = pVideoEISData->mEISAttr.pBPDataSavePath;
             iRet = sprintf(pTmp, "%s/EISGyroDataCache%dx%dCnt%d.txt", pVideoEISData->pBPDataSavePath,
@@ -1881,7 +1881,7 @@ ERRORTYPE _VideoEisCreate(VIDEOEISDATATYPE *pVideoEISData)
             }
             if (!pVideoEISData->pGyroPtsDataFd || !pVideoEISData->pVideoPtsFd
                     || (!pVideoEISData->pVideoDataFd && pVideoEISData->mEISAttr.bSaveYUV)) {
-                aloge("Open %s/xxx cache files failed, check if you have enough space or this path.\r\n", pVideoEISData->pBPDataSavePath);
+                LOGE("Open %s/xxx cache files failed, check if you have enough space or this path.", pVideoEISData->pBPDataSavePath);
                 eError = ERR_EIS_FAILED_NOTENABLE;
                 goto EOSaveFd;
             }
@@ -1890,7 +1890,7 @@ ERRORTYPE _VideoEisCreate(VIDEOEISDATATYPE *pVideoEISData)
         } break;
 
         default: {
-            aloge("Wrong EIS algoram mode[%d], return.", pVideoEISData->mEISAttr.eEisAlgoMode);
+            LOGE("Wrong EIS algoram mode[%d], return.", pVideoEISData->mEISAttr.eEisAlgoMode);
             eError = ERR_EIS_INVALID_PARA;
         } break;
     }
@@ -1921,7 +1921,7 @@ ERRORTYPE _VideoEisDestroy(VIDEOEISDATATYPE *pVideoEISData)
     int iRet = 0;
 
     if (!pVideoEISData->mEisHd && (EIS_ALGO_MODE_BP != pVideoEISData->mEISAttr.eEisAlgoMode)) {
-        alogd("You have already destroy the EIS handle.");
+        LOGD("You have already destroy the EIS handle.");
         return SUCCESS;
     }
 
@@ -1935,14 +1935,14 @@ ERRORTYPE _VideoEisDestroy(VIDEOEISDATATYPE *pVideoEISData)
 
             iRet = EIS_Destroy(&pVideoEISData->mEisHd);
             if (iRet < 0) {
-                aloge("Destroy EIS hardware handle failed. ret %d.", iRet);
+                LOGE("Destroy EIS hardware handle failed. ret %d.", iRet);
                 eError = ERR_EIS_FAILED_NOTDISABLE;
             }
             pVideoEISData->mEisHd = NULL;
         } break;
 
         case EIS_ALGO_MODE_BP: {
-            alogw("You choice the bypass EIS mode, and I save all useful datas.");
+            LOGW("You choice the bypass EIS mode, and I save all useful datas.");
             pVideoEISData->bByPassMode = 0;
             pVideoEISData->pBPDataSavePath = NULL;
             if (pVideoEISData->pGyroPtsDataFd)
@@ -1954,7 +1954,7 @@ ERRORTYPE _VideoEisDestroy(VIDEOEISDATATYPE *pVideoEISData)
         } break;
 
         default: {
-            aloge("Wrong EIS algoram mode[%d], return.", pVideoEISData->mEISAttr.eEisAlgoMode);
+            LOGE("Wrong EIS algoram mode[%d], return.", pVideoEISData->mEISAttr.eEisAlgoMode);
             eError = ERR_EIS_INVALID_PARA;
         } break;
     }
@@ -2083,7 +2083,7 @@ ERRORTYPE VideoEISComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     _EisInitAttrs(pVideoEISData);
 
     if (message_create(&pVideoEISData->cmd_queue) < 0) {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_VI_NOMEM;
         goto ECrtMsg;
     }
@@ -2092,12 +2092,12 @@ ERRORTYPE VideoEISComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     * the question is: should we open the gyro after create the gyro thread immediately? no.
     */
     if (pthread_create(&pVideoEISData->mEISTrd, NULL, EIS_CompStabThread, pVideoEISData)) {
-        aloge("create EIS_CompStabThread fail!");
+        LOGE("create EIS_CompStabThread fail!");
         eError = ERR_VI_NOMEM;
         goto ECrtStab;
     }
 
-    alogv("VideoEIS component Init success!");
+    LOGV("VideoEIS component Init success!");
     return SUCCESS;
 
 ECrtStab:
@@ -2116,7 +2116,7 @@ ERRORTYPE VideoEISComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     int cnt = 0;
 
     if (NULL == hComponent) {
-        aloge("Fatel error: NULL pointer.");
+        LOGE("Fatel error: NULL pointer.");
         return ERR_EIS_NOT_PERM;
     }
 
@@ -2136,7 +2136,7 @@ ERRORTYPE VideoEISComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     free(pVideoEISData);
     pVideoEISData = NULL;
-    alogv("VideoEIS component exited!");
+    LOGV("VideoEIS component exited!");
 
     return eError;
 }
@@ -2146,18 +2146,18 @@ void _GyroDebugDumpAllChannelInfos(struct gyro_device_attr *gyro_attr)
     int i = 0;
 
     for (i = 0; i < gyro_attr->arry_elems; i++) {
-        printf("Channel [%d]:\r\n", i);
-        printf("\tName\t%s\r\n", gyro_attr->iio_chn[i].name);
-        printf("\tGName\t%s\r\n", gyro_attr->iio_chn[i].generic_name);
-        printf("\tScale\t%f\r\n", gyro_attr->iio_chn[i].scale);
-        printf("\toffset\t%f\r\n", gyro_attr->iio_chn[i].offset);
-        printf("\tindex\t%u\r\n", gyro_attr->iio_chn[i].index);
-        printf("\tbytes\t%u\r\n", gyro_attr->iio_chn[i].bytes);
-        printf("\tbitused\t%u\r\n", gyro_attr->iio_chn[i].bits_used);
-        printf("\tshift\t%u\r\n", gyro_attr->iio_chn[i].shift);
-        printf("\tbe\t%u\r\n", gyro_attr->iio_chn[i].be);
-        printf("\tis_sign\t%u\r\n", gyro_attr->iio_chn[i].is_signed);
-        printf("\tlocation\t%u\r\n\n", gyro_attr->iio_chn[i].location);
+        LOGI("Channel [%d]:", i);
+        LOGI("\tName\t%s", gyro_attr->iio_chn[i].name);
+        LOGI("\tGName\t%s", gyro_attr->iio_chn[i].generic_name);
+        LOGI("\tScale\t%f", gyro_attr->iio_chn[i].scale);
+        LOGI("\toffset\t%f", gyro_attr->iio_chn[i].offset);
+        LOGI("\tindex\t%u", gyro_attr->iio_chn[i].index);
+        LOGI("\tbytes\t%u", gyro_attr->iio_chn[i].bytes);
+        LOGI("\tbitused\t%u", gyro_attr->iio_chn[i].bits_used);
+        LOGI("\tshift\t%u", gyro_attr->iio_chn[i].shift);
+        LOGI("\tbe\t%u", gyro_attr->iio_chn[i].be);
+        LOGI("\tis_sign\t%u", gyro_attr->iio_chn[i].is_signed);
+        LOGI("\tlocation\t%u\r", gyro_attr->iio_chn[i].location);
     }
 }
 
@@ -2171,7 +2171,7 @@ static void *EIS_CompGyroThread(void *pThreadData)
 
     message_t cmd_msg;
 
-    alogv("VideoEIS ComponentGyroThread start run...");
+    LOGV("VideoEIS ComponentGyroThread start run...");
     prctl(PR_SET_NAME, "EIS_CompGyroThread", 0, 0, 0);
 
 #if 0
@@ -2182,9 +2182,9 @@ static void *EIS_CompGyroThread(void *pThreadData)
     CPU_SET(3, &stCpuSet);
     ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &stCpuSet);
     if (ret < 0) {
-        aloge("sched_setaffinity failed!!\r\n");
+        LOGE("sched_setaffinity failed!!");
     }
-    alogv("sched_setaffinity for GyroHw_CapThread\r\n");
+    LOGV("sched_setaffinity for GyroHw_CapThread");
 #endif
 
 #if 0
@@ -2193,7 +2193,7 @@ static void *EIS_CompGyroThread(void *pThreadData)
     sched_setscheduler(syscall(__NR_gettid), SCHED_RR, &stSchedPara);
 //    sched_setparam(syscall(__NR_gettid), const struct sched_param *param);
 
-    alogv("loop GyroHw_CapThread, freq:%d, one read sequence gyro number:%d.\r\n",
+    LOGV("loop GyroHw_CapThread, freq:%d, one read sequence gyro number:%d.",
         pVideoEISData->mEISAttr.iGyroFreq, iGyroReadGrainSize);
 
 //    _GyroDebugDumpAllChannelInfos(&pVideoEISData->mGyroAttr);
@@ -2211,10 +2211,10 @@ static void *EIS_CompGyroThread(void *pThreadData)
 
     	iRet = select(pVideoEISData->mGyroAttr.gyro_fd + 1, &stRdFdSet, NULL, NULL, &stTimeLimit);
     	if (iRet < 0) {
-            aloge("Select wait for gyro datas failed, return %d.", -errno);
+            LOGE("Select wait for gyro datas failed, return %d.", -errno);
             continue;
     	} else if (0 == iRet) {
-            aloge("Select wait for gyro datas timeout.");
+            LOGE("Select wait for gyro datas timeout.");
             continue;
     	}
 
@@ -2324,7 +2324,7 @@ static EISE_FrameData* _SyncAndPacketEisHardwareBuffer
         ? pstVFrm->mpts - iFixedDelayTime*1000
         : pstVFrm->mpts + abs(iFixedDelayTime)*1000;
 
-//    printf("EIS:[%u]\n", pstVFrm->mExposureTime);
+//    LOGI("EIS:[%u]", pstVFrm->mExposureTime);
     dPacktEndTimeStamp = dFixedVideoPts - dVideoFrameIntervalMs*1000
         + (uint64_t)(pVideoEISData->mEisCfg.td*1000000.0f);
 
@@ -2382,7 +2382,7 @@ static EISE_FrameData* _SyncAndPacketEisHardwareBuffer
          /* If we got one gyro packet success,
          * then use it whatever, even it may not too valid. */
         if (ring_buffer_out(pGyroRBHd, &stGyroPkt, 1) <= 0) {
-            aloge("Empty.");
+            LOGE("Empty.");
             goto EEmptyRB;
         }
 
@@ -2412,7 +2412,7 @@ EEmptyRB:
     if (i == 0) {
         if (NULL == pVideoEISData->pLastUsedEISPkt) {
             /* This mean we got an empty buffer packets, construct it. */
-            aloge("Got zero gyro buffer datas. video pts[%llu], construct it.", pstVFrm->mpts);
+            LOGE("Got zero gyro buffer datas. video pts[%llu], construct it.", pstVFrm->mpts);
             memset(&pstEISFrmTmp->gyro_data[0], 0, sizeof(pstEISFrmTmp->gyro_data));
 
             pstEISFrmTmp->gyro_data[0].time = dPacktStartTimeStamp;
@@ -2443,7 +2443,7 @@ EEmptyRB:
         } else {
             if (pVideoEISData->bHasGyroDev && pVideoEISData->iGVSyncPktId % pVideoEISData->mEISAttr.iVideoFps == 0)
                 /* This mean we got an empty buffer packets. then use the last gyro data one */
-                aloge("Got zero gyro buffer datas. video pts[%llu], last pts[%llu], ring buffer kepp[%d].",
+                LOGE("Got zero gyro buffer datas. video pts[%llu], last pts[%llu], ring buffer kepp[%d].",
                     pstVFrm->mpts,
                     pVideoEISData->pLastUsedEISPkt->gyro_data[pVideoEISData->pLastUsedEISPkt->gyro_num-1].time,
                     ring_buffer_g_validnum(pGyroRBHd));
@@ -2458,7 +2458,7 @@ EEmptyRB:
             dGyroDataExtendIntervalUs = (dPacktEndTimeStamp - dPacktStartTimeStamp)/(pstEISFrmTmp->gyro_num-1);
 
             if (pVideoEISData->bHasGyroDev && pVideoEISData->iGVSyncPktId % pVideoEISData->mEISAttr.iVideoFps == 0)
-                aloge("Got zero gyro buffer datas. video pts0[%llu], num[%d].",
+                LOGE("Got zero gyro buffer datas. video pts0[%llu], num[%d].",
                         pstEISFrmTmp->gyro_data[0].time, pstEISFrmTmp->gyro_num);
 
             /* Fix timestamps */
@@ -2474,7 +2474,7 @@ EEmptyRB:
         /* Too less packets, shoudle we use the last one? */
         /* Should copy the last gyro data to pad the gyro data number, but increase timestamp */
         /* Just keep the exist program, if can not support, then change it. */
-        aloge("Too less gyro buffer datas %d, ring buffer keep[%d], then extend to %d datas.\n",
+        LOGE("Too less gyro buffer datas %d, ring buffer keep[%d], then extend to %d datas.",
                 i, ring_buffer_g_validnum(pGyroRBHd), iNeedGyroDataNum);
 #if 0
         dGyroDataExtendIntervalUs = (dPacktEndTimeStamp - pstEISFrmTmp->gyro_data[i-1].time)/(iNeedGyroDataNum-i);
@@ -2528,11 +2528,11 @@ static void *EIS_CompStabThread(void *pThreadData)
         struct sched_param stSchedPara;
         stSchedPara.sched_priority = 20;
         if (pthread_setschedparam(pthread_self(), SCHED_RR, &stSchedPara))
-            aloge("Set EIS_CompStabThread into SCHED_RR failed, %s.", strerror(errno));
+            LOGE("Set EIS_CompStabThread into SCHED_RR failed, %s.", strerror(errno));
     }
 #endif
 
-    alogv("VideoEIS ComponentStabThread start run...");
+    LOGV("VideoEIS ComponentStabThread start run...");
     prctl(PR_SET_NAME, "EIS_CompStabThread", 0, 0, 0);
 
     while (1) {
@@ -2540,7 +2540,7 @@ static void *EIS_CompStabThread(void *pThreadData)
         if (get_message(&pVideoEISData->cmd_queue, &cmd_msg) == 0) {
             cmd = cmd_msg.command;
             cmddata = (unsigned int)cmd_msg.para0;
-            // alogv("VideoVi ComponentThread get_message cmd:%d", cmd);
+            // LOGV("VideoVi ComponentThread get_message cmd:%d", cmd);
             if (cmd == SetState) {
                 pthread_mutex_lock(&pVideoEISData->mStateLock);
                 if (pVideoEISData->state == (COMP_STATETYPE)(cmddata)) {
@@ -2568,23 +2568,23 @@ static void *EIS_CompStabThread(void *pThreadData)
                             DoVideoEisReturnBackAllInputFrames(pVideoEISData);
 
                             if (!list_empty(&pVideoEISData->mOutUsedList)) {
-                                aloge("Wait EIS component output buffer used frame list empty.");
+                                LOGE("Wait EIS component output buffer used frame list empty.");
                                 while (!list_empty(&pVideoEISData->mOutUsedList)) {usleep(10*1000);};
                             }
                             VideoBufMgrWaitUsingEmpty(pVideoEISData->pInputBufMgr);
-                            alogd("Wait all EIS component output using frame return done.");
+                            LOGD("Wait all EIS component output using frame return done.");
 
                             pVideoEISData->mWaitAllFrameReleaseFlag = 0;
                             pVideoEISData->state = COMP_StateLoaded;
                             _VideoEisDestroy(pVideoEISData);
-                            alogv("Set EIS OMX_StateLoaded OK");
+                            LOGV("Set EIS OMX_StateLoaded OK");
                             pVideoEISData->pCallbacks->EventHandler(pVideoEISData->hSelf, pVideoEISData->pAppData,
                                                                    COMP_EventCmdComplete, COMP_CommandStateSet,
                                                                    pVideoEISData->state, NULL);
                         } break;
                         case COMP_StateIdle: {
                             if (pVideoEISData->state == COMP_StateLoaded) {
-                                alogv("video VI: loaded->idle ...");
+                                LOGV("video VI: loaded->idle ...");
                                 pVideoEISData->state = COMP_StateIdle;
                                 pVideoEISData->pCallbacks->EventHandler(pVideoEISData->hSelf,
                                                                 pVideoEISData->pAppData,
@@ -2593,19 +2593,19 @@ static void *EIS_CompStabThread(void *pThreadData)
                                                                 pVideoEISData->state, NULL);
                             } else if (pVideoEISData->state == COMP_StatePause ||
                                             pVideoEISData->state == COMP_StateExecuting) {
-                                alogv("video vi: pause/executing[0x%x]->idle ...", pVideoEISData->state);
+                                LOGV("video vi: pause/executing[0x%x]->idle ...", pVideoEISData->state);
                                 //release all frames to video input.
                                 if(!VideoBufMgrUsingEmpty(pVideoEISData->pInputBufMgr)) {
-                                    alogw("Fatal warning! using frame is not empty! check code!");
+                                    LOGW("Fatal warning! using frame is not empty! check code!");
                                 }
 
                                 pVideoEISData->state = COMP_StateIdle;
-                                alogv("Set EIS COMP_StateIdle OK");
+                                LOGV("Set EIS COMP_StateIdle OK");
                                 pVideoEISData->pCallbacks->EventHandler(pVideoEISData->hSelf, pVideoEISData->pAppData,
                                                                        COMP_EventCmdComplete, COMP_CommandStateSet,
                                                                        pVideoEISData->state, NULL);
                             } else {
-                                aloge("Fatal error! current state[0x%x] can't turn to idle!", pVideoEISData->state);
+                                LOGE("Fatal error! current state[0x%x] can't turn to idle!", pVideoEISData->state);
                                 pVideoEISData->pCallbacks->EventHandler(pVideoEISData->hSelf, pVideoEISData->pAppData,
                                                                        COMP_EventError,
                                                                        ERR_VI_INCORRECT_STATE_TRANSITION, 0, NULL);
@@ -2620,10 +2620,10 @@ static void *EIS_CompStabThread(void *pThreadData)
                                                                 COMP_EventError,
                                                                 COMP_CommandStateSet,
                                                                 eError, NULL);
-                                    aloge("Convert status Idle->Executing failed because open hw EIS failed. ret 0x%x.", eError);
+                                    LOGE("Convert status Idle->Executing failed because open hw EIS failed. ret 0x%x.", eError);
                                 } else {
                                     pVideoEISData->state = COMP_StateExecuting;
-                                    alogv("Set Virvi COMP_StateExecuting OK");
+                                    LOGV("Set Virvi COMP_StateExecuting OK");
                                     pVideoEISData->pCallbacks->EventHandler(pVideoEISData->hSelf,
                                                                 pVideoEISData->pAppData,
                                                                 COMP_EventCmdComplete,
@@ -2661,7 +2661,7 @@ static void *EIS_CompStabThread(void *pThreadData)
                 /* Kill thread */
                 goto EXIT;
             } else if(cmd == EisComp_InputFrameAvailable) {
-                alogv("(f:%s, l:%d) frame input", __FUNCTION__, __LINE__);
+                LOGV("(f:%s, l:%d) frame input", __FUNCTION__, __LINE__);
             } else if(cmd == EisComp_StoreFrame) {
                 pVideoEISData->bStoreFrame = TRUE;
                 snprintf(pVideoEISData->mDbgStoreFrameFilePath, sizeof(pVideoEISData->mDbgStoreFrameFilePath), "%s", (char*)cmd_msg.mpData);
@@ -2738,7 +2738,7 @@ static void *EIS_CompStabThread(void *pThreadData)
                             list_move_tail(&pVFrmOutputCur->mList, &pVideoEISData->mOutValidList);
                             pVideoEISData->iOutFrmIdleCnt--;
                         } else
-                            aloge("We has only one idle frame in EIS output frame list.");
+                            LOGE("We has only one idle frame in EIS output frame list.");
                         pVFrmOutputCur->mFrame.VFrame.mPhyAddr[0] = pVideoInBufTmp->VFrame.mPhyAddr[0];
                         pVFrmOutputCur->mFrame.VFrame.mPhyAddr[1] = pVideoInBufTmp->VFrame.mPhyAddr[1];
                         pVFrmOutputCur->mFrame.VFrame.mpts = pVideoInBufTmp->VFrame.mpts;
@@ -2810,7 +2810,7 @@ static void *EIS_CompStabThread(void *pThreadData)
             pEisProcPkt = _SyncAndPacketEisHardwareBuffer(pVideoEISData, &pVInFrm->VFrame);
 //            pEisProcPkt->frame_stamp = pVInFrm->VFrame.mpts;
             pEisProcPkt->texp = (float)pVInFrm->VFrame.mExposureTime/1000.0f;
-//            aloge("Send video pts: %f %f gyro_num[%d] %f %f %f %f to process.",
+//            LOGE("Send video pts: %f %f gyro_num[%d] %f %f %f %f to process.",
 //                pEisProcPkt->frame_stamp, pEisProcPkt->texp, pEisProcPkt->gyro_num, pEisProcPkt->gyro_data[0].time,
 //                pEisProcPkt->gyro_data[0].vx, pEisProcPkt->gyro_data[0].vy, pEisProcPkt->gyro_data[0].vz);
             pEisProcPkt->in_addr.in_luma_mmu_Addr = pVInFrm->VFrame.mpVirAddr[0];
@@ -2847,7 +2847,7 @@ static void *EIS_CompStabThread(void *pThreadData)
                     VideoBufMgrReleaseFrame(pVideoEISData->pInputBufMgr, pVideoInBufTmp);
                     DoVideoEisSendBackInputFrame(pVideoEISData, &stVideoInBufRetTmp);
                 } else
-                    aloge("Using frame list empty.");
+                    LOGE("Using frame list empty.");
             }
 
 #ifdef PROC_TIME_TEST
@@ -2860,7 +2860,7 @@ static void *EIS_CompStabThread(void *pThreadData)
 
 #ifdef PROC_TIME_TEST
             TIME_GET_END(T);
-            printf("[%d]%f.\n", pVideoEISData->mMppChnInfo.mChnId, TIME_PRINT_DIFF(T));
+            LOGI("[%d]%f.", pVideoEISData->mMppChnInfo.mChnId, TIME_PRINT_DIFF(T));
 #endif
 #endif
             switch (iEisProcRet) {
@@ -2879,7 +2879,7 @@ static void *EIS_CompStabThread(void *pThreadData)
                         pVideoEISData->iOutFrmIdleCnt--;
                         bCanGetOutBuf = 1;
                     } else{
-                        aloge("We has only one idle frame in EIS output frame list.");
+                        LOGE("We has only one idle frame in EIS output frame list.");
                     }
                     pthread_mutex_unlock(&pVideoEISData->mOutFrmListLock);
 
@@ -2892,7 +2892,7 @@ static void *EIS_CompStabThread(void *pThreadData)
                             VideoBufMgrReleaseFrame(pVideoEISData->pInputBufMgr, pVideoInBufTmp);
                             DoVideoEisSendBackInputFrame(pVideoEISData, &stVideoInBufRetTmp);
                         } else
-                            aloge("Not find input buffer in UsingFrameList, addr=0x%x.", pEisProcPkt->in_addr.in_luma_mmu_Addr);
+                            LOGE("Not find input buffer in UsingFrameList, addr=0x%x.", pEisProcPkt->in_addr.in_luma_mmu_Addr);
                         /* Now, clear using flag. */
                         pVideoEISData->mEisPktMap &= ~(1 << iInputFrmId);
                     }
@@ -2927,7 +2927,7 @@ static void *EIS_CompStabThread(void *pThreadData)
                             obh.pOutputPortPrivate = pVOutFrm;
                             eError = COMP_EmptyThisBuffer(pOutTunnelComp, &obh);
                             if(SUCCESS != eError) {
-                                alogw("Loop EIS_CompStabThread OutTunnelComp EmptyThisBuffer failed 0x%x, return this frame", eError);
+                                LOGW("Loop EIS_CompStabThread OutTunnelComp EmptyThisBuffer failed 0x%x, return this frame", eError);
                                 /* Just return */
                                 list_move_tail(&pVFrmOutputCur->mList, &pVideoEISData->mOutIdleList);
                                 pVideoEISData->iOutFrmIdleCnt++;
@@ -2936,11 +2936,11 @@ static void *EIS_CompStabThread(void *pThreadData)
                             pthread_mutex_unlock(&pVideoEISData->mOutFrmListLock);
                         }
                     } else{
-                        aloge("Not find output buffer.");
+                        LOGE("Not find output buffer.");
                     }
                 } break;
                 case LIB_E_BUFFER_NOT_ENOUGH: {
-                    alogw("Has not get enough buffer.");
+                    LOGW("Has not get enough buffer.");
                 } break;
                 default: {
                     /* Something error occurs, and we should return the oldest using frame. */
@@ -2952,7 +2952,7 @@ static void *EIS_CompStabThread(void *pThreadData)
                             for (i = 0; i < pVideoEISData->mEISAttr.iInputBufNum; i++) {
                                 if (pVideoEISData->pstEISPkt[i].in_addr.in_luma_mmu_Addr == pVideoInBufTmp->VFrame.mpVirAddr[0]) {
                                     pVideoEISData->mEisPktMap &= ~(1 << i);
-                                    aloge("Free used EISPkt[%d] because of hardware error.", i);
+                                    LOGE("Free used EISPkt[%d] because of hardware error.", i);
                                     break;
                                 }
                             }
@@ -2962,19 +2962,19 @@ static void *EIS_CompStabThread(void *pThreadData)
                             VideoBufMgrReleaseFrame(pVideoEISData->pInputBufMgr, pVideoInBufTmp);
                             DoVideoEisSendBackInputFrame(pVideoEISData, &stVideoInBufRetTmp);
                         } else
-                            aloge("Using frame list empty.");
+                            LOGE("Using frame list empty.");
                     }
-                    aloge("Got one undefined error. ret 0x%x.", iEisProcRet);
+                    LOGE("Got one undefined error. ret 0x%x.", iEisProcRet);
                 } break;
             }
         } else {
-            alogv("EIS_CompStabThread not OMX_StateExecuting\n");
+            LOGV("EIS_CompStabThread not OMX_StateExecuting");
             TMessage_WaitQueueNotEmpty(&pVideoEISData->cmd_queue, 0);
         }
     }
 
 EXIT:
-    alogv("VideoEis ComponentThread stopped");
+    LOGV("VideoEis ComponentThread stopped");
     return (void *)SUCCESS;
 }
 

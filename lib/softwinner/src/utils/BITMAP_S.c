@@ -1,6 +1,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "BITMAP_S"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include "plat_errno.h"
 #include "plat_type.h"
@@ -20,7 +20,7 @@ int BITMAP_S_GetdataSize(PARAM_IN const BITMAP_S *pBitmap)
     int nSize = 0;
     if(NULL == pBitmap)
     {
-        aloge("fatal error! pBitmap == NULL, return!");
+        LOGE("fatal error! pBitmap == NULL, return!");
         return 0;
     }
     switch(pBitmap->mPixelFormat)
@@ -32,7 +32,7 @@ int BITMAP_S_GetdataSize(PARAM_IN const BITMAP_S *pBitmap)
             nSize = pBitmap->mWidth * pBitmap->mHeight * 4;
             break;
         default:
-            aloge("fatal error! unknown pixel format[0x%x]", pBitmap->mPixelFormat);
+            LOGE("fatal error! unknown pixel format[0x%x]", pBitmap->mPixelFormat);
             break;
     }
     return nSize;
@@ -46,7 +46,7 @@ ERRORTYPE BITMAP_S_FlipData(PARAM_INOUT BITMAP_S *pBitmap, PARAM_IN BMP_FLIP_FLA
 
     if (flip_dir < BMP_FLIP_NONE || flip_dir > BMP_FLIP_BOTH_FLIP)
     {
-        aloge("fatal error! unknown flip direction[%d]!", flip_dir);
+        LOGE("fatal error! unknown flip direction[%d]!", flip_dir);
         ret = FAILURE;
         return ret;
     }
@@ -97,7 +97,7 @@ ERRORTYPE BITMAP_S_FlipData(PARAM_INOUT BITMAP_S *pBitmap, PARAM_IN BMP_FLIP_FLA
         }
         default:
         {
-            aloge("fatal error! unknown pixel format[0x%x]", pBitmap->mPixelFormat);
+            LOGE("fatal error! unknown pixel format[0x%x]", pBitmap->mPixelFormat);
             ret = FAILURE;
             break;
         }

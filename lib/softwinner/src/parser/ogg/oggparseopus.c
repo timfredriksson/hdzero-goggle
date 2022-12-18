@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "ParseOpus"
 #include "CdxOggParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 
 
@@ -83,7 +83,7 @@ static int opus_header(CdxOggParser *ogg, int idx)
 #if 1
     if (priv->need_comments) {
         if (os->psize < 8 || memcmp(packet, "OpusTags", 8)){
-            CDX_LOGE("To fix me! Temporary thought it has shut down comment feature");
+            LOGE("To fix me! Temporary thought it has shut down comment feature");
             priv->need_comments--;
             return 1;//AVERROR_INVALIDDATA;
         }
@@ -173,7 +173,7 @@ static int opus_packet(CdxOggParser *ogg, int idx)
         if (skip > 0) {
             os->pduration = skip < os->pduration ? os->pduration - skip : 1;
             //os->end_trimming = skip;
-            CDX_LOGD("Last packet was truncated to %d due to end trimming",
+            LOGD("Last packet was truncated to %d due to end trimming",
                      os->pduration);
         }
     }

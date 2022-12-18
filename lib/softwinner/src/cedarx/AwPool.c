@@ -9,7 +9,7 @@
  */
 
 #include <AwPool.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxList.h>
 #include <CdxAtomic.h>
 #include <CdxLock.h>
@@ -23,7 +23,7 @@
 #define POOL_ALIGNMENT 8
 #define POOL_LARGE_SIZE 4095
 
-#define AwAlign(d, a) (((d) + (a - 1)) & ~(a - 1)) /*ÏòÉÏ¶ÔÆë*/
+#define AwAlign(d, a) (((d) + (a - 1)) & ~(a - 1)) /*ï¿½ï¿½ï¿½Ï¶ï¿½ï¿½ï¿½*/
 
 struct PoolDataS
 {
@@ -83,7 +83,7 @@ static void *PallocBlock(AwPoolT *pool, int size, char *file, int line)
 //    newPd = memalign(POOL_ALIGNMENT, POOL_BLOCK_SIZE);
     if (newPd == NULL)
     {
-        CDX_LOGE("memalign alloc %d failure errno(%d)", POOL_BLOCK_SIZE, errno);
+        LOGE("memalign alloc %d failure errno(%d)", POOL_BLOCK_SIZE, errno);
         return NULL;
     }
 
@@ -135,7 +135,7 @@ static void *PallocLarge(AwPoolT *pool, int size, char *file, int line)
     pm = malloc(size + sizeof(*pm));
     if (pm == NULL)
     {
-        CDX_LOGE("malloc size(%d) failure, errno(%d)", size, errno);
+        LOGE("malloc size(%d) failure, errno(%d)", size, errno);
         return NULL;
     }
 
@@ -159,7 +159,7 @@ AwPoolT *PoolNodeCreate(char *file, int line)
 //    poolData = memalign(POOL_ALIGNMENT, POOL_BLOCK_SIZE);
     if ((!pool) || (!poolData))
     {
-        CDX_LOGE("memalign alloc %d failure errno(%d)", POOL_BLOCK_SIZE, errno);
+        LOGE("memalign alloc %d failure errno(%d)", POOL_BLOCK_SIZE, errno);
         if(pool)
             free(pool);
         if(poolData)
@@ -180,13 +180,13 @@ AwPoolT *PoolNodeCreate(char *file, int line)
     pthread_mutexattr_t attr;
     if (pthread_mutexattr_init(&attr) != 0)
     {
-        CDX_LOGE("init thread mutex attr failure...");
+        LOGE("init thread mutex attr failure...");
         return NULL;
     }
 
     if (pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK) != 0)
     {
-        CDX_LOGE("pthread_mutexattr_settype failure...");
+        LOGE("pthread_mutexattr_settype failure...");
         return NULL;
     }
 
@@ -240,7 +240,7 @@ void AwPoolDestroy(AwPoolT *pool)
 
     CdxListForEachEntrySafe(pm, nPm, &pool->largeList, node)
     {
-        CDX_LOGW("memory leak @<%s:%d>", strrchr(pm->file, '/') + 1, pm->line);
+        LOGW("memory leak @<%s:%d>", strrchr(pm->file, '/') + 1, pm->line);
         CdxListDel(&pm->node);
         free(pm);
     }
@@ -257,7 +257,7 @@ void AwPoolDestroy(AwPoolT *pool)
             struct PoolMemoryS *pm;
             CdxListForEachEntry(pm, &pd->pmList, node)
             {
-                CDX_LOGW("memory leak @<%s:%d>", strrchr(pm->file, '/') + 1, pm->line);
+                LOGW("memory leak @<%s:%d>", strrchr(pm->file, '/') + 1, pm->line);
                 PoolDataDecRef(pd);
             }
         }
@@ -352,7 +352,7 @@ void *AwRealloc(AwPoolT *pool, void *p, int size, char *file, int line)
         newP = PallocLarge(pool, size, file, line);
         if (!newP)
         {
-            CDX_LOGE("realloc failure...");
+            LOGE("realloc failure...");
             goto out;
         }
         memcpy(newP, p, pm->size);
@@ -366,7 +366,7 @@ void *AwRealloc(AwPoolT *pool, void *p, int size, char *file, int line)
         newP = PallocLarge(pool, size, file, line);
         if (!newP)
         {
-            CDX_LOGE("realloc failure...");
+            LOGE("realloc failure...");
             goto out;
         }
         memcpy(newP, p, pm->size);
@@ -444,7 +444,7 @@ void AwPoolReset(void)
     }
     else
     {
-        CDX_LOGW("global pool not initinal...");
+        LOGW("global pool not initinal...");
     }
     return ;
 }

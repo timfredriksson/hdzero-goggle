@@ -11,7 +11,7 @@
   History       :
 ******************************************************************************/
 #define LOG_TAG "mpi_adec"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <stdlib.h>
@@ -62,12 +62,12 @@ ERRORTYPE ADEC_Construct(void)
     }
     gpADecChnMap = (ADecChnManager*)malloc(sizeof(ADecChnManager));
     if (NULL == gpADecChnMap) {
-        aloge("alloc ADecChnManager error(%s)!", strerror(errno));
+        LOGE("alloc ADecChnManager error(%s)!", strerror(errno));
         return FAILURE;
     }
     ret = pthread_mutex_init(&gpADecChnMap->mLock, NULL);
     if (ret != 0) {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         free(gpADecChnMap);
         gpADecChnMap = NULL;
         return FAILURE;
@@ -80,7 +80,7 @@ ERRORTYPE ADEC_Destruct(void)
 {
     if (gpADecChnMap != NULL) {
         if (!list_empty(&gpADecChnMap->mList)) {
-            aloge("fatal error! some adec channel still running when destroy adec device!");
+            LOGE("fatal error! some adec channel still running when destroy adec device!");
         }
         pthread_mutex_destroy(&gpADecChnMap->mLock);
         free(gpADecChnMap);
@@ -171,7 +171,7 @@ static ADEC_CHN_MAP_S* ADEC_CHN_MAP_S_Construct()
     ADEC_CHN_MAP_S *pChannel = (ADEC_CHN_MAP_S*)malloc(sizeof(ADEC_CHN_MAP_S));
     if(NULL == pChannel)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pChannel, 0, sizeof(ADEC_CHN_MAP_S));
@@ -183,7 +183,7 @@ static void ADEC_CHN_MAP_S_Destruct(ADEC_CHN_MAP_S *pChannel)
 {
     if(pChannel->mADecComp)
     {
-        aloge("fatal error! ADec component need free before!");
+        LOGE("fatal error! ADec component need free before!");
         COMP_FreeHandle(pChannel->mADecComp);
         pChannel->mADecComp = NULL;
     }
@@ -204,7 +204,7 @@ static ERRORTYPE AudioDecEventHandler(
     ret = ((MM_COMPONENTTYPE*)hComponent)->GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &ADecChnInfo);
     if(ret == SUCCESS)
     {
-        alogv("audio decoder event, MppChannel[%d][%d][%d]", ADecChnInfo.mModId, ADecChnInfo.mDevId, ADecChnInfo.mChnId);
+        LOGV("audio decoder event, MppChannel[%d][%d][%d]", ADecChnInfo.mModId, ADecChnInfo.mDevId, ADecChnInfo.mChnId);
     }
     ADEC_CHN_MAP_S *pChn = (ADEC_CHN_MAP_S*)pAppData;
 
@@ -214,13 +214,13 @@ static ERRORTYPE AudioDecEventHandler(
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("audio decoder EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("audio decoder EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else
             {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
@@ -238,25 +238,25 @@ static ERRORTYPE AudioDecEventHandler(
         {
             if(ERR_ADEC_SAMESTATE == nData1)
             {
-                alogv("set same state to adec!");
+                LOGV("set same state to adec!");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(ERR_ADEC_INVALIDSTATE == nData1)
             {
-                aloge("why adec state turn to invalid?");
+                LOGE("why adec state turn to invalid?");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(ERR_ADEC_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("fatal error! adec state transition incorrect.");
+                LOGE("fatal error! adec state transition incorrect.");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
     return SUCCESS;
@@ -272,12 +272,12 @@ ERRORTYPE AW_MPI_ADEC_CreateChn(ADEC_CHN ADecChn, const ADEC_CHN_ATTR_S *pAttr)
 {
     if(!(ADecChn>=0 && ADecChn <ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ADecChn[%d]!", ADecChn);
+        LOGE("fatal error! invalid ADecChn[%d]!", ADecChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     if(NULL == pAttr)
     {
-        aloge("fatal error! illagal ADecAttr!");
+        LOGE("fatal error! illagal ADecAttr!");
         return ERR_ADEC_ILLEGAL_PARAM;
     }
     pthread_mutex_lock(&gpADecChnMap->mLock);
@@ -294,7 +294,7 @@ ERRORTYPE AW_MPI_ADEC_CreateChn(ADEC_CHN ADecChn, const ADEC_CHN_ATTR_S *pAttr)
     eRet = COMP_GetHandle((COMP_HANDLETYPE*)&pNode->mADecComp, CDX_ComponentNameAudioDecoder, (void*)pNode, &AudioDecCallback);
     if(eRet != SUCCESS)
     {
-        aloge("fatal error! get comp handle fail!");
+        LOGE("fatal error! get comp handle fail!");
     }
     MPP_CHN_S ChannelInfo;
     ChannelInfo.mModId = MOD_ID_ADEC;
@@ -316,7 +316,7 @@ ERRORTYPE AW_MPI_ADEC_DestroyChn(ADEC_CHN ADecChn)
     ERRORTYPE ret;
     if (!(ADecChn>=0 && ADecChn<ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ADecChn[%d]!", ADecChn);
+        LOGE("fatal error! invalid ADecChn[%d]!", ADecChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -342,12 +342,12 @@ ERRORTYPE AW_MPI_ADEC_DestroyChn(ADEC_CHN ADecChn)
             }
             else if (nCompState == COMP_StateInvalid)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             }
             else
             {
-                aloge("Fatal error! invalid ADecChn[%d] state[0x%x]!", ADecChn, nCompState);
+                LOGE("Fatal error! invalid ADecChn[%d] state[0x%x]!", ADecChn, nCompState);
                 eRet = FAILURE;
             }
 
@@ -366,13 +366,13 @@ ERRORTYPE AW_MPI_ADEC_DestroyChn(ADEC_CHN ADecChn)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_ADEC_BUSY;
         }
     }
     else
     {
-        aloge("fatal error! no ADec component!");
+        LOGE("fatal error! no ADec component!");
         list_del(&pChn->mList);
         ADEC_CHN_MAP_S_Destruct(pChn);
         ret = SUCCESS;
@@ -390,7 +390,7 @@ ERRORTYPE AW_MPI_ADEC_ResetChn(ADEC_CHN ADecChn)
 {
     if(!(ADecChn>=0 && ADecChn <ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ADecChn[%d]!", ADecChn);
+        LOGE("fatal error! invalid ADecChn[%d]!", ADecChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -406,13 +406,13 @@ ERRORTYPE AW_MPI_ADEC_ResetChn(ADEC_CHN ADecChn)
         eRet2 = pChn->mADecComp->SetConfig(pChn->mADecComp, COMP_IndexVendorAdecResetChannel, NULL);
         if(eRet2 != SUCCESS)
         {
-            aloge("fatal error! reset channel fail[0x%x]!", eRet2);
+            LOGE("fatal error! reset channel fail[0x%x]!", eRet2);
         }
         return eRet2;
     }
     else
     {
-        aloge("wrong status[0x%x], can't reset adec channel!", nCompState);
+        LOGE("wrong status[0x%x], can't reset adec channel!", nCompState);
         return ERR_ADEC_NOT_PERM;
     }
 }
@@ -421,7 +421,7 @@ ERRORTYPE AW_MPI_ADEC_RegisterCallback(ADEC_CHN ADecChn, MPPCallbackInfo *pCallb
 {
     if(!(ADecChn>=0 && ADecChn <ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ADecChn[%d]!", ADecChn);
+        LOGE("fatal error! invalid ADecChn[%d]!", ADecChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -438,7 +438,7 @@ ERRORTYPE AW_MPI_ADEC_SetStreamEof(ADEC_CHN AdChn, BOOL bEofFlag)
 {
     if(!(AdChn>=0 && AdChn <ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AdecChn[%d]!", AdChn);
+        LOGE("fatal error! invalid AdecChn[%d]!", AdChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -451,7 +451,7 @@ ERRORTYPE AW_MPI_ADEC_SetStreamEof(ADEC_CHN AdChn, BOOL bEofFlag)
     ret = pChn->mADecComp->GetState(pChn->mADecComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-       aloge("wrong state[0x%x], return!", nState);
+       LOGE("wrong state[0x%x], return!", nState);
        return ERR_ADEC_NOT_PERM;
     }
     if(bEofFlag)
@@ -469,7 +469,7 @@ ERRORTYPE AW_MPI_ADEC_SetChnAttr(ADEC_CHN ADecChn, const ADEC_CHN_ATTR_S *pAttr)
 {
     if(!(ADecChn>=0 && ADecChn <ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ADecChn[%d]!", ADecChn);
+        LOGE("fatal error! invalid ADecChn[%d]!", ADecChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -482,7 +482,7 @@ ERRORTYPE AW_MPI_ADEC_SetChnAttr(ADEC_CHN ADecChn, const ADEC_CHN_ATTR_S *pAttr)
     ret = pChn->mADecComp->GetState(pChn->mADecComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ADEC_NOT_PERM;
     }
     ret = pChn->mADecComp->SetConfig(pChn->mADecComp, COMP_IndexVendorAdecChnAttr, (void*)pAttr);
@@ -493,7 +493,7 @@ ERRORTYPE AW_MPI_ADEC_GetChnAttr(ADEC_CHN ADecChn, ADEC_CHN_ATTR_S *pAttr)
 {
     if(!(ADecChn>=0 && ADecChn <ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ADecChn[%d]!", ADecChn);
+        LOGE("fatal error! invalid ADecChn[%d]!", ADecChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -506,7 +506,7 @@ ERRORTYPE AW_MPI_ADEC_GetChnAttr(ADEC_CHN ADecChn, ADEC_CHN_ATTR_S *pAttr)
     ret = pChn->mADecComp->GetState(pChn->mADecComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ADEC_NOT_PERM;
     }
     ret = pChn->mADecComp->GetConfig(pChn->mADecComp, COMP_IndexVendorAdecChnAttr, (void*)pAttr);
@@ -517,7 +517,7 @@ ERRORTYPE AW_MPI_ADEC_StartRecvStream(ADEC_CHN AdChn)
 {
     if(!(AdChn>=0 && AdChn <ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AdChn[%d]!", AdChn);
+        LOGE("fatal error! invalid AdChn[%d]!", AdChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -534,14 +534,14 @@ ERRORTYPE AW_MPI_ADEC_StartRecvStream(ADEC_CHN AdChn)
         eRet = pChn->mADecComp->SendCommand(pChn->mADecComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else
     {
-        alogd("AdecChannel[%d] State[0x%x], do nothing!", AdChn, nCompState);
+        LOGD("AdecChannel[%d] State[0x%x], do nothing!", AdChn, nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -551,7 +551,7 @@ ERRORTYPE AW_MPI_ADEC_Pause(ADEC_CHN AdChn)
 {
     if(!(AdChn>=0 && AdChn<ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AdChn[%d]!", AdChn);
+        LOGE("fatal error! invalid AdChn[%d]!", AdChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -568,24 +568,24 @@ ERRORTYPE AW_MPI_ADEC_Pause(ADEC_CHN AdChn)
         eRet = pChn->mADecComp->SendCommand(pChn->mADecComp, COMP_CommandStateSet, COMP_StatePause, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command statePause fail!");
+            LOGE("fatal error! Send command statePause fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StatePause == nCompState)
     {
-        alogd("AdecChannel[%d] already statePause.", AdChn);
+        LOGD("AdecChannel[%d] already statePause.", AdChn);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("AdecChannel[%d] stateIdle, can't turn to statePause!", AdChn);
+        LOGD("AdecChannel[%d] stateIdle, can't turn to statePause!", AdChn);
         ret = ERR_ADEC_INCORRECT_STATE_TRANSITION;
     }
     else
     {
-        aloge("fatal error! check AdecChannel[%d]State[0x%x]!", AdChn, nCompState);
+        LOGE("fatal error! check AdecChannel[%d]State[0x%x]!", AdChn, nCompState);
         ret = ERR_ADEC_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -595,7 +595,7 @@ ERRORTYPE AW_MPI_ADEC_Seek(ADEC_CHN AdChn)
 {
     if(!(AdChn>=0 && AdChn<ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AdChn[%d]!", AdChn);
+        LOGE("fatal error! invalid AdChn[%d]!", AdChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -613,7 +613,7 @@ ERRORTYPE AW_MPI_ADEC_Seek(ADEC_CHN AdChn)
     }
     else
     {
-        aloge("fatal error! can't seek int AdecChannel[%d] State[0x%x]!", AdChn, nCompState);
+        LOGE("fatal error! can't seek int AdecChannel[%d] State[0x%x]!", AdChn, nCompState);
         ret = ERR_ADEC_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -623,7 +623,7 @@ ERRORTYPE AW_MPI_ADEC_StopRecvStream(ADEC_CHN AdChn)
 {
     if(!(AdChn>=0 && AdChn <ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AdChn[%d]!", AdChn);
+        LOGE("fatal error! invalid AdChn[%d]!", AdChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -640,19 +640,19 @@ ERRORTYPE AW_MPI_ADEC_StopRecvStream(ADEC_CHN AdChn)
         eRet = pChn->mADecComp->SendCommand(pChn->mADecComp, COMP_CommandStateSet, COMP_StateIdle, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateIdle fail");
+            LOGE("fatal error! send command stateIdle fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if (COMP_StateIdle == nCompState)
     {
-        alogv("AdecChannel[%d] State[0x%x], do nothing!", AdChn, nCompState);
+        LOGV("AdecChannel[%d] State[0x%x], do nothing!", AdChn, nCompState);
         ret = SUCCESS;
     }
     else
     {
-        aloge("fatal error! check AdecChannelState[0x%x]!", nCompState);
+        LOGE("fatal error! check AdecChannelState[0x%x]!", nCompState);
         ret = ERR_ADEC_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -662,7 +662,7 @@ ERRORTYPE AW_MPI_ADEC_StopRecvStream(ADEC_CHN AdChn)
 //{
 //    if(!(ADecChn>=0 && ADecChn <ADEC_MAX_CHN_NUM))
 //    {
-//        aloge("fatal error! invalid ADecChn[%d]!", ADecChn);
+//        LOGE("fatal error! invalid ADecChn[%d]!", ADecChn);
 //        return ERR_ADEC_INVALID_CHNID;
 //    }
 //    ADEC_CHN_MAP_S *pChn;
@@ -687,7 +687,7 @@ ERRORTYPE AW_MPI_ADEC_SendStream(ADEC_CHN AdChn, const AUDIO_STREAM_S *pStream, 
 {
     if(!(AdChn>=0 && AdChn<ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AdChn[%d]!", AdChn);
+        LOGE("fatal error! invalid AdChn[%d]!", AdChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -700,7 +700,7 @@ ERRORTYPE AW_MPI_ADEC_SendStream(ADEC_CHN AdChn, const AUDIO_STREAM_S *pStream, 
     ret = pChn->mADecComp->GetState(pChn->mADecComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ADEC_NOT_PERM;
     }
     AdecInputStream inputStream;
@@ -716,7 +716,7 @@ ERRORTYPE AW_MPI_ADEC_GetFrame(ADEC_CHN AdChn, AUDIO_FRAME_S *pFrame, int nMilli
 {
     if(!(AdChn>=0 && AdChn <ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AdChn[%d]!", AdChn);
+        LOGE("fatal error! invalid AdChn[%d]!", AdChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -726,12 +726,12 @@ ERRORTYPE AW_MPI_ADEC_GetFrame(ADEC_CHN AdChn, AUDIO_FRAME_S *pFrame, int nMilli
     }
     if(NULL == pFrame)
     {
-        aloge("fatal error! pFrame == NULL!");
+        LOGE("fatal error! pFrame == NULL!");
         return ERR_ADEC_NULL_PTR;
     }
     if(nMilliSec < -1)
     {
-        aloge("fatal error! illegal nMilliSec[%d]!", nMilliSec);
+        LOGE("fatal error! illegal nMilliSec[%d]!", nMilliSec);
         return ERR_ADEC_ILLEGAL_PARAM;
     }
     ERRORTYPE ret;
@@ -739,7 +739,7 @@ ERRORTYPE AW_MPI_ADEC_GetFrame(ADEC_CHN AdChn, AUDIO_FRAME_S *pFrame, int nMilli
     ret = pChn->mADecComp->GetState(pChn->mADecComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ADEC_NOT_PERM;
     }
     AdecOutputFrame adecFrame;
@@ -753,7 +753,7 @@ ERRORTYPE AW_MPI_ADEC_ReleaseFrame(ADEC_CHN AdChn, AUDIO_FRAME_S *pFrame)
 {
     if(!(AdChn>=0 && AdChn <ADEC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AdChn[%d]!", AdChn);
+        LOGE("fatal error! invalid AdChn[%d]!", AdChn);
         return ERR_ADEC_INVALID_CHNID;
     }
     ADEC_CHN_MAP_S *pChn;
@@ -763,7 +763,7 @@ ERRORTYPE AW_MPI_ADEC_ReleaseFrame(ADEC_CHN AdChn, AUDIO_FRAME_S *pFrame)
     }
     if(NULL == pFrame)
     {
-        aloge("fatal error! pFrame == NULL!");
+        LOGE("fatal error! pFrame == NULL!");
         return ERR_ADEC_NULL_PTR;
     }
     ERRORTYPE ret;
@@ -771,7 +771,7 @@ ERRORTYPE AW_MPI_ADEC_ReleaseFrame(ADEC_CHN AdChn, AUDIO_FRAME_S *pFrame)
     ret = pChn->mADecComp->GetState(pChn->mADecComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ADEC_NOT_PERM;
     }
     AdecOutputFrame adecFrame;

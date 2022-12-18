@@ -13,7 +13,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mm_component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <stdlib.h>
@@ -38,7 +38,7 @@ static int get_cmp_index(char* cmp_name)
     unsigned int i;
     for(i=0; i< SIZE_OF_COMP; i++)
     {
-        alogv("get_cmp_index: cmp_name = %s , cdx_comp_table[%d].name = %s", cmp_name, i, cdx_comp_table[i].name);
+        LOGV("get_cmp_index: cmp_name = %s , cdx_comp_table[%d].name = %s", cmp_name, i, cdx_comp_table[i].name);
         if(!strcmp(cmp_name, cdx_comp_table[i].name))
         {
             rc = i;
@@ -55,7 +55,7 @@ ERRORTYPE COMP_GetHandle(
     PARAM_IN  COMP_CALLBACKTYPE* pCallBacks)
 {
     ERRORTYPE eRet = SUCCESS;
-    alogv("COMP CORE API - COMP_GetHandle");
+    LOGV("COMP CORE API - COMP_GetHandle");
     int compIndex = get_cmp_index(cComponentName);
     if(compIndex >= 0)
     {
@@ -63,7 +63,7 @@ ERRORTYPE COMP_GetHandle(
         compHandle = (COMP_HANDLETYPE) malloc(sizeof(MM_COMPONENTTYPE));
         if (!compHandle) 
         {
-            aloge("Component Creation failed");
+            LOGE("Component Creation failed");
             return ERR_COMPCORE_NOMEM;
         }
         memset(compHandle, 0, sizeof(MM_COMPONENTTYPE));
@@ -73,7 +73,7 @@ ERRORTYPE COMP_GetHandle(
     }
     else
     {
-        alogw("component name[%s] is not found", cComponentName);
+        LOGW("component name[%s] is not found", cComponentName);
         eRet = ERR_COMPCORE_UNEXIST;
     }
     return eRet;
@@ -83,7 +83,7 @@ ERRORTYPE COMP_FreeHandle(
     PARAM_IN  COMP_HANDLETYPE hComponent)
 {
     ERRORTYPE eRet = SUCCESS;
-    alogv("COMP CORE API - Free Handle %p", hComponent);
+    LOGV("COMP CORE API - Free Handle %p", hComponent);
     if(NULL == hComponent)
     {
         return SUCCESS;
@@ -93,7 +93,7 @@ ERRORTYPE COMP_FreeHandle(
     pComp->GetState(hComponent, &state);
     if(state!=COMP_StateLoaded)
     {
-        aloge("fatal error! Calling FreeHandle in state %d", state);
+        LOGE("fatal error! Calling FreeHandle in state %d", state);
     }
     pComp->ComponentDeInit(hComponent);
     free(hComponent);
@@ -106,19 +106,19 @@ ERRORTYPE COMP_SetupTunnel(
     PARAM_IN  COMP_HANDLETYPE hInput,
     PARAM_IN  unsigned int nPortInput)
 {
-    alogv("COMP CORE API - COMP_SetupTunnel %p %d %p %d", hOutput, nPortOutput, hInput, nPortInput);
+    LOGV("COMP CORE API - COMP_SetupTunnel %p %d %p %d", hOutput, nPortOutput, hInput, nPortInput);
     ERRORTYPE eError;
     COMP_TUNNELSETUPTYPE oTunnelSetup;
     eError = ((MM_COMPONENTTYPE *)hOutput)->ComponentTunnelRequest(hOutput, nPortOutput, hInput, nPortInput, &oTunnelSetup);
     if(eError!=SUCCESS)
     {
-        aloge("fatal error! setup tunnel on output port fail[0x%x]!", eError);
+        LOGE("fatal error! setup tunnel on output port fail[0x%x]!", eError);
         return ERR_COMPCORE_NOT_SUPPORT;
     }
     eError = ((MM_COMPONENTTYPE *)hInput)->ComponentTunnelRequest(hInput, nPortInput, hOutput, nPortOutput, &oTunnelSetup);
     if(eError!=SUCCESS)
     {
-        aloge("fatal error! setup tunnel on input port fail[0x%x]!", eError);
+        LOGE("fatal error! setup tunnel on input port fail[0x%x]!", eError);
         ((MM_COMPONENTTYPE *)hOutput)->ComponentTunnelRequest(hOutput, nPortOutput, NULL, 0, NULL);
         return ERR_COMPCORE_NOT_SUPPORT;
     }
@@ -131,18 +131,18 @@ ERRORTYPE COMP_ResetTunnel(
     PARAM_IN  COMP_HANDLETYPE hInput,
     PARAM_IN  unsigned int nPortInput)
 {
-    alogv("COMP CORE API - COMP_ResetTunnel %p %d %p %d", hOutput, nPortOutput, hInput, nPortInput);
+    LOGV("COMP CORE API - COMP_ResetTunnel %p %d %p %d", hOutput, nPortOutput, hInput, nPortInput);
     ERRORTYPE eError;
     eError = ((MM_COMPONENTTYPE *)hOutput)->ComponentTunnelRequest(hOutput, nPortOutput, NULL, 0, NULL);
     if(eError!=SUCCESS)
     {
-        aloge("fatal error! setup tunnel on output port fail[0x%x]!", eError);
+        LOGE("fatal error! setup tunnel on output port fail[0x%x]!", eError);
         eError = ERR_COMPCORE_NOT_SUPPORT;
     }
     eError = ((MM_COMPONENTTYPE *)hInput)->ComponentTunnelRequest(hInput, nPortInput, NULL, 0, NULL);
     if(eError!=SUCCESS)
     {
-        aloge("fatal error! setup tunnel on input port fail[0x%x]!", eError);
+        LOGE("fatal error! setup tunnel on input port fail[0x%x]!", eError);
         eError = ERR_COMPCORE_NOT_SUPPORT;
     }
     return SUCCESS;
@@ -161,7 +161,7 @@ ERRORTYPE COMP_UpdateTunnelSlavePortDefine(
 
     if(out_port_def.eDir != COMP_DirOutput)
     {
-        aloge("fatal error! update tunnel slave port define fail!");
+        LOGE("fatal error! update tunnel slave port define fail!");
         return ERR_COMPCORE_NOT_SUPPORT;
     }
 
@@ -169,13 +169,13 @@ ERRORTYPE COMP_UpdateTunnelSlavePortDefine(
     ((MM_COMPONENTTYPE *)hInput)->GetConfig(hInput,COMP_IndexParamPortDefinition,&in_port_def);
     if(in_port_def.eDir != COMP_DirInput)
     {
-        aloge("fatal error! update tunnel slave port define fail!");
+        LOGE("fatal error! update tunnel slave port define fail!");
         return ERR_COMPCORE_NOT_SUPPORT;
     }
 
     if(in_port_def.eDomain != out_port_def.eDomain)
     {
-        aloge("fatal error! update tunnel slave port define fail!");
+        LOGE("fatal error! update tunnel slave port define fail!");
         return ERR_COMPCORE_NOT_SUPPORT;
     }
 
@@ -197,7 +197,7 @@ ERRORTYPE COMP_AddTunnelInfoChain(
     CDX_TUNNELINFOTYPE *tunnel_info = (CDX_TUNNELINFOTYPE *)malloc(sizeof(CDX_TUNNELINFOTYPE));
 
     if(!tunnel_info){
-        aloge("malloc fail!");
+        LOGE("malloc fail!");
         return ERR_COMPCORE_NOMEM;
     }
 
@@ -252,7 +252,7 @@ ERRORTYPE COMP_QueryTunnelInfoChain(
         return SUCCESS;
     }
     else{
-        aloge("fatal error! query tunnel info fail!");
+        LOGE("fatal error! query tunnel info fail!");
         return ERR_COMPCORE_UNEXIST;
     }
 }

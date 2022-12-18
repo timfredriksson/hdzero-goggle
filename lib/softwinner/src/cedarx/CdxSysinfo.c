@@ -8,7 +8,7 @@
  *
  */
 
-#include <cdx_log.h>
+#include <log/log.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -53,18 +53,18 @@ int SysinfoChipId(void)
     dev = open("/dev/sunxi_soc_info", O_RDONLY);
     if (dev < 0)
     {
-        logv("cannot open /dev/sunxi_soc_info\n");
+        LOGV("cannot open /dev/sunxi_soc_info");
         return  SI_CHIP_UNKNOWN;
     }
 
     ret = ioctl(dev, 3, buf);
     if(ret < 0)
     {
-        loge("ioctl err!\n");
+        LOGE("ioctl err!");
         return  SI_CHIP_UNKNOWN;
     }
 
-    logd("%s\n", buf);
+    LOGD("%s", buf);
 
     close(dev);
 

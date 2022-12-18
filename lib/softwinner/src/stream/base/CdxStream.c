@@ -9,7 +9,7 @@
  */
 
 #include <CdxTypes.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 
 #include <CdxStream.h>
@@ -89,7 +89,7 @@ int AwStreamRegister(CdxStreamCreatorT *creator, cdx_char *type)
 static void AwStreamInit(void) __attribute__((constructor));
 void AwStreamInit(void)
 {
-    CDX_LOGD("aw stream init...");
+    LOGD("aw stream init...");
 
     AwStreamRegister(&fileStreamCtor,"fd");
     AwStreamRegister(&fileStreamCtor,"file");
@@ -121,7 +121,7 @@ void AwStreamInit(void)
     AwStreamRegister(&videoResizeStreamCtor,"videoResize");
     AwStreamRegister(&dataSourceStreamCtor,"datasource");
 #endif
-    CDX_LOGD("stream list size:%d",streamList.size);
+    LOGD("stream list size:%d",streamList.size);
     return ;
 }
 
@@ -148,7 +148,7 @@ CdxStreamT *CdxStreamCreate(CdxDataSourceT *source)
 
     if (NULL == ctor)
     {
-        CDX_LOGE("unsupport stream. scheme(%s)", scheme);
+        LOGE("unsupport stream. scheme(%s)", scheme);
         return NULL;
     }
 
@@ -156,7 +156,7 @@ CdxStreamT *CdxStreamCreate(CdxDataSourceT *source)
     CdxStreamT *stream = ctor->create(source);
     if (!stream)
     {
-        CDX_LOGE("open stream fail, uri(%s)", source->uri);
+        LOGE("open stream fail, uri(%s)", source->uri);
         return NULL;
     }
 
@@ -170,7 +170,7 @@ int CdxStreamOpen(CdxDataSourceT *source, pthread_mutex_t *mutex, cdx_bool *exit
         pthread_mutex_lock(mutex);
     if(exit && *exit)
     {
-        CDX_LOGW("open stream user cancel.");
+        LOGW("open stream user cancel.");
         if(mutex) pthread_mutex_unlock(mutex);
         return -1;
     }
@@ -179,7 +179,7 @@ int CdxStreamOpen(CdxDataSourceT *source, pthread_mutex_t *mutex, cdx_bool *exit
         pthread_mutex_unlock(mutex);
     if (!*stream)
     {
-        CDX_LOGW("open stream failure.");
+        LOGW("open stream failure.");
         return -1;
     }
     int ret;
@@ -188,7 +188,7 @@ int CdxStreamOpen(CdxDataSourceT *source, pthread_mutex_t *mutex, cdx_bool *exit
         ret = CdxStreamControl(*stream, streamTasks->cmd, streamTasks->param);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamControl fail, cmd=%d", streamTasks->cmd);
+            LOGE("CdxStreamControl fail, cmd=%d", streamTasks->cmd);
         }
         streamTasks = streamTasks->next;
     }

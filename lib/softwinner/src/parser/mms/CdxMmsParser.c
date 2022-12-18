@@ -41,25 +41,25 @@ static int mmsPlaylistClear(struct CdxMmsParser* impl)
     impl->mStatus = CDX_MMS_INITIALIZED;
 
     //CdxStream
-    CDX_LOGD("+++ streamTell: %llx", CdxStreamTell(impl->stream));
+    LOGD("+++ streamTell: %llx", CdxStreamTell(impl->stream));
     CdxStreamControl(impl->stream, STREAM_CMD_RESET_STREAM, NULL);
-    CDX_LOGD("+++ streamTell: %llx", CdxStreamTell(impl->stream));
+    LOGD("+++ streamTell: %llx", CdxStreamTell(impl->stream));
     impl->asfParser = asfParserCtor.create(impl->stream, NO_NEED_CLOSE_STREAM);
     if(!impl->asfParser)
     {
-        CDX_LOGE("open asf parser failed!");
+        LOGE("open asf parser failed!");
         return -1;
     }
 
     while ((status = CdxParserGetStatus(impl->asfParser)) != PSR_OK && status != PSR_OPEN_FAIL)
     {
-        CDX_LOGI("parser preparing...");
+        LOGI("parser preparing...");
         usleep(100000);
         if (impl->exitFlag)
         {
             return -1;
         }
-        CDX_LOGD("xxx CdxParserGetStatus(parser) != PSR_OK");
+        LOGD("xxx CdxParserGetStatus(parser) != PSR_OK");
     }
 
     impl->mErrno = PSR_OK;
@@ -69,7 +69,7 @@ static int mmsPlaylistClear(struct CdxMmsParser* impl)
     if((impl->videoCodecFormat != mediaInfo.program[0].video[0].eCodecFormat)
         || (impl->audioCodecFormat != mediaInfo.program[0].audio[0].eCodecFormat))
     {
-        CDX_LOGW("---- videoCodecFormat not the same: <%d, %d>",
+        LOGW("---- videoCodecFormat not the same: <%d, %d>",
                 impl->videoCodecFormat, mediaInfo.program[0].video[0].eCodecFormat);
     }
 
@@ -101,20 +101,20 @@ static cdx_int32 __CdxMmsParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
     int ret;
     int ioStatus;
     impl->mStatus = CDX_MMS_PREFETCHING;
-    //CDX_LOGD("--- mms parser prefetch");
+    //LOGD("--- mms parser prefetch");
     ret = CdxParserPrefetch(impl->asfParser, pkt);
-    //CDX_LOGD("--- mms parser prefetch ret = %d", ret);
+    //LOGD("--- mms parser prefetch ret = %d", ret);
     if(ret < 0)
     {
         ioStatus = CdxStreamGetIoState(impl->stream);
-        CDX_LOGD("--- ioStatus = %d", ioStatus);
+        LOGD("--- ioStatus = %d", ioStatus);
         if(ioStatus == CDX_IO_STATE_CLEAR)
         {
-            CDX_LOGD("--- mms playlist");
+            LOGD("--- mms playlist");
             ret = mmsPlaylistClear(impl);
             if(ret < 0)
             {
-                CDX_LOGW("--- mmsPlaylistClear error");
+                LOGW("--- mmsPlaylistClear error");
                 impl->mStatus = CDX_MMS_IDLE;
                 return -1;
             }
@@ -123,7 +123,7 @@ static cdx_int32 __CdxMmsParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
         }
         else
         {
-            CDX_LOGW("-- prefecth error, maybe eos");
+            LOGW("-- prefecth error, maybe eos");
             impl->mStatus = CDX_MMS_IDLE;
         }
     }
@@ -147,14 +147,14 @@ static cdx_int32 __CdxMmsParserRead(CdxParserT *parser, CdxPacketT *pkt)
     if(ret < 0)
     {
         ioStatus = CdxStreamGetIoState(impl->stream);
-        CDX_LOGD("--- read ioStatus = %d", ioStatus);
+        LOGD("--- read ioStatus = %d", ioStatus);
         if(ioStatus == CDX_IO_STATE_CLEAR)
         {
-            CDX_LOGD("--- mms playlist");
+            LOGD("--- mms playlist");
             ret = mmsPlaylistClear(impl);
             if(ret < 0)
             {
-                CDX_LOGW("--- mmsPlaylistClear error");
+                LOGW("--- mmsPlaylistClear error");
                 impl->mStatus = CDX_MMS_IDLE;
                 return -1;
             }
@@ -173,7 +173,7 @@ static cdx_int32 __CdxMmsParserRead(CdxParserT *parser, CdxPacketT *pkt)
         }
         else
         {
-            CDX_LOGW("-- read error, maybe eos");
+            LOGW("-- read error, maybe eos");
             impl->mStatus = CDX_MMS_IDLE;
         }
     }
@@ -200,7 +200,7 @@ cdx_int32 __CdxMmsParserForceStop(CdxParserT *parser)
     impl = (struct CdxMmsParser*)parser;
     if(!impl)
     {
-        CDX_LOGE("mms file parser has not been initiated!");
+        LOGE("mms file parser has not been initiated!");
         return -1;
     }
     impl->exitFlag = 1;
@@ -208,14 +208,14 @@ cdx_int32 __CdxMmsParserForceStop(CdxParserT *parser)
     ret = CdxParserForceStop(impl->asfParser);
     if(ret < 0)
     {
-        CDX_LOGE("mms parser force stop error!");
+        LOGE("mms parser force stop error!");
         return -1;
     }
     #if 0 // stream force stop have done in  asf parser , so we do not need in mms parser
     ret = CdxStreamForceStop(impl->stream);
     if(ret < 0)
     {
-        CDX_LOGE("mms parser force stop error!");
+        LOGE("mms parser force stop error!");
         return -1;
     }
     #endif
@@ -238,20 +238,20 @@ cdx_int32 __CdxMmsParserClrForceStop(CdxParserT *parser)
     impl = (struct CdxMmsParser*)parser;
     if(!impl)
     {
-        CDX_LOGE("mms file parser has not been initiated!");
+        LOGE("mms file parser has not been initiated!");
         return -1;
     }
     impl->exitFlag = 0;
     ret = CdxParserClrForceStop(impl->asfParser);
     if(ret < 0)
     {
-        CDX_LOGE("mms parser force stop error!");
+        LOGE("mms parser force stop error!");
         return -1;
     }
     ret = CdxStreamClrForceStop(impl->stream);
     if(ret < 0)
     {
-        CDX_LOGE("mms parser force stop error!");
+        LOGE("mms parser force stop error!");
         return -1;
     }
 
@@ -276,7 +276,7 @@ static int __CdxMmsParserControl(CdxParserT *parser, int cmd, void *param)
             struct StreamCacheStateS streamCS;
             if (CdxStreamControl(impl->stream, STREAM_CMD_GET_CACHESTATE, &streamCS) < 0)
             {
-                CDX_LOGE("STREAM_CMD_GET_CACHESTATE fail");
+                LOGE("STREAM_CMD_GET_CACHESTATE fail");
                 return -1;
             }
             parserCS->nCacheCapacity = streamCS.nCacheCapacity;
@@ -286,7 +286,7 @@ static int __CdxMmsParserControl(CdxParserT *parser, int cmd, void *param)
             break;
         }
         default:
-            CDX_LOGD("unkown cmd");
+            LOGD("unkown cmd");
             break;
     }
 
@@ -327,18 +327,18 @@ static int __CdxMmsParserInit(CdxParserT *parser)
     ret = CdxParserInit(impl->asfParser);
     if(ret < 0)
     {
-        CDX_LOGE("asf parser init failed");
+        LOGE("asf parser init failed");
         return -1;
     }
 
     int ioStatus = CdxStreamGetIoState(impl->stream);
     if(ioStatus == CDX_IO_STATE_CLEAR)
     {
-        CDX_LOGD("--- mms playlist  clear");
+        LOGD("--- mms playlist  clear");
         ret = mmsPlaylistClear(impl);
         if(ret < 0)
         {
-            CDX_LOGW("--- mmsPlaylistClear error");
+            LOGW("--- mmsPlaylistClear error");
             impl->mErrno = PSR_OPEN_FAIL;
             return -1;
         }
@@ -377,29 +377,29 @@ static void* mmsOpenThread(void* p_arg)
     impl->asfParser = asfParserCtor.create(stream, NO_NEED_CLOSE_STREAM);
     if(!impl->asfParser)
     {
-        CDX_LOGE("open asf parser failed!");
+        LOGE("open asf parser failed!");
         goto error;
     }
 
     while ((status = CdxParserGetStatus(impl->asfParser)) != PSR_OK && status != PSR_OPEN_FAIL)
     {
-        CDX_LOGI("parser preparing...");
+        LOGI("parser preparing...");
         usleep(100000);
         if (impl->exitFlag)
         {
             goto error;
         }
-        CDX_LOGD("xxx CdxParserGetStatus(parser) != PSR_OK");
+        LOGD("xxx CdxParserGetStatus(parser) != PSR_OK");
     }
 
     int ioStatus = CdxStreamGetIoState(impl->stream);
     if(ioStatus == CDX_IO_STATE_CLEAR)
     {
-        CDX_LOGD("--- mms playlist  clear");
+        LOGD("--- mms playlist  clear");
         ret = mmsPlaylistClear(impl);
         if(ret < 0)
         {
-            CDX_LOGW("--- mmsPlaylistClear error");
+            LOGW("--- mmsPlaylistClear error");
             impl->mErrno = PSR_OPEN_FAIL;
             return NULL;
         }
@@ -431,14 +431,14 @@ static CdxParserT *__CdxMmsParserOpen(CdxStreamT *stream, cdx_uint32 flag)
     impl->asfParser = asfParserCtor.create(stream, NO_NEED_CLOSE_STREAM);
     if(!impl->asfParser)
     {
-        CDX_LOGE("open asf parser failed!");
+        LOGE("open asf parser failed!");
         goto error;
     }
 
     //ret = pthread_create(&impl->thread, NULL, mmsOpenThread, (void*)impl) ;
     //if(ret != 0)
     //{
-    //    CDX_LOGE("cannot create probedata thread");
+    //    LOGE("cannot create probedata thread");
     //    impl->thread = (pthread_t)0;
     //    goto error;
     //}
@@ -458,7 +458,7 @@ static cdx_uint32 __CdxMmsParserProbe(CdxStreamProbeDataT *probeData)
 {
     if(!memcmp(probeData->buf, "mms-allwinner", 13))
     {
-        CDX_LOGD("--- it is mms parser");
+        LOGD("--- it is mms parser");
         return 100;
     }
     return 0;

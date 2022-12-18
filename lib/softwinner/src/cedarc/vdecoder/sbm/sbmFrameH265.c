@@ -19,7 +19,7 @@
 #include <pthread.h>
 #include "sbm.h"
 #include "CdcMessageQueue.h"
-#include "log.h"
+#include <log/log.h>
 
 extern VideoStreamDataInfo *requestStream(SbmFrame *pSbm);
 extern int flushStream(SbmFrame *pSbm, VideoStreamDataInfo *pDataInfo, int bFlush);
@@ -64,7 +64,7 @@ typedef enum SbmHevcNaluType
 
 static inline char readByteIdx(char *p, char *pStart, char *pEnd, s32 i)
 {
-    logv("p = %p, start = %p, end = %p, i = %d",p,pStart, pEnd, i);
+    LOGV("p = %p, start = %p, end = %p, i = %d",p,pStart, pEnd, i);
     char c = 0x0;
     if((p+i) <= pEnd)
         c = p[i];
@@ -100,24 +100,24 @@ static s32 checkBitStreamTypeWithStartCode(SbmFrame* pSbm,
     s32 nForbiddenBit    = -1;
 
     //*1. process sbm-cycle-buffer case
-    //logd("the_111,bSecureVideoFlag=%d",pSbm->mConfig.bSecureVideoFlag);
+    //LOGD("the_111,bSecureVideoFlag=%d",pSbm->mConfig.bSecureVideoFlag);
 
     if(pSbm->mConfig.bSecureVideoFlag == 1)
     {
         pBuf = (char *)malloc(pStream->nLength+32);
         if(pBuf == NULL)
         {
-            loge("*** malloc pBuf failed, size = %d",pStream->nLength);
+            LOGE("*** malloc pBuf failed, size = %d",pStream->nLength);
             return -2;
         }
         if(pStream->pData + pStream->nLength <= pEnd)
         {
-            //logd("the_111");
+            //LOGD("the_111");
             CdcMemRead(pSbm->mConfig.memops, pBuf, pStream->pData, pStream->nLength);
         }
         else
         {
-            //logd("the_111");
+            //LOGD("the_111");
             s32 nFirsrPart;
             nFirsrPart = pEnd-pStream->pData+1;
             CdcMemRead(pSbm->mConfig.memops, pBuf, pStream->pData, nFirsrPart);
@@ -127,11 +127,11 @@ static s32 checkBitStreamTypeWithStartCode(SbmFrame* pSbm,
         }
         pStart = pBuf;
         pEnd   = pBuf + pStream->nLength;
-        //logd("the_121,pStart=%p,pEnd=%p\n",pStart,pEnd);
+        //LOGD("the_121,pStart=%p,pEnd=%p",pStart,pEnd);
     }
     else
     {
-        //logd("the_222");
+        //LOGD("the_222");
         pBuf = pStream->pData;
     }
 
@@ -144,7 +144,7 @@ static s32 checkBitStreamTypeWithStartCode(SbmFrame* pSbm,
         tmpBuf[3] = readByteIdx(pBuf, pStart, pEnd, nHadCheckBytesLen + 3);
         tmpBuf[4] = readByteIdx(pBuf, pStart, pEnd, nHadCheckBytesLen + 4);
         tmpBuf[5] = readByteIdx(pBuf, pStart, pEnd, nHadCheckBytesLen + 5);
-        //logd("%d,%d,%d,%d,%d,%d",tmpBuf[0],tmpBuf[1],tmpBuf[2],tmpBuf[3],tmpBuf[4],tmpBuf[5]);
+        //LOGD("%d,%d,%d,%d,%d,%d",tmpBuf[0],tmpBuf[1],tmpBuf[2],tmpBuf[3],tmpBuf[4],tmpBuf[5]);
         nCheck4BitsValue = (tmpBuf[0] << 24) | (tmpBuf[1] << 16) | (tmpBuf[2] << 8) | tmpBuf[3];
         if(nCheck4BitsValue == 0) //*compatible for the case: 00 00 00 00 00 00 00 01
         {
@@ -214,24 +214,24 @@ static s32 checkBitStreamTypeWithoutStartCode(SbmFrame* pSbm,
 
     s32 nHadProcessLen = 0;
 
-    logd("the_111,bSecureVideoFlag=%d",pSbm->mConfig.bSecureVideoFlag);
+    LOGD("the_111,bSecureVideoFlag=%d",pSbm->mConfig.bSecureVideoFlag);
 
     if(pSbm->mConfig.bSecureVideoFlag == 1)
     {
         pBuf = (char *)malloc(pStream->nLength+32);
         if(pBuf == NULL)
         {
-            loge("*** malloc pBuf failed, size = %d",pStream->nLength);
+            LOGE("*** malloc pBuf failed, size = %d",pStream->nLength);
             return -2;
         }
         if(pStream->pData + pStream->nLength <= pEnd)
         {
-            logv("the_111");
+            LOGV("the_111");
             CdcMemRead(pSbm->mConfig.memops, pBuf, pStream->pData, pStream->nLength);
         }
         else
         {
-            logv("the_112");
+            LOGV("the_112");
             s32 nFirsrPart;
             nFirsrPart = pEnd - pStream->pData +1;
             CdcMemRead(pSbm->mConfig.memops, pBuf, pStream->pData, nFirsrPart);
@@ -241,16 +241,16 @@ static s32 checkBitStreamTypeWithoutStartCode(SbmFrame* pSbm,
         }
         pStart = pBuf;
         pEnd   = pBuf + pStream->nLength;
-        logv("the_121,pStart=%p,pEnd=%p\n",pStart,pEnd);
+        LOGV("the_121,pStart=%p,pEnd=%p",pStart,pEnd);
     }
     else
     {
-        logv("the_222");
+        LOGV("the_222");
         pBuf = pStream->pData;
     }
     while(nHadProcessLen < pStream->nLength)
     {
-        logv("the_222,pBuf=%p,pStart=%p,pEnd=%p\n",pBuf,pStart,pEnd);
+        LOGV("the_222,pBuf=%p,pStart=%p,pEnd=%p",pBuf,pStart,pEnd);
         nRemainSize = pStream->nLength-nHadProcessLen;
         tmpBuf[0] = readByteIdx(pBuf, pStart, pEnd, 0);
         tmpBuf[1] = readByteIdx(pBuf, pStart, pEnd, 1);
@@ -258,23 +258,23 @@ static s32 checkBitStreamTypeWithoutStartCode(SbmFrame* pSbm,
         tmpBuf[3] = readByteIdx(pBuf, pStart, pEnd, 3);
         tmpBuf[4] = readByteIdx(pBuf, pStart, pEnd, 4);
         tmpBuf[5] = readByteIdx(pBuf, pStart, pEnd, 5);
-        logv("%d,%d,%d,%d,%d,%d",tmpBuf[0],tmpBuf[1],tmpBuf[2],tmpBuf[3],tmpBuf[4],tmpBuf[5]);
+        LOGV("%d,%d,%d,%d,%d,%d",tmpBuf[0],tmpBuf[1],tmpBuf[2],tmpBuf[3],tmpBuf[4],tmpBuf[5]);
         nDataSize = (tmpBuf[0] << 24) | (tmpBuf[1] << 16) | (tmpBuf[2] << 8) | tmpBuf[3];
         nForbiddenBit = tmpBuf[4] >> 7; //* read 1 bits
         nTemporalId   = tmpBuf[5] & 0x7;//* read 3 bits
-        logv("the_333,nRemainSize=%d,nTemporalIdMinValue=%d,nForbiddenBitValue=%d",
+        LOGV("the_333,nRemainSize=%d,nTemporalIdMinValue=%d,nForbiddenBitValue=%d",
             nRemainSize,nTemporalIdMinValue,nForbiddenBitValue);
         if(nDataSize > (nRemainSize - 4)
            || nDataSize < 0
            || nTemporalId < nTemporalIdMinValue
            || nForbiddenBit != nForbiddenBitValue)
         {
-            logv("check stream type fail: nDataSize[%d], streamSize[%d], nTempId[%d], fobBit[%d]",
+            LOGV("check stream type fail: nDataSize[%d], streamSize[%d], nTempId[%d], fobBit[%d]",
                  nDataSize, (pStream->nLength-nHadProcessLen),nTemporalId,nForbiddenBit);
             nRet = -1;
             break;
         }
-        logv("*** nDataSize = %d, nRemainSize = %d, proceLen = %d, totalLen = %d",
+        LOGV("*** nDataSize = %d, nRemainSize = %d, proceLen = %d, totalLen = %d",
             nDataSize, nRemainSize,
             nHadProcessLen,pStream->nLength);
 
@@ -367,7 +367,7 @@ s32 HevcSbmFrameCheckBitStreamType(SbmFrame* pSbm)
            pSbm->bStreamWithStartCode = -1;
         }
 
-        logd("result: bStreamWithStartCode[%d], with[%d], whitout[%d]",pSbm->bStreamWithStartCode,
+        LOGD("result: bStreamWithStartCode[%d], with[%d], whitout[%d]",pSbm->bStreamWithStartCode,
               bStartCode_with, bStartCode_without);
 
         //*continue reqeust stream from sbm when if judge the stream type
@@ -390,7 +390,7 @@ s32 HevcSbmFrameCheckBitStreamType(SbmFrame* pSbm)
 
 static void expandNaluList(FramePicInfo* pFramePic)
 {
-    logd("nalu num for one frame is not enought, expand it: %d, %d",
+    LOGD("nalu num for one frame is not enought, expand it: %d, %d",
           pFramePic->nMaxNaluNum, pFramePic->nMaxNaluNum + DEFAULT_NALU_NUM);
 
     pFramePic->nMaxNaluNum += DEFAULT_NALU_NUM;
@@ -405,7 +405,7 @@ static void chooseFramePts(DetectFramePicInfo* pDetectInfo)
     pDetectInfo->pCurFramePic->nPts = -1;
     for(i=0; i < MAX_FRAME_PTS_LIST_NUM; i++)
     {
-        logv("*** choose pts: %lld, i = %d",pDetectInfo->nCurFramePtsList[i], i);
+        LOGV("*** choose pts: %lld, i = %d",pDetectInfo->nCurFramePtsList[i], i);
         if(pDetectInfo->nCurFramePtsList[i] != -1)
         {
             pDetectInfo->pCurFramePic->nPts = pDetectInfo->nCurFramePtsList[i];
@@ -456,7 +456,7 @@ static int searchStartCode(SbmFrame* pSbm, int* pAfterStartCodeIdx)
         pBuf = (char *)malloc(nSize+32);
         if(pBuf == NULL)
         {
-            loge("*** malloc pBuf failed, size = %d",pDetectInfo->nCurStreamDataSize);
+            LOGE("*** malloc pBuf failed, size = %d",pDetectInfo->nCurStreamDataSize);
             return -2;
         }
         if(pDetectInfo->pCurStreamDataptr + pDetectInfo->nCurStreamDataSize <= pEnd)
@@ -483,7 +483,7 @@ static int searchStartCode(SbmFrame* pSbm, int* pAfterStartCodeIdx)
 
     if(pDetectInfo->nCurStreamRebackFlag)
     {
-        logv("bHasTwoDataTrunk pSbmBuf: %p, pSbmBufEnd: %p, curr: %p, diff: %d ",
+        LOGV("bHasTwoDataTrunk pSbmBuf: %p, pSbmBufEnd: %p, curr: %p, diff: %d ",
                 pStart, pEnd, pBuf, (u32)(pEnd - pBuf));
         char tmpBuf[3];
         while(nSize > 0)
@@ -539,7 +539,7 @@ static inline int supplyStreamData(SbmFrame* pSbm)
     VideoStreamDataInfo *pStream = requestStream(pSbm);
     if(pStream == NULL)
     {
-        logv("no bit stream");
+        LOGV("no bit stream");
         //SemTimedWait(&pSbm->streamDataSem, 20);
         return -1;
     }
@@ -567,7 +567,7 @@ static void disposeInvalidStreamData(SbmFrame* pSbm)
     DetectFramePicInfo* pDetectInfo = &pSbm->mDetectInfo;
 
     int bNeedAddFramePic = 0;
-    logd("**1 pCurFramePic->nlength = %d, flag = %d",pDetectInfo->pCurFramePic->nlength,
+    LOGD("**1 pCurFramePic->nlength = %d, flag = %d",pDetectInfo->pCurFramePic->nlength,
          (pDetectInfo->pCurStreamDataptr == pDetectInfo->pCurStream->pData));
     if(pDetectInfo->pCurStreamDataptr == pDetectInfo->pCurStream->pData
        && pDetectInfo->pCurFramePic->nlength == 0)
@@ -580,7 +580,7 @@ static void disposeInvalidStreamData(SbmFrame* pSbm)
     else
     {
         pDetectInfo->pCurFramePic->nlength += pDetectInfo->nCurStreamDataSize;
-        logd("**2, pCurFramePic->nlength = %d, diff = %d",pDetectInfo->pCurFramePic->nlength,
+        LOGD("**2, pCurFramePic->nlength = %d, diff = %d",pDetectInfo->pCurFramePic->nlength,
              pDetectInfo->pCurFramePic->nlength - MAX_INVALID_STREAM_DATA_SIZE);
 
         if(pDetectInfo->pCurFramePic->nlength > MAX_INVALID_STREAM_DATA_SIZE)
@@ -590,7 +590,7 @@ static void disposeInvalidStreamData(SbmFrame* pSbm)
         }
     }
 
-    logd("bNeedAddFramePic = %d",bNeedAddFramePic );
+    LOGD("bNeedAddFramePic = %d",bNeedAddFramePic );
     flushStream(pSbm, pDetectInfo->pCurStream, 0);
     pDetectInfo->pCurStream = NULL;
     pDetectInfo->pCurStreamDataptr = NULL;
@@ -627,7 +627,7 @@ static inline void storeNaluInfo(SbmFrame* pSbm, int nNaluType, int nNaluSize, c
 
     int nNaluIdx = pDetectInfo->pCurFramePic->nCurNaluIdx;
     NaluInfo* pNaluInfo = &pDetectInfo->pCurFramePic->pNaluInfoList[nNaluIdx];
-    logv("*** nNaluIdx = %d, pts = %lld",nNaluIdx, pDetectInfo->pCurStream->nPts);
+    LOGV("*** nNaluIdx = %d, pts = %lld",nNaluIdx, pDetectInfo->pCurStream->nPts);
     if(nNaluIdx < MAX_FRAME_PTS_LIST_NUM)
         pDetectInfo->nCurFramePtsList[nNaluIdx] = pDetectInfo->pCurStream->nPts;
 
@@ -687,7 +687,7 @@ static void detectWithStartCode(SbmFrame* pSbm)
                         pDetectInfo->bCurFrameStartCodeFound = 0;
                         chooseFramePts(pDetectInfo);
                         addFramePic(pSbm, pDetectInfo->pCurFramePic);
-                        logv("find eos, flush last stream frame, pts = %lld",
+                        LOGV("find eos, flush last stream frame, pts = %lld",
                           (long long int)pDetectInfo->pCurFramePic->nPts);
                         pDetectInfo->pCurFramePic = NULL;
                      }
@@ -709,7 +709,7 @@ static void detectWithStartCode(SbmFrame* pSbm)
         if(nRet != 0 //*  can not find startCode
            || pDetectInfo->pCurFramePic->nCurNaluIdx > MAX_NALU_NUM_IN_FRAME)
         {
-            logw("can not find startCode, curNaluIdx = %d, max = %d",
+            LOGW("can not find startCode, curNaluIdx = %d, max = %d",
                   pDetectInfo->pCurFramePic->nCurNaluIdx, MAX_NALU_NUM_IN_FRAME);
             disposeInvalidStreamData(pSbm);
             return ;
@@ -737,7 +737,7 @@ static void detectWithStartCode(SbmFrame* pSbm)
         }
         int nNaluType = (tmpBuf[0] & 0x7e) >> 1;
 
-        logv("*** nNaluType = %d",nNaluType);
+        LOGV("*** nNaluType = %d",nNaluType);
         if((nNaluType >= SBM_HEVC_NAL_VPS && nNaluType <= SBM_HEVC_NAL_AUD) ||
             nNaluType == SBM_HEVC_NAL_SEI_PREFIX)
         {
@@ -771,19 +771,19 @@ static void detectWithStartCode(SbmFrame* pSbm)
                 tmpBuf[2] = readByteIdx(pAfterStartCodeBuf ,pStart, pEnd, 2);
             }
             bFirstSliceSegment = (tmpBuf[2] >> 7);
-            logv("***bFirstSliceSegment = %d", bFirstSliceSegment);
+            LOGV("***bFirstSliceSegment = %d", bFirstSliceSegment);
             if(bFirstSliceSegment == 1)
             {
                 if(pDetectInfo->bCurFrameStartCodeFound == 0)
                 {
-                    logv("pCurFramePic = %p, pCurStream = %p",
+                    LOGV("pCurFramePic = %p, pCurStream = %p",
                          pDetectInfo->pCurFramePic, pDetectInfo->pCurStream);
                     pDetectInfo->bCurFrameStartCodeFound = 1;
                     pDetectInfo->pCurFramePic->nFrameNaluType = nNaluType;
                 }
                 else
                 {
-                    logv("**** have found one frame pic ****");
+                    LOGV("**** have found one frame pic ****");
                     pDetectInfo->bCurFrameStartCodeFound = 0;
                     chooseFramePts(pDetectInfo);
                     addFramePic(pSbm, pDetectInfo->pCurFramePic);
@@ -914,12 +914,12 @@ static void detectWithoutStartCode(SbmFrame* pSbm)
         }
         unsigned int nNaluSize = 0;
         nNaluSize = (tmpBuf[0] << 24) | (tmpBuf[1] << 16) | (tmpBuf[2] << 8) | tmpBuf[3];
-        logv("*** read nalu size = %u, ",nNaluSize);
+        LOGV("*** read nalu size = %u, ",nNaluSize);
         if(nNaluSize > (unsigned int)(pDetectInfo->nCurStreamDataSize - nPrefixBytes)
            || nNaluSize == 0
            || pDetectInfo->pCurFramePic->nCurNaluIdx > MAX_NALU_NUM_IN_FRAME)
         {
-            logw(" error: nNaluSize[%u] > nCurStreamDataSize[%d], curNaluIdx = %d, max = %d",
+            LOGW(" error: nNaluSize[%u] > nCurStreamDataSize[%d], curNaluIdx = %d, max = %d",
                    nNaluSize, pDetectInfo->nCurStreamDataSize,
                    pDetectInfo->pCurFramePic->nCurNaluIdx, MAX_NALU_NUM_IN_FRAME);
             disposeInvalidStreamData(pSbm);
@@ -949,7 +949,7 @@ static void detectWithoutStartCode(SbmFrame* pSbm)
         }
 
         nNaluType = (tmpBuf[0] & 0x7e) >> 1;
-        logv("*** nNaluType = %d",nNaluType);
+        LOGV("*** nNaluType = %d",nNaluType);
         if((nNaluType >= SBM_HEVC_NAL_VPS && nNaluType <= SBM_HEVC_NAL_AUD) ||
             nNaluType == SBM_HEVC_NAL_SEI_PREFIX)
         {
@@ -984,7 +984,7 @@ static void detectWithoutStartCode(SbmFrame* pSbm)
             }
 
             bFirstSliceSegment = (tmpBuf[2] >> 7);
-            logv("***bFirstSliceSegment = %d", bFirstSliceSegment);
+            LOGV("***bFirstSliceSegment = %d", bFirstSliceSegment);
 
             if(bFirstSliceSegment == 1)
             {
@@ -995,7 +995,7 @@ static void detectWithoutStartCode(SbmFrame* pSbm)
                 }
                 else
                 {
-                    logv("**** have found one frame pic ****");
+                    LOGV("**** have found one frame pic ****");
                     pDetectInfo->bCurFrameStartCodeFound = 0;
                     chooseFramePts(pDetectInfo);
                     addFramePic(pSbm, pDetectInfo->pCurFramePic);
@@ -1019,7 +1019,7 @@ static void detectWithoutStartCode(SbmFrame* pSbm)
 
 void HevcSbmFrameDetectOneFramePic(SbmFrame* pSbm)
 {
-    logv("pSbm->bStreamWithStartCode = %d",pSbm->bStreamWithStartCode);
+    LOGV("pSbm->bStreamWithStartCode = %d",pSbm->bStreamWithStartCode);
     if(pSbm->bStreamWithStartCode == 1)
     {
         detectWithStartCode(pSbm);

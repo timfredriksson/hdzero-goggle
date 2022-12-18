@@ -77,7 +77,7 @@ static cdx_int32 CdxMpgParserClose(CdxParserT *parser)
 
     if(!pCdxMpgParserT)
     {
-        CDX_LOGE("Close mov file parser module error, there is no file information!");
+        LOGE("Close mov file parser module error, there is no file information!");
         return -1;
     }
     pCdxMpgParserT->close(pCdxMpgParserT);
@@ -97,17 +97,17 @@ static cdx_int32 CdxMpgParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
     pCdxMpgParserT = (CdxMpgParserT *)parser;
     mMpgParserCxt = (MpgParserContextT*)pCdxMpgParserT->pMpgParserContext;
     pMpgCheckNulT = &(mMpgParserCxt->mMpgCheckNulT);
-    //CDX_LOGD("prefetch");
+    //LOGD("prefetch");
 
     if(pCdxMpgParserT->nError == PSR_EOS)
     {
-        CDX_LOGD("---eos");
+        LOGD("---eos");
         return -1;
     }
 
     if(pCdxMpgParserT->eStatus != CDX_PSR_IDLE && pCdxMpgParserT->eStatus != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("error operation:: not in the status of IDLE or PREFETCHED when call prefetch()");
+        LOGE("error operation:: not in the status of IDLE or PREFETCHED when call prefetch()");
         pCdxMpgParserT->nError = PSR_INVALID_OPERATION;
     }
     if(pCdxMpgParserT->eStatus == CDX_PSR_PREFETCHED)
@@ -140,7 +140,7 @@ prefetchData:
             #endif
             if(nResult == -1)
             {
-                CDX_LOGV("Try to read sample failed!");
+                LOGV("Try to read sample failed!");
                 return CDX_FAILURE;
             }
         }
@@ -336,7 +336,7 @@ prefetchData:
         pCdxMpgParserT->mCurPacketT.pts = mMpgParserCxt->mDataChunkT.nPts;
         pCdxMpgParserT->mCurPacketT.pts *= 1000;
     }
-    //CDX_LOGD("prefetch end, pts=%lld, type=%d, streamIndex=%d, cdx_pkt->length=%d",
+    //LOGD("prefetch end, pts=%lld, type=%d, streamIndex=%d, cdx_pkt->length=%d",
     //pkt->pts, pkt->type, pkt->streamIndex, pkt->length);
     memcpy(pkt, &pCdxMpgParserT->mCurPacketT, sizeof(CdxPacketT));
     pCdxMpgParserT->eStatus = CDX_PSR_PREFETCHED;
@@ -501,7 +501,7 @@ static cdx_int32 CdxMpgParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT * pM
     pCdxMpgParserT = (CdxMpgParserT *)parser;
     if(!pCdxMpgParserT)
     {
-        CDX_LOGE("mpg file parser lib has not been initiated!");
+        LOGE("mpg file parser lib has not been initiated!");
         return -1;
     }
     mMpgParserCxt = (MpgParserContextT *)pCdxMpgParserT->pMpgParserContext;
@@ -752,7 +752,7 @@ cdx_int32 CdxMpgParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType
 
     if(mMpgParserCxt->bSeekDisableFlag == 1)
     {
-        CDX_LOGE("error the stream can not seek !");
+        LOGE("error the stream can not seek !");
         return -1;
     }
     pCdxMpgParserT->eStatus = CDX_PSR_SEEKING;
@@ -780,7 +780,7 @@ cdx_int32 CdxMpgParserForceStop(CdxParserT *parser)
     pCdxMpgParserT = (CdxMpgParserT*)parser;
     if(!pCdxMpgParserT || !pCdxMpgParserT->pMpgParserContext)
     {
-        CDX_LOGE("mpg file parser lib has not been initiated!");
+        LOGE("mpg file parser lib has not been initiated!");
         return -1;
     }
     pMpgParserContextT = (MpgParserContextT*)pCdxMpgParserT->pMpgParserContext;
@@ -834,12 +834,12 @@ static CdxParserT *CdxMpgParserOpen(CdxStreamT *stream, cdx_uint32 flag)
     pCdxMpgParserT = MpgInit(&nResult);
     if(!pCdxMpgParserT)
     {
-        CDX_LOGE("Initiate mpg file parser lib module failed!");
+        LOGE("Initiate mpg file parser lib module failed!");
         return NULL;
     }
     if(nResult < 0)
     {
-        CDX_LOGE("Initiate mpg file parser lib module error!");
+        LOGE("Initiate mpg file parser lib module error!");
         return NULL;
     }
     pCdxMpgParserT->eStatus = CDX_PSR_INITIALIZED;
@@ -848,7 +848,7 @@ static CdxParserT *CdxMpgParserOpen(CdxStreamT *stream, cdx_uint32 flag)
     nResult = pCdxMpgParserT->open(pCdxMpgParserT, stream);
     if(nResult < 0)
     {
-        CDX_LOGE("open fail !");
+        LOGE("open fail !");
         pCdxMpgParserT->nError = PSR_OPEN_FAIL;
         return NULL;
     }
@@ -877,13 +877,13 @@ static int FdUriToFilepath(char* uri,char* path)
     ret = sscanf(uri, "fd://%d?offset=%lld&length=%lld", &fd, &offset, &size);
     if (ret != 3)
     {
-        CDX_LOGE("sscanf failure...(%s)", uri);
+        LOGE("sscanf failure...(%s)", uri);
         return -1;
     }
 
     if (fd < 0)
     {
-        CDX_LOGE("invalid fd(%d)", fd);
+        LOGE("invalid fd(%d)", fd);
         return -1;
     }
 
@@ -892,7 +892,7 @@ static int FdUriToFilepath(char* uri,char* path)
     ret = readlink(fdInProc, path, 1024 - 1);
     if (ret == -1)
     {
-        CDX_LOGE("readlink failure, errno(%d)", errno);
+        LOGE("readlink failure, errno(%d)", errno);
         return -1;
     }
 
@@ -920,7 +920,7 @@ static cdx_uint32 CdxMpgParserProbe(CdxStreamProbeDataT *probeData)
 
     if(probeData->len < 4)
     {
-        CDX_LOGE("error: Probe data is not enough.");
+        LOGE("error: Probe data is not enough.");
         return 0;
     }
 
@@ -1039,7 +1039,7 @@ static cdx_uint32 CdxMpgParserProbe(CdxStreamProbeDataT *probeData)
         }
     }
 
-    logd("uri suffix not match for mpg score need cut half");
+    LOGD("uri suffix not match for mpg score need cut half");
     return score/2;
 
 }

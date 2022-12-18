@@ -11,7 +11,7 @@
 //#define CONFIG_LOG_LEVEL 4
 
 #include <CdxTypes.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxStream.h>
 #include <CdxMemory.h>
 #include <CdxParser.h>
@@ -38,13 +38,13 @@ static void CdxStreamSave(void *buf, cdx_uint32 len)
         fp_bs_rtsp = fopen("/data/camera/rtsp_stream", "wb+");
         if (fp_bs_rtsp == NULL)
         {
-            CDX_LOGE("fopen failure, errno(%d)", errno);
+            LOGE("fopen failure, errno(%d)", errno);
         }
     }
     fwrite(buf, 1, len, fp_bs_rtsp);
     sync();
 
-    CDX_LOGV("==== CdxStreamSave %s,%u", __FUNCTION__, len);
+    LOGV("==== CdxStreamSave %s,%u", __FUNCTION__, len);
     return;
 }
 #endif
@@ -152,7 +152,7 @@ cdx_int32 __RemuxPsrSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType se
     CDX_UNUSE(seekModeType);
     (void)parser;
     (void)timeUs;
-    CDX_LOGE("not support...");
+    LOGE("not support...");
     return -1;
 }
 
@@ -184,7 +184,7 @@ cdx_int32 __RemuxPsrControl(CdxParserT *parser, int cmd, void *param)
         ret = CdxStreamControl(impl->stream, STREAM_CMD_GET_CACHESTATE, &stCS);
         if (ret != CDX_SUCCESS)
         {
-            CDX_LOGE("get cache state failure, err(%d)", ret);
+            LOGE("get cache state failure, err(%d)", ret);
             return -1;
         }
         psrCS->nCacheCapacity = stCS.nCacheCapacity;
@@ -195,7 +195,7 @@ cdx_int32 __RemuxPsrControl(CdxParserT *parser, int cmd, void *param)
         return 0;
     }
     default:
-        CDX_LOGW("cmd(%d) not implment now...", cmd);
+        LOGW("cmd(%d) not implment now...", cmd);
         break;
     }
 
@@ -222,7 +222,7 @@ cdx_int32 __RemuxPsrPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     ret = CdxStreamRead(impl->stream, &ptkHead, sizeof(ptkHead));
     if (ret != 0)
     {
-        CDX_LOGE("read failure..., req(%d), ret(%d)", (int)sizeof(ptkHead), ret);
+        LOGE("read failure..., req(%d), ret(%d)", (int)sizeof(ptkHead), ret);
         return -1;
     }
 
@@ -237,7 +237,7 @@ cdx_int32 __RemuxPsrPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     }
     if(pkt->type == CDX_MEDIA_VIDEO)
     {
-        logv("impl->preVideopts = %lld, ptkHead.pts = %lld",impl->preVideopts,ptkHead.pts);
+        LOGV("impl->preVideopts = %lld, ptkHead.pts = %lld",impl->preVideopts,ptkHead.pts);
         //* set the FIRST_PART when the pts is not the same
         if(impl->preVideopts != ptkHead.pts || impl->preVideopts == 0)
         {
@@ -248,11 +248,11 @@ cdx_int32 __RemuxPsrPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     }
 #endif
 
-    logv("==========prefetch pkt->type(%d),pkt->length(%d), pkt->pts(%lld), pkt->flags(%d)",
+    LOGV("==========prefetch pkt->type(%d),pkt->length(%d), pkt->pts(%lld), pkt->flags(%d)",
     pkt->type, pkt->length, pkt->pts, pkt->flags);
     if (pkt->type != CDX_MEDIA_AUDIO && pkt->type != CDX_MEDIA_VIDEO)
     {
-        CDX_LOGD("pkt type(%d), length(%d)", pkt->type, pkt->length);
+        LOGD("pkt type(%d), length(%d)", pkt->type, pkt->length);
 
         memset(pkt, 0x00, sizeof(*pkt));
         return 0;
@@ -298,7 +298,7 @@ cdx_int32 __RemuxPsrRead(CdxParserT *parser, CdxPacketT *pkt)
         ret = CdxStreamRead(impl->stream, pkt->buf, pkt->length);
         if (ret != 0)
         {
-            CDX_LOGE("read stream error.");
+            LOGE("read stream error.");
             return -1;
         }
 
@@ -315,13 +315,13 @@ cdx_int32 __RemuxPsrRead(CdxParserT *parser, CdxPacketT *pkt)
         CDX_LOG_CHECK(pkt->buflen + pkt->ringBufLen >= pkt->length,
             "buffer not enough (%d,%d,%d)", pkt->buflen, pkt->ringBufLen, pkt->length);
 
-        logv("============ pkt->buflen(%d), pkt->ringBufLen(%d), pkt->length(%d)",
+        LOGV("============ pkt->buflen(%d), pkt->ringBufLen(%d), pkt->length(%d)",
             pkt->buflen, pkt->ringBufLen, pkt->length);
 
         ret = CdxStreamRead(impl->stream, pkt->buf, pkt->buflen);
         if (ret != 0)
         {
-            CDX_LOGE("read stream error.");
+            LOGE("read stream error.");
             return -1;
         }
 
@@ -335,7 +335,7 @@ cdx_int32 __RemuxPsrRead(CdxParserT *parser, CdxPacketT *pkt)
         ret = CdxStreamRead(impl->stream, pkt->ringBuf, pkt->length - pkt->buflen);
         if (ret != 0)
         {
-            CDX_LOGE("read stream error.");
+            LOGE("read stream error.");
             return -1;
         }
 
@@ -375,7 +375,7 @@ cdx_int32 __RemuxPsrGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *pMediaInfo)
             pMediaInfo->program[0].video[0].nHeight = height;
             pMediaInfo->program[0].video[0].nWidth = width;
         }
-        logv("width(%d), nHeight(%d)", width, height);
+        LOGV("width(%d), nHeight(%d)", width, height);
     }
     else if(impl->vdata && pMediaInfo->program[0].video[0].eCodecFormat == VIDEO_CODEC_FORMAT_H263)
     {
@@ -392,7 +392,7 @@ cdx_int32 __RemuxPsrGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *pMediaInfo)
             pMediaInfo->program[0].video[0].nWidth = width;
         }
 
-        logv("width(%d), nHeight(%d)", width, height);
+        LOGV("width(%d), nHeight(%d)", width, height);
     }
 
     return 0;
@@ -453,7 +453,7 @@ static int GetVideoPkt(struct CdxRemuxParserImplS *impl)
         pkt = (CdxPacketT *)malloc(sizeof(CdxPacketT));
         if(!pkt)
         {
-            loge("malloc failed.");
+            LOGE("malloc failed.");
             return -1;
         }
         else
@@ -468,7 +468,7 @@ static int GetVideoPkt(struct CdxRemuxParserImplS *impl)
             ret = CdxStreamRead(impl->stream, &ptkHead, sizeof(ptkHead));
             if (ret != 0)
             {
-                CDX_LOGE("read failure..., req(%d), ret(%d)", (int)sizeof(ptkHead), ret);
+                LOGE("read failure..., req(%d), ret(%d)", (int)sizeof(ptkHead), ret);
                 if(pkt!=NULL)
                 {
                     free(pkt);
@@ -505,31 +505,31 @@ static int GetVideoPkt(struct CdxRemuxParserImplS *impl)
         pkt->buf = (char *)malloc(pkt->length);
         if(!pkt->buf)
         {
-            loge("malloc failed.");
+            LOGE("malloc failed.");
             return -1;
         }
         pkt->buflen = pkt->length;
         ret = CdxStreamRead(impl->stream, pkt->buf, pkt->length);
         if(ret != 0)
         {
-            loge("read failed.");
+            LOGE("read failed.");
             return -1;
         }
         if(impl->pktNum >= MAX_PKT_NUM)
         {
-            loge("packet num >= MAX_PKT_NUM");
+            LOGE("packet num >= MAX_PKT_NUM");
             return -1;
         }
 
         impl->pkts[impl->pktNum++] = pkt;
         if(pkt->type == CDX_MEDIA_VIDEO)
         {
-            logd("pkt length=%d", pkt->length);
+            LOGD("pkt length=%d", pkt->length);
             impl->vdataLen = pkt->length;
             impl->vdata = (cdx_uint8 *)malloc(impl->vdataLen);
             if(!impl->vdata)
             {
-                loge("malloc failed.");
+                LOGE("malloc failed.");
                 return -1;
             }
             memcpy(impl->vdata, pkt->buf, impl->vdataLen);
@@ -559,11 +559,11 @@ static int __RemuxPsrInit(CdxParserT *parser)
             memcpy(impl->extraDataContainer.extraData, extraDataContainer->extraData,
                 sizeof(CdxMediaInfoT));
         }
-        CDX_LOGD("xxx get mediainfo.");
+        LOGD("xxx get mediainfo.");
     }
     else
     {
-        CDX_LOGE("get extra-data failed.");
+        LOGE("get extra-data failed.");
         goto err_out;
     }
 
@@ -574,7 +574,7 @@ static int __RemuxPsrInit(CdxParserT *parser)
 
     if(!impl->hasAudio && !impl->hasVideo)
     {
-        CDX_LOGE("no av found!");
+        LOGE("no av found!");
         goto err_out;
     }
 
@@ -584,7 +584,7 @@ static int __RemuxPsrInit(CdxParserT *parser)
         ret = GetVideoPkt(impl);
         if(ret < 0)
         {
-            logw("get video pkt failed.");
+            LOGW("get video pkt failed.");
             goto err_out;
         }
     }
@@ -633,11 +633,11 @@ static cdx_uint32 __RemuxPsrProbe(CdxStreamProbeDataT *probeData)
 {
     if (!probeData || probeData->len < 9 || memcmp(probeData->buf, "remux", 5))
     {
-        CDX_LOGW("not privite remux file...");
+        LOGW("not privite remux file...");
         return 0;
     }
 
-    CDX_LOGI("privite remux file...");
+    LOGI("privite remux file...");
     return 100;
 }
 

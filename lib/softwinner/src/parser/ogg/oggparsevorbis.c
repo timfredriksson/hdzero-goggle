@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "ParseVorbis"
 #include "CdxOggParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 
 static AVMetadataTag *

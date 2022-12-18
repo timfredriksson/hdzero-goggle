@@ -26,7 +26,7 @@
 #endif
 
 
-#include "log.h"
+#include <log/log.h>
 #include "CdcUtil.h"
 
 int CdcIonGetMemType()
@@ -40,7 +40,7 @@ int CdcIonGetMemType()
     #ifdef __ANDROID__
     char prop_value[512];
     property_get("ro.kernel.iomem.type", prop_value, "0xaf01");
-    logv("++++ prop_value: %s", prop_value);
+    LOGV("++++ prop_value: %s", prop_value);
     if(strcmp(prop_value, "0xaf10")==0)
     {
         eMemoryType = MEMORY_IOMMU;
@@ -69,7 +69,7 @@ unsigned long CdcIonGetPhyAdr(int fd, uintptr_t handle)
         ret = ioctl(fd, AW_MEM_ION_IOC_CUSTOM, &custom_data);
         if(ret < 0)
         {
-            loge("CdcIonGetPhyAdr AW_MEM_ION_IOC_CUSTOM error\n");
+            LOGE("CdcIonGetPhyAdr AW_MEM_ION_IOC_CUSTOM error");
             return 0;
         }
         return phys_data.phys_addr;
@@ -84,7 +84,7 @@ int CdcIonGetFd(int fd, uintptr_t handle)
     ret = ioctl(fd, AW_MEM_ION_IOC_MAP, &fd_data);
     if(ret)
     {
-        loge("CdcIonGetFd map other dev's handle err, ret %d, dmabuf fd 0x%08x\n",
+        LOGE("CdcIonGetFd map other dev's handle err, ret %d, dmabuf fd 0x%08x",
                                                                 ret, fd_data.aw_fd);
         return -1;
     }
@@ -101,7 +101,7 @@ int CdcIonImport(int fd, int share_fd, aw_ion_user_handle_t *ion_handle)
     ret = ioctl(fd, AW_MEM_ION_IOC_IMPORT, &fd_data);
     if(ret)
     {
-        loge("CdcIonImport get ion_handle err, ret %d\n",ret);
+        LOGE("CdcIonImport get ion_handle err, ret %d",ret);
         return -1;
     }
 
@@ -119,7 +119,7 @@ int CdcIonFree(int fd, aw_ion_user_handle_t ion_handle)
     ret = ioctl(fd, AW_MEM_ION_IOC_FREE, &sIonHandleData);
     if(ret)
     {
-        loge("CdcIonFree free ion_handle err, ret %d\n",ret);
+        LOGE("CdcIonFree free ion_handle err, ret %d",ret);
         return -1;
     }
     return 0;
@@ -129,7 +129,7 @@ int CdcIonOpen(void)
 {
     int fd = open("/dev/ion", O_RDWR);
     if (fd < 0)
-        loge("open /dev/ion failed!\n");
+        LOGE("open /dev/ion failed!");
     return fd;
 }
 
@@ -138,7 +138,7 @@ int CdcIonClose(int fd)
     int ret = close(fd);
     if (ret < 0)
     {
-        loge("CdcIonClose failed with code %d: %s\n", ret, strerror(errno));
+        LOGE("CdcIonClose failed with code %d: %s", ret, strerror(errno));
         return -errno;
     }
     return ret;
@@ -152,7 +152,7 @@ int CdcIonMmap(int buf_fd, size_t len, unsigned char **pVirAddr)
         PROT_READ|PROT_WRITE, MAP_SHARED, buf_fd, 0);
     if(MAP_FAILED == pVirAddr)
     {
-        loge("CdcIonMmap failed: %s\n", strerror(errno));
+        LOGE("CdcIonMmap failed: %s", strerror(errno));
         return -errno;
     }
 
@@ -166,7 +166,7 @@ int CdcIonUnmap(size_t len, unsigned char *pVirAddr)
     ret = munmap((void*)pVirAddr, len);
     if(ret)
     {
-        loge("CdcIonUnmap failed: %s\n", strerror(errno));
+        LOGE("CdcIonUnmap failed: %s", strerror(errno));
         return -errno;
     }
 
@@ -187,7 +187,7 @@ unsigned long CdcIonGetTEEAdr(int fd, uintptr_t handle)
     ret = ioctl(fd, AW_MEM_ION_IOC_CUSTOM, &custom_data);
     if(ret)
     {
-        loge("ION_IOC_CUSTOM get TEE addr err, ret %d\n", ret);
+        LOGE("ION_IOC_CUSTOM get TEE addr err, ret %d", ret);
         return 0;
     }
     return tee_data.phys_addr;

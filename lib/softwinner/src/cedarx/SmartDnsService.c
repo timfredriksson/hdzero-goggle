@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdio.h>
 
 #include <CdxTypes.h>
 #include <CdxList.h>
@@ -94,7 +95,7 @@ static struct addrinfo *SDSNetSearch(const char *hostname, int port)
     ret = getaddrinfo(hostname, strPort, NULL, &retAddr);
     if (ret != 0)
     {
-        CDX_LOGE("get host failed, host:%s, port:%s, err:%s", hostname,
+        LOGE("get host failed, host:%s, port:%s, err:%s", hostname,
             strPort, gai_strerror(errno));
         return NULL;
     }
@@ -140,7 +141,7 @@ static void *SDSNetSearchWrap(void* arg)
     searchAi = SDSCacheSearch(instance, hostname, port);
     if (searchAi)
     {
-        logd("already have %s dns",hostname);
+        LOGD("already have %s dns",hostname);
         freeaddrinfo(ai);
         hook(userHdr, SDS_OK, searchAi);
     }
@@ -224,7 +225,7 @@ static void __SDSMsgRecv(CdxHandlerItfT *itf, CdxMessageT *msg)
         int ret = pthread_create(&pid, NULL, SDSNetSearchWrap, (void*)searchArg);
         if (ret != 0)
         {
-            logd("dns search thread creat fail!");
+            LOGD("dns search thread creat fail!");
             ResponeHook hook = searchArg->hook;
             hook(searchArg->userHdr, SDS_ERROR, NULL);
             free(searchArg);
@@ -285,7 +286,7 @@ int SDSRequest(const char *hostname, int port, struct addrinfo **pAddr, void *us
 
     if (hostname == NULL)
     {
-        CDX_LOGE("hostname null...");
+        LOGE("hostname null...");
         return -1;
     }
 

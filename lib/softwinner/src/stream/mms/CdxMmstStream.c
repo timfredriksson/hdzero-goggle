@@ -81,7 +81,7 @@ int MmsGetNetworkData(aw_mms_inf_t* mmsStreamInf, int fs, char* data, int dataLe
         {
             case -1:
             {
-                CDX_LOGD("select = -1");
+                LOGD("select = -1");
                 return -1;
             }
             case 0:
@@ -90,16 +90,16 @@ int MmsGetNetworkData(aw_mms_inf_t* mmsStreamInf, int fs, char* data, int dataLe
             }
             default:
             {
-                if(FD_ISSET(mmsStreamInf->sockFd, &ers))  //¼ì²âsockFdÊÇ·ñ·¢Éú±ä»¯
+                if(FD_ISSET(mmsStreamInf->sockFd, &ers))  //ï¿½ï¿½ï¿½sockFdï¿½Ç·ï¿½ï¿½ï¿½ï¿½ä»¯
                 {
-                    CDX_LOGD("**************socket(shutdown).\n");
+                    LOGD("**************socket(shutdown).");
                 }
                 if(FD_ISSET(mmsStreamInf->sockFd, &fds))
                 {
                     readLen = recv(fs, data, dataLen, 0);
                     if(readLen == -1)
                     {
-                        CDX_LOGW("errno = %d", errno);
+                        LOGW("errno = %d", errno);
                     }
 
                     return readLen;
@@ -135,7 +135,7 @@ static void String2Utf16(char *pDst,char *pSrc, int len)
 //*********************************************************************************//
 static void Put32 (command_t *cmd, unsigned int val)
 {
-    cmd->buf[cmd->numBytes] = val % 256;        /* È¡µÍ8Î» */
+    cmd->buf[cmd->numBytes] = val % 256;        /* È¡ï¿½ï¿½8Î» */
     val = val >> 8;
     cmd->buf[cmd->numBytes+1] = val % 256 ;
     val = val >> 8;
@@ -171,7 +171,7 @@ static int MmstSendCommand(int* seqNum,int s, int command, unsigned int switches
     Put32 (&cmd, len8*8 + 32);    /* (Command length)data length after protocol type*/
     Put32 (&cmd, 0x20534d4d);     /* protocol type "MMS " */
     Put32 (&cmd, len8 + 4);
-   /* Length until end of packet in 8 byte boundary lengths£¬Including own data field */
+   /* Length until end of packet in 8 byte boundary lengthsï¿½ï¿½Including own data field */
     Put32 (&cmd, *seqNum);        /* sequence number '0000'  */
     (*seqNum)++;                   /* sequence number add one after send a command message */
     Put32 (&cmd, 0x0);        /* (8bytes) double decision time stamp(used for net timing) */
@@ -194,7 +194,7 @@ static int MmstSendCommand(int* seqNum,int s, int command, unsigned int switches
     //ret = send(s, cmd.buf, len8*8+48, 0);
     if(ret != (len8*8+48))
     {
-        CDX_LOGW("*********send comand error");
+        LOGW("*********send comand error");
         return -1;
     }
     return 0;
@@ -226,7 +226,7 @@ static int MmstGetAnswer (aw_mms_inf_t* mmsStreamInf, int s)
         len = MmsGetNetworkData(mmsStreamInf,s, data,MMST_BUF_SIZE);
         if(len <= 0)
         {
-            CDX_LOGW("****************the return value  of the recv is 0.\n");
+            LOGW("****************the return value  of the recv is 0.");
             return -1;
         }
         command = Get32((unsigned char*)data, 36) & 0xFFFF;  // command in packet header
@@ -255,7 +255,7 @@ static int GetData (aw_mms_inf_t* mmsStreamInf, int s, unsigned char *buf, size_
 
         if(len <= 0)
         {
-            CDX_LOGW("****************the return value  of the recv is 0.\n");
+            LOGW("****************the return value  of the recv is 0.");
             return 0;
         }
         total += len;
@@ -365,19 +365,19 @@ static int MmstInterpHeader (aw_mms_inf_t* mmsStreamInf, unsigned char *header, 
         if((0x6cce6200aa00d9a6ULL == guid_1) && (0x11cf668e75b22630ULL == guid_2) )
       /* ASF_HEADER_Object*/
         {
-            logv("header object");
+            LOGV("header object");
         }
         else if ((0x6cce6200aa00d9a6ULL == guid_1) && (0x11cf668e75b22636ULL == guid_2))
       /*ASF_Data_Object*/
         {
-            logv("data object");
+            LOGV("data object");
         }
         else if((0x6553200cc000e48eULL == guid_1) && (0x11cfa9478cabdca1ULL == guid_2))
       /*ASF_File_Properties_Object*/
         {
             packetLength = Get32(header, i+92-24);
          //*  Minimum Data Packet Size in ASF_File_Properties_Object
-            logv("file property object");
+            LOGV("file property object");
         }
         else if((0x6553200cc000e68eULL == guid_1) && (0x11cfa9b7b7dc0791ULL == guid_2))
       /*ASF_Stream_Properties_Object*/
@@ -396,7 +396,7 @@ static int MmstInterpHeader (aw_mms_inf_t* mmsStreamInf, unsigned char *header, 
         }
         else
         {
-           loge("unkown object");
+           LOGE("unkown object");
         }
         i += length-24;
     }
@@ -431,7 +431,7 @@ int MmstStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
     unescpath = malloc(strlen(path)+1);
     if(!unescpath)
     {
-        CDX_LOGE("******************unescpath faile.\n");
+        LOGE("******************unescpath faile.");
         return -1;
     }
     CdxUrlUnescapeString(unescpath,path);
@@ -461,7 +461,7 @@ int MmstStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
    */
 
     /* prepare for the url encoding conversion */
-    /* NSPlayer/version£»<spcae>{128bit client GUID}; <space>Host:<space>server IP address*/
+    /* NSPlayer/versionï¿½ï¿½<spcae>{128bit client GUID}; <space>Host:<space>server IP address*/
     snprintf(str, 1023, "\034\003NSPlayer/7.0.0.1956; \
             {33715801-BAB3-9D85-24E9-03B90328270A}; Host: %s", url->hostname);
 
@@ -475,7 +475,7 @@ int MmstStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
                           (unsigned char*)sendData);
     if(ret < 0)
     {
-        CDX_LOGW("--- send command error!");
+        LOGW("--- send command error!");
         return -1;
     }
 
@@ -486,7 +486,7 @@ int MmstStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
         closesocket(fs);
         return -1;
     }
-    CDX_LOGD("first command");
+    LOGD("first command");
 
  /*
   **************************************************************************************
@@ -509,7 +509,7 @@ int MmstStreamingStart(char *uri, aw_mms_inf_t* mmsStreamInf)
         closesocket(fs);
         return -1;
     }
-    CDX_LOGD("---- second command");
+    LOGD("---- second command");
 
  /*
   ****************************************************************************************
@@ -640,7 +640,7 @@ static int MmstStreamingRead(aw_mms_inf_t* mmsStreamInf)
     dataSize = GetData(mmsStreamInf, mmsStreamInf->fd, preHeader, 8);
     if(dataSize < 8)
     {
-        CDX_LOGW("****************MMST_PreHeader Read Failed\n");
+        LOGW("****************MMST_PreHeader Read Failed");
         ret = STREAM_READ_END;
         goto failed;
     }
@@ -650,9 +650,9 @@ static int MmstStreamingRead(aw_mms_inf_t* mmsStreamInf)
         packetLen = (preHeader[7]<<8|preHeader[6])- 8;
         if(packetLen < 0 || packetLen > MMST_BUF_SIZE)
         {
-             CDX_LOGW("MSGTR_MPDEMUX_MMST_InvalidMMSPacketSize");
+             LOGW("MSGTR_MPDEMUX_MMST_InvalidMMSPacketSize");
              ret = STREAM_READ_ERROR;
-             CDX_LOGW("************here1:mms packet len error.packetLen=%d\n", packetLen);
+             LOGW("************here1:mms packet len error.packetLen=%d", packetLen);
              goto failed;
         }
         while(mmsStreamInf->exitFlag == 0)
@@ -720,14 +720,14 @@ static int MmstStreamingRead(aw_mms_inf_t* mmsStreamInf)
     {
         if (!GetData (mmsStreamInf, mmsStreamInf->fd, (unsigned char*)&packetLen, 4))
         {
-            CDX_LOGW("MMST_packet_len Read Failed");
+            LOGW("MMST_packet_len Read Failed");
             ret = STREAM_READ_END;
             goto failed;
         }
         packetLen = Get32((unsigned char*)&packetLen, 0) + 4;
         if(packetLen < 0 || packetLen > MMST_BUF_SIZE)
         {
-             CDX_LOGW("************here2:mms packet len error.packetLen=%d\n", packetLen);
+             LOGW("************here2:mms packet len error.packetLen=%d", packetLen);
              ret = STREAM_READ_ERROR;
              goto failed;
         }
@@ -766,7 +766,7 @@ static int MmstStreamingRead(aw_mms_inf_t* mmsStreamInf)
     }
 
  failed:
-     CDX_LOGW("failed \n");
+     LOGW("failed ");
     if(ret==STREAM_READ_END ||ret ==STREAM_READ_ERROR)
     {
         closesocket(mmsStreamInf->sockFd);
@@ -798,7 +798,7 @@ int AsfStreamStart(char *uri, aw_mms_inf_t* mmsStreamInf)
     //Is protocol mms or mmst?
     if (!strcasecmp(proto, "mmst") || !strcasecmp(proto, "mms"))
     {
-        CDX_LOGD("--- Trying mmst");
+        LOGD("--- Trying mmst");
         fd = MmstStreamingStart(uri, mmsStreamInf);
         mmsStreamInf->awUrl->port = port;
         mmsStreamInf->mmsMode = PROTOCOL_MMS_T;
@@ -807,7 +807,7 @@ int AsfStreamStart(char *uri, aw_mms_inf_t* mmsStreamInf)
         {
             return 0;
         }
-        CDX_LOGW("*******************ASF/TCP failed, is not mmst.\n");
+        LOGW("*******************ASF/TCP failed, is not mmst.");
 
         if (fd == -2)
         {
@@ -818,7 +818,7 @@ int AsfStreamStart(char *uri, aw_mms_inf_t* mmsStreamInf)
     //Is protocol  mmsh?
     if (!strcasecmp(proto, "mmsh") || !strcasecmp(proto, "mmshttp") || !strcasecmp(proto, "mms"))
     {
-        CDX_LOGD("********************Trying ASF/MMSH...\n");
+        LOGD("********************Trying ASF/MMSH...");
         fd = MmshStreamingStart(uri, mmsStreamInf);
         mmsStreamInf->awUrl->port = port;
         mmsStreamInf->mmsMode = PROTOCOL_MMS_H;
@@ -827,7 +827,7 @@ int AsfStreamStart(char *uri, aw_mms_inf_t* mmsStreamInf)
         {
             return 0;
         }
-        CDX_LOGD("*********************ASF/MMSH failed\n");
+        LOGD("*********************ASF/MMSH failed");
         if(fd == -2)
         {
             return -1;
@@ -847,7 +847,7 @@ int AsfStreamStart(char *uri, aw_mms_inf_t* mmsStreamInf)
         {
                return &(mmsStreamInf->streaminfo);
            }
-           CDX_LOGI("*********************ASF/HTTP failed\n");
+           LOGI("*********************ASF/HTTP failed");
            if(fd == -2)
         {
                return NULL;
@@ -907,7 +907,7 @@ void* CdxReadAsfStream(void* p_arg)
         }
 
         if( (mmsStreamInf->stream_buf_size - mmsStreamInf->validDataSize) < 3*1024*1024)
-      /* buffer Ê£Óà¿Õ¼ä²»×ã*/
+      /* buffer Ê£ï¿½ï¿½Õ¼ä²»ï¿½ï¿½*/
         {
             usleep(40*1000);
             continue;
@@ -941,7 +941,7 @@ void* CdxReadAsfStream(void* p_arg)
             pthread_mutex_lock(&mmsStreamInf->lock);
             mmsStreamInf->iostate = CDX_IO_STATE_EOS;
             pthread_mutex_unlock(&mmsStreamInf->lock);
-            CDX_LOGW("read the stream end.\n");
+            LOGW("read the stream end.");
             break;
         }
         else if(ret == STREAM_READ_ERROR)
@@ -949,7 +949,7 @@ void* CdxReadAsfStream(void* p_arg)
             pthread_mutex_lock(&mmsStreamInf->lock);
             mmsStreamInf->iostate = CDX_IO_STATE_ERROR;
             pthread_mutex_unlock(&mmsStreamInf->lock);
-            CDX_LOGE("read the stream error.\n");
+            LOGE("read the stream error.");
             break;
         }
 
@@ -967,7 +967,7 @@ void* CdxReadAsfStream(void* p_arg)
     }
 
     CdxAtomicDec(&mmsStreamInf->ref);
-    CDX_LOGD("---read thread ref = %d", CdxAtomicRead(&mmsStreamInf->ref));
+    LOGD("---read thread ref = %d", CdxAtomicRead(&mmsStreamInf->ref));
     mmsStreamInf->eof = 1;
     return NULL;
 }

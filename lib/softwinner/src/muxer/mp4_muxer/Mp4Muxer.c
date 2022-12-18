@@ -1,6 +1,6 @@
 // #include <CDX_LogNDebug.h>
 #define LOG_TAG "Mp4Muxer.c"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -487,7 +487,7 @@ static unsigned int FFIsomGetAvccSize(unsigned char *data, int len)
             int ret = ff_avc_parse_nal_units(data, &buf, &len);
             if (ret < 0)
             {
-                alogw("fatal error! ret[%d] of ff_avc_parse_nal_units() < 0", ret);
+                LOGW("fatal error! ret[%d] of ff_avc_parse_nal_units() < 0", ret);
                 free(buf);
                 return 0;
             }
@@ -792,9 +792,9 @@ static unsigned int movGetVideoTagSize(MOVTrack *track)
     else if(track->tag == MKTAG('h','v','c','1'))
         videoTagSize += movGetHvccTagSize(track, 0);
     else if(track->tag == MKTAG('m','j','p','a'))
-        alogd("mjpa[0x%x] need not write extra data", track->tag);
+        LOGD("mjpa[0x%x] need not write extra data", track->tag);
     else
-        alogw("fatal error! video[0x%x] need not write extra data?", track->tag);
+        LOGW("fatal error! video[0x%x] need not write extra data?", track->tag);
     return videoTagSize;
 }
 
@@ -1458,7 +1458,7 @@ static int mov_write_tkhd_tag(ByteIOContext *pb, MOVTrack *track)
                 d = 0;
                 break;
             default:
-                aloge("Should never reach this unknown rotation");
+                LOGE("Should never reach this unknown rotation");
                 break;
         }
 
@@ -1759,7 +1759,7 @@ static int mov_write_moov_tag(ByteIOContext *pb, MOVContext *mov,
     mov_write_mvhd_tag(pb, mov);
     for (i=0; i<mov->nb_streams; i++) {
         if(mov->tracks[i].stsz_size> 0) {
-			alogd("mov_write_trak_tag: [%d], stsz_size: [%d]", i, mov->tracks[i].stsz_size);
+			LOGD("mov_write_trak_tag: [%d], stsz_size: [%d]", i, mov->tracks[i].stsz_size);
             mov_write_trak_tag(pb, &(mov->tracks[i]));
         }
     }
@@ -1784,7 +1784,7 @@ void flush_payload_cache(MOVContext *mov, ByteIOContext *s)
     //mov->mpFsWriter->fsFlush(mov->mpFsWriter);
     s->fsFlush(s);
 //    tm2 = CDX_GetNowUs();
-//    alogd("[%dx%d] flush, [%lld]ms", mov->tracks[0].enc->width, mov->tracks[0].enc->height, (tm2-tm1)/1000);
+//    LOGD("[%dx%d] flush, [%lld]ms", mov->tracks[0].enc->width, mov->tracks[0].enc->height, (tm2-tm1)/1000);
 }
 
 static int mov_write_mdat_tag(ByteIOContext *pb, MOVContext *mov)
@@ -1898,10 +1898,10 @@ static void printCacheSize(MOVContext *mov)
     int i;
     for(i=0;i<mov->nb_streams;i++)
     {
-        alogd("mov->stsc_cache_size[%d] = [%d]kB", i, mov->stsc_cache_size[i]/1024);
-        alogd("mov->stco_cache_size[%d] = [%d]kB", i, mov->stco_cache_size[i]/1024);
-        alogd("mov->stsz_cache_size[%d] = [%d]kB", i, mov->stsz_cache_size[i]/1024);
-        alogd("mov->stts_cache_size[%d] = [%d]kB", i, mov->stts_cache_size[i]/1024);
+        LOGD("mov->stsc_cache_size[%d] = [%d]kB", i, mov->stsc_cache_size[i]/1024);
+        LOGD("mov->stco_cache_size[%d] = [%d]kB", i, mov->stco_cache_size[i]/1024);
+        LOGD("mov->stsz_cache_size[%d] = [%d]kB", i, mov->stsz_cache_size[i]/1024);
+        LOGD("mov->stts_cache_size[%d] = [%d]kB", i, mov->stts_cache_size[i]/1024);
     }
 }
 
@@ -1932,7 +1932,7 @@ static void mov_write_gps_packet(AVFormatContext *s, AVPacket *pkt)
     if(mov->gps_entry_buff_wt >= MOV_GPS_MAX_ENTRY_NUM)
     {
         mov->gps_entry_buff_wt = 0;
-        aloge("fatal error,gps write overflow");
+        LOGE("fatal error,gps write overflow");
     }
 
     mov_write_free_tag(pb,mov,data_size); 
@@ -1998,7 +1998,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
 			{
                 if(mov->cache_write_ptr[STSC_ID][mov->last_stream_index] != mov->cache_end_ptr[STSC_ID][mov->last_stream_index] + 1)
                 {
-                    aloge("fatal error! stsc buf wrPtr[%p]!=endPtr[%p]+1", mov->cache_write_ptr[STSC_ID][mov->last_stream_index], mov->cache_end_ptr[STSC_ID][mov->last_stream_index]);
+                    LOGE("fatal error! stsc buf wrPtr[%p]!=endPtr[%p]+1", mov->cache_write_ptr[STSC_ID][mov->last_stream_index], mov->cache_end_ptr[STSC_ID][mov->last_stream_index]);
                 }
 				mov->cache_write_ptr[STSC_ID][mov->last_stream_index] = mov->cache_start_ptr[STSC_ID][mov->last_stream_index];
 			}
@@ -2007,15 +2007,15 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
 			{
 				int ret;
 				
-				alogv("streamIndex[%d] stsc tinypage: %d, mov[%p]", pkt->stream_index, trk->stsc_tiny_pages, mov);
+				LOGV("streamIndex[%d] stsc tinypage: %d, mov[%p]", pkt->stream_index, trk->stsc_tiny_pages, mov);
                 if(!mov->fd_stsz[0])
                 {
-                    alogd("strm[%d] not create mp4 tmp file stsc, create now! mov[%p]", mov->last_stream_index, mov);
+                    LOGD("strm[%d] not create mp4 tmp file stsc, create now! mov[%p]", mov->last_stream_index, mov);
                     //printCacheSize(mov);
                     //not create mp4 tmp file, create now.
                     if(0!=movCreateTmpFile(mov))
                     {
-                        aloge("fatal error! movCreateTmpFile() fail!");
+                        LOGE("fatal error! movCreateTmpFile() fail!");
 						return -1;
                     }
                 }
@@ -2035,7 +2035,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
 				{
                     if(mov->cache_read_ptr[STSC_ID][mov->last_stream_index] != mov->cache_end_ptr[STSC_ID][mov->last_stream_index]+1)
                     {
-                        aloge("fatal error! stsc buf rdPtr[%p]!=endPtr[%p]+1", mov->cache_read_ptr[STSC_ID][mov->last_stream_index], mov->cache_end_ptr[STSC_ID][mov->last_stream_index]);
+                        LOGE("fatal error! stsc buf rdPtr[%p]!=endPtr[%p]+1", mov->cache_read_ptr[STSC_ID][mov->last_stream_index], mov->cache_end_ptr[STSC_ID][mov->last_stream_index]);
                     }
 					mov->cache_read_ptr[STSC_ID][mov->last_stream_index] = mov->cache_start_ptr[STSC_ID][mov->last_stream_index];
 				}
@@ -2047,7 +2047,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
         {
             if(mov->cache_write_ptr[STCO_ID][pkt->stream_index] != mov->cache_end_ptr[STCO_ID][pkt->stream_index]+1)
             {
-                aloge("fatal error! stco buf wtPtr[%p]!=endPtr[%p]+1", mov->cache_write_ptr[STCO_ID][pkt->stream_index], mov->cache_end_ptr[STCO_ID][pkt->stream_index]);
+                LOGE("fatal error! stco buf wtPtr[%p]!=endPtr[%p]+1", mov->cache_write_ptr[STCO_ID][pkt->stream_index], mov->cache_end_ptr[STCO_ID][pkt->stream_index]);
             }
 			mov->cache_write_ptr[STCO_ID][pkt->stream_index] = mov->cache_start_ptr[STCO_ID][pkt->stream_index];
 		}
@@ -2056,15 +2056,15 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
 		{
             int ret;
 			
-			alogv("streamIndex[%d] stco tinypage: %d, mov[%p]", pkt->stream_index, trk->stco_tiny_pages, mov);
+			LOGV("streamIndex[%d] stco tinypage: %d, mov[%p]", pkt->stream_index, trk->stco_tiny_pages, mov);
 			if(!mov->fd_stsz[0])
             {
-                alogd("strm[%d] not create mp4 tmp file stco, create now! mov[%p]", pkt->stream_index, mov);
+                LOGD("strm[%d] not create mp4 tmp file stco, create now! mov[%p]", pkt->stream_index, mov);
                 //printCacheSize(mov);
                 //not create mp4 tmp file, create now.
                 if(0!=movCreateTmpFile(mov))
                 {
-                    aloge("fatal error! movCreateTmpFile() fail!");
+                    LOGE("fatal error! movCreateTmpFile() fail!");
 					return -1;
                 }
             }
@@ -2075,7 +2075,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
             ret = pStcoStream->write(mov->cache_read_ptr[STCO_ID][pkt->stream_index],1,MOV_CACHE_TINY_PAGE_SIZE_IN_BYTE,pStcoStream);
 			if(ret != (MOV_CACHE_TINY_PAGE_SIZE_IN_BYTE))
 			{
-                aloge("fatal error!stco write fail!");
+                LOGE("fatal error!stco write fail!");
 				return -1;
 			}
             //int tmpfd = fileno((FILE*)mov->fd_stco[pkt->stream_index]);
@@ -2087,7 +2087,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
             {
                 if(mov->cache_read_ptr[STCO_ID][pkt->stream_index] != mov->cache_end_ptr[STCO_ID][pkt->stream_index]+1)
                 {
-                    aloge("fatal error! stco buf rdPtr[%p]!=endPtr[%p]+1", mov->cache_read_ptr[STCO_ID][pkt->stream_index], mov->cache_end_ptr[STCO_ID][pkt->stream_index]);
+                    LOGE("fatal error! stco buf rdPtr[%p]!=endPtr[%p]+1", mov->cache_read_ptr[STCO_ID][pkt->stream_index], mov->cache_end_ptr[STCO_ID][pkt->stream_index]);
                 }
                 mov->cache_read_ptr[STCO_ID][pkt->stream_index] = mov->cache_start_ptr[STCO_ID][pkt->stream_index];
             }
@@ -2112,7 +2112,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
 	{
         if(mov->cache_write_ptr[STSZ_ID][pkt->stream_index] != mov->cache_end_ptr[STSZ_ID][pkt->stream_index]+1)
         {
-            aloge("fatal error! stsz buf wtPtr[%p]!=endPtr[%p]+1", mov->cache_write_ptr[STSZ_ID][pkt->stream_index], mov->cache_end_ptr[STSZ_ID][pkt->stream_index]);
+            LOGE("fatal error! stsz buf wtPtr[%p]!=endPtr[%p]+1", mov->cache_write_ptr[STSZ_ID][pkt->stream_index], mov->cache_end_ptr[STSZ_ID][pkt->stream_index]);
         }
 		mov->cache_write_ptr[STSZ_ID][pkt->stream_index] = mov->cache_start_ptr[STSZ_ID][pkt->stream_index];
 	}
@@ -2122,15 +2122,15 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
 	{
 		int ret;
 				
-		alogv("streamIndex[%d] stsz tinypage: %d, mov[%p]", pkt->stream_index, trk->stsz_tiny_pages, mov);
+		LOGV("streamIndex[%d] stsz tinypage: %d, mov[%p]", pkt->stream_index, trk->stsz_tiny_pages, mov);
 		if(!mov->fd_stsz[0])
         {
-            alogd("strm[%d] not create mp4 tmp file stsz, create now! mov[%p]", pkt->stream_index, mov);
+            LOGD("strm[%d] not create mp4 tmp file stsz, create now! mov[%p]", pkt->stream_index, mov);
             //printCacheSize(mov);
             //not create mp4 tmp file, create now.
             if(0!=movCreateTmpFile(mov))
             {
-                aloge("fatal error! movCreateTmpFile() fail!");
+                LOGE("fatal error! movCreateTmpFile() fail!");
 				return -1;
             }
         }
@@ -2150,7 +2150,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
 		{
             if(mov->cache_read_ptr[STSZ_ID][pkt->stream_index] != mov->cache_end_ptr[STSZ_ID][pkt->stream_index]+1)
             {
-                aloge("fatal error! stsz buf rdPtr[%p]!=endPtr[%p]+1", mov->cache_read_ptr[STSZ_ID][pkt->stream_index], mov->cache_end_ptr[STSZ_ID][pkt->stream_index]);
+                LOGE("fatal error! stsz buf rdPtr[%p]!=endPtr[%p]+1", mov->cache_read_ptr[STSZ_ID][pkt->stream_index], mov->cache_end_ptr[STSZ_ID][pkt->stream_index]);
             }
 			mov->cache_read_ptr[STSZ_ID][pkt->stream_index] = mov->cache_start_ptr[STSZ_ID][pkt->stream_index];
 		}
@@ -2169,23 +2169,23 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
     	{
             if(mov->cache_write_ptr[STTS_ID][pkt->stream_index] != mov->cache_end_ptr[STTS_ID][pkt->stream_index]+1)
             {
-                aloge("fatal error! stts buf wtPtr[%p]!=endPtr[%p]+1", mov->cache_write_ptr[STTS_ID][pkt->stream_index], mov->cache_end_ptr[STTS_ID][pkt->stream_index]);
+                LOGE("fatal error! stts buf wtPtr[%p]!=endPtr[%p]+1", mov->cache_write_ptr[STTS_ID][pkt->stream_index], mov->cache_end_ptr[STTS_ID][pkt->stream_index]);
             }
     		mov->cache_write_ptr[STTS_ID][pkt->stream_index] = mov->cache_start_ptr[STTS_ID][pkt->stream_index];
     	}
     	
     	if(mov->stts_cache_size[pkt->stream_index] >= STTS_CACHE_SIZE)
     	{
-            alogv("streamIndex[%d] stts tinypage: %d, mov[%p]", pkt->stream_index, trk->stsz_tiny_pages, mov);
+            LOGV("streamIndex[%d] stts tinypage: %d, mov[%p]", pkt->stream_index, trk->stsz_tiny_pages, mov);
     		int ret;
     		if(!mov->fd_stsz[0])
             {
-                alogd("strm[%d] not create mp4 tmp file stts, create now! mov[%p]", pkt->stream_index, mov);
+                LOGD("strm[%d] not create mp4 tmp file stts, create now! mov[%p]", pkt->stream_index, mov);
                 //printCacheSize(mov);
                 //not create mp4 tmp file, create now.
                 if(0!=movCreateTmpFile(mov))
                 {
-                    aloge("fatal error! movCreateTmpFile() fail!");
+                    LOGE("fatal error! movCreateTmpFile() fail!");
 					return -1;
                 }
             }
@@ -2205,7 +2205,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
     		{
                 if(mov->cache_read_ptr[STTS_ID][pkt->stream_index] != mov->cache_end_ptr[STTS_ID][pkt->stream_index]+1)
                 {
-                    aloge("fatal error! stts buf rdPtr[%p]!=endPtr[%p]+1", mov->cache_read_ptr[STTS_ID][pkt->stream_index], mov->cache_end_ptr[STTS_ID][pkt->stream_index]);
+                    LOGE("fatal error! stts buf rdPtr[%p]!=endPtr[%p]+1", mov->cache_read_ptr[STTS_ID][pkt->stream_index], mov->cache_end_ptr[STTS_ID][pkt->stream_index]);
                 }
     			mov->cache_read_ptr[STTS_ID][pkt->stream_index] = mov->cache_start_ptr[STTS_ID][pkt->stream_index];
     		}
@@ -2261,7 +2261,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
         }
         else
         {
-            aloge("err codec type!\n");
+            LOGE("err codec type!");
             return -1;
         }
 
@@ -2280,11 +2280,11 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
 
 //    if(0 == pkt->size1)
 //    {
-//        alogd("strmidx[%d]size[%d]", pkt->stream_index, pkt->size0+pkt->size1);
+//        LOGD("strmidx[%d]size[%d]", pkt->stream_index, pkt->size0+pkt->size1);
 //    }
 //    else
 //    {
-//        alogd("strmidx[%d]size[%d], size1[%d]", pkt->stream_index, pkt->size0+pkt->size1, pkt->size1);
+//        LOGD("strmidx[%d]size[%d], size1[%d]", pkt->stream_index, pkt->size0+pkt->size1, pkt->size1);
 //    }
     int bNeedSkipDataFlag = 0;
     int nSkipSize = 0;
@@ -2299,7 +2299,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
             put_buffer_cache(mov, pb, (char*)&pkt_size, 4);
             if(pkt->size0 <= 4)
             {
-                //alogd("Be careful! pkt->size0[%d]<=4", pkt->size0);
+                //LOGD("Be careful! pkt->size0[%d]<=4", pkt->size0);
                 bNeedSkipDataFlag = 1;
                 nSkipSize = 4-pkt->size0;
             }
@@ -2319,7 +2319,7 @@ int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
         {
             if(pkt->size1<=nSkipSize)
             {
-                aloge("fatal error! size1[%d]<=skipSize[%d], check code!", pkt->size1, nSkipSize);
+                LOGE("fatal error! size1[%d]<=skipSize[%d], check code!", pkt->size1, nSkipSize);
             }
             put_buffer_cache(mov, pb, pkt->data1+nSkipSize, pkt->size1-nSkipSize);
         }
@@ -2392,7 +2392,7 @@ static void makeMovTmpFullFilePath(char *pPath, int nPathSize, char *filetype, i
     }
     else
     {
-        aloge("fatal error, mov tmp filetype[%s] is not support!", filetype);
+        LOGE("fatal error, mov tmp filetype[%s] is not support!", filetype);
     }
     return;
 }
@@ -2405,7 +2405,7 @@ static __hdle openMovTmpFile(char *pPath)
 //    fd = open(pPath, O_CREAT|O_RDWR, 0777);
 //	if(fd < 0)
 //    {
-//        aloge("opening file failed,filePath=%s\n", pPath);
+//        LOGE("opening file failed,filePath=%s", pPath);
 //        return NULL;
 //	}
     CedarXDataSourceDesc datasourceDesc;
@@ -2416,17 +2416,17 @@ static __hdle openMovTmpFile(char *pPath)
     pStream = create_outstream_handle(&datasourceDesc);
     if(NULL == pStream)
     {
-        aloge("fatal error! create mov tmp file fail.");
+        LOGE("fatal error! create mov tmp file fail.");
     }
 //	ret = fallocate(fd,0x01,0,4*1024*1024);
 //	if (ret < 0)
 //	{
-//		ALOGV("fallocate failed try again\n");
+//		LOGV("fallocate failed try again");
 //	}
 //    FILE *pFile = fdopen(fd, "a+");
 //    if(pFile == NULL) 
 //    {
-//        aloge("get file stream fail");
+//        LOGE("get file stream fail");
 //        close(fd);
 //    }
     return (__hdle)pStream;
@@ -2438,7 +2438,7 @@ int movCreateTmpFile(MOVContext *mov)
     //create tmp directory
 //    if(access (MOV_TMPFILE_DIR, F_OK) != 0)
 //    {
-//        LOGV("creat mp4 tmp directory , path=%s is not exist,so creat it\n", MOV_TMPFILE_DIR);
+//        LOGV("creat mp4 tmp directory , path=%s is not exist,so creat it", MOV_TMPFILE_DIR);
 //        mkdir(MOV_TMPFILE_DIR, 0777);
 //    }
     stream_mkdir(MOV_TMPFILE_DIR, 0777);
@@ -2451,7 +2451,7 @@ int movCreateTmpFile(MOVContext *mov)
             //LOGD("open fd_stsz[%d]name[%s]", i, mov->FilePath_stsz[i]);
             if(!mov->fd_stsz[i])
             {
-                aloge("error = %d\n",-errno);
+                LOGE("error = %d",-errno);
                 //*ret = -1;
                 return -1;
             }

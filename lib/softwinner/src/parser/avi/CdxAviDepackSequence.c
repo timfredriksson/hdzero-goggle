@@ -65,25 +65,25 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
 
     if(!p)
     {
-        CDX_LOGE("Check para.");
+        LOGE("Check para.");
         return AVI_ERR_PARA_ERR;
     }
     aviIn = (AviFileInT *)p->privData;
     if(!aviIn)
     {
-        CDX_LOGE("Check privData.");
+        LOGE("Check privData.");
         return AVI_ERR_PARA_ERR;
     }
     //check if the index table is exsit in media file idx1 indx
     if(USE_IDX1 != aviIn->idxStyle)
     {
-        CDX_LOGE("avi_in->idx_style != USE_IDX1, fatal error!");
+        LOGE("avi_in->idx_style != USE_IDX1, fatal error!");
         return AVI_ERR_PARA_ERR;
     }
 
     if(!aviIn->idx1Total || !p->hasVideo)
     {
-        CDX_LOGE("No valid index table in the media file!");
+        LOGE("No valid index table in the media file!");
         return AVI_ERR_NO_INDEX_TABLE;
     }
     if(!aviIn->idx1Buf)
@@ -91,7 +91,7 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
         aviIn->idx1Buf = (cdx_uint32 *)malloc(MAX_IDX_BUF_SIZE);
         if(!aviIn->idx1Buf)
         {
-            CDX_LOGE("Request buffer for build index failed.");
+            LOGE("Request buffer for build index failed.");
             return AVI_ERR_REQMEM_FAIL;
         }
     }
@@ -107,7 +107,7 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
 
     if(CdxStreamSeek(aviIn->fp, (cdx_uint32)aviIn->idx1Start, STREAM_SEEK_SET) < 0)
     {
-        CDX_LOGE("Seek file failed!");
+        LOGE("Seek file failed!");
         return AVI_ERR_READ_FILE_FAIL;
     }
 
@@ -119,7 +119,7 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
         //check if need get file data
         if(p->bAbortFlag)
         {
-            CDX_LOGV("idx1 seq:detect abort flag,quit now!");
+            LOGV("idx1 seq:detect abort flag,quit now!");
             ret = AVI_ERR_ABORT;
             goto _err0;
         }
@@ -141,7 +141,7 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
             if(bufIdxItem * sizeof(AviIndexEntryT) !=
              (cdx_uint32)CdxStreamRead(aviIn->fp, chunkBuf, bufIdxItem * sizeof(AviIndexEntryT)))
             {
-                CDX_LOGE("Read error.");
+                LOGE("Read error.");
                 return AVI_ERR_READ_FILE_FAIL;
             }
 
@@ -158,7 +158,7 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
             if(mIdx->dwFlags & CDX_AVIIF_KEYFRAME)
             {
                 pSeqKeyFrameTableEntry->frameIdx = frameCount;
-                //CDX_LOGD("xxxxxxxxx keyframe idx(%d), AviBuildIdxForIdx1SequenceMode",
+                //LOGD("xxxxxxxxx keyframe idx(%d), AviBuildIdxForIdx1SequenceMode",
                                                         //pSeqKeyFrameTableEntry->frameIdx);
                 pSeqKeyFrameTableEntry->vidChunkOffset = aviIn->ckBaseOffset + mIdx->dwChunkOffset;
                 for(iAud = 0; iAud < p->hasAudio; iAud++)
@@ -167,7 +167,7 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
                         = (cdx_uint32)CalcAviAudioChunkPts(&aviIn->audInfoArray[iAud],
                             audDatSizeCntrArray[iAud], audChkCntrArray[iAud]);
                 }
-                CDX_LOGV("keyFrame:frmidx[%d],pts[%d]s, audioPts[%d]ms, mIdx->dwFlags[%u]",
+                LOGV("keyFrame:frmidx[%d],pts[%d]s, audioPts[%d]ms, mIdx->dwFlags[%u]",
                 pSeqKeyFrameTableEntry->frameIdx,
                 pSeqKeyFrameTableEntry->frameIdx*FRAME_RATE_BASE/p->aviFormat.vFormat.nFrameRate,
                 pSeqKeyFrameTableEntry->audPtsArray[0], mIdx->dwFlags);
@@ -175,7 +175,7 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
                 pSeqKeyFrameTableEntry++;
                 if(nKeyframeTableSize <= aviIn->indexCountInKeyfrmTbl)
                 {
-                    CDX_LOGV("KeyframeTable full, cnt=%d, indextable_i[%d], indextablecnt[%d]\n",
+                    LOGV("KeyframeTable full, cnt=%d, indextable_i[%d], indextablecnt[%d]",
                         aviIn->indexCountInKeyfrmTbl, i, aviIn->idx1Total);
                     break;
                 }
@@ -184,7 +184,7 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
         }
         else if(mIdx->ckid == CDX_LIST_TYPE_AVI_RECORD)
         {
-            CDX_LOGV("meet [rec ]");
+            LOGV("meet [rec ]");
             nIdx1RecNum++;
         }
         else    //audio chunk
@@ -202,13 +202,13 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
             }
             if(iAud == p->hasAudio && iAud > 0)
             {
-                CDX_LOGV("stream id[%d] is not av, iAud[%d]\n", id, iAud);
+                LOGV("stream id[%d] is not av, iAud[%d]", id, iAud);
             }
         }
         bufIdxItem--;
         mIdx++;
     }
-    CDX_LOGV("KeyframeTable done, keyfrm entry cnt=%d, table_maxcnt=%d,"
+    LOGV("KeyframeTable done, keyfrm entry cnt=%d, table_maxcnt=%d,"
         "total chunk[%d], video chunk[%d], nIdx1RecNum[%d]\n",
         aviIn->indexCountInKeyfrmTbl,  nKeyframeTableSize,
         aviIn->idx1Total - nIdx1RecNum, frameCount, nIdx1RecNum);
@@ -221,7 +221,7 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
     //restore file position
     if(CdxStreamSeek(aviIn->fp, (cdx_int64)curFilePos, STREAM_SEEK_SET) < 0)
     {
-        CDX_LOGE("Seek failed.");
+        LOGE("Seek failed.");
         if(aviIn->idx1Buf)
         {
             free(aviIn->idx1Buf);
@@ -232,7 +232,7 @@ cdx_int16 AviBuildIdxForIdx1SequenceMode(CdxAviParserImplT *p)
 
     if(!aviIn->indexCountInKeyfrmTbl)
     {
-        CDX_LOGE("No key frame in the index table!!!");
+        LOGE("No key frame in the index table!!!");
 
         if(aviIn->idx1Buf)
         {
@@ -278,7 +278,7 @@ cdx_int32 SearchAudioChunkIndxEntryOdmlSequence(ODML_SUPERINDEX_READER *pAudSupe
     //audio chunk offset video chunk audio chunk
     if(iAud >= MAX_AUDIO_STREAM)
     {
-        CDX_LOGV("fatal error!iAud[%d]>= MAX_AUDIO_STREAM[%d]\n", iAud, MAX_AUDIO_STREAM);
+        LOGV("fatal error!iAud[%d]>= MAX_AUDIO_STREAM[%d]", iAud, MAX_AUDIO_STREAM);
         return -1;
     }
     if(pAudSuperReader->chunkOffset > pSeqEntry->vidChunkOffset
@@ -300,7 +300,7 @@ cdx_int32 SearchAudioChunkIndxEntryOdmlSequence(ODML_SUPERINDEX_READER *pAudSupe
             {
                 if(chunkPos.ckOffset == pSeqEntry->vidChunkOffset)
                 {
-                    CDX_LOGV("file fatal error! audio chunk video chunk pos is same!\n");
+                    LOGV("file fatal error! audio chunk video chunk pos is same!");
                 }
                 audPts = (cdx_uint32)CalcAviAudioChunkPts(pAudStrmInfo,
                                     pAudSuperReader->totalChunkSize - pAudSuperReader->chunkSize,
@@ -313,7 +313,7 @@ cdx_int32 SearchAudioChunkIndxEntryOdmlSequence(ODML_SUPERINDEX_READER *pAudSupe
         { //use last valid value to fill pidx_item.
             if(AVI_ERR_SEARCH_INDEX_CHUNK_END == srchRet)
             {
-                CDX_LOGV("search aud chunk over!\n");
+                LOGV("search aud chunk over!");
             }
             audPts = (cdx_uint32)CalcAviAudioChunkPts(pAudStrmInfo,
                                     pAudSuperReader->totalChunkSize - pAudSuperReader->chunkSize,
@@ -361,7 +361,7 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
 
     if(!p)
     {
-        CDX_LOGE("Check para.");
+        LOGE("Check para.");
         return AVI_ERR_PARA_ERR;
     }
     //calculate audio bitstream time offset
@@ -370,18 +370,18 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
     //avi_in = (AVI_FILE_IN *)p;
     if(!aviIn)
     {
-        CDX_LOGE("Check privData.");
+        LOGE("Check privData.");
         return AVI_ERR_PARA_ERR;
     }
     if(USE_INDX != aviIn->idxStyle)
     {
-        CDX_LOGE("avi_in->idx_style != USE_INDX, fatal error!\n");
+        LOGE("avi_in->idx_style != USE_INDX, fatal error!");
         return AVI_ERR_PARA_ERR;
     }
     //check if the index table is exist in media file idx1 indx
     if((!p->hasVideo) || (!aviIn->sInfo[p->videoStreamIndex]->isODML))
     {
-        CDX_LOGE("No valid index table in the media file!");
+        LOGE("No valid index table in the media file!");
         return AVI_ERR_NO_INDEX_TABLE;
     }
 
@@ -390,7 +390,7 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
         aviIn->idx1Buf = (cdx_uint32 *)malloc(MAX_IDX_BUF_SIZE);
         if(!aviIn->idx1Buf)
         {
-            CDX_LOGE("Request buffer for build index failed.");
+            LOGE("Request buffer for build index failed.");
             return AVI_ERR_REQMEM_FAIL;
         }
     }
@@ -407,7 +407,7 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
     if(ret != AVI_SUCCESS)
     {
         ret = AVI_ERR_NO_INDEX_TABLE;
-        CDX_LOGE("initial psr indx failed.");
+        LOGE("initial psr indx failed.");
         goto _err0;
     }
     for(i =0; i<aviIn->vidIndxReader.indxTblEntryCnt; i++)
@@ -421,7 +421,7 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
         //chunk_body_size = 0;
         if(p->bAbortFlag)
         {
-            CDX_LOGV("odml seq:detect abort flag,quit now1!");
+            LOGV("odml seq:detect abort flag,quit now1!");
             ret = AVI_ERR_ABORT;
             goto _err0;
         }
@@ -429,14 +429,14 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
         if(AVI_SUCCESS == srchRet)
         {
             nStdindexEntryNum++;
-            //CDX_LOGD("nStdindexEntryNum (%d)", nStdindexEntryNum);
+            //LOGD("nStdindexEntryNum (%d)", nStdindexEntryNum);
             //check if it is a key frame.
             if(1 == chunkPos.isKeyframe)
             {
                 //because chunk_idx has increase 1 in search_next_ODML_index_entry()
-                //CDX_LOGD("nStdindexEntryNum(%d), is keyframe.", nStdindexEntryNum);
+                //LOGD("nStdindexEntryNum(%d), is keyframe.", nStdindexEntryNum);
                 pSeqKeyFrameTableEntry->frameIdx = aviIn->vidIndxReader.chunkCounter - 1;
-                //CDX_LOGD("xxxxxxxxx keyframe idx(%d)", pSeqKeyFrameTableEntry->frameIdx);
+                //LOGD("xxxxxxxxx keyframe idx(%d)", pSeqKeyFrameTableEntry->frameIdx);
                 pSeqKeyFrameTableEntry->vidChunkOffset = chunkPos.ckOffset;
                 vframePts = (cdx_uint32)((cdx_int64)pSeqKeyFrameTableEntry->frameIdx *
                     p->aviFormat.nMicSecPerFrame / 1000);
@@ -448,7 +448,7 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
                 aviIn->indexCountInKeyfrmTbl++;
                 if(aviIn->indexCountInKeyfrmTbl >= nKeyframeTableSize)
                 {
-                    CDX_LOGW("FFRRKeyframe Table full,[%d] == [%d], cur_std_indx[%d],"
+                    LOGW("FFRRKeyframe Table full,[%d] == [%d], cur_std_indx[%d],"
                         " total indx[%d], entry num[%d]\n",
                         aviIn->indexCountInKeyfrmTbl, nKeyframeTableSize,
                         aviIn->vidIndxReader.indxTblEntryIdx,
@@ -459,21 +459,21 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
         }
         else if(AVI_ERR_SEARCH_INDEX_CHUNK_END == srchRet)
         {
-            //CDX_LOGD("AVI_ERR_SEARCH_INDEX_CHUNK_END");
+            //LOGD("AVI_ERR_SEARCH_INDEX_CHUNK_END");
             break;
         }
         else
         {
-            CDX_LOGE("search ODML indx chunk error, [%d]\n", srchRet);
+            LOGE("search ODML indx chunk error, [%d]", srchRet);
             indexChunkOkFlag = 0;
             break;
         }
     }
     DeinitialPsrIndxTableReader(&aviIn->vidIndxReader);
-   // CDX_LOGD("odml seq: ffrrkeyframe entry cnt[%d]\n", aviIn->indexCountInKeyfrmTbl);
+   // LOGD("odml seq: ffrrkeyframe entry cnt[%d]", aviIn->indexCountInKeyfrmTbl);
     if(!aviIn->indexCountInKeyfrmTbl)
     {
-        CDX_LOGE("No key frame in the index table!!!\n");
+        LOGE("No key frame in the index table!!!");
         ret = AVI_ERR_INDEX_HAS_NO_KEYFRAME;
         goto _err0;;
     }
@@ -482,7 +482,7 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
     {
         if(iAud >= MAX_AUDIO_STREAM)
         {
-            CDX_LOGW("iAud[%d] >= MAX_AUDIO_STREAM[%d]\n", iAud, MAX_AUDIO_STREAM);
+            LOGW("iAud[%d] >= MAX_AUDIO_STREAM[%d]", iAud, MAX_AUDIO_STREAM);
             indexChunkOkFlag = 0;
             break;
         }
@@ -499,7 +499,7 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
         {
             nTotalSuperIndexDwDuration += (aviIn->audIndxReader.indxTblEntryArray+i)->dwDuration;
         }
-        CDX_LOGV("audio[stream num %d] super index entry total dwDuration is [%d]\n",
+        LOGV("audio[stream num %d] super index entry total dwDuration is [%d]",
             p->audioStreamIndexArray[iAud], nTotalSuperIndexDwDuration);
         pSeqKeyFrameTableEntry = (OldIdxTableItemT *)aviIn->idx1Buf;
         pAudStrmInfo = &aviIn->audInfoArray[iAud];
@@ -507,7 +507,7 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
         {
             if(p->bAbortFlag)
             {
-                CDX_LOGV("odml seq:detect abort flag,quit now2!\n");
+                LOGV("odml seq:detect abort flag,quit now2!");
                 ret = AVI_ERR_ABORT;
                 goto _err0;
             }
@@ -525,7 +525,7 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
                     indexChunkOkFlag = 0;
                     DeinitialPsrIndxTableReader(&aviIn->audIndxReader);
                     ret = srchRet;
-                    CDX_LOGE("errout...");
+                    LOGE("errout...");
                     goto _err0;
                 }
             }
@@ -548,7 +548,7 @@ cdx_int16 AviBuildIdxForOdmlSequenceMode(CdxAviParserImplT *p)
     if(CdxStreamSeek(aviIn->fp, (cdx_uint32)curFilePos, STREAM_SEEK_SET) < 0)
     {
         ret =  AVI_ERR_READ_FILE_FAIL;
-        CDX_LOGE("seek failed.");
+        LOGE("seek failed.");
         goto _err0;
     }
     return ret;
@@ -602,19 +602,19 @@ cdx_int16 AviGetIndexByMsReadMode0(CdxAviParserImplT *p, cdx_uint32 timeMs,
 
     if(!aviIn)
     {
-        CDX_LOGE("aviIn is NULL.");
+        LOGE("aviIn is NULL.");
         return AVI_ERR_PARA_ERR;
     }
 
     if(!aviIn->idx1Buf)
     {
-        CDX_LOGE("idx1Buf is NULL.");
+        LOGE("idx1Buf is NULL.");
         return AVI_ERR_PARA_ERR;
     }
 
     if(*keyfrmIdx >= (cdx_uint32)aviIn->indexCountInKeyfrmTbl)
     {
-        CDX_LOGV("sth wrong! keyfrmidx_inkeyframetable[%d] >= total[%d]\n", *keyfrmIdx,
+        LOGV("sth wrong! keyfrmidx_inkeyframetable[%d] >= total[%d]", *keyfrmIdx,
             aviIn->indexCountInKeyfrmTbl);
         if(aviIn->indexCountInKeyfrmTbl > 0)
         {
@@ -714,7 +714,7 @@ cdx_int16 AviGetIndexByMsReadMode0(CdxAviParserImplT *p, cdx_uint32 timeMs,
                     *diff = avDiff;
                 }
                 *keyfrmIdx = i;
-                //CDX_LOGD("xxx keyfrmidx =%d", i);
+                //LOGD("xxx keyfrmidx =%d", i);
                 return AVI_SUCCESS;
             }
             pSeqEntry--;
@@ -817,7 +817,7 @@ cdx_int32 ReconfigAviReadContextReadMode0(CdxAviParserImplT *p, cdx_uint32 vidTi
                 (cdx_uint32 *)&aviIn->frameIndex,
                 NULL) < AVI_SUCCESS)
         {
-            CDX_LOGE("AviGetIndexByMsReadMode0 failed.");
+            LOGE("AviGetIndexByMsReadMode0 failed.");
             return AVI_ERR_FAIL;
         }
     }
@@ -834,7 +834,7 @@ cdx_int32 ReconfigAviReadContextReadMode0(CdxAviParserImplT *p, cdx_uint32 vidTi
     //seek file pointer to current key frame
     if(CdxStreamSeek(aviIn->fp, filePst, STREAM_SEEK_SET))
     {
-        CDX_LOGE("file seek error.");
+        LOGE("file seek error.");
         return AVI_ERR_READ_FILE_FAIL;
     }
 
@@ -862,7 +862,7 @@ cdx_int16 AviReaderGetChunkHeader(CdxAviParserImplT *p)
 
     if(!aviFile)
     {
-        CDX_LOGE("aviFile NULL.");
+        LOGE("aviFile NULL.");
         return AVI_ERR_PARA_ERR;
     }
 
@@ -870,7 +870,7 @@ cdx_int16 AviReaderGetChunkHeader(CdxAviParserImplT *p)
     pos = CdxStreamTell(aviFile->fp);
     if(pos >= aviFile->fileSize)
     {
-        CDX_LOGE("End of file.");
+        LOGE("End of file.");
         return AVI_ERR_END_OF_MOVI;
     }
 
@@ -878,7 +878,7 @@ check_next_chunk_head:
     // read a data chunk
     if(GetNextChunkHead(aviFile->fp, &aviFile->dataChunk, &length) < 0)
     {
-        CDX_LOGE("GetNextChunkHead failed.");
+        LOGE("GetNextChunkHead failed.");
         return AVI_ERR_FILE_FMT_ERR;
     }
 
@@ -888,7 +888,7 @@ check_next_chunk_head:
         //skip list header,  RIFF AVIX LIST movi LIST rec chunk......  moe_more.avi
         if(CdxStreamSeek(aviFile->fp, (cdx_int64)length, STREAM_SEEK_CUR))
         {//rec LIST,length,"rec " "rec "
-            CDX_LOGE("seek avi file list header failed!");
+            LOGE("seek avi file list header failed!");
             return AVI_ERR_READ_FILE_FAIL;
         }
         goto check_next_chunk_head;
@@ -898,7 +898,7 @@ check_next_chunk_head:
         //skip JUNK
         if(CdxStreamSeek(aviFile->fp, (cdx_int64)length, STREAM_SEEK_CUR))
         {
-            CDX_LOGE("seek avi file junk failed!");
+            LOGE("seek avi file junk failed!");
             return AVI_ERR_READ_FILE_FAIL;
         }
         goto check_next_chunk_head;
@@ -906,7 +906,7 @@ check_next_chunk_head:
 
     if(chunk->fcc == CDX_CKID_AVI_NEWINDEX && !aviFile->hasIndx)    //AVI1.0 idx1
     {
-        CDX_LOGV("End of file.");
+        LOGV("End of file.");
         return AVI_ERR_END_OF_MOVI;
     }
     else if(aviFile->hasIndx) //AVI2.0
@@ -916,7 +916,7 @@ check_next_chunk_head:
             //skip 'AVIX'
             if(CdxStreamSeek(aviFile->fp, (cdx_int64)length, STREAM_SEEK_CUR) < 0)
             {
-                CDX_LOGE("seek avi file list header failed!");
+                LOGE("seek avi file list header failed!");
                 return AVI_ERR_READ_FILE_FAIL;
             }
             goto check_next_chunk_head;
@@ -926,7 +926,7 @@ check_next_chunk_head:
             //skip 'ix00' or 'ix01' or 'idx1'
             if(CdxStreamSeek(aviFile->fp, (cdx_int64)length, STREAM_SEEK_CUR))
             {
-                CDX_LOGV("seek avi file list header failed!");
+                LOGV("seek avi file list header failed!");
                 return AVI_ERR_READ_FILE_FAIL;
             }
             goto check_next_chunk_head;
@@ -955,7 +955,7 @@ cdx_int16 AviReadSequence(CdxAviParserImplT *p)
 
     if(!p)
     {
-        CDX_LOGE("Check para.");
+        LOGE("Check para.");
         return AVI_ERR_PARA_ERR;
     }
 
@@ -963,14 +963,14 @@ cdx_int16 AviReadSequence(CdxAviParserImplT *p)
 
     if(!aviIn)
     {
-        CDX_LOGE("Check privData.");
+        LOGE("Check privData.");
         return AVI_ERR_PARA_ERR;
     }
 
     ret = AviReaderGetChunkHeader(p);
     if(ret != AVI_SUCCESS)
     {
-        CDX_LOGE("get chunk header fail,ret[%d].", ret);
+        LOGE("get chunk header fail,ret[%d].", ret);
     }
     return ret;
 }

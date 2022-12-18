@@ -47,12 +47,12 @@ static int connect2Server_with_af(aw_mms_inf_t* mmsStreamInf, char *host, int po
     sockServerFd = CdxAsynSocket(AF_INET, &sockRecvLen);
     if(sockServerFd == 1)
     {
-        CDX_LOGW("+++++++ fd(%d), maybe error", sockServerFd);
+        LOGW("+++++++ fd(%d), maybe error", sockServerFd);
     }
     mmsStreamInf->sockFd = sockServerFd;
     if(sockServerFd==-1)
     {
-        CDX_LOGE("io err errno(%d)", errno);
+        LOGE("io err errno(%d)", errno);
         return -1;
     }
 
@@ -69,7 +69,7 @@ static int connect2Server_with_af(aw_mms_inf_t* mmsStreamInf, char *host, int po
             break;
 
         default:
-            CDX_LOGE("unexpect af...");
+            LOGE("unexpect af...");
             return -1;
     }
     memset(&serverAddr, 0, sizeof(serverAddr));
@@ -83,7 +83,7 @@ static int connect2Server_with_af(aw_mms_inf_t* mmsStreamInf, char *host, int po
         {
             if(verb)
             {
-                CDX_LOGE("io err errno(%d)", errno);
+                LOGE("io err errno(%d)", errno);
                 return -1;
             }
         }
@@ -99,7 +99,7 @@ static int connect2Server_with_af(aw_mms_inf_t* mmsStreamInf, char *host, int po
             break;
 
         default:
-            CDX_LOGE("unexpect af...");
+            LOGE("unexpect af...");
             return -1;
     }
 
@@ -109,11 +109,11 @@ static int connect2Server_with_af(aw_mms_inf_t* mmsStreamInf, char *host, int po
     if(connect(sockServerFd, (struct sockaddr*)&serverAddr, server_address_size)==-1 )
     {
 
-        CDX_LOGV("connect, errno(%d)", errno);
+        LOGV("connect, errno(%d)", errno);
         if(errno != EINPROGRESS )
         {
             closesocket(sockServerFd);
-            CDX_LOGE("io err errno(%d)", errno);
+            LOGE("io err errno(%d)", errno);
             return -1;
         }
     }
@@ -129,16 +129,16 @@ static int connect2Server_with_af(aw_mms_inf_t* mmsStreamInf, char *host, int po
         {
             return -1;
         }
-        CDX_LOGV(" select 0");
+        LOGV(" select 0");
         if(count > 30 )
         {
             if(count > 30)
             {
-                CDX_LOGE("*****************ConnTimeout");
+                LOGE("*****************ConnTimeout");
             }
             else
             {
-                CDX_LOGE("***************Connection interrupted by user");
+                LOGE("***************Connection interrupted by user");
             }
             return -1;
         }
@@ -151,20 +151,20 @@ static int connect2Server_with_af(aw_mms_inf_t* mmsStreamInf, char *host, int po
     }
 
     if(ret < 0)
-        CDX_LOGE(" select error\n");
+        LOGE(" select error");
 
     // Check if there were any errors
     err_len = sizeof(int);
     ret = getsockopt(sockServerFd,SOL_SOCKET,SO_ERROR,&err,&err_len);
     if(ret < 0)
     {
-        CDX_LOGE("io err errno(%d)", errno);
+        LOGE("io err errno(%d)", errno);
         return -1;
     }
 
     if(err > 0)
     {
-        CDX_LOGE("io err errno(%d)", errno);
+        LOGE("io err errno(%d)", errno);
         return -1;
     }
 

@@ -13,7 +13,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "pcmBufferManager"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <memory.h>
 #include <cdx_list.h>
@@ -68,7 +68,7 @@ static void pcmBufMgrReleaseFrame(PcmBufferManager *pMgr, AUDIO_FRAME_S *pFrame)
         list_add_tail(&pEntry->mList, &pMgr->mFreeFrmList);
         pthread_mutex_unlock(&pMgr->mFreeFrmListLock);
     } else {
-        aloge("Unknown audio frame!");
+        LOGE("Unknown audio frame!");
     }
 }
 
@@ -91,17 +91,17 @@ static AUDIO_FRAME_S* pcmBufMgrGetFreeFrame(PcmBufferManager *pMgr)
                     pNode->mFrame.mId = pMgr->mFrameNodeNum;
                     list_add_tail(&pNode->mList, &pMgr->mFreeFrmList);
                     pMgr->mFrameNodeNum++;
-                    alogd("Be careful! add one pcm node, curNum[%d]!", pMgr->mFrameNodeNum);
+                    LOGD("Be careful! add one pcm node, curNum[%d]!", pMgr->mFrameNodeNum);
                 }
                 else
                 {
-                    aloge("fatal error! Alloc mpAddr size %d error!", pMgr->mFrameSize);
+                    LOGE("fatal error! Alloc mpAddr size %d error!", pMgr->mFrameSize);
                     free(pNode);
                 }
             }
             else
             {
-                aloge("fatal error! Alloc AudioFrameInfo error!");
+                LOGE("fatal error! Alloc AudioFrameInfo error!");
             }
         }
     }
@@ -143,7 +143,7 @@ static void pcmBufMgrPushFrame(PcmBufferManager *pMgr, AUDIO_FRAME_S *pFrame)
         list_add_tail(&pEntry->mList, &pMgr->mValidFrmList);
         pthread_mutex_unlock(&pMgr->mValidFrmListLock);
     } else {
-        aloge("Unknown audio frame!");
+        LOGE("Unknown audio frame!");
     }
 }
 
@@ -213,7 +213,7 @@ PcmBufferManager *pcmBufMgrCreate(int frmNum, int frmSize)
 {
     PcmBufferManager *pMgr = (PcmBufferManager*)malloc(sizeof(PcmBufferManager));
     if (pMgr == NULL) {
-        aloge("Alloc PcmBufferManager error!");
+        LOGE("Alloc PcmBufferManager error!");
         return NULL;
     }
     memset(pMgr, 0, sizeof(PcmBufferManager));
@@ -231,13 +231,13 @@ PcmBufferManager *pcmBufMgrCreate(int frmNum, int frmSize)
     for (i = 0; i < frmNum; ++i) {
         AudioFrameInfo *pNode = (AudioFrameInfo*)malloc(sizeof(AudioFrameInfo));
         if (pNode == NULL) {
-            aloge("Alloc AudioFrameInfo error!");
+            LOGE("Alloc AudioFrameInfo error!");
             break;
         }
         memset(pNode, 0, sizeof(AudioFrameInfo));
         pNode->mFrame.mpAddr = malloc(frmSize);
         if (pNode->mFrame.mpAddr == NULL) {
-            aloge("Alloc mpAddr size %d error!", frmSize);
+            LOGE("Alloc mpAddr size %d error!", frmSize);
             free(pNode);
             break;
         }
@@ -266,19 +266,19 @@ void pcmBufMgrDestroy(PcmBufferManager *pMgr)
     int frmnum = 0;
 
     if (pMgr == NULL) {
-        aloge("pMgr==NULL!");
+        LOGE("pMgr==NULL!");
         return;
     }
 
     pthread_mutex_lock(&pMgr->mUsingFrmListLock);
     if (!list_empty(&pMgr->mUsingFrmList)) {
-        aloge("Fatal error! UsingFrmList should be 0! maybe some frames not release!");
+        LOGE("Fatal error! UsingFrmList should be 0! maybe some frames not release!");
     }
     pthread_mutex_unlock(&pMgr->mUsingFrmListLock);
 
     pthread_mutex_lock(&pMgr->mFillingFrmListLock);
     if (!list_empty(&pMgr->mFillingFrmList)) {
-        aloge("Fatal error! FillingFrmLis should be 0! maybe some frames not release!");
+        LOGE("Fatal error! FillingFrmLis should be 0! maybe some frames not release!");
     }
     pthread_mutex_unlock(&pMgr->mFillingFrmListLock);
 
@@ -307,7 +307,7 @@ void pcmBufMgrDestroy(PcmBufferManager *pMgr)
     pthread_mutex_unlock(&pMgr->mFreeFrmListLock);
 
     if (frmnum != pMgr->mFrameNodeNum) {
-        aloge("Fatal error! frame node number is not match[%d][%d]", frmnum, pMgr->mFrameNodeNum);
+        LOGE("Fatal error! frame node number is not match[%d][%d]", frmnum, pMgr->mFrameNodeNum);
     }
 
     pthread_mutex_destroy(&pMgr->mFreeFrmListLock);

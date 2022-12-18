@@ -30,7 +30,7 @@
 #include "memcheck.h"
 #endif
 
-#include "alib_log.h"
+#include <log/log.h>
 
 #ifdef  LOG_TAG
 #undef  LOG_TAG
@@ -221,7 +221,7 @@ int AdCedarBuildAACPacketHdr(unsigned char* extraData,
             break;
         default:
             {
-                alib_logw("AAC sub type can't support, just think it as LC!");
+                LOGW("AAC sub type can't support, just think it as LC!");
                 tmpProfile = AAC_PROFILE_LC;
                 break;
             }
@@ -251,7 +251,7 @@ int AdCedarBuildAACPacketHdr(unsigned char* extraData,
     }
     else
     {
-        alib_logw("!!!please implement it!");
+        LOGW("!!!please implement it!");
         tmpProfile = 1;
         tmpChnCfg = channels & 7;
         for(tmpSampRateIdx=0; tmpSampRateIdx<AAC_SAMPLE_RATE_IDX_SIZE; tmpSampRateIdx++)
@@ -681,12 +681,12 @@ int SetAudioBsHeader_PCM(AudioStreamInfo  *tmpAbsFmt, Ac320FileRead   *FileReadI
         FileReadInfo->FileWritingOpsition += sizeof(__wave_header_adpcm_t);
     }
 #if 1
-    alib_logv("****************PCM HEAD START***************");
-    alib_logv("eSubCodecFormat =%d",tmpAbsFmt->eSubCodecFormat);   
-    alib_logv("nBitsPerSample =%d",tmpAbsFmt->nBitsPerSample);
-    alib_logv("nChannelNum =%d",tmpAbsFmt->nChannelNum);
-    alib_logv("nSampleRate =%d",tmpAbsFmt->nSampleRate);    
-    alib_logv("****************PCM HEAD END***************");
+    LOGV("****************PCM HEAD START***************");
+    LOGV("eSubCodecFormat =%d",tmpAbsFmt->eSubCodecFormat);   
+    LOGV("nBitsPerSample =%d",tmpAbsFmt->nBitsPerSample);
+    LOGV("nChannelNum =%d",tmpAbsFmt->nChannelNum);
+    LOGV("nSampleRate =%d",tmpAbsFmt->nSampleRate);    
+    LOGV("****************PCM HEAD END***************");
 #endif
     return 0;
 }

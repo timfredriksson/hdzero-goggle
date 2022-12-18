@@ -15,7 +15,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include "log.h"
+#include <log/log.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +28,8 @@ extern "C" {
 #include "memoryAdapter.h"
 #include "CdcUtil.h"
 #include "cdc_version.h"
+#include "CdxTypes.h"
+
 #define FRAME_BUFFER_NUM 4
 
 #define AW_ENCODER_SHOW_SPEED_INFO (0)
@@ -124,7 +126,7 @@ VideoEncoder* VideoEncCreate(VENC_CODEC_TYPE eCodecType)
 
     venc_ctx = (VencContext*)malloc(sizeof(VencContext));
     if(!venc_ctx){
-        loge("malloc VencContext fail!");
+        LOGE("malloc VencContext fail!");
         return NULL;
     }
 
@@ -138,7 +140,7 @@ VideoEncoder* VideoEncCreate(VENC_CODEC_TYPE eCodecType)
     venc_ctx->veOpsS = GetVeOpsS(type);
     if(venc_ctx->veOpsS == NULL)
     {
-        loge("get ve ops failed , type = %d",type);
+        LOGE("get ve ops failed , type = %d",type);
         free(venc_ctx);
         return NULL;
     }
@@ -154,7 +156,7 @@ VideoEncoder* VideoEncCreate(VENC_CODEC_TYPE eCodecType)
     venc_ctx->pVeOpsSelf = CdcVeInit(venc_ctx->veOpsS, &mVeConfig);
     if(venc_ctx->pVeOpsSelf == NULL)
     {
-        loge("init ve ops failed");
+        LOGE("init ve ops failed");
         CdcVeRelease(venc_ctx->veOpsS,venc_ctx->pVeOpsSelf);
         free(venc_ctx);
         return NULL;
@@ -174,7 +176,7 @@ VideoEncoder* VideoEncCreate(VENC_CODEC_TYPE eCodecType)
     venc_ctx->pVEncDevice = VencoderDeviceCreate(eCodecType);
     if(venc_ctx->pVEncDevice == NULL)
     {
-        loge("VencoderDeviceCreate failed\n");
+        LOGE("VencoderDeviceCreate failed");
         free(venc_ctx);
         return NULL;
     }
@@ -182,14 +184,14 @@ VideoEncoder* VideoEncCreate(VENC_CODEC_TYPE eCodecType)
     venc_ctx->memops = MemAdapterGetOpsS();
     if (venc_ctx->memops == NULL)
     {
-        loge("MemAdapterGetOpsS failed\n");
+        LOGE("MemAdapterGetOpsS failed");
         free(venc_ctx);
         return NULL;
     }
 
     if(EncAdapterInitializeMem(venc_ctx->memops) != 0)
       {
-        loge("can not set up memory runtime environment.");
+        LOGE("can not set up memory runtime environment.");
         free(venc_ctx);
         return NULL;
     }
@@ -202,7 +204,7 @@ VideoEncoder* VideoEncCreate(VENC_CODEC_TYPE eCodecType)
                     venc_ctx->pVEncDevice->open(&venc_ctx->baseConfig, venc_ctx->ICVersion);
     if(!venc_ctx->pEncoderHandle)
     {
-        logd("open VEncDevice error\n");
+        LOGD("open VEncDevice error");
         VencoderDeviceDestroy(venc_ctx->pVEncDevice);
         venc_ctx->pVEncDevice = NULL;
         free(venc_ctx);
@@ -247,7 +249,7 @@ int VideoEncInit(VideoEncoder* pEncoder, VencBaseConfig* pConfig)
 
     if(pEncoder == NULL || pConfig == NULL || venc_ctx->bInit)
     {
-        loge("InitVideoEncoder, param is NULL");
+        LOGE("InitVideoEncoder, param is NULL");
         return VENC_RESULT_NULL_PTR;
     }
 
@@ -261,11 +263,11 @@ int VideoEncInit(VideoEncoder* pEncoder, VencBaseConfig* pConfig)
     if(venc_ctx->pFBM == NULL)
     {
 
-        loge("venc_ctx->pFBM == NULL");
+        LOGE("venc_ctx->pFBM == NULL");
         return VENC_RESULT_NO_MEMORY;
     }
 
-    //logd("(f:%s, l:%d)", __FUNCTION__, __LINE__);
+    //LOGD("(f:%s, l:%d)", __FUNCTION__, __LINE__);
 
     if(venc_ctx->ICVersion == 0x1639)
     {
@@ -276,11 +278,11 @@ int VideoEncInit(VideoEncoder* pEncoder, VencBaseConfig* pConfig)
         else
         {
             CdcVeInitEncoderPerformance(pConfig->veOpsS, pConfig->pVeOpsSelf, 0);
-            logd("VeInitEncoderPerformance");
+            LOGD("VeInitEncoderPerformance");
         }
     }
 
-    //logd("(f:%s, l:%d)", __FUNCTION__, __LINE__);
+    //LOGD("(f:%s, l:%d)", __FUNCTION__, __LINE__);
 
     memcpy(&venc_ctx->baseConfig, pConfig, sizeof(VencBaseConfig));
 
@@ -294,7 +296,7 @@ int VideoEncInit(VideoEncoder* pEncoder, VencBaseConfig* pConfig)
     }
     else
     {
-        loge("venc_init_fail");
+        LOGE("venc_init_fail");
     }
 
     return result;
@@ -306,7 +308,7 @@ int VideoEncUnInit(VideoEncoder* pEncoder)
 
     if(!venc_ctx->bInit)
     {
-        logw("the VideoEnc is not init currently\n");
+        LOGW("the VideoEnc is not init currently");
         return -1;
     }
 
@@ -324,7 +326,7 @@ int VideoEncUnInit(VideoEncoder* pEncoder)
         {
             CdcVeUnInitEncoderPerformance(venc_ctx->baseConfig.veOpsS,
                                           venc_ctx->baseConfig.pVeOpsSelf, 0);
-            logd("VeUninitEncoderPerformance");
+            LOGD("VeUninitEncoderPerformance");
         }
     }
 
@@ -344,21 +346,21 @@ int AllocInputBuffer(VideoEncoder* pEncoder, VencAllocateBufferParam *pBufferPar
 
     if(pEncoder == NULL || pBufferParam == NULL)
     {
-        loge("InitVideoEncoder, param is NULL");
+        LOGE("InitVideoEncoder, param is NULL");
         return VENC_RESULT_NULL_PTR;
     }
 
     if(venc_ctx->pFBM == NULL)
     {
 
-        loge("venc_ctx->pFBM == NULL, must call InitVideoEncoder firstly");
+        LOGE("venc_ctx->pFBM == NULL, must call InitVideoEncoder firstly");
         return VENC_RESULT_NO_RESOURCE;
     }
 
     if(AllocateInputBuffer(venc_ctx->pFBM, pBufferParam)!=0)
     {
 
-        loge("allocat inputbuffer failed");
+        LOGE("allocat inputbuffer failed");
         return VENC_RESULT_NO_MEMORY;
     }
 
@@ -372,13 +374,13 @@ int GetOneAllocInputBuffer(VideoEncoder* pEncoder, VencInputBuffer* pInputbuffer
 
     if(pEncoder == NULL)
     {
-        loge("pEncoder == NULL");
+        LOGE("pEncoder == NULL");
         return VENC_RESULT_NULL_PTR;
     }
 
     result = GetOneAllocateInputBuffer(venc_ctx->pFBM, pInputbuffer);
     if(result != 0)
-        loge("get one allocate inputbuffer failed");
+        LOGE("get one allocate inputbuffer failed");
 
     return result;
 }
@@ -389,7 +391,7 @@ int FlushCacheAllocInputBuffer(VideoEncoder* pEncoder,  VencInputBuffer *pInputb
 
     if(venc_ctx == NULL)
     {
-        loge("pEncoder == NULL");
+        LOGE("pEncoder == NULL");
         return VENC_RESULT_NULL_PTR;
     }
 
@@ -405,13 +407,13 @@ int ReturnOneAllocInputBuffer(VideoEncoder* pEncoder,  VencInputBuffer *pInputbu
 
     if(pEncoder == NULL)
     {
-        loge("pEncoder == NULL");
+        LOGE("pEncoder == NULL");
         return VENC_RESULT_NULL_PTR;
     }
 
     result = ReturnOneAllocateInputBuffer(venc_ctx->pFBM, pInputbuffer);
     if(result != 0)
-        loge("ReturnOneAllocInputBuffer failed");
+        LOGE("ReturnOneAllocInputBuffer failed");
 
     return result;
 }
@@ -422,7 +424,7 @@ int ReleaseAllocInputBuffer(VideoEncoder* pEncoder)
 
     if(pEncoder == NULL)
     {
-        loge("ReleaseAllocInputBuffer, pEncoder is NULL");
+        LOGE("ReleaseAllocInputBuffer, pEncoder is NULL");
         return -1;
     }
     return 0;
@@ -435,7 +437,7 @@ int AddOneInputBuffer(VideoEncoder* pEncoder, VencInputBuffer* pBuffer)
 
     if(venc_ctx == NULL || pBuffer == NULL)
     {
-        loge("AddInputBuffer, param is NULL");
+        LOGE("AddInputBuffer, param is NULL");
         return -1;
     }
 
@@ -467,7 +469,7 @@ static int updateSpeedInfo(VencContext* venc_ctx)
     {
         int64_t nHardwareSpeed = pSpeedCtx->nPeriodCostTotalTime/pSpeedCtx->nPeriodFrameNum;
         int64_t nRealSpeed = nPeriodTime/pSpeedCtx->nPeriodFrameNum;
-        logd(" hardware_speed = %0.2f fps, real_speed = %0.2f fps, maxTime = %0.2f ms, minTime = %0.2f ms",
+        LOGD(" hardware_speed = %0.2f fps, real_speed = %0.2f fps, maxTime = %0.2f ms, minTime = %0.2f ms",
             (float)1000*1000/nHardwareSpeed, (float)1000*1000/nRealSpeed,
             (float)pSpeedCtx->nPeriodMaxTime/1000,
             (float)pSpeedCtx->nPeriodMinTime/1000);
@@ -534,7 +536,7 @@ int AlreadyUsedInputBuffer(VideoEncoder* pEncoder, VencInputBuffer* pBuffer)
 
     if(venc_ctx == NULL || pBuffer == NULL)
     {
-        loge("AddInputBuffer, param is NULL");
+        LOGE("AddInputBuffer, param is NULL");
         return -1;
     }
 
@@ -649,7 +651,7 @@ int VideoEncoderSetFreq(VideoEncoder* pEncoder, int nVeFreq)
     int ret;
     ret = CdcVeSetSpeed(venc_ctx->veOpsS, venc_ctx->pVeOpsSelf, nVeFreq);
     if(ret < 0)
-        loge("VideoEncoderSetFreq %d error, ret is %d\n", nVeFreq, ret);
+        LOGE("VideoEncoderSetFreq %d error, ret is %d", nVeFreq, ret);
 
     return ret;
 }
@@ -683,7 +685,7 @@ int AWJpecEnc(JpegEncInfo* pJpegInfo, EXIFInfo* pExifInfo, void* pOutBuffer, int
     memory_type = CdcIonGetMemType();
     memset(&inputBuffer, 0, sizeof(VencInputBuffer));
 
-    logd("memory_type[%d](0:normal, 1:iommu), pAddrPhyY[%p], pAddrPhyC[%p],\
+    LOGD("memory_type[%d](0:normal, 1:iommu), pAddrPhyY[%p], pAddrPhyC[%p],\
     quality[%d], nShareBufFd[%d], cropFlag[%d]\n",
                                                         memory_type,
                                                         pJpegInfo->pAddrPhyY,
@@ -691,14 +693,14 @@ int AWJpecEnc(JpegEncInfo* pJpegInfo, EXIFInfo* pExifInfo, void* pOutBuffer, int
                                                         pJpegInfo->quality,
                                                         pJpegInfo->nShareBufFd,
                                                         pJpegInfo->bEnableCorp);
-    logd("input_size[%dx%d], output_size[%dx%d], stride[%d], color_format[%d]\n",
+    LOGD("input_size[%dx%d], output_size[%dx%d], stride[%d], color_format[%d]",
                                                         pJpegInfo->sBaseInfo.nInputWidth,
                                                         pJpegInfo->sBaseInfo.nInputHeight,
                                                         pJpegInfo->sBaseInfo.nDstWidth,
                                                         pJpegInfo->sBaseInfo.nDstHeight,
                                                         pJpegInfo->sBaseInfo.nStride,
                                                         pJpegInfo->sBaseInfo.eInputFormat);
-    logd("thumb_size[%dx%d]\n",
+    LOGD("thumb_size[%dx%d]",
                                                         pExifInfo->ThumbWidth,
                                                         pExifInfo->ThumbHeight);
 
@@ -737,7 +739,7 @@ int AWJpecEnc(JpegEncInfo* pJpegInfo, EXIFInfo* pExifInfo, void* pOutBuffer, int
         ion_fd = CdcIonOpen();
         if (ion_fd < 0)
         {
-            loge("open ion fd failed \n");
+            LOGE("open ion fd failed ");
             result = -1;
             goto ERROR;
         }
@@ -746,7 +748,7 @@ int AWJpecEnc(JpegEncInfo* pJpegInfo, EXIFInfo* pExifInfo, void* pOutBuffer, int
         result = CdcIonImport(ion_fd, pJpegInfo->nShareBufFd, &handle_ion);
         if (result < 0)
         {
-            loge("CdcIonImport get handle failed\n");
+            LOGE("CdcIonImport get handle failed");
             result = -1;
             goto ERROR;
         }
@@ -755,7 +757,7 @@ int AWJpecEnc(JpegEncInfo* pJpegInfo, EXIFInfo* pExifInfo, void* pOutBuffer, int
         nBufFd = CdcIonGetFd(ion_fd, (uintptr_t)handle_ion);
         if (nBufFd < 0)
         {
-            loge("CdcIonGetFd get fd failed\n");
+            LOGE("CdcIonGetFd get fd failed");
             result = -1;
             goto ERROR;
         }
@@ -787,7 +789,7 @@ int AWJpecEnc(JpegEncInfo* pJpegInfo, EXIFInfo* pExifInfo, void* pOutBuffer, int
     AddOneInputBuffer(pVideoEnc, &inputBuffer);
     if(VideoEncodeOneFrame(pVideoEnc)!= 0)
     {
-        loge("jpeg encoder error");
+        LOGE("jpeg encoder error");
     }
 
     //deattach buf fd from ve
@@ -800,7 +802,7 @@ int AWJpecEnc(JpegEncInfo* pJpegInfo, EXIFInfo* pExifInfo, void* pOutBuffer, int
         result = CdcIonClose(nBufFd);
         if(result < 0)
         {
-            loge("CdcIonClose close buf fd error\n");
+            LOGE("CdcIonClose close buf fd error");
             result = -1;
             goto ERROR;
         }
@@ -812,7 +814,7 @@ int AWJpecEnc(JpegEncInfo* pJpegInfo, EXIFInfo* pExifInfo, void* pOutBuffer, int
         result = CdcIonFree(ion_fd, handle_ion);
         if(result < 0)
         {
-            loge("CdcIonFree free ion_handle error\n");
+            LOGE("CdcIonFree free ion_handle error");
             goto ERROR;
         }
     }
@@ -822,7 +824,7 @@ int AWJpecEnc(JpegEncInfo* pJpegInfo, EXIFInfo* pExifInfo, void* pOutBuffer, int
         result = CdcIonClose(ion_fd);
         if(result < 0)
         {
-            loge("CdcIonClose ion fd error\n");
+            LOGE("CdcIonClose ion fd error");
             goto ERROR;
         }
         ion_fd = -1;

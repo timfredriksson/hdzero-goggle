@@ -15,7 +15,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include <log.h>
+#include <log/log.h>
 #include <stdlib.h>
 #include <string.h>
 #include "EncAdapter.h"
@@ -56,13 +56,13 @@ BitStreamManager* BitStreamCreate(unsigned char bIsVbvNoCache, int nBufferSize, 
 
     if (buffer == NULL)
     {
-        loge("pSbmBuf == NULL.");
+        LOGE("pSbmBuf == NULL.");
         return NULL;
     }
 
     if(nBufferSize != nMaxBufferSize)
     {
-        logw("just can palloc partial buffer for vbv: %d < %d",nBufferSize, nMaxBufferSize);
+        LOGW("just can palloc partial buffer for vbv: %d < %d",nBufferSize, nMaxBufferSize);
     }
 
     EncAdapterMemFlushCache(buffer, nBufferSize);
@@ -70,7 +70,7 @@ BitStreamManager* BitStreamCreate(unsigned char bIsVbvNoCache, int nBufferSize, 
     handle = (BitStreamManager *)malloc(sizeof(BitStreamManager));
     if (handle == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         EncAdapterMemPfree(buffer);
         return NULL;
     }
@@ -82,7 +82,7 @@ BitStreamManager* BitStreamCreate(unsigned char bIsVbvNoCache, int nBufferSize, 
 
     if (handle->nBSListQ.pStreamInfos == NULL)
     {
-        loge("context->nBSListQ.pStreamInfo == NULL.");
+        LOGE("context->nBSListQ.pStreamInfo == NULL.");
         free(handle);
         EncAdapterMemPfree(buffer);
         return NULL;
@@ -118,7 +118,7 @@ BitStreamManager* BitStreamCreate(unsigned char bIsVbvNoCache, int nBufferSize, 
     handle->nBSListQ.nReadPos         = 0;
     handle->nBSListQ.nWritePos        = 0;
 
-    logd("BitStreamCreate OK");
+    LOGD("BitStreamCreate OK");
     return handle;
 }
 
@@ -152,7 +152,7 @@ void* BitStreamBaseAddress(BitStreamManager* handle)
 {
     if (handle == NULL)
     {
-        loge("BitStreamManager == NULL.");
+        LOGE("BitStreamManager == NULL.");
         return NULL;
     }
 
@@ -163,7 +163,7 @@ void* BitStreamBasePhyAddress(BitStreamManager* handle)
 {
     if (handle == NULL)
     {
-        loge("BitStreamManager == NULL.");
+        LOGE("BitStreamManager == NULL.");
         return NULL;
     }
 
@@ -174,7 +174,7 @@ void* BitStreamEndPhyAddress(BitStreamManager* handle)
 {
     if (handle == NULL)
     {
-        loge("BitStreamManager == NULL.");
+        LOGE("BitStreamManager == NULL.");
         return NULL;
     }
 
@@ -185,7 +185,7 @@ int BitStreamBufferSize(BitStreamManager* handle)
 {
     if (handle == NULL)
     {
-        loge("BitStreamManager == NULL.");
+        LOGE("BitStreamManager == NULL.");
         return 0;
     }
 
@@ -196,7 +196,7 @@ int BitStreamFreeBufferSize(BitStreamManager* handle)
 {
     if (handle == NULL)
     {
-        loge("BitStreamManager == NULL.");
+        LOGE("BitStreamManager == NULL.");
         return 0;
     }
 
@@ -207,7 +207,7 @@ int BitStreamFrameNum(BitStreamManager* handle)
 {
     if (handle == NULL)
     {
-        loge("BitStreamManager == NULL.");
+        LOGE("BitStreamManager == NULL.");
         return -1;
     }
 
@@ -218,7 +218,7 @@ int BitStreamWriteOffset(BitStreamManager* handle)
 {
     if (handle == NULL)
     {
-        loge("BitStreamManager == NULL.");
+        LOGE("BitStreamManager == NULL.");
         return -1;
     }
 
@@ -232,7 +232,7 @@ int BitStreamAddOneBitstream(BitStreamManager* handle, StreamInfo* pStreamInfo)
 
     if (handle == NULL || pStreamInfo == NULL)
     {
-        loge("param error.");
+        LOGE("param error.");
         return -1;
     }
 
@@ -243,14 +243,14 @@ int BitStreamAddOneBitstream(BitStreamManager* handle, StreamInfo* pStreamInfo)
 
     if (handle->nBSListQ.nValidFrameNum >= handle->nBSListQ.nMaxFrameNum)
     {
-        loge("nValidFrameNum > nMaxFrameNum.");
+        LOGE("nValidFrameNum > nMaxFrameNum.");
         pthread_mutex_unlock(&handle->mutex);
         return -1;
     }
 
     if (pStreamInfo->nStreamLength > (handle->nStreamBufferSize - handle->nValidDataSize))
     {
-        loge("pStreamInfo->nStreamLength[%d] > freebuffer[%d]\n",pStreamInfo->nStreamLength,\
+        LOGE("pStreamInfo->nStreamLength[%d] > freebuffer[%d]",pStreamInfo->nStreamLength,\
             handle->nStreamBufferSize - handle->nValidDataSize);
         pthread_mutex_unlock(&handle->mutex);
         return -1;
@@ -281,7 +281,7 @@ int BitStreamAddOneBitstream(BitStreamManager* handle, StreamInfo* pStreamInfo)
         pData[1] = (unsigned char)((nLen>>16)&0x000000FF);
         pData[2] = (unsigned char)((nLen>>8)&0x000000FF);
         pData[3] = (unsigned char)(nLen&0x000000FF);
-        logv("nLen=%d,the_data:%x,%x,%x,%x",nLen,pData[0],pData[1],pData[2],pData[3]);
+        LOGV("nLen=%d,the_data:%x,%x,%x,%x",nLen,pData[0],pData[1],pData[2],pData[3]);
     }
     NewWriteOffset = handle->nWriteOffset + ALIGN_64B(pStreamInfo->nStreamLength);
 
@@ -303,19 +303,19 @@ StreamInfo* BitStreamGetOneBitstream(BitStreamManager* handle)
 
     if (handle == NULL)
     {
-        loge("handle == NULL");
+        LOGE("handle == NULL");
         return NULL;
     }
 
     if (pthread_mutex_lock(&handle->mutex) != 0)
     {
-        loge("pthread_mutex_lock failed.");
+        LOGE("pthread_mutex_lock failed.");
         return NULL;
     }
 
     if (handle->nBSListQ.nUnReadFrameNum == 0)
     {
-        logv("nUnReadFrameNum == 0.");
+        LOGV("nUnReadFrameNum == 0.");
         pthread_mutex_unlock(&handle->mutex);
         return NULL;
     }
@@ -324,7 +324,7 @@ StreamInfo* BitStreamGetOneBitstream(BitStreamManager* handle)
 
     if (pStreamInfo == NULL)
     {
-        loge("request failed.");
+        LOGE("request failed.");
         pthread_mutex_unlock(&handle->mutex);
         return NULL;
     }
@@ -346,19 +346,19 @@ StreamInfo* BitStreamGetOneBitstreamInfo(BitStreamManager* handle)
 
     if (handle == NULL)
     {
-        loge("handle == NULL");
+        LOGE("handle == NULL");
         return NULL;
     }
 
     if (pthread_mutex_lock(&handle->mutex) != 0)
     {
-        loge("pthread_mutex_lock failed.");
+        LOGE("pthread_mutex_lock failed.");
         return NULL;
     }
 
     if (handle->nBSListQ.nUnReadFrameNum == 0)
     {
-        logv("nUnReadFrameNum == 0.");
+        LOGV("nUnReadFrameNum == 0.");
         pthread_mutex_unlock(&handle->mutex);
         return NULL;
     }
@@ -367,12 +367,12 @@ StreamInfo* BitStreamGetOneBitstreamInfo(BitStreamManager* handle)
 
     if (pStreamInfo == NULL)
     {
-        logv("request failed.");
+        LOGV("request failed.");
         pthread_mutex_unlock(&handle->mutex);
         return NULL;
     }
     pthread_mutex_unlock(&handle->mutex);
-    logv("get bitstream info, offset = %d, len = %d",pStreamInfo->nStreamOffset,pStreamInfo->nStreamLength);
+    LOGV("get bitstream info, offset = %d, len = %d",pStreamInfo->nStreamOffset,pStreamInfo->nStreamLength);
 
     return pStreamInfo;
 }
@@ -383,13 +383,13 @@ int BitStreamReturnOneBitstream(BitStreamManager* handle, StreamInfo* pStreamInf
 
     if (handle == NULL)
     {
-        loge("BitStreamManager == NULL.");
+        LOGE("BitStreamManager == NULL.");
         return 0;
     }
 
     if (pStreamInfo->nID < 0 || pStreamInfo->nID > handle->nBSListQ.nMaxFrameNum)
     {
-        loge("pStreamInfo->nID is error");
+        LOGE("pStreamInfo->nID is error");
     }
 
     if (pthread_mutex_lock(&handle->mutex) != 0)
@@ -399,7 +399,7 @@ int BitStreamReturnOneBitstream(BitStreamManager* handle, StreamInfo* pStreamInf
 
     if (handle->nBSListQ.nValidFrameNum == 0)
     {
-        loge("no valid frame.");
+        LOGE("no valid frame.");
         pthread_mutex_unlock(&handle->mutex);
         return -1;
     }
@@ -418,7 +418,7 @@ int BitStreamReset(BitStreamManager* handle, struct ScMemOpsS *memops)
 
     if (handle == NULL)
     {
-        loge("BitStreamManager == NULL.");
+        LOGE("BitStreamManager == NULL.");
         return -1;
     }
 

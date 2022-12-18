@@ -17,7 +17,7 @@
 #include <pthread.h>
 
 #include "sbmInterface.h"
-#include "log.h"
+#include <log/log.h>
 #include "CdcMessageQueue.h"
 
 #ifdef __cplusplus

@@ -1,6 +1,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Mpeg2tstsMuxerDiv"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +41,7 @@ int32_t Mpeg2tsMuxerWriteHeader(void *handle)
     uint32_t nCacheSize = 0;
     if(Mpeg2tsMuxerCtx->mpFsWriter)
     {
-        aloge("fatal error! why Mpeg2tsMuxerCtx->mpFsWriter[%p]!=NULL", Mpeg2tsMuxerCtx->mpFsWriter);
+        LOGE("fatal error! why Mpeg2tsMuxerCtx->mpFsWriter[%p]!=NULL", Mpeg2tsMuxerCtx->mpFsWriter);
         return -1;
     }
     if(Mpeg2tsMuxerCtx->pb_cache)
@@ -57,7 +57,7 @@ int32_t Mpeg2tsMuxerWriteHeader(void *handle)
     		}
     		else
     		{
-                aloge("fatal error! not set cacheMemory but set mode FSWRITEMODE_CACHETHREAD! use FSWRITEMODE_DIRECT.");
+                LOGE("fatal error! not set cacheMemory but set mode FSWRITEMODE_CACHETHREAD! use FSWRITEMODE_DIRECT.");
                 mode = FSWRITEMODE_DIRECT;
     		}
         }
@@ -69,7 +69,7 @@ int32_t Mpeg2tsMuxerWriteHeader(void *handle)
         Mpeg2tsMuxerCtx->mpFsWriter = createFsWriter(mode, Mpeg2tsMuxerCtx->pb_cache, (char*)pCache, nCacheSize, Mpeg2tsMuxerCtx->streams[0]->codec.codec_id);
         if(NULL == Mpeg2tsMuxerCtx->mpFsWriter)
         {
-            aloge("fatal error! create FsWriter() fail!");
+            LOGE("fatal error! create FsWriter() fail!");
             return -1;
         }
     }
@@ -108,7 +108,7 @@ int32_t Mpeg2tsMuxerIoctrl(void *handle, uint32_t uCmd, uint32_t uParam, void *p
 		pMediaInf = (_media_file_inf_t *)pParam2;
 		
 		if (NULL == pMediaInf) {
-			aloge("error in param\n");
+			LOGE("error in param");
 			return -1;
 		}
 		
@@ -162,7 +162,7 @@ int32_t Mpeg2tsMuxerIoctrl(void *handle, uint32_t uCmd, uint32_t uParam, void *p
             Mpeg2tsMuxerCtx->streams[Mpeg2tsMuxerCtx->nb_streams]->codec.codec_type = CODEC_TYPE_AUDIO;         
 			Mpeg2tsMuxerCtx->nb_streams++;
 
-			alogd("pMediaInf->sample_rate: %d\n", pMediaInf->sample_rate);
+			LOGD("pMediaInf->sample_rate: %d", pMediaInf->sample_rate);
 		}
 
         if(0==pMediaInf->text_encode_type && pMediaInf->geo_available)   // gps info enabled
@@ -205,7 +205,7 @@ int32_t Mpeg2tsMuxerIoctrl(void *handle, uint32_t uCmd, uint32_t uParam, void *p
             pcr_st = Mpeg2tsMuxerCtx->streams[0];
             ts_st = pcr_st->priv_data;
             service->pcr_pid = ts_st->pid;
-		    alogv("service->pcr_pid: %x", service->pcr_pid);
+		    LOGV("service->pcr_pid: %x", service->pcr_pid);
         }
 
 		service->pcr_pid = 0x1000; //fix it later
@@ -232,7 +232,7 @@ int32_t Mpeg2tsMuxerIoctrl(void *handle, uint32_t uCmd, uint32_t uParam, void *p
             {
                 if (!pcr_st->codec.frame_size)
                 {
-                    alogd("frame size not set\n");
+                    LOGD("frame size not set");
                     service->pcr_packet_period =
                         pcr_st->codec.sample_rate/(10*512);
                 }
@@ -271,7 +271,7 @@ int32_t Mpeg2tsMuxerIoctrl(void *handle, uint32_t uCmd, uint32_t uParam, void *p
         Mpeg2tsMuxerCtx->pb_cache = create_outstream_handle(&datasourceDesc);
         if(NULL == Mpeg2tsMuxerCtx->pb_cache)
         {
-            aloge("fatal error! create ts outstream fail.");
+            LOGE("fatal error! create ts outstream fail.");
             return -1;
         }
 		
@@ -280,7 +280,7 @@ int32_t Mpeg2tsMuxerIoctrl(void *handle, uint32_t uCmd, uint32_t uParam, void *p
 			sprintf((char*)Mpeg2tsMuxerCtx->filename, "%s%d.ts", TS_FILE_SAVED_PATH, Mpeg2tsMuxerCtx->current_segment);
 //			Mpeg2tsMuxerCtx->pb_cache = fopen(Mpeg2tsMuxerCtx->filename, "wb");
 //			if(Mpeg2tsMuxerCtx->pb_cache == NULL) {
-//				alogd("open Mpeg2tsMuxer file error");
+//				LOGD("open Mpeg2tsMuxer file error");
 //			}
             CedarXDataSourceDesc datasourceDesc;
             memset(&datasourceDesc, 0, sizeof(CedarXDataSourceDesc));
@@ -290,7 +290,7 @@ int32_t Mpeg2tsMuxerIoctrl(void *handle, uint32_t uCmd, uint32_t uParam, void *p
             Mpeg2tsMuxerCtx->pb_cache = create_outstream_handle(&datasourceDesc);
             if(NULL == Mpeg2tsMuxerCtx->pb_cache)
             {
-                aloge("fatal error! create m3u8 outstream fail.");
+                LOGE("fatal error! create m3u8 outstream fail.");
                 return -1;
             }
 		}
@@ -306,38 +306,38 @@ int32_t Mpeg2tsMuxerIoctrl(void *handle, uint32_t uCmd, uint32_t uParam, void *p
         Mpeg2tsMuxerCtx->pb_cache = create_outstream_handle(&datasourceDesc);
         if(NULL == Mpeg2tsMuxerCtx->pb_cache)
         {
-            aloge("fatal error! create ts outstream fail.");
+            LOGE("fatal error! create ts outstream fail.");
             return -1;
         }
         if(Mpeg2tsMuxerCtx->mFallocateLen > 0)
         {
             if(Mpeg2tsMuxerCtx->pb_cache->fallocate(Mpeg2tsMuxerCtx->pb_cache, 0x01, 0, Mpeg2tsMuxerCtx->mFallocateLen) < 0)
             {
-                aloge("fatal error! Failed to fallocate size %d, fd[%d](%s)", Mpeg2tsMuxerCtx->mFallocateLen, Mpeg2tsMuxerCtx->pb_cache->fd_desc.fd, strerror(errno));
+                LOGE("fatal error! Failed to fallocate size %d, fd[%d](%s)", Mpeg2tsMuxerCtx->mFallocateLen, Mpeg2tsMuxerCtx->pb_cache->fd_desc.fd, strerror(errno));
             }
         }
         Mpeg2tsMuxerCtx->output_buffer_mode = OUTPUT_TS_FILE;
         break;
     }
 	case SETOUTURL:
-		aloge("DO not support set URL");
+		LOGE("DO not support set URL");
 		break;
 
 	case REGISTER_WRITE_CALLBACK:
 
-		alogd("m2ts REGISTER_WRITE_CALLBACK");
+		LOGD("m2ts REGISTER_WRITE_CALLBACK");
 		Mpeg2tsMuxerCtx->output_buffer_mode = OUTPUT_CALLBACK_BUFFER;
 		Mpeg2tsMuxerCtx->datasource_desc.source_url = (char*)pParam2;
 		Mpeg2tsMuxerCtx->datasource_desc.source_type = CEDARX_SOURCE_WRITER_CALLBACK;
 		if(Mpeg2tsMuxerCtx->OutStreamHandle == NULL) {
 			Mpeg2tsMuxerCtx->OutStreamHandle = create_outstream_handle(&Mpeg2tsMuxerCtx->datasource_desc);
             if (NULL == Mpeg2tsMuxerCtx->OutStreamHandle) {
-                aloge("fatal error! create callback outstream fail.");
+                LOGE("fatal error! create callback outstream fail.");
                 return -1;
             }
 		}
 		else {
-			aloge("Mpeg2tsMuxerCtx->OutStreamHandle not NULL");
+			LOGE("Mpeg2tsMuxerCtx->OutStreamHandle not NULL");
 		}
 		break;
     case SETCACHEMEM:
@@ -356,7 +356,7 @@ int32_t Mpeg2tsMuxerIoctrl(void *handle, uint32_t uCmd, uint32_t uParam, void *p
             Mpeg2tsMuxerCtx->pb_cache->callback.hComp = callback->hComp;
             Mpeg2tsMuxerCtx->pb_cache->callback.cb = callback->cb;
         } else {
-            alogw("Mp4MuxerCtx->pb_cache not initialize!!");
+            LOGW("Mp4MuxerCtx->pb_cache not initialize!!");
         }
         break;
     }
@@ -387,7 +387,7 @@ void *Mpeg2tsMuxerOpen(int *ret)
     Mpeg2tsMuxerCtx->cache_in_ts_stream = (uint8_t *)malloc(TS_PACKET_SIZE*1024);
 	
     if(!Mpeg2tsMuxerCtx->cache_in_ts_stream) {
-        aloge("malloc the cache_in_ts_stream is error!");
+        LOGE("malloc the cache_in_ts_stream is error!");
 		 *ret = -1;
          goto _err1;
     }
@@ -395,7 +395,7 @@ void *Mpeg2tsMuxerOpen(int *ret)
     ts = (MpegTSWrite *)malloc(sizeof(MpegTSWrite));
     if(!ts) {
        *ret = -1;
-       aloge("fatal error! malloc fail!");
+       LOGE("fatal error! malloc fail!");
        goto _err2;
     }
 
@@ -431,7 +431,7 @@ void *Mpeg2tsMuxerOpen(int *ret)
     ts->services = NULL;
     ts->services = (MpegTSService**)malloc(MAX_SERVERVICES_IN_FILE*sizeof(MpegTSService*));
     if(!ts->services) {
-        aloge("fatal error! malloc fail!");
+        LOGE("fatal error! malloc fail!");
         *ret = -1;
         Mpeg2tsMuxerCtx->priv_data = (void *)ts;
         goto _err3;
@@ -462,7 +462,7 @@ void *Mpeg2tsMuxerOpen(int *ret)
     {
         service = (MpegTSService*)malloc(sizeof(MpegTSService));
         if(!service) {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             *ret = -1;
             goto _err4;
         }
@@ -483,7 +483,7 @@ void *Mpeg2tsMuxerOpen(int *ret)
     {
         st = (AVStream *)malloc(sizeof(AVStream));
         if(!st) {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             *ret = -1;
             goto _err5;
         }
@@ -494,7 +494,7 @@ void *Mpeg2tsMuxerOpen(int *ret)
 		Mpeg2tsMuxerCtx->streams[i]->firstframeflag = 1;
         ts_st = (MpegTSWriteStream *)malloc(sizeof(MpegTSWriteStream));
         if(!ts_st) {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             *ret = -1;
             goto _err5;
         }
@@ -502,7 +502,7 @@ void *Mpeg2tsMuxerOpen(int *ret)
         ts_st->service = ts->services[0];
         ts_st->pid = DEFAULT_START_PID + i;
 
-		alogv("ts_st->pid: %x", ts_st->pid);
+		LOGV("ts_st->pid: %x", ts_st->pid);
         ts_st->payload_pts = -1;
         ts_st->payload_dts = -1;
         ts_st->first_pts_check = 1;

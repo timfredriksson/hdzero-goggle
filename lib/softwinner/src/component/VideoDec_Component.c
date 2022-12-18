@@ -22,7 +22,7 @@ extern "C" {
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "VideoDec_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <errno.h>
 //#include <ion/ion.h>
@@ -119,7 +119,7 @@ static enum EPIXELFORMAT convertPixelFormatCdx2Vdec(int format)
     } else if (format == CDX_PIXEL_FORMAT_AW_NV12) {
         return PIXEL_FORMAT_NV12;
     } else {
-        alogw("fatal error! format=0x%x", format);
+        LOGW("fatal error! format=0x%x", format);
         return PIXEL_FORMAT_YUV_MB32_420;
     }
 }
@@ -142,7 +142,7 @@ ROTATE_E map_cedarv_rotation_to_ROTATE_E(int cedarv_rotation)
             nRotate = ROTATE_270;
             break;
         default:
-            aloge("fatal error! not support other rotation[%d]", cedarv_rotation);
+            LOGE("fatal error! not support other rotation[%d]", cedarv_rotation);
             nRotate = ROTATE_NONE;
             break;
     }
@@ -167,7 +167,7 @@ int map_ROTATE_E_to_cedarv_rotation(ROTATE_E eRotate)
             cedarvRotation = 3;
             break;
         default:
-            aloge("fatal error! unknown rotate[%d]", eRotate);
+            LOGE("fatal error! unknown rotate[%d]", eRotate);
             cedarvRotation = 0;
             break;
     }
@@ -220,22 +220,22 @@ static ERRORTYPE CompFrameInit(VDecCompOutputFrame *pCompFrame, VideoPicture *pP
     ERRORTYPE ret = SUCCESS;
     if(nRotation < 0 || nRotation > 3)
     {
-        aloge("fatal error! wrong rotation[%d].", nRotation);
+        LOGE("fatal error! wrong rotation[%d].", nRotation);
         return ERR_VDEC_ILLEGAL_PARAM;
     }
     if(0 == nRotation)
     {
-        alogw("fatal error! rotation is 0");
+        LOGW("fatal error! rotation is 0");
     }
     if(pCompFrame->mpPicture)
     {
-        aloge("fatal error! mpPicture[%p] is not NULL.", pCompFrame->mpPicture);
+        LOGE("fatal error! mpPicture[%p] is not NULL.", pCompFrame->mpPicture);
         return SUCCESS;
     }
     pCompFrame->mpPicture = (VideoPicture*)calloc(sizeof(VideoPicture), 1);
     if(NULL == pCompFrame->mpPicture)
     {
-        aloge("fatal error! malloc fail!");
+        LOGE("fatal error! malloc fail!");
         return ERR_VDEC_NOMEM;
     }
     *pCompFrame->mpPicture = *pPicture;
@@ -272,7 +272,7 @@ static ERRORTYPE CompFrameInit(VDecCompOutputFrame *pCompFrame, VideoPicture *pP
     }
     else
     {
-        aloge("fatal error! rotation[%d] is not support!", nRotation);
+        LOGE("fatal error! rotation[%d] is not support!", nRotation);
     }
 
     int nYSize = 0;
@@ -286,7 +286,7 @@ static ERRORTYPE CompFrameInit(VDecCompOutputFrame *pCompFrame, VideoPicture *pP
         char *pVirBuf = (char*)ion_allocMem(nYSize + nUSize + nVSize);
         if(NULL == pVirBuf)
         {
-            aloge("fatal error! ion malloc size[%d] fail", nYSize + nUSize + nVSize);
+            LOGE("fatal error! ion malloc size[%d] fail", nYSize + nUSize + nVSize);
             ret = ERR_VDEC_NOMEM;
             goto _err0;
         }
@@ -307,7 +307,7 @@ static ERRORTYPE CompFrameInit(VDecCompOutputFrame *pCompFrame, VideoPicture *pP
         char *pVirBuf = (char*)ion_allocMem(nYSize + nUSize + nVSize);
         if(NULL == pVirBuf)
         {
-            aloge("fatal error! ion malloc size[%d] fail", nYSize + nUSize + nVSize);
+            LOGE("fatal error! ion malloc size[%d] fail", nYSize + nUSize + nVSize);
             ret = ERR_VDEC_NOMEM;
             goto _err0;
         }
@@ -321,11 +321,11 @@ static ERRORTYPE CompFrameInit(VDecCompOutputFrame *pCompFrame, VideoPicture *pP
     }
     else
     {
-        aloge("fatal error! pixelFormat[0x%x] is not support!", pCompFrame->mpPicture->ePixelFormat);
+        LOGE("fatal error! pixelFormat[0x%x] is not support!", pCompFrame->mpPicture->ePixelFormat);
         ret = ERR_VDEC_ILLEGAL_PARAM;
         goto _err0;
     }
-    alogd("comp frame init, rotation[%d], size[%dx%d, %d,%d,%d,%d]", 
+    LOGD("comp frame init, rotation[%d], size[%dx%d, %d,%d,%d,%d]", 
         nRotation, pCompFrame->mpPicture->nWidth, pCompFrame->mpPicture->nHeight, 
         pCompFrame->mpPicture->nTopOffset, pCompFrame->mpPicture->nLeftOffset, 
         pCompFrame->mpPicture->nBottomOffset, pCompFrame->mpPicture->nRightOffset);
@@ -378,7 +378,7 @@ int decideMaxScaleRatio(int maxRatio, VideoStreamInfo *pStreamInfo)
         {
             if (maxRatio > 2) 
             {
-                alogd("limit ScaleDownRatio[%d]->[2] of CodecFormat[0x%x]", maxRatio, pStreamInfo->eCodecFormat);
+                LOGD("limit ScaleDownRatio[%d]->[2] of CodecFormat[0x%x]", maxRatio, pStreamInfo->eCodecFormat);
                 maxRatio = 2;
             }
             break;
@@ -387,27 +387,27 @@ int decideMaxScaleRatio(int maxRatio, VideoStreamInfo *pStreamInfo)
         {
             if (maxRatio > 3) 
             {
-                alogd("limit ScaleDownRatio[%d]->[3] of CodecFormat[0x%x]", maxRatio, pStreamInfo->eCodecFormat);
+                LOGD("limit ScaleDownRatio[%d]->[3] of CodecFormat[0x%x]", maxRatio, pStreamInfo->eCodecFormat);
                 maxRatio = 3;
             }
             break;
         }
         default:
         {
-            aloge("fatal error! unknown CodecFormat[0x%x]", pStreamInfo->eCodecFormat);
+            LOGE("fatal error! unknown CodecFormat[0x%x]", pStreamInfo->eCodecFormat);
             if (maxRatio > 2) 
             {
-                alogd("limit ScaleDownRatio[%d]->[2] of CodecFormat[0x%x]", maxRatio, pStreamInfo->eCodecFormat);
+                LOGD("limit ScaleDownRatio[%d]->[2] of CodecFormat[0x%x]", maxRatio, pStreamInfo->eCodecFormat);
                 maxRatio = 2;
             }
             break;
         }
     }
 #else
-    aloge("fatal error! unknown chip");
+    LOGE("fatal error! unknown chip");
     if (maxRatio > 2) 
     {
-        alogd("limit ScaleDownRatio[%d]->[2] of CodecFormat[0x%x]", maxRatio, pStreamInfo->eCodecFormat);
+        LOGD("limit ScaleDownRatio[%d]->[2] of CodecFormat[0x%x]", maxRatio, pStreamInfo->eCodecFormat);
         maxRatio = 2;
     }
 #endif
@@ -445,13 +445,13 @@ ERRORTYPE VideoDecDecideCompFrameBufferMode(VIDEODECDATATYPE *pVideoDecData)
             pVideoDecData->mG2DHandle = open("/dev/g2d", O_RDWR, 0);
             if (pVideoDecData->mG2DHandle < 0)
             {
-                aloge("fatal error! open /dev/g2d failed");
+                LOGE("fatal error! open /dev/g2d failed");
             }
-            alogv("open /dev/g2d OK");
+            LOGV("open /dev/g2d OK");
         }
         else
         {
-            aloge("fatal error! why g2dDriver[%d] is open?", pVideoDecData->mG2DHandle);
+            LOGE("fatal error! why g2dDriver[%d] is open?", pVideoDecData->mG2DHandle);
         }
         if(pVideoDecData->mG2DHandle >= 0)
         {
@@ -461,7 +461,7 @@ ERRORTYPE VideoDecDecideCompFrameBufferMode(VIDEODECDATATYPE *pVideoDecData)
                 int err = pthread_create(&pVideoDecData->mCompFrameBufferThreadId, NULL, VideoDecCompFrameBufferThread, pVideoDecData);
                 if (err || !pVideoDecData->mCompFrameBufferThreadId)
                 {
-                    aloge("fatal error! create thread fail![%d], threadId[%d]", err, (int)pVideoDecData->mCompFrameBufferThreadId);
+                    LOGE("fatal error! create thread fail![%d], threadId[%d]", err, (int)pVideoDecData->mCompFrameBufferThreadId);
                 }
                 message_t msg;
                 msg.command = SetState;
@@ -476,7 +476,7 @@ ERRORTYPE VideoDecDecideCompFrameBufferMode(VIDEODECDATATYPE *pVideoDecData)
             }
             else
             {
-                aloge("fatal error! comp FBThreadId[%d] is exist!", (int)pVideoDecData->mCompFrameBufferThreadId);
+                LOGE("fatal error! comp FBThreadId[%d] is exist!", (int)pVideoDecData->mCompFrameBufferThreadId);
             }
         }
         else
@@ -493,7 +493,7 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
     VideoDecoder *pCedarV;
 
     if (pVideoDecData->pCedarV) {
-        alogd("VideoDecoder already exist!");
+        LOGD("VideoDecoder already exist!");
         return SUCCESS;
     }
 
@@ -502,13 +502,13 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
     {
         pVideoStreamInfo = (VideoStreamInfo *)pVideoDecData->sInPortExtraDef[VDEC_PORT_SUFFIX_DEMUX].pVendorInfo;
         if (NULL == pVideoStreamInfo) {
-            alogd("video stream info is not got, can't init vdeclib now.");
+            LOGD("video stream info is not got, can't init vdeclib now.");
             return ERR_VDEC_ILLEGAL_PARAM;
         }
     }
     else
     {
-        alogd("JPEG or H264 decoder init begin!");
+        LOGD("JPEG or H264 decoder init begin!");
         pVideoStreamInfo = &tmpStreamInfo;
         memset(pVideoStreamInfo, 0, sizeof(VideoStreamInfo));
         memcpy(pVideoStreamInfo, &pVideoDecData->stVideoStreamInfo, sizeof(VideoStreamInfo));
@@ -516,17 +516,17 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
         pVideoStreamInfo->bIsFramePackage = 1;
     }
 
-    alogd("video_format: %d", pVideoStreamInfo->eCodecFormat);
+    LOGD("video_format: %d", pVideoStreamInfo->eCodecFormat);
     if (!(pVideoStreamInfo->eCodecFormat >= VIDEO_CODEC_FORMAT_MIN &&
           pVideoStreamInfo->eCodecFormat <= VIDEO_CODEC_FORMAT_MAX)) {
-        aloge("!!!!can't find cedar codecs!, eCodecFormat(%d)\n", pVideoStreamInfo->eCodecFormat);
+        LOGE("!!!!can't find cedar codecs!, eCodecFormat(%d)", pVideoStreamInfo->eCodecFormat);
         return -1;
     }
 
     //pCedarV = libcedarv_init(&ret);
     pCedarV = CreateVideoDecoder();
     if (pCedarV == NULL) {
-        aloge("libcedarv_init error!");
+        LOGE("libcedarv_init error!");
         return -1;
     }
 
@@ -536,12 +536,12 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
         int nMaxCapabilityHeight = pVideoDecData->max_resolution & 0xffff;
         if(pVideoDecData->cedarv_max_width > nMaxCapabilityWidth)
         {
-            alogd("Be careful! user setting decode width[%d] > Capability[%d]", pVideoDecData->cedarv_max_width, nMaxCapabilityWidth);
+            LOGD("Be careful! user setting decode width[%d] > Capability[%d]", pVideoDecData->cedarv_max_width, nMaxCapabilityWidth);
             pVideoDecData->cedarv_max_width = nMaxCapabilityWidth;
         }
         if(pVideoDecData->cedarv_max_height > nMaxCapabilityHeight)
         {
-            alogd("Be careful! user setting decode height[%d] > Capability[%d]", pVideoDecData->cedarv_max_height, nMaxCapabilityHeight);
+            LOGD("Be careful! user setting decode height[%d] > Capability[%d]", pVideoDecData->cedarv_max_height, nMaxCapabilityHeight);
             pVideoDecData->cedarv_max_height = nMaxCapabilityHeight;
         }
     }
@@ -578,7 +578,7 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
         pVideoDecData->mVConfig.nHorizonScaleDownRatio = pVideoDecData->mVConfig.nVerticalScaleDownRatio = maxRatio;
         if (pVideoDecData->mVConfig.bScaleDownEn) 
         {
-            alogd("ScaleDownRatio[%dx%d], max_output_resolution[%dx%d], stream_resolution[%dx%d]",
+            LOGD("ScaleDownRatio[%dx%d], max_output_resolution[%dx%d], stream_resolution[%dx%d]",
                   pVideoDecData->mVConfig.nHorizonScaleDownRatio, pVideoDecData->mVConfig.nVerticalScaleDownRatio,
                   pVideoDecData->cedarv_max_width, pVideoDecData->cedarv_max_height, pVideoStreamInfo->nWidth,
                   pVideoStreamInfo->nHeight);
@@ -590,7 +590,7 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
             {
                 pVideoDecData->mVConfig.nHorizonScaleDownRatio = pVideoDecData->mVConfig.nVerticalScaleDownRatio;
             }
-            alogd("final, ScaleDownRatio[%dx%d]", pVideoDecData->mVConfig.nHorizonScaleDownRatio, pVideoDecData->mVConfig.nVerticalScaleDownRatio);
+            LOGD("final, ScaleDownRatio[%dx%d]", pVideoDecData->mVConfig.nHorizonScaleDownRatio, pVideoDecData->mVConfig.nVerticalScaleDownRatio);
         }
     }
 
@@ -605,7 +605,7 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
             || VIDEO_CODEC_FORMAT_MJPEG == pVideoStreamInfo->eCodecFormat
             || VIDEO_CODEC_FORMAT_H264 == pVideoStreamInfo->eCodecFormat)
         {
-            alogd("don't use vdeclib to rotate[%d] for vdecFormat[0x%x], we use g2d!", pVideoDecData->cedarv_rotation, pVideoStreamInfo->eCodecFormat);
+            LOGD("don't use vdeclib to rotate[%d] for vdecFormat[0x%x], we use g2d!", pVideoDecData->cedarv_rotation, pVideoStreamInfo->eCodecFormat);
             pVideoDecData->mVConfig.bRotationEn = 0;
             pVideoDecData->mVConfig.nRotateDegree = 0;
         }
@@ -618,10 +618,10 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
     pVideoDecData->mVConfig.bThumbnailMode = 0;
     if (pVideoDecData->cedarv_output_setting == PIXEL_FORMAT_DEFAULT) {
         pVideoDecData->mVConfig.eOutputPixelFormat = PIXEL_FORMAT_YV12;  //PIXEL_FORMAT_YUV_MB32_420;
-        alogd("vdec output format default to PIXEL_FORMAT_YV12");
+        LOGD("vdec output format default to PIXEL_FORMAT_YV12");
     } else {
         pVideoDecData->mVConfig.eOutputPixelFormat = pVideoDecData->cedarv_output_setting;
-        alogd("vdec output format set to [0x%x]", pVideoDecData->mVConfig.eOutputPixelFormat);
+        LOGD("vdec output format set to [0x%x]", pVideoDecData->mVConfig.eOutputPixelFormat);
     }
     pVideoDecData->mVConfig.bNoBFrames = 0;
     if (pVideoDecData->disable_3d) {
@@ -635,11 +635,11 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
     if(pVideoDecData->config_vbv_size%1024 != 0)
     {
         int alignSize = ALIGN(pVideoDecData->config_vbv_size, 1024);
-        aloge("fatal error! vbvSize[%d] must 1024 align! we will extend it", pVideoDecData->config_vbv_size, alignSize);
+        LOGE("fatal error! vbvSize[%d] must 1024 align! we will extend it", pVideoDecData->config_vbv_size, alignSize);
         pVideoDecData->config_vbv_size = alignSize;
     }
     pVideoDecData->mVConfig.nVbvBufferSize = pVideoDecData->config_vbv_size;
-    alogd("config vbvBufferSize[%d]KB", pVideoDecData->mVConfig.nVbvBufferSize / 1024);
+    LOGD("config vbvBufferSize[%d]KB", pVideoDecData->mVConfig.nVbvBufferSize / 1024);
     pVideoDecData->mVConfig.nAlignStride = 32;
     if (0 == pVideoDecData->nDisplayFrameRequestMode) {
         pVideoDecData->mVConfig.bGpuBufValid = 0;
@@ -698,7 +698,7 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
         }
         else
         {
-            aloge("fatal error, the [%d] decode type do support second output!", pVideoDecData->mChnAttr.mType);
+            LOGE("fatal error, the [%d] decode type do support second output!", pVideoDecData->mChnAttr.mType);
             pVideoDecData->mVConfig.bSecOutputEn = 0;
             pVideoDecData->cedarv_second_output_en = 0;
         }
@@ -706,9 +706,9 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
 
     //ret = pCedarV->open(pCedarV);
     ret = InitializeVideoDecoder(pCedarV, pVideoStreamInfo, &pVideoDecData->mVConfig);
-    alogd("video stream info size[%dx%d]", pVideoStreamInfo->nWidth, pVideoStreamInfo->nHeight);
+    LOGD("video stream info size[%dx%d]", pVideoStreamInfo->nWidth, pVideoStreamInfo->nHeight);
     if (ret < 0) {
-        aloge("CedarV open error! ret=%d", ret);
+        LOGE("CedarV open error! ret=%d", ret);
         return -1;
     }
     pVideoDecData->mbConfigVdecFrameBuffers = FALSE;
@@ -716,10 +716,10 @@ int CedarvCodecInit(VIDEODECDATATYPE *pVideoDecData)
     pVideoDecData->pCedarV = pCedarV;
     if(pVideoDecData->mVEFreq)
     {
-        alogd("vdec init VE freq to [%d]MHz", pVideoDecData->mVEFreq);
+        LOGD("vdec init VE freq to [%d]MHz", pVideoDecData->mVEFreq);
         VideoDecoderSetFreq(pVideoDecData->pCedarV, pVideoDecData->mVEFreq);
     }
-    alogv("pVideoDecData->pCedarV:%p", pVideoDecData->pCedarV);
+    LOGV("pVideoDecData->pCedarV:%p", pVideoDecData->pCedarV);
 
     return 0;
 }
@@ -750,20 +750,20 @@ ERRORTYPE VideoDecTunnel_SendVDecCompOutputFrame(VIDEODECDATATYPE *pVideoDecData
             int commonErrCode = omxRet&0x1FFF;
             if (EN_ERR_INCORRECT_STATE_OPERATION == commonErrCode) 
             {
-                alogd("Be careful! VDec output frame fail[0x%x], maybe next component status is Loaded, return frame!", omxRet);
+                LOGD("Be careful! VDec output frame fail[0x%x], maybe next component status is Loaded, return frame!", omxRet);
             }
             else if(EN_ERR_SYS_NOTREADY == commonErrCode)
             {
-                alogv("frame is ignored.");
+                LOGV("frame is ignored.");
             }
             else
             {
-                aloge("fatal error! errCode[0x%x]", omxRet);
+                LOGE("fatal error! errCode[0x%x]", omxRet);
             }
             releaseRet = ReturnPicture(pVideoDecData->pCedarV, (VideoPicture *)pOutFrame->mpPicture);
             if (releaseRet != 0) 
             {
-                aloge("fatal error! Return Picture() fail ret[%d]", releaseRet);
+                LOGE("fatal error! Return Picture() fail ret[%d]", releaseRet);
             }
             pthread_mutex_lock(&pVideoDecData->mOutFrameListMutex);
             list_add(&pOutFrame->mList, &pVideoDecData->mIdleOutFrameList);
@@ -806,20 +806,20 @@ ERRORTYPE VideoDecReturnVDecCompOutputFrameToIdleList(VIDEODECDATATYPE *pVideoDe
             }
             else
             {
-                aloge("fatal error! find frameId[0x%x] again!", pEntry->mpPicture->nID);
+                LOGE("fatal error! find frameId[0x%x] again!", pEntry->mpPicture->nID);
             }
         }
     }
     if(!bFindFlag)
     {
-        aloge("fatal error! can't find frameId[%d], check code!", nFrameId);
+        LOGE("fatal error! can't find frameId[%d], check code!", nFrameId);
         pthread_mutex_unlock(&pVideoDecData->mOutFrameListMutex);
         return ERR_VDEC_ILLEGAL_PARAM;
     }
     int ret = ReturnPicture(pVideoDecData->pCedarV, (VideoPicture *)pOutFrame->mpPicture);
     if (ret != 0) 
     {
-        aloge("fatal error! Return Picture() fail ret[%d]", ret);
+        LOGE("fatal error! Return Picture() fail ret[%d]", ret);
     }
     list_move_tail(&pOutFrame->mList, &pVideoDecData->mIdleOutFrameList);
     if (pVideoDecData->mWaitOutFrameFlag) 
@@ -871,13 +871,13 @@ ERRORTYPE VideoDecTunnel_ReturnVDecCompOutputFrame(VIDEODECDATATYPE *pVideoDecDa
                 }
                 else
                 {
-                    aloge("fatal error! find frameId[0x%x] again!", pEntry->mpPicture->nID);
+                    LOGE("fatal error! find frameId[0x%x] again!", pEntry->mpPicture->nID);
                 }
             }
         }
         if(!bFindFlag)
         {
-            aloge("fatal error! can't find frameId[%d], check code!", nFrameId);
+            LOGE("fatal error! can't find frameId[%d], check code!", nFrameId);
             pthread_mutex_unlock(&pVideoDecData->mCompOutFramesLock);
             return ERR_VDEC_ILLEGAL_PARAM;
         }
@@ -960,13 +960,13 @@ ERRORTYPE VideoDecNonTunnel_GetVDecCompOutputFrame(
                 {
                     if(pOutFrame->mpPicture->nID != pOutFrame->mpSubPicture->nID)
                     {
-                        aloge("fatal error! why frame pair id is not same?[%d]!=[%d]", pOutFrame->mpPicture->nID, pOutFrame->mpSubPicture->nID);
+                        LOGE("fatal error! why frame pair id is not same?[%d]!=[%d]", pOutFrame->mpPicture->nID, pOutFrame->mpSubPicture->nID);
                     }
                     config_VIDEO_FRAME_INFO_S_by_VideoPicture(pSubFrameInfo, pOutFrame->mpSubPicture, pVideoDecData);
                 }
                 else
                 {
-                    aloge("fatal error!,if you want get sub portout, why not get stream?");
+                    LOGE("fatal error!,if you want get sub portout, why not get stream?");
                 }
 
             }
@@ -995,7 +995,7 @@ ERRORTYPE VideoDecNonTunnel_GetVDecCompOutputFrame(
                 int ret = pthread_cond_wait_timeout(&pVideoDecData->mReadyFrameCondition, &pVideoDecData->mOutFrameListMutex, nMilliSec);
                 if (ETIMEDOUT == ret) 
                 {
-                    alogv("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
+                    LOGV("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
                     eError = ERR_VDEC_NOBUF;
                     pVideoDecData->mWaitReadyFrameFlag = FALSE;
                 } 
@@ -1006,7 +1006,7 @@ ERRORTYPE VideoDecNonTunnel_GetVDecCompOutputFrame(
                 } 
                 else 
                 {
-                    aloge("fatal error! pthread cond wait timeout ret[%d]", ret);
+                    LOGE("fatal error! pthread cond wait timeout ret[%d]", ret);
                     eError = ERR_VDEC_NOBUF;
                     pVideoDecData->mWaitReadyFrameFlag = FALSE;
                 }
@@ -1032,7 +1032,7 @@ ERRORTYPE VideoDecNonTunnel_GetVDecCompOutputFrame(
                 }
                 else
                 {
-                    aloge("fatal error!,if you want get sub portout, why not get stream?");
+                    LOGE("fatal error!,if you want get sub portout, why not get stream?");
                 }
             }
 
@@ -1061,7 +1061,7 @@ ERRORTYPE VideoDecNonTunnel_GetVDecCompOutputFrame(
                 int ret = pthread_cond_wait_timeout(&pVideoDecData->mCompReadyFrameCondition, &pVideoDecData->mCompOutFramesLock, nMilliSec);
                 if (ETIMEDOUT == ret) 
                 {
-                    alogv("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
+                    LOGV("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
                     eError = ERR_VDEC_NOBUF;
                     pVideoDecData->mbCompWaitReadyFrame = FALSE;
                 } 
@@ -1072,7 +1072,7 @@ ERRORTYPE VideoDecNonTunnel_GetVDecCompOutputFrame(
                 } 
                 else 
                 {
-                    aloge("fatal error! pthread cond wait timeout ret[%d]", ret);
+                    LOGE("fatal error! pthread cond wait timeout ret[%d]", ret);
                     eError = ERR_VDEC_NOBUF;
                     pVideoDecData->mbCompWaitReadyFrame = FALSE;
                 }
@@ -1104,7 +1104,7 @@ ERRORTYPE VideoDecNonTunnel_ReleaseVDecCompOutputFrame(
                     ret = ReturnPicture(pVideoDecData->pCedarV, pEntry->mpPicture);
                     if (ret != 0) 
                     {
-                        aloge("fatal error! Return Picture() fail ret[%d]", ret);
+                        LOGE("fatal error! Return Picture() fail ret[%d]", ret);
                     }
 
                     if(pVideoDecData->mVConfig.bSecOutputEn)
@@ -1113,17 +1113,17 @@ ERRORTYPE VideoDecNonTunnel_ReleaseVDecCompOutputFrame(
                         {
                             if(pEntry->mpSubPicture->nID != pSubFrameInfo->mId)
                             {
-                                aloge("fatal error! why subPicture Id is not match?[%d]!=[%d]", pEntry->mpSubPicture->nID, pSubFrameInfo->mId);
+                                LOGE("fatal error! why subPicture Id is not match?[%d]!=[%d]", pEntry->mpSubPicture->nID, pSubFrameInfo->mId);
                             }
                             ret = ReturnPicture(pVideoDecData->pCedarV, pEntry->mpSubPicture); // must return sub frame to vdecoder, do not check id.
                             if(ret != 0)
                             {
-                                aloge("fatal error! Return Picture() fail ret[%d]", ret);
+                                LOGE("fatal error! Return Picture() fail ret[%d]", ret);
                             }
                         }
                         else
                         {
-                            aloge("fatal error! if you want get sub portout, why not get stream?");
+                            LOGE("fatal error! if you want get sub portout, why not get stream?");
                         }
                     }
 
@@ -1152,13 +1152,13 @@ ERRORTYPE VideoDecNonTunnel_ReleaseVDecCompOutputFrame(
             }
             if (0 == nFindFlag) 
             {
-                aloge("fatal error! vdec frameId[0x%x] is not match UsedOutFrameList", pFrameInfo->mId);
+                LOGE("fatal error! vdec frameId[0x%x] is not match UsedOutFrameList", pFrameInfo->mId);
                 eError = ERR_VDEC_ILLEGAL_PARAM;
             }
         }
         else 
         {
-            aloge("fatal error! vdec frameId[0x%x] is not find in UsedOutFrameList", pFrameInfo->mId);
+            LOGE("fatal error! vdec frameId[0x%x] is not find in UsedOutFrameList", pFrameInfo->mId);
             eError = ERR_VDEC_ILLEGAL_PARAM;
         }
         pthread_mutex_unlock(&pVideoDecData->mOutFrameListMutex);
@@ -1201,13 +1201,13 @@ ERRORTYPE VideoDecNonTunnel_ReleaseVDecCompOutputFrame(
             }
             if(0 == nFindFlag)
             {
-                aloge("fatal error! comp frameId[0x%x] is not match CompUsedOutFrameList", pFrameInfo->mId);
+                LOGE("fatal error! comp frameId[0x%x] is not match CompUsedOutFrameList", pFrameInfo->mId);
                 eError = ERR_VDEC_ILLEGAL_PARAM;
             }
         }
         else 
         {
-            aloge("fatal error! comp frameId[0x%x] is not find in CompUsedOutFrameList", pFrameInfo->mId);
+            LOGE("fatal error! comp frameId[0x%x] is not find in CompUsedOutFrameList", pFrameInfo->mId);
             eError = ERR_VDEC_ILLEGAL_PARAM;
         }
         pthread_mutex_unlock(&pVideoDecData->mCompOutFramesLock);
@@ -1228,7 +1228,7 @@ VDANWBuffer *searchVDANWBufferListByVideoPicture(struct list_head *pVdAnbList, V
                 pDes = pEntry;
                 num++;
             } else {
-                aloge("fatal error! same ion_user_handle_t[%d][%p]?", pEntry->mIonUserHandle, pEntry->mpFrameBuf);
+                LOGE("fatal error! same ion_user_handle_t[%d][%p]?", pEntry->mIonUserHandle, pEntry->mpFrameBuf);
                 num++;
             }
         }
@@ -1239,7 +1239,7 @@ VDANWBuffer *searchVDANWBufferListByVideoPicture(struct list_head *pVdAnbList, V
 ERRORTYPE VideoDecDestroyVDANWBufferList(VIDEODECDATATYPE *pVideoDecData, struct list_head *pVdAnbList)
 {
     if (!list_empty(pVdAnbList)) {
-        alogd("free ANWBuffers ion_user_handle_t!");
+        LOGD("free ANWBuffers ion_user_handle_t!");
         VDANWBuffer *pEntry, *pTmp;
         list_for_each_entry_safe(pEntry, pTmp, pVdAnbList, mList)
         {
@@ -1276,7 +1276,7 @@ VDStreamInfo *VideoDecAddChangedStreamInfos(VIDEODECDATATYPE *pVideoDecData, str
     for (i = 0; i < pVideoinfo->videoNum; i++) {
         pVDStreamInfo = malloc(sizeof(VDStreamInfo));
         if (NULL == pVDStreamInfo) {
-            aloge("fatal error! malloc video stream info fail!");
+            LOGE("fatal error! malloc video stream info fail!");
             break;
         }
         memset(pVDStreamInfo, 0, sizeof(VDStreamInfo));
@@ -1284,7 +1284,7 @@ VDStreamInfo *VideoDecAddChangedStreamInfos(VIDEODECDATATYPE *pVideoDecData, str
         if (pVideoinfo->video[i].pCodecSpecificData) {
             pVDStreamInfo->mStreamInfo.pCodecSpecificData = (char *)malloc(pVideoinfo->video[i].nCodecSpecificDataLen);
             if (pVDStreamInfo->mStreamInfo.pCodecSpecificData == NULL) {
-                aloge("fatal error! malloc video specific data fail!");
+                LOGE("fatal error! malloc video specific data fail!");
                 free(pVDStreamInfo);
                 break;
             }
@@ -1319,7 +1319,7 @@ ERRORTYPE VideoDecDeleteChangedStreamInfo(VIDEODECDATATYPE *pVideoDecData, Video
         free(pDesEntry);
         return SUCCESS;
     } else {
-        aloge("fatal error! not find stream[%p] in changedStreamList", pVideoStreamInfo);
+        LOGE("fatal error! not find stream[%p] in changedStreamList", pVideoStreamInfo);
         return ERR_VDEC_ILLEGAL_PARAM;
     }
 }
@@ -1489,12 +1489,12 @@ ERRORTYPE VideoDecGetFrame(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT VIDEO_
     VIDEODECDATATYPE *pVideoDecData = (VIDEODECDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (COMP_StateIdle != pVideoDecData->state && COMP_StateExecuting != pVideoDecData->state && COMP_StatePause != pVideoDecData->state) 
     {
-        alogw("call getStream in wrong state[0x%x]", pVideoDecData->state);
+        LOGW("call getStream in wrong state[0x%x]", pVideoDecData->state);
         return ERR_VDEC_NOT_PERM;
     }
     if (pVideoDecData->mOutputPortTunnelFlag) 
     {
-        aloge("fatal error! can't call getStream() in tunnel mode!");
+        LOGE("fatal error! can't call getStream() in tunnel mode!");
         return ERR_VDEC_NOT_PERM;
     }
     eError = VideoDecNonTunnel_GetVDecCompOutputFrame(pVideoDecData, pFrameInfo, pSubFrameInfo, nMilliSec);
@@ -1552,7 +1552,7 @@ ERRORTYPE VideoDecSetIonFd(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN int nIo
 {
     VIDEODECDATATYPE *pVideoDecData = (VIDEODECDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (pVideoDecData->mIonFd >= 0) {
-        aloge("fatal error! ionFd[%d] >= 0?", pVideoDecData->mIonFd);
+        LOGE("fatal error! ionFd[%d] >= 0?", pVideoDecData->mIonFd);
         close(pVideoDecData->mIonFd);
         pVideoDecData->mIonFd = -1;
     }
@@ -1569,7 +1569,7 @@ ERRORTYPE VideoDecSeek(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     else
     {
-        alogw("the vdecor do not create, it means had seek!!!");
+        LOGW("the vdecor do not create, it means had seek!!!");
     }
     pVideoDecData->mbEof = FALSE;
     return SUCCESS;
@@ -1578,7 +1578,7 @@ ERRORTYPE VideoDecSeek(PARAM_IN COMP_HANDLETYPE hComponent)
 ERRORTYPE VideoDecSetStreamEof(PARAM_IN COMP_HANDLETYPE hComponent)
 {
     VIDEODECDATATYPE *pVideoDecData = (VIDEODECDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
-    alogv("vdec end flag is set");
+    LOGV("vdec end flag is set");
     pVideoDecData->priv_flag |= CDX_comp_PRIV_FLAGS_STREAMEOF;
     message_t msg;
     msg.command = VDecComp_VbsAvailable;
@@ -1589,7 +1589,7 @@ ERRORTYPE VideoDecSetStreamEof(PARAM_IN COMP_HANDLETYPE hComponent)
 ERRORTYPE VideoDecClearStreamEof(PARAM_IN COMP_HANDLETYPE hComponent)
 {
     VIDEODECDATATYPE *pVideoDecData = (VIDEODECDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
-    alogv("vdec end flag is clear");
+    LOGV("vdec end flag is clear");
     pVideoDecData->priv_flag &= ~(CDX_comp_PRIV_FLAGS_STREAMEOF);
     return SUCCESS;
 }
@@ -1646,7 +1646,7 @@ ERRORTYPE VideoDecSetChnAttr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN VDEC_
             || pVideoDecData->cedarv_second_vertical_scale_down_ratio >= 5
             || pVideoDecData->cedarv_second_vertical_scale_down_ratio < 0)
         {
-            aloge("fatal error! sub ratio wrong! [%d],[%d]", pVideoDecData->cedarv_second_horizon_scale_down_ratio, pVideoDecData->cedarv_second_vertical_scale_down_ratio);
+            LOGE("fatal error! sub ratio wrong! [%d],[%d]", pVideoDecData->cedarv_second_horizon_scale_down_ratio, pVideoDecData->cedarv_second_vertical_scale_down_ratio);
             pVideoDecData->cedarv_second_output_en = 0;
         }
     }
@@ -1658,13 +1658,13 @@ ERRORTYPE VideoDecResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
     //ERRORTYPE eError;
     VIDEODECDATATYPE *pVideoDecData = (VIDEODECDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (pVideoDecData->state != COMP_StateIdle) {
-        aloge("fatal error! must reset channel in stateIdle!");
+        LOGE("fatal error! must reset channel in stateIdle!");
         return ERR_VDEC_NOT_PERM;
     }
 
     int cnt;
     struct list_head *pList;
-    alogd("wait VDec idleOutFrameList full");
+    LOGD("wait VDec idleOutFrameList full");
     pthread_mutex_lock(&pVideoDecData->mOutFrameListMutex);
     pVideoDecData->mWaitOutFrameFullFlag = TRUE;
     //wait all outFrame return.
@@ -1672,7 +1672,7 @@ ERRORTYPE VideoDecResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
         cnt = 0;
         list_for_each(pList, &pVideoDecData->mIdleOutFrameList) { cnt++; }
         if (cnt < pVideoDecData->mFrameNodeNum) {
-            alogd("wait idleOutFrameList [%d]nodes to home", pVideoDecData->mFrameNodeNum - cnt);
+            LOGD("wait idleOutFrameList [%d]nodes to home", pVideoDecData->mFrameNodeNum - cnt);
             pthread_cond_wait(&pVideoDecData->mOutFrameFullCondition, &pVideoDecData->mOutFrameListMutex);
         } else {
             break;
@@ -1690,7 +1690,7 @@ ERRORTYPE VideoDecResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
     pVideoDecData->mCurDecodeFramesNum = 0;
     pthread_mutex_unlock(&pVideoDecData->mDecodeFramesControlLock);
     
-    alogd("wait VDec idleOutFrameList full done");
+    LOGD("wait VDec idleOutFrameList full done");
     return SUCCESS;
 }
 
@@ -1729,12 +1729,12 @@ ERRORTYPE VideoDecReleaseFrame(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN VID
     ERRORTYPE eError = SUCCESS;
     if (COMP_StateIdle != pVideoDecData->state && COMP_StateExecuting != pVideoDecData->state && COMP_StatePause != pVideoDecData->state) 
     {
-        alogw("call getStream in wrong state[0x%x]", pVideoDecData->state);
+        LOGW("call getStream in wrong state[0x%x]", pVideoDecData->state);
         return ERR_VDEC_NOT_PERM;
     }
     if (pVideoDecData->mOutputPortTunnelFlag) 
     {
-        aloge("fatal error! can't call releaseFrame() in tunnel mode!");
+        LOGE("fatal error! can't call releaseFrame() in tunnel mode!");
         return ERR_VDEC_NOT_PERM;
     }
     eError = VideoDecNonTunnel_ReleaseVDecCompOutputFrame(pVideoDecData, pFrameInfo, pSubFrameInfo);
@@ -1783,7 +1783,7 @@ ERRORTYPE VideoDecSetFrameBuffersToVdecLib(PARAM_IN COMP_HANDLETYPE hComponent,
                 pVdecPic = ReturnRelasePicture(pVideoDecData->pCedarV, &tmpVP, 1);
             }
             if (list_empty(&pVideoDecData->mIdleOutFrameList)) {
-                aloge("fatal error! idle out frame list can't be empty in state[%d]", pVideoDecData->state);
+                LOGE("fatal error! idle out frame list can't be empty in state[%d]", pVideoDecData->state);
                 continue;
             }
             VDecCompOutputFrame *pOutFrame =
@@ -1795,16 +1795,16 @@ ERRORTYPE VideoDecSetFrameBuffersToVdecLib(PARAM_IN COMP_HANDLETYPE hComponent,
     pVideoDecData->mbConfigVdecFrameBuffers = TRUE;
     //store ANWBuffers in VDANWBuffer list.
     if (!list_empty(&pVideoDecData->mANWBuffersList)) {
-        aloge("fatal error! why ANWBuffers is not empty?");
+        LOGE("fatal error! why ANWBuffers is not empty?");
         abort();
     }
     if (!list_empty(&pVideoDecData->mPreviousANWBuffersList)) {
-        alogw("Low probability! previousANWBuffersList is not empty");
+        LOGW("Low probability! previousANWBuffersList is not empty");
     }
     for (i = 0; i < pAnwBuffersInfo->mnBufNum; i++) {
         VDANWBuffer *pANWBuf = (VDANWBuffer *)malloc(sizeof(VDANWBuffer));
         if (NULL == pANWBuf) {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             break;
         }
         memset(pANWBuf, 0, sizeof(VDANWBuffer));
@@ -1813,9 +1813,9 @@ ERRORTYPE VideoDecSetFrameBuffersToVdecLib(PARAM_IN COMP_HANDLETYPE hComponent,
         list_add_tail(&pANWBuf->mList, &pVideoDecData->mANWBuffersList);
     }
     //print ANativeWindow buffers info
-    alogd("set gpu buffers num[%d], state[%d]", pAnwBuffersInfo->mnBufNum, pVideoDecData->state);
+    LOGD("set gpu buffers num[%d], state[%d]", pAnwBuffersInfo->mnBufNum, pVideoDecData->state);
     for (i = 0; i < pAnwBuffersInfo->mnBufNum; i++) {
-        alogd("buffer[%d]: [%dx%d][%d][0x%x][0x%x][%p][%p][%p],[%d]", i, pAnwBuffersInfo->mANWBuffers[i].width,
+        LOGD("buffer[%d]: [%dx%d][%d][0x%x][0x%x][%p][%p][%p],[%d]", i, pAnwBuffersInfo->mANWBuffers[i].width,
               pAnwBuffersInfo->mANWBuffers[i].height, pAnwBuffersInfo->mANWBuffers[i].stride,
               pAnwBuffersInfo->mANWBuffers[i].format, pAnwBuffersInfo->mANWBuffers[i].usage,
               pAnwBuffersInfo->mANWBuffers[i].dst, pAnwBuffersInfo->mANWBuffers[i].dstPhy,
@@ -1883,7 +1883,7 @@ static ERRORTYPE VideoDecSetVEFreq(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN
     {
         if(pVideoDecData->pCedarV)
         {
-            alogd("vdec set VE freq to [%d]MHz", nFreq);
+            LOGD("vdec set VE freq to [%d]MHz", nFreq);
             VideoDecoderSetFreq(pVideoDecData->pCedarV, nFreq);
         }
     }
@@ -1918,7 +1918,7 @@ static ERRORTYPE VideoDecSetVideoStreamInfo(PARAM_IN COMP_HANDLETYPE hComponent,
     VIDEODECDATATYPE *pVideoDecData = (VIDEODECDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (NULL == pVideoStreamInfo)
     {
-        aloge("fatal error! Set VideoStreamInfo is NULL!");
+        LOGE("fatal error! Set VideoStreamInfo is NULL!");
         return ERR_VDEC_NULL_PTR;
     }
     memcpy(&pVideoDecData->stVideoStreamInfo, pVideoStreamInfo, sizeof(VideoStreamInfo));
@@ -1927,7 +1927,7 @@ static ERRORTYPE VideoDecSetVideoStreamInfo(PARAM_IN COMP_HANDLETYPE hComponent,
         char* tmpBuf = (char*)malloc(pVideoStreamInfo->nCodecSpecificDataLen);
         if (NULL == tmpBuf)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             return ERR_VDEC_NOMEM;
         }
         memcpy(tmpBuf, pVideoStreamInfo->pCodecSpecificData, pVideoStreamInfo->nCodecSpecificDataLen);
@@ -2073,12 +2073,12 @@ ERRORTYPE VideoDecGetConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_I
             break;
         }
         case COMP_IndexVendorVdecLuma: {
-            aloge("unsupported temporary");
+            LOGE("unsupported temporary");
             eError = FAILURE;
             break;
         }
         default: {
-            aloge("fatal error! unknown nIndex[0x%x] in state[%d]", nIndex, pVideoDecData->state);
+            LOGE("fatal error! unknown nIndex[0x%x] in state[%d]", nIndex, pVideoDecData->state);
             eError = ERR_VDEC_NOT_SURPPORT;
             break;
         }
@@ -2182,7 +2182,7 @@ ERRORTYPE VideoDecSetConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_I
             break;
         }
         default: {
-            aloge("fatal error! unknown nIndex[0x%x] in state[%d]", nIndex, pVideoDecData->state);
+            LOGE("fatal error! unknown nIndex[0x%x] in state[%d]", nIndex, pVideoDecData->state);
             eError = ERR_VDEC_ILLEGAL_PARAM;
             break;
         }
@@ -2197,9 +2197,9 @@ ERRORTYPE VideoDecComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
     ERRORTYPE eError = SUCCESS;
     VIDEODECDATATYPE *pVideoDecData = (VIDEODECDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (pVideoDecData->state == COMP_StateExecuting) {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     } else if (pVideoDecData->state != COMP_StateIdle) {
-        aloge("fatal error! tunnel request can't be in state[0x%x]", pVideoDecData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]", pVideoDecData->state);
         eError = ERR_VDEC_INCORRECT_STATE_OPERATION;
         goto COMP_CMD_FAIL;
     }
@@ -2225,7 +2225,7 @@ ERRORTYPE VideoDecComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         }
     }
     if (FALSE == bFindFlag) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_VDEC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -2245,7 +2245,7 @@ ERRORTYPE VideoDecComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         }
     }
     if (FALSE == bFindFlag) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_VDEC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -2259,7 +2259,7 @@ ERRORTYPE VideoDecComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         }
     }
     if (FALSE == bFindFlag) {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_VDEC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -2270,7 +2270,7 @@ ERRORTYPE VideoDecComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if (NULL == hTunneledComp && 0 == nTunneledPort && NULL == pTunnelSetup) 
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         if (pPortDef->eDir == COMP_DirOutput)
         {
             pVideoDecData->mOutputPortTunnelFlag = FALSE;
@@ -2284,7 +2284,7 @@ ERRORTYPE VideoDecComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
     }
     if (pPortDef->eDir == COMP_DirOutput) {
         if (pVideoDecData->mOutputPortTunnelFlag) {
-            aloge("VDec_Comp outport already bind, why bind again?!");
+            LOGE("VDec_Comp outport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -2293,7 +2293,7 @@ ERRORTYPE VideoDecComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         pVideoDecData->mOutputPortTunnelFlag = TRUE;
     } else {
         if (pVideoDecData->mInputPortTunnelFlag) {
-            aloge("VDec_Comp inport already bind, why bind again?!");
+            LOGE("VDec_Comp inport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -2303,7 +2303,7 @@ ERRORTYPE VideoDecComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
         out_port_def.nPortIndex = nTunneledPort;
         ((MM_COMPONENTTYPE *)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if (out_port_def.eDir != COMP_DirOutput) {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_VDEC_ILLEGAL_PARAM;
             goto COMP_CMD_FAIL;
         }
@@ -2318,7 +2318,7 @@ ERRORTYPE VideoDecComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 
         //The component B informs component A about the final result of negotiation.
         if (pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier) {
-            alogw("Low probability! input portIndex[%d] buffer supplier[%d] is not same as output portIndex[%d] buffer supplier[%d], respect output port decision!", 
+            LOGW("Low probability! input portIndex[%d] buffer supplier[%d] is not same as output portIndex[%d] buffer supplier[%d], respect output port decision!", 
                 nPort, pPortBufSupplier->eBufferSupplier, nTunneledPort, pTunnelSetup->eSupplier);
              pPortBufSupplier->eBufferSupplier = pTunnelSetup->eSupplier;
         }
@@ -2336,7 +2336,7 @@ COMP_CMD_FAIL:
 
 ERRORTYPE VideoDecRequstBuffer(COMP_HANDLETYPE hComponent, unsigned int nPortIndex, COMP_BUFFERHEADERTYPE *pBuffer)
 {
-    alogw("Be careful! old method, should not use now.");
+    LOGW("Be careful! old method, should not use now.");
     ERRORTYPE eError = SUCCESS;
 
     // Get component private data
@@ -2346,18 +2346,18 @@ ERRORTYPE VideoDecRequstBuffer(COMP_HANDLETYPE hComponent, unsigned int nPortInd
     // Check Video Decoder
     if (NULL == pVideoDecData->pCedarV) 
     {
-        alogw("vdecLib is not create, can't request buffer.");
+        LOGW("vdecLib is not create, can't request buffer.");
         return ERR_VDEC_SYS_NOTREADY;
     }
     
-    //alogd("requestBuf len[%d]", pDmxOutBuf->nTobeFillLen);
+    //LOGD("requestBuf len[%d]", pDmxOutBuf->nTobeFillLen);
     if (nPortIndex == pVideoDecData->sInPortDef[VDEC_PORT_SUFFIX_DEMUX].nPortIndex) 
     {// inport tunnel mode
         int nStreamBufIndex = (VIDEO_TYPE_MINOR == pDmxOutBuf->video_stream_type) ? 1 : 0;
         int ret = RequestVideoStreamBuffer(pVideoDecData->pCedarV, pDmxOutBuf->nTobeFillLen, (char **)&pDmxOutBuf->pBuffer,
                                        (int *)&pDmxOutBuf->nBufferLen, (char **)&pDmxOutBuf->pBufferExtra,
                                        (int *)&pDmxOutBuf->nBufferExtraLen, nStreamBufIndex);
-        //alogd("requestBuf ret[0x%x], len[%d+%d]", ret, pDmxOutBuf->nBufferLen, pDmxOutBuf->nBufferExtraLen);
+        //LOGD("requestBuf ret[0x%x], len[%d+%d]", ret, pDmxOutBuf->nBufferLen, pDmxOutBuf->nBufferExtraLen);
         if (ret < 0) 
         {
             eError = ERR_VDEC_BUF_FULL;
@@ -2365,7 +2365,7 @@ ERRORTYPE VideoDecRequstBuffer(COMP_HANDLETYPE hComponent, unsigned int nPortInd
     } 
     else 
     {// inport non-tunnel mode
-        aloge("fatal error! wrong portIndex[%d]", nPortIndex);
+        LOGE("fatal error! wrong portIndex[%d]", nPortIndex);
         eError = ERR_VDEC_ILLEGAL_PARAM;
     }
 
@@ -2382,7 +2382,7 @@ ERRORTYPE VideoDecRequstBuffer(COMP_HANDLETYPE hComponent, unsigned int nPortInd
  */
 ERRORTYPE VideoDecReleaseBuffer(COMP_HANDLETYPE hComponent, unsigned int nPortIndex, COMP_BUFFERHEADERTYPE *pBuffer)
 {
-    alogw("Be careful! old method, should not use now.");
+    LOGW("Be careful! old method, should not use now.");
     VIDEODECDATATYPE *pVideoDecData;
     ERRORTYPE eError = SUCCESS;
     int ret;
@@ -2390,7 +2390,7 @@ ERRORTYPE VideoDecReleaseBuffer(COMP_HANDLETYPE hComponent, unsigned int nPortIn
     pVideoDecData = (VIDEODECDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     EncodedStream *pDmxOutBuf = (EncodedStream *)pBuffer->pOutputPortPrivate;
     
-    //alogd("releaseBuf len[%d]", pDmxOutBuf->nFilledLen);
+    //LOGD("releaseBuf len[%d]", pDmxOutBuf->nFilledLen);
     if (nPortIndex == pVideoDecData->sInPortDef[VDEC_PORT_SUFFIX_DEMUX].nPortIndex) 
     {// inport tunnel mode
         pthread_mutex_lock(&pVideoDecData->mVbsInputMutex);
@@ -2405,7 +2405,7 @@ ERRORTYPE VideoDecReleaseBuffer(COMP_HANDLETYPE hComponent, unsigned int nPortIn
                 struct VideoInfo *pVideoinfo = (struct VideoInfo *)pDmxOutBuf->pChangedStreamsInfo;
                 if (pVideoinfo->videoNum != 1) 
                 {
-                    aloge("fatal error! the videoNum is not 1");
+                    LOGE("fatal error! the videoNum is not 1");
                     abort();
                 }
                 VDStreamInfo *pVDStreamInfo = VideoDecAddChangedStreamInfos(pVideoDecData, pVideoinfo);
@@ -2432,7 +2432,7 @@ ERRORTYPE VideoDecReleaseBuffer(COMP_HANDLETYPE hComponent, unsigned int nPortIn
         if (pDmxOutBuf->nFlags & CEDARV_FLAG_LAST_PART)
         {
             dataInfo.bIsLastPart = 1;
-            alogv("last part found!");
+            LOGV("last part found!");
         }
         if (pDmxOutBuf->video_stream_type == VIDEO_TYPE_MINOR) //CDX_VIDEO_STREAM_MINOR
         {
@@ -2458,7 +2458,7 @@ ERRORTYPE VideoDecReleaseBuffer(COMP_HANDLETYPE hComponent, unsigned int nPortIn
     } 
     else 
     {// inport non-tunnel mode
-        aloge("fatal error! wrong portIndex[%d]", nPortIndex);
+        LOGE("fatal error! wrong portIndex[%d]", nPortIndex);
         eError = ERR_VDEC_ILLEGAL_PARAM;
     }
 
@@ -2480,7 +2480,7 @@ ERRORTYPE VideoDecTunnel_EmptyThisBuffer_BufferSupplyInput(COMP_HANDLETYPE hComp
     if (list_empty(&pInputData->mUsingVbsList))
     {
         pthread_mutex_unlock(&pInputData->mVbsListLock);
-        aloge("fatal error! Calling EmptyThisBuffer while mUsingVbsList is empty!");
+        LOGE("fatal error! Calling EmptyThisBuffer while mUsingVbsList is empty!");
         return FAILURE;
     }
     
@@ -2490,14 +2490,14 @@ ERRORTYPE VideoDecTunnel_EmptyThisBuffer_BufferSupplyInput(COMP_HANDLETYPE hComp
        )
     {
        pthread_mutex_unlock(&pInputData->mVbsListLock);
-       aloge("fatal error! the buffer in EmptyThisBuffer param is not same as in mUsingVbsList");
+       LOGE("fatal error! the buffer in EmptyThisBuffer param is not same as in mUsingVbsList");
        return FAILURE;
     }
     
     if (-1 == pDmxOutBuf->nFilledLen)
     {// buffer is not enough for component A
         
-        alogv("vdec lib buffer is not enough for component A (nTobeFillLen = %d)", pDmxOutBuf->nTobeFillLen);
+        LOGV("vdec lib buffer is not enough for component A (nTobeFillLen = %d)", pDmxOutBuf->nTobeFillLen);
         pInputData->nRequestLen = pDmxOutBuf->nTobeFillLen;
 
         // Move node from mUsingAbsList to mIdleAbsList
@@ -2538,17 +2538,17 @@ ERRORTYPE VideoDecTunnel_EmptyThisBuffer_BufferSupplyInput(COMP_HANDLETYPE hComp
     if(-1 == pVideoDecData->mVideoInfoVersion)
     {
         pVideoDecData->mVideoInfoVersion = pDmxOutBuf->infoVersion;
-        alogd("video info init version is [%d]!", pVideoDecData->mVideoInfoVersion);
+        LOGD("video info init version is [%d]!", pVideoDecData->mVideoInfoVersion);
     }
     if (pDmxOutBuf->infoVersion != pVideoDecData->mVideoInfoVersion) 
     {
-        alogd("Be careful! demux detect video info version change [%d]->[%d]!", pDmxOutBuf->infoVersion, pVideoDecData->mVideoInfoVersion);
+        LOGD("Be careful! demux detect video info version change [%d]->[%d]!", pDmxOutBuf->infoVersion, pVideoDecData->mVideoInfoVersion);
         if (pDmxOutBuf->pChangedStreamsInfo) 
         {
             struct VideoInfo *pVideoinfo = (struct VideoInfo *)pDmxOutBuf->pChangedStreamsInfo;
             if (pVideoinfo->videoNum != 1) 
             {
-                aloge("fatal error! the videoNum is not 1");
+                LOGE("fatal error! the videoNum is not 1");
                 abort();
             }
             VDStreamInfo *pVDStreamInfo = VideoDecAddChangedStreamInfos(pVideoDecData, pVideoinfo);
@@ -2575,7 +2575,7 @@ ERRORTYPE VideoDecTunnel_EmptyThisBuffer_BufferSupplyInput(COMP_HANDLETYPE hComp
     if (pDmxOutBuf->nFlags & CEDARV_FLAG_LAST_PART)
     {
         dataInfo.bIsLastPart = 1;
-        alogv("last part found!");
+        LOGV("last part found!");
     }
     if (pDmxOutBuf->video_stream_type == VIDEO_TYPE_MINOR)  //CDX_VIDEO_STREAM_MINOR
     {
@@ -2633,13 +2633,13 @@ ERRORTYPE VideoDecTunnel_EmptyThisBuffer_BufferSupplyInput(COMP_HANDLETYPE hComp
         else
         {
             pthread_mutex_unlock(&pInputData->mVbsListLock);
-            aloge("fatal error! No Using Vbs node while calling EmptyThisBuffer!");
+            LOGE("fatal error! No Using Vbs node while calling EmptyThisBuffer!");
             return FAILURE;
         }
     }
     else
     {
-        aloge("fatal error! submit data fail, check code!");
+        LOGE("fatal error! submit data fail, check code!");
         pthread_mutex_unlock(&pInputData->mVbsListLock);
         eError = FAILURE;
     }
@@ -2658,7 +2658,7 @@ ERRORTYPE VideoDecTunnel_EmptyThisBuffer_BufferSupplyOutput(COMP_HANDLETYPE hCom
 
     if(pStream->pBufferExtra!=NULL || pStream->nBufferExtraLen!=0)
     {
-        aloge("fatal error! we only process pBuffer! BufferExtra[%p][%d] will be ignore!", pStream->pBufferExtra, pStream->nBufferExtraLen);
+        LOGE("fatal error! we only process pBuffer! BufferExtra[%p][%d] will be ignore!", pStream->pBufferExtra, pStream->nBufferExtraLen);
     }
     // Check it is the same buffer in mUsingAbsList
     pthread_mutex_lock(&pInputData->mVbsListLock);
@@ -2666,7 +2666,7 @@ ERRORTYPE VideoDecTunnel_EmptyThisBuffer_BufferSupplyOutput(COMP_HANDLETYPE hCom
     //make sure there is an idle node.
     if(list_empty(&pInputData->mIdleVbsList))
     {
-        alogw("Be careful! not enough idle node, malloc more!");
+        LOGW("Be careful! not enough idle node, malloc more!");
         DMXPKT_NODE_T *pNode = (DMXPKT_NODE_T*)malloc(sizeof(DMXPKT_NODE_T));
         if(pNode != NULL)
         {
@@ -2676,7 +2676,7 @@ ERRORTYPE VideoDecTunnel_EmptyThisBuffer_BufferSupplyOutput(COMP_HANDLETYPE hCom
         }
         else
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             pthread_mutex_unlock(&pInputData->mVbsListLock);
             return ERR_VDEC_NOMEM;
         }
@@ -2711,17 +2711,17 @@ _TryToRequestVbs:
         if(-1 == pVideoDecData->mVideoInfoVersion)
         {
             pVideoDecData->mVideoInfoVersion = pStream->infoVersion;
-            alogd("video info init version is [%d]!", pVideoDecData->mVideoInfoVersion);
+            LOGD("video info init version is [%d]!", pVideoDecData->mVideoInfoVersion);
         }
         if (pStream->infoVersion != pVideoDecData->mVideoInfoVersion) 
         {
-            alogd("Be careful! demux detect video info version change [%d]->[%d]!", pStream->infoVersion, pVideoDecData->mVideoInfoVersion);
+            LOGD("Be careful! demux detect video info version change [%d]->[%d]!", pStream->infoVersion, pVideoDecData->mVideoInfoVersion);
             if (pStream->pChangedStreamsInfo) 
             {
                 struct VideoInfo *pVideoinfo = (struct VideoInfo *)pStream->pChangedStreamsInfo;
                 if (pVideoinfo->videoNum != 1) 
                 {
-                    aloge("fatal error! the videoNum is not 1");
+                    LOGE("fatal error! the videoNum is not 1");
                     abort();
                 }
                 VDStreamInfo *pVDStreamInfo = VideoDecAddChangedStreamInfos(pVideoDecData, pVideoinfo);
@@ -2740,7 +2740,7 @@ _TryToRequestVbs:
         {
             dataInfo.nPts = -1;
         }
-        //alogd("input encoded frame pts [%lld]us!", dataInfo.nPts);
+        //LOGD("input encoded frame pts [%lld]us!", dataInfo.nPts);
         dataInfo.nPcr = -1;
         if (pStream->nFlags & CEDARV_FLAG_FIRST_PART)
         {
@@ -2749,7 +2749,7 @@ _TryToRequestVbs:
         if (pStream->nFlags & CEDARV_FLAG_LAST_PART)
         {
             dataInfo.bIsLastPart = 1;
-            alogv("last part found!");
+            LOGV("last part found!");
         }
         if (pStream->video_stream_type == VIDEO_TYPE_MINOR)  //CDX_VIDEO_STREAM_MINOR
         {
@@ -2764,7 +2764,7 @@ _TryToRequestVbs:
         int submitRet = SubmitVideoStreamData(pVideoDecData->pCedarV, &dataInfo, dataInfo.nStreamIndex);
         if(submitRet != 0)
         {
-            aloge("fatal error! check vdeclib, ret[%d]", submitRet);
+            LOGE("fatal error! check vdeclib, ret[%d]", submitRet);
         }
         if (pVideoDecData->mWaitVbsInputFlag)
         {
@@ -2810,7 +2810,7 @@ ERRORTYPE VideoDecNonTunnel_EmptyThisBuffer(COMP_HANDLETYPE hComponent, COMP_BUF
     int nMilliSec = pInputStream->nMilliSec;
     if (0 == pStream->mLen && pStream->mbEndOfStream) 
     {
-        alogd("indicate EndOfStream");
+        LOGD("indicate EndOfStream");
         VideoDecSetStreamEof(hComponent);
         goto ERROR;
     }
@@ -2854,7 +2854,7 @@ _TryToRequestVbs:
         } 
         else 
         {
-            alogw("Be careful! maybe one frame divided to several parts");
+            LOGW("Be careful! maybe one frame divided to several parts");
             dataInfo.bIsLastPart = 0;
         }
         dataInfo.nStreamIndex = 0;
@@ -2871,7 +2871,7 @@ _TryToRequestVbs:
         
         if (pStream->mbEndOfStream) 
         {
-            alogd("indicate EndOfStream");
+            LOGD("indicate EndOfStream");
             VideoDecSetStreamEof(hComponent);
         }
         eError = SUCCESS;
@@ -2897,7 +2897,7 @@ _TryToRequestVbs:
             int waitRet = pthread_cond_wait_timeout(&pVideoDecData->mEmptyVbsCondition, &pVideoDecData->mVbsInputMutex, nMilliSec);
             if (ETIMEDOUT == waitRet)
             {
-                alogv("wait empty vbs buffer timeout[%d]ms, ret[%d]", nMilliSec, waitRet);
+                LOGV("wait empty vbs buffer timeout[%d]ms, ret[%d]", nMilliSec, waitRet);
                 eError = ERR_VDEC_BUF_FULL;
                 pVideoDecData->mWaitEmptyVbsFlag = FALSE;
             } 
@@ -2908,7 +2908,7 @@ _TryToRequestVbs:
             } 
             else 
             {
-                aloge("fatal error! pthread cond wait timeout ret[%d]", waitRet);
+                LOGE("fatal error! pthread cond wait timeout ret[%d]", waitRet);
                 eError = ERR_VDEC_BUF_FULL;
                 pVideoDecData->mWaitEmptyVbsFlag = FALSE;
             }
@@ -2941,11 +2941,11 @@ ERRORTYPE VideoDecEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
 
     if (pVideoDecData->state != COMP_StateExecuting && pVideoDecData->state != COMP_StatePause) 
     {
-        alogw("send stream when vdec state[0x%x] is not executing/pause", pVideoDecData->state);
+        LOGW("send stream when vdec state[0x%x] is not executing/pause", pVideoDecData->state);
     }
     if(NULL == pVideoDecData->pCedarV)
     {
-        alogw("Be careful! vdeclib is not create! can't send data!");
+        LOGW("Be careful! vdeclib is not create! can't send data!");
         pthread_mutex_unlock(&pVideoDecData->mStateLock);
         return ERR_VDEC_NOT_PERM;
     }
@@ -2965,13 +2965,13 @@ ERRORTYPE VideoDecEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
             }
             else
             {
-                aloge("fatal error! wrong bufferSupplier[0x%x]!", pPortBufferSupplier->eBufferSupplier);
+                LOGE("fatal error! wrong bufferSupplier[0x%x]!", pPortBufferSupplier->eBufferSupplier);
                 eError = FAILURE;
             }
         }
         else
         {
-            aloge("fatal error! PortIndex[%u]!=[%u]!", pBuffer->nInputPortIndex, pVideoDecData->sInPortTunnelInfo[VDEC_PORT_SUFFIX_DEMUX].nPortIndex);
+            LOGE("fatal error! PortIndex[%u]!=[%u]!", pBuffer->nInputPortIndex, pVideoDecData->sInPortTunnelInfo[VDEC_PORT_SUFFIX_DEMUX].nPortIndex);
             eError = FAILURE;
         }
     }
@@ -3005,7 +3005,7 @@ ERRORTYPE VideoDecFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
     } 
     else 
     {
-        aloge("fatal error! outPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pVideoDecData->sOutPortDef.nPortIndex);
+        LOGE("fatal error! outPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pVideoDecData->sOutPortDef.nPortIndex);
     }
 
 ERROR:
@@ -3083,10 +3083,10 @@ ERRORTYPE VideoDecComponentDeInit(COMP_HANDLETYPE hComponent)
 
     pthread_mutex_lock(&pVideoDecData->mOutFrameListMutex);
     if (!list_empty(&pVideoDecData->mUsedOutFrameList)) {
-        aloge("fatal error! outUsedFrame must be 0!");
+        LOGE("fatal error! outUsedFrame must be 0!");
     }
     if (!list_empty(&pVideoDecData->mReadyOutFrameList)) {
-        aloge("fatal error! outReadyFrame must be 0!");
+        LOGE("fatal error! outReadyFrame must be 0!");
     }
     int nodeNum = 0;
     if (!list_empty(&pVideoDecData->mIdleOutFrameList)) {
@@ -3100,7 +3100,7 @@ ERRORTYPE VideoDecComponentDeInit(COMP_HANDLETYPE hComponent)
     }
     if (nodeNum != pVideoDecData->mFrameNodeNum) 
     {
-        aloge("fatal error! frame node number is not match[%d][%d]", nodeNum, pVideoDecData->mFrameNodeNum);
+        LOGE("fatal error! frame node number is not match[%d][%d]", nodeNum, pVideoDecData->mFrameNodeNum);
     }
     pthread_mutex_unlock(&pVideoDecData->mOutFrameListMutex);
     //if VideoDec CompFrameBufferThread exist, stop it
@@ -3114,12 +3114,12 @@ ERRORTYPE VideoDecComponentDeInit(COMP_HANDLETYPE hComponent)
     message_destroy(&pVideoDecData->mCompFrameBufferThreadMessageQueue);
     if (!list_empty(&pVideoDecData->mCompUsedOutFrameList))
     {
-        aloge("fatal error! CompUsedOutFrame must be 0!");
+        LOGE("fatal error! CompUsedOutFrame must be 0!");
         list_splice_tail_init(&pVideoDecData->mCompUsedOutFrameList, &pVideoDecData->mCompIdleOutFrameList);
     }
     if (!list_empty(&pVideoDecData->mCompReadyOutFrameList))
     {
-        aloge("fatal error! CompReadyOutFrame must be 0!");
+        LOGE("fatal error! CompReadyOutFrame must be 0!");
         list_splice_tail_init(&pVideoDecData->mCompReadyOutFrameList, &pVideoDecData->mCompIdleOutFrameList);
     }
     if(!list_empty(&pVideoDecData->mCompIdleOutFrameList))
@@ -3136,7 +3136,7 @@ ERRORTYPE VideoDecComponentDeInit(COMP_HANDLETYPE hComponent)
     }
     if (nodeNum != VDEC_COMP_FRAME_COUNT)
     {
-        aloge("fatal error! frame node number is not match[%d][%d]", nodeNum, VDEC_COMP_FRAME_COUNT);
+        LOGE("fatal error! frame node number is not match[%d][%d]", nodeNum, VDEC_COMP_FRAME_COUNT);
     }
     
     pthread_cond_destroy(&pVideoDecData->mOutFrameFullCondition);
@@ -3152,14 +3152,14 @@ ERRORTYPE VideoDecComponentDeInit(COMP_HANDLETYPE hComponent)
     pthread_mutex_destroy(&pVideoDecData->mStateLock);
     pthread_mutex_destroy(&pVideoDecData->mDecodeFramesControlLock);
     if (!list_empty(&pVideoDecData->mANWBuffersList) || !list_empty(&pVideoDecData->mPreviousANWBuffersList)) {
-        aloge("fatal error! why ANWBuffers is not empty?");
+        LOGE("fatal error! why ANWBuffers is not empty?");
     }
     if (pVideoDecData->mIonFd >= 0) {
         close(pVideoDecData->mIonFd);
         pVideoDecData->mIonFd = -1;
     }
     if (!list_empty(&pVideoDecData->mChangedStreamList)) {
-        alogw("Low probability! changedStream is not processed done by vdeclib.");
+        LOGW("Low probability! changedStream is not processed done by vdeclib.");
         VideoDecDestroyChangedStreamInfos(pVideoDecData);
     }
     if(pVideoDecData->mG2DHandle >= 0)
@@ -3169,7 +3169,7 @@ ERRORTYPE VideoDecComponentDeInit(COMP_HANDLETYPE hComponent)
     }
 #if CAL_DECODER_TIME
     //print statistics info
-    alogd("DecFrameCount[%d], timeDuration[%lld]us, averageDecDuration[%lld]us", pVideoDecData->mDecodeFrameCount, pVideoDecData->mTotalDecodeDuration, pVideoDecData->mTotalDecodeDuration/pVideoDecData->mDecodeFrameCount);
+    LOGD("DecFrameCount[%d], timeDuration[%lld]us, averageDecDuration[%lld]us", pVideoDecData->mDecodeFrameCount, pVideoDecData->mTotalDecodeDuration, pVideoDecData->mTotalDecodeDuration/pVideoDecData->mDecodeFrameCount);
 #endif
 
     if (pVideoDecData->pInputData)
@@ -3185,7 +3185,7 @@ ERRORTYPE VideoDecComponentDeInit(COMP_HANDLETYPE hComponent)
         free(pVideoDecData);
     }
 
-    alogd("VideoDec component exited!");
+    LOGD("VideoDec component exited!");
     
     return eError;
 }
@@ -3224,7 +3224,7 @@ ERRORTYPE VideoDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     for (i = 0; i < VDEC_FRAME_COUNT; i++) {
         VDecCompOutputFrame *pNode = (VDecCompOutputFrame *)malloc(sizeof(VDecCompOutputFrame));
         if (NULL == pNode) {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             break;
         }
         //memset(pNode, 0, sizeof(VDecCompOutputFrame));
@@ -3236,7 +3236,7 @@ ERRORTYPE VideoDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         VDecCompOutputFrame *pNode = (VDecCompOutputFrame *)malloc(sizeof(VDecCompOutputFrame));
         if (NULL == pNode) 
         {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             break;
         }
         memset(pNode, 0, sizeof(VDecCompOutputFrame));
@@ -3250,7 +3250,7 @@ ERRORTYPE VideoDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pVideoDecData->mDecodeFramesControlLock, NULL);
     if (err != 0) 
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_VDEC_SYS_NOTREADY;
         goto EXIT0;
     }
@@ -3260,25 +3260,25 @@ ERRORTYPE VideoDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     
     err = pthread_mutex_init(&pVideoDecData->mVbsInputMutex, NULL);
     if (err != 0) {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_VDEC_SYS_NOTREADY;
         goto EXIT0;
     }
     err = pthread_mutex_init(&pVideoDecData->mOutFrameListMutex, NULL);
     if (err != 0) {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_VDEC_SYS_NOTREADY;
         goto EXIT1;
     }
     err = pthread_mutex_init(&pVideoDecData->mCompOutFramesLock, NULL);
     if (err != 0) 
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
     }
     err = pthread_mutex_init(&pVideoDecData->mCompFBThreadStateLock, NULL);
     if (err != 0) 
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
     }
         
     pthread_condattr_t  condAttr;
@@ -3286,7 +3286,7 @@ ERRORTYPE VideoDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pthread_condattr_setclock(&condAttr, CLOCK_MONOTONIC);
     err = pthread_cond_init(&pVideoDecData->mOutFrameFullCondition, &condAttr);
     if (err != 0) {
-        aloge("pthread cond init fail!");
+        LOGE("pthread cond init fail!");
         eError = ERR_VDEC_SYS_NOTREADY;
         goto EXIT2;
     }
@@ -3352,13 +3352,13 @@ ERRORTYPE VideoDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if (message_create(&pVideoDecData->cmd_queue) < 0) 
     {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_VDEC_NOMEM;
         goto EXIT3;
     }
     if (message_create(&pVideoDecData->mCompFrameBufferThreadMessageQueue) < 0)
     {
-        aloge("fatal error! msg queue init fail!");
+        LOGE("fatal error! msg queue init fail!");
     }
     pVideoDecData->mMemOps = MemAdapterGetOpsS();
 
@@ -3366,7 +3366,7 @@ ERRORTYPE VideoDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     VIDEODEC_INPUT_DATA* pInputData = (VIDEODEC_INPUT_DATA*) malloc(sizeof(VIDEODEC_INPUT_DATA));
     if (pInputData == NULL)
     {
-        aloge("create input data error!");
+        LOGE("create input data error!");
         eError = ERR_VDEC_NOMEM;
         goto EXIT4;
     }
@@ -3380,7 +3380,7 @@ ERRORTYPE VideoDecComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if((eError = VideoDec_InputDataInit(pInputData, pVideoDecData)) != SUCCESS)
     {
-        aloge("fatal error! VideoDec InputData init fail");
+        LOGE("fatal error! VideoDec InputData init fail");
         goto EXIT5;
     }
     pthread_condattr_destroy(&condAttr);
@@ -3417,7 +3417,7 @@ static void *ComponentThread(void *pThreadData)
     VIDEODECDATATYPE *pVideoDecData = (VIDEODECDATATYPE *)pThreadData;
     VIDEODEC_INPUT_DATA* pInputData = pVideoDecData->pInputData;
     
-    alogv("VideoDecoder ComponentThread start run...");
+    LOGV("VideoDecoder ComponentThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"MPP_VDec", 0, 0, 0);
 
     while (1) 
@@ -3463,7 +3463,7 @@ PROCESS_MESSAGE:
                         {
                             if (pVideoDecData->state != COMP_StateIdle) 
                             {
-                                aloge("fatal error! VideoDec incorrect state transition [0x%x]->Loaded!", pVideoDecData->state);
+                                LOGE("fatal error! VideoDec incorrect state transition [0x%x]->Loaded!", pVideoDecData->state);
                                 pVideoDecData->pCallbacks->EventHandler
                                     (pVideoDecData->hSelf
                                     ,pVideoDecData->pAppData
@@ -3493,7 +3493,7 @@ PROCESS_MESSAGE:
                             
                             // wait all outFrame return.
                             struct list_head *pList;
-                            alogd("wait VDec idleOutFrameList full");
+                            LOGD("wait VDec idleOutFrameList full");
                             pthread_mutex_lock(&pVideoDecData->mOutFrameListMutex);
                             pVideoDecData->mWaitOutFrameFullFlag = TRUE;
                             while (1) 
@@ -3503,7 +3503,7 @@ PROCESS_MESSAGE:
                                 list_for_each(pList, &pVideoDecData->mReadyOutFrameList) { cnt++; }
                                 if (cnt < pVideoDecData->mFrameNodeNum) 
                                 {
-                                    alogd("wait idleOutFrameList [%d]nodes to home", pVideoDecData->mFrameNodeNum - cnt);
+                                    LOGD("wait idleOutFrameList [%d]nodes to home", pVideoDecData->mFrameNodeNum - cnt);
                                     pthread_cond_wait(&pVideoDecData->mOutFrameFullCondition, &pVideoDecData->mOutFrameListMutex);
                                 } 
                                 else 
@@ -3513,7 +3513,7 @@ PROCESS_MESSAGE:
                             }
                             pVideoDecData->mWaitOutFrameFullFlag = FALSE;
                             pthread_mutex_unlock(&pVideoDecData->mOutFrameListMutex);
-                            alogd("wait VDec idleOutFrameList full done");
+                            LOGD("wait VDec idleOutFrameList full done");
                             
                             //free ion_user_handle_t
                             VideoDecDestroyVDANWBufferList(pVideoDecData, &pVideoDecData->mPreviousANWBuffersList);
@@ -3562,7 +3562,7 @@ PROCESS_MESSAGE:
                             }
                             else 
                             {
-                                alogd("VideoDec state[0x%x]->Idle!", pVideoDecData->state);
+                                LOGD("VideoDec state[0x%x]->Idle!", pVideoDecData->state);
                                 if (pVideoDecData->mbUseCompFrame)
                                 {
                                     // Send message to FrameBufferThread
@@ -3618,7 +3618,7 @@ PROCESS_MESSAGE:
                                         }
                                         else
                                         {
-                                            aloge("fatal error! check why vdecLib init fail!"); 
+                                            LOGE("fatal error! check why vdecLib init fail!"); 
                                             pVideoDecData->pCallbacks->EventHandler(pVideoDecData->hSelf, pVideoDecData->pAppData,
                                                                                     COMP_EventError,
                                                                                     ERR_VDEC_INCORRECT_STATE_TRANSITION, 0, NULL); 
@@ -3725,26 +3725,26 @@ PROCESS_MESSAGE:
             } 
             else if (cmd == VDecComp_VbsAvailable) 
             {
-                alogv("Vdec vbs available");
+                LOGV("Vdec vbs available");
             } 
             else if (cmd == VDecComp_OutFrameAvailable) 
             {
-                alogv("Vdec frame available");
+                LOGV("Vdec frame available");
             } 
             else if (cmd == VDecComp_ChangeGraphicBufferProducer) 
             {
                 //state is pause here in common
                 if (pVideoDecData->state != COMP_StatePause) 
                 {
-                    aloge("fatal error! state[%d] is not pause", pVideoDecData->state);
+                    LOGE("fatal error! state[%d] is not pause", pVideoDecData->state);
                 }
-                alogd("receive message: change GraphicBufferProducer, displayFrameRequestMode[%d]", pVideoDecData->nDisplayFrameRequestMode);
+                LOGD("receive message: change GraphicBufferProducer, displayFrameRequestMode[%d]", pVideoDecData->nDisplayFrameRequestMode);
                 if (pVideoDecData->nDisplayFrameRequestMode) 
                 {
                     pVideoDecData->mbChangeGraphicBufferProducer = TRUE;
                     if (!list_empty(&pVideoDecData->mPreviousANWBuffersList)) 
                     {
-                        aloge("fatal error! previous GraphicBufferProducer's frames still remain!");
+                        LOGE("fatal error! previous GraphicBufferProducer's frames still remain!");
                     }
                     list_splice_tail_init(&pVideoDecData->mANWBuffersList, &pVideoDecData->mPreviousANWBuffersList);
                     //set vdeclib release flag, get release frames as many as possible, and free its ionUserHandle.
@@ -3758,17 +3758,17 @@ PROCESS_MESSAGE:
                             struct list_head *pList;
                             list_for_each(pList, &pVideoDecData->mPreviousANWBuffersList) { nNeedReleaseBufferNum++; }
                             if (nNeedReleaseBufferNum > 0) {
-                                alogw("Low probability, not request all releasePictures, left [%d]frames",
+                                LOGW("Low probability, not request all releasePictures, left [%d]frames",
                                       nNeedReleaseBufferNum);
                             }
                             break;
                         }
                         pVdAnb = searchVDANWBufferListByVideoPicture(&pVideoDecData->mPreviousANWBuffersList, pReleasePicture);
                         if (NULL == pVdAnb) {
-                            aloge("fatal error! not find release VideoPicture!");
+                            LOGE("fatal error! not find release VideoPicture!");
                             abort();
                         }
-                        alogd("ion_free: handle_ion[%p]", pReleasePicture->pPrivate);
+                        LOGD("ion_free: handle_ion[%p]", pReleasePicture->pPrivate);
                         //ion_free(pVideoDecData->mIonFd, pVdAnb->mIonUserHandle);
                         struct ion_handle_data handleData = {
                             .handle = pVdAnb->mIonUserHandle,
@@ -3788,7 +3788,7 @@ PROCESS_MESSAGE:
             } 
             else if (cmd == VDecComp_ReopenVideoEngine) 
             {
-                alogd("resolution change, reopen VideoEngine done.");
+                LOGD("resolution change, reopen VideoEngine done.");
                 pVideoDecData->mResolutionChangeFlag = FALSE;
             }
             
@@ -3798,7 +3798,7 @@ PROCESS_MESSAGE:
 
         if (pVideoDecData->mbEof)
         {
-            alogd("VDec EOF!");
+            LOGD("VDec EOF!");
             TMessage_WaitQueueNotEmpty(&pVideoDecData->cmd_queue, 0);
         }
         else if (pVideoDecData->state == COMP_StateExecuting) 
@@ -3819,7 +3819,7 @@ PROCESS_MESSAGE:
             pthread_mutex_lock(&pVideoDecData->mDecodeFramesControlLock);
             if(pVideoDecData->mLimitedDecodeFramesFlag && pVideoDecData->mCurDecodeFramesNum >= pVideoDecData->mDecodeFramesParam.mDecodeFrameNum)
             {
-                alogd("the vdec channel[%d] had decode %d frame, it is enough!",pVideoDecData->mMppChnInfo.mChnId, pVideoDecData->mCurDecodeFramesNum);
+                LOGD("the vdec channel[%d] had decode %d frame, it is enough!",pVideoDecData->mMppChnInfo.mChnId, pVideoDecData->mCurDecodeFramesNum);
                 pthread_mutex_unlock(&pVideoDecData->mDecodeFramesControlLock);
                 TMessage_WaitQueueNotEmpty(&pVideoDecData->cmd_queue, 0);
                 goto PROCESS_MESSAGE;
@@ -3839,11 +3839,11 @@ PROCESS_MESSAGE:
             if (!pVideoDecData->mResolutionChangeFlag) 
             {
                 ret = DecodeVideoStream(pCedarV, bStreamEOF /*eof*/, 0 /*key frame only*/, pVideoDecData->drop_B_frame /*drop b frame*/, 0 /*current time*/);
-                //alogd("decoder ret:0x%x, priv_flag:0x%x", ret, pVideoDecData->priv_flag);
+                //LOGD("decoder ret:0x%x, priv_flag:0x%x", ret, pVideoDecData->priv_flag);
             } 
             else 
             {
-                aloge("fatal error! resolution change is not process done, can't decode!");
+                LOGE("fatal error! resolution change is not process done, can't decode!");
                 TMessage_WaitQueueNotEmpty(&pVideoDecData->cmd_queue, 0);
                 goto PROCESS_MESSAGE;
             }
@@ -3872,7 +3872,7 @@ PROCESS_MESSAGE:
                || ret == VDECODE_RESULT_KEYFRAME_DECODED
                )
             {
-                alogv("dec_itl[%lld], ret[0x%x]", end_time - start_time, ret);
+                LOGV("dec_itl[%lld], ret[0x%x]", end_time - start_time, ret);
                 pVideoDecData->mTotalDecodeDuration += end_time - start_time;
                 if (ret == VDECODE_RESULT_FRAME_DECODED || ret == VDECODE_RESULT_KEYFRAME_DECODED)
                 {
@@ -3883,7 +3883,7 @@ PROCESS_MESSAGE:
 
             if (pVideoDecData->mbChangeGraphicBufferProducer) 
             {
-                alogd("vdeclib ret[%d] when changeGraphicBufferProducer!", ret);
+                LOGD("vdeclib ret[%d] when changeGraphicBufferProducer!", ret);
                 
                 // continue get release frames as many as possible, and free its ionUserHandle.
                 VDANWBuffer *pVdAnb;
@@ -3901,17 +3901,17 @@ PROCESS_MESSAGE:
                         }
                         if (nNeedReleaseBufferNum > 0) 
                         {
-                            alogw("Low probability, not request all releasePictures, left [%d]frames", nNeedReleaseBufferNum);
+                            LOGW("Low probability, not request all releasePictures, left [%d]frames", nNeedReleaseBufferNum);
                         }
                         break;
                     }
                     pVdAnb = searchVDANWBufferListByVideoPicture(&pVideoDecData->mPreviousANWBuffersList, pReleasePicture);
                     if (NULL == pVdAnb) 
                     {
-                        aloge("fatal error! not find release VideoPicture!");
+                        LOGE("fatal error! not find release VideoPicture!");
                         abort();
                     }
-                    alogd("ion_free: handle_ion[%p]", pReleasePicture->pPrivate);
+                    LOGD("ion_free: handle_ion[%p]", pReleasePicture->pPrivate);
                     //ion_free(pVideoDecData->mIonFd, pVdAnb->mIonUserHandle);
                     struct ion_handle_data handleData = {
                         .handle = pVdAnb->mIonUserHandle,
@@ -3930,7 +3930,7 @@ PROCESS_MESSAGE:
             if ((VDECODE_RESULT_KEYFRAME_DECODED == ret || VDECODE_RESULT_FRAME_DECODED == ret)) 
             {// Get one frame
                 
-                //alogv("cedar dec ret:%d totalframe:%d",ret,pVideoDecData->total_dec_frames++);
+                //LOGV("cedar dec ret:%d totalframe:%d",ret,pVideoDecData->total_dec_frames++);
                 
                 //check if need signal emptyVbs ready.
                 if (FALSE == pVideoDecData->mInputPortTunnelFlag) 
@@ -3954,11 +3954,11 @@ PROCESS_MESSAGE:
                     pthread_mutex_lock(&pVideoDecData->mOutFrameListMutex);
                     if (list_empty(&pVideoDecData->mIdleOutFrameList)) 
                     {// Output buffer full, malloc new block
-                        aloge("fatal error! idle out frame list is empty, wait");
+                        LOGE("fatal error! idle out frame list is empty, wait");
                         VDecCompOutputFrame *pNewNode = malloc(sizeof(VDecCompOutputFrame));
                         if (NULL == pNewNode) 
                         {
-                            aloge("fatal error! malloc fail! turn to stateInvalid!");
+                            LOGE("fatal error! malloc fail! turn to stateInvalid!");
                             pVideoDecData->pCallbacks->EventHandler(pVideoDecData->hSelf, pVideoDecData->pAppData, COMP_EventError, ERR_VDEC_NOMEM, 0, NULL);
                             pVideoDecData->state = COMP_StateInvalid;
                             pthread_mutex_unlock(&pVideoDecData->mOutFrameListMutex);
@@ -3979,11 +3979,11 @@ PROCESS_MESSAGE:
                             pOutFrame->mpSubPicture = RequestPicture(pCedarV, 1 /*the sub stream*/);
                             if(NULL == pOutFrame->mpSubPicture)
                             {
-                                aloge("fatal error! why the sub output can not get stream?");
+                                LOGE("fatal error! why the sub output can not get stream?");
                                 pthread_mutex_unlock(&pVideoDecData->mOutFrameListMutex);
                                 break;
                             }
-//                            alogd("main[%d,%d,%dx%d], sub[%d,%d,%dx%d]",
+//                            LOGD("main[%d,%d,%dx%d], sub[%d,%d,%dx%d]",
 //                                pOutFrame->mpPicture->nLeftOffset, pOutFrame->mpPicture->nTopOffset,
 //                                pOutFrame->mpPicture->nRightOffset - pOutFrame->mpPicture->nLeftOffset, 
 //                                pOutFrame->mpPicture->nBottomOffset - pOutFrame->mpPicture->nTopOffset,
@@ -3999,7 +3999,7 @@ PROCESS_MESSAGE:
                         if (pic_id % 30 == 0) 
                         {
                             FILE *fp_yuv = fopen("/mnt/extsd/yuv.dat", "a+");
-                            alogd("pict->nWidth(%d), pict->nHeight(%d)", pOutFrame->mpPicture->nWidth,
+                            LOGD("pict->nWidth(%d), pict->nHeight(%d)", pOutFrame->mpPicture->nWidth,
                                   pOutFrame->mpPicture->nHeight);
                             fwrite(pOutFrame->mpPicture->pData0, 1,
                                    pOutFrame->mpPicture->nWidth * pOutFrame->mpPicture->nHeight, fp_yuv);
@@ -4048,7 +4048,7 @@ PROCESS_MESSAGE:
                 } 
                 else 
                 {
-                    //alogd("Low probability! vdecLib has empty frame[%d] after decode_no_frame!", emptyFrameNum);
+                    //LOGD("Low probability! vdecLib has empty frame[%d] after decode_no_frame!", emptyFrameNum);
                     pthread_mutex_unlock(&pVideoDecData->mOutFrameListMutex);
                 }
                 goto PROCESS_MESSAGE;
@@ -4064,7 +4064,7 @@ PROCESS_MESSAGE:
                         pVideoDecData->exit_counter++;
                         continue;
                     }
-                    alogd("VideoDec notify EOF");
+                    LOGD("VideoDec notify EOF");
                     pVideoDecData->pCallbacks->EventHandler(pVideoDecData->hSelf, pVideoDecData->pAppData, COMP_EventBufferFlag, 0, 0, NULL);
                     pVideoDecData->mbEof = TRUE;
                     continue;
@@ -4073,7 +4073,7 @@ PROCESS_MESSAGE:
                 int streamSize = VideoStreamDataSize(pCedarV, 0);
                 if (streamSize > 0 && pVideoDecData->mNoBitstreamCounter < 2) 
                 {
-                    //alogd("Low probability! vdecLib has bitstream[%d]!", streamSize);
+                    //LOGD("Low probability! vdecLib has bitstream[%d]!", streamSize);
                     pthread_mutex_unlock(&pVideoDecData->mVbsInputMutex);
                 } 
                 else 
@@ -4087,13 +4087,13 @@ PROCESS_MESSAGE:
             else if (ret <= VDECODE_RESULT_UNSUPPORTED) 
             {
                 //* CXC, unsupported stream, may be stream format not supported or memory allocation for frame buffers fail.
-                aloge("fatal error! cedarv dec error 0 ret[%d]", ret);
+                LOGE("fatal error! cedarv dec error 0 ret[%d]", ret);
                 pVideoDecData->pCallbacks->EventHandler(pVideoDecData->hSelf, pVideoDecData->pAppData, COMP_EventError, ERR_VDEC_INVALIDSTATE, 0, NULL);
                 pVideoDecData->state = COMP_StateInvalid;
             } 
             else if (ret == VDECODE_RESULT_RESOLUTION_CHANGE) 
             {
-                alogd("detect video picture resolution change!");
+                LOGD("detect video picture resolution change!");
                 //request and send all frames to videoRender.
                 pVideoDecData->mResolutionChangeFlag = TRUE;
                 int releaseRet;
@@ -4102,7 +4102,7 @@ PROCESS_MESSAGE:
                     pthread_mutex_lock(&pVideoDecData->mOutFrameListMutex);
                     if (list_empty(&pVideoDecData->mIdleOutFrameList)) 
                     {
-                        aloge("fatal error! idle out frame list is empty, wait");
+                        LOGE("fatal error! idle out frame list is empty, wait");
                         pthread_mutex_unlock(&pVideoDecData->mOutFrameListMutex);
                         if (TMessage_WaitQueueNotEmpty(&pVideoDecData->cmd_queue, 200) > 0) 
                         {
@@ -4139,7 +4139,7 @@ PROCESS_MESSAGE:
                             {
                                 if (ERR_VDEC_INCORRECT_STATE_OPERATION == omxRet) 
                                 {
-                                    alogd(
+                                    LOGD(
                                       "Be careful! VDec output frame fail[0x%x], maybe next component status is "
                                       "Loaded, return frame!",
                                       omxRet);
@@ -4147,7 +4147,7 @@ PROCESS_MESSAGE:
                                 releaseRet = ReturnPicture(pCedarV, (VideoPicture *)pOutFrame->mpPicture);
                                 if (releaseRet != 0) 
                                 {
-                                    aloge("fatal error! Return Picture() fail ret[%d]", ret);
+                                    LOGE("fatal error! Return Picture() fail ret[%d]", ret);
                                 }
                                 pthread_mutex_lock(&pVideoDecData->mOutFrameListMutex);
                                 list_add(&pOutFrame->mList, &pVideoDecData->mIdleOutFrameList);
@@ -4182,7 +4182,7 @@ PROCESS_MESSAGE:
             } 
             else 
             {
-                aloge("fatal error! ret[%d]", ret);
+                LOGE("fatal error! ret[%d]", ret);
             }
         } 
         else 
@@ -4192,7 +4192,7 @@ PROCESS_MESSAGE:
     }
 
 EXIT:
-    alogv("VideoDecoder ComponentThread stopped");
+    LOGV("VideoDecoder ComponentThread stopped");
     return (void *)SUCCESS;
 }
 
@@ -4273,7 +4273,7 @@ ERRORTYPE VideoDecRotateFrame(const VideoPicture *pSrc, VideoPicture *pDst, VIDE
             nRotation = 270;
             break;
         default:
-            aloge("fatal error! cedarv rotation[%d] is not support!", pVideoDecData->cedarv_rotation);
+            LOGE("fatal error! cedarv rotation[%d] is not support!", pVideoDecData->cedarv_rotation);
             nRotation = 0;
             break;
     }
@@ -4283,12 +4283,12 @@ ERRORTYPE VideoDecRotateFrame(const VideoPicture *pSrc, VideoPicture *pDst, VIDE
     ERRORTYPE ret = SUCCESS;
     if (nRotation != 90 && nRotation != 180 && nRotation != 270)
     {
-        aloge("fatal error! rotation[%d] is invalid!", nRotation);
+        LOGE("fatal error! rotation[%d] is invalid!", nRotation);
         return ERR_VDEC_ILLEGAL_PARAM;
     }
     if(pVideoDecData->mG2DHandle < 0)
     {
-        aloge("fatal error! g2d driver[%d] is not valid, can't rotate!", pVideoDecData->mG2DHandle);
+        LOGE("fatal error! g2d driver[%d] is not valid, can't rotate!", pVideoDecData->mG2DHandle);
         return ERR_VDEC_SYS_NOTREADY;
     }
     g2d_data_fmt    eSrcFormat, eDstFormat;
@@ -4297,13 +4297,13 @@ ERRORTYPE VideoDecRotateFrame(const VideoPicture *pSrc, VideoPicture *pDst, VIDE
     eError = convert_EPIXELFORMAT_to_G2dFormat((enum EPIXELFORMAT)pSrc->ePixelFormat, &eSrcFormat, &eSrcPixelSeq);
     if(eError!=SUCCESS)
     {
-        aloge("fatal error! src pixel format[0x%x] is invalid!", pSrc->ePixelFormat);
+        LOGE("fatal error! src pixel format[0x%x] is invalid!", pSrc->ePixelFormat);
         return ERR_VDEC_ILLEGAL_PARAM;
     }
     eError = convert_EPIXELFORMAT_to_G2dFormat((enum EPIXELFORMAT)pDst->ePixelFormat, &eDstFormat, &eDstPixelSeq);
     if(eError!=SUCCESS)
     {
-        aloge("fatal error! dst pixel format[0x%x] is invalid!", pDst->ePixelFormat);
+        LOGE("fatal error! dst pixel format[0x%x] is invalid!", pDst->ePixelFormat);
         return ERR_VDEC_ILLEGAL_PARAM;
     }
     memset(&blit_para, 0, sizeof(g2d_blt));
@@ -4341,7 +4341,7 @@ ERRORTYPE VideoDecRotateFrame(const VideoPicture *pSrc, VideoPicture *pDst, VIDE
             blit_para.flag = G2D_BLT_ROTATE270;
             break;
         default:
-            aloge("fatal error! rotation[%d] is invalid!", nRotation);
+            LOGE("fatal error! rotation[%d] is invalid!", nRotation);
             blit_para.flag = G2D_BLT_NONE;
             break;
     }
@@ -4349,7 +4349,7 @@ ERRORTYPE VideoDecRotateFrame(const VideoPicture *pSrc, VideoPicture *pDst, VIDE
     err = ioctl(pVideoDecData->mG2DHandle, G2D_CMD_BITBLT, (unsigned long)&blit_para);
     if(err < 0)
     {
-        aloge("fatal error! bit-block(image) transfer failed");
+        LOGE("fatal error! bit-block(image) transfer failed");
         system("cd /sys/class/sunxi_dump;echo 0x14A8000,0x14A8100 > dump;cat dump");
         ret = ERR_VDEC_SYS_NOTREADY;
     }
@@ -4361,12 +4361,12 @@ ERRORTYPE VideoDecRotateFrame(const VideoPicture *pSrc, VideoPicture *pDst, VIDE
     status_t    ret = SUCCESS;
     if (nRotation != 90 && nRotation != 180 && nRotation != 270 && nRotation != 360)
     {
-        aloge("fatal error! rotation[%d] is invalid!", nRotation);
+        LOGE("fatal error! rotation[%d] is invalid!", nRotation);
         return ERR_VDEC_ILLEGAL_PARAM;
     }
     if(pVideoDecData->mG2DHandle < 0)
     {
-        aloge("fatal error! g2d driver[%d] is not valid, can't rotate!", pVideoDecData->mG2DHandle);
+        LOGE("fatal error! g2d driver[%d] is not valid, can't rotate!", pVideoDecData->mG2DHandle);
         return ERR_VDEC_SYS_NOTREADY;
     }
     g2d_fmt_enh eSrcFormat, eDstFormat;
@@ -4374,13 +4374,13 @@ ERRORTYPE VideoDecRotateFrame(const VideoPicture *pSrc, VideoPicture *pDst, VIDE
     eError = convert_EPIXELFORMAT_to_g2d_fmt_enh(pSrc->ePixelFormat, &eSrcFormat);
     if(eError!=SUCCESS)
     {
-        aloge("fatal error! src pixel format[0x%x] is invalid!", pSrc->ePixelFormat);
+        LOGE("fatal error! src pixel format[0x%x] is invalid!", pSrc->ePixelFormat);
         return ERR_VDEC_ILLEGAL_PARAM;
     }
     eError = convert_EPIXELFORMAT_to_g2d_fmt_enh(pDst->ePixelFormat, &eDstFormat);
     if(eError!=SUCCESS)
     {
-        aloge("fatal error! dst pixel format[0x%x] is invalid!", pDst->ePixelFormat);
+        LOGE("fatal error! dst pixel format[0x%x] is invalid!", pDst->ePixelFormat);
         return ERR_VDEC_ILLEGAL_PARAM;
     }
 
@@ -4398,7 +4398,7 @@ ERRORTYPE VideoDecRotateFrame(const VideoPicture *pSrc, VideoPicture *pDst, VIDE
             blit.flag_h = G2D_ROT_270;
             break;
         default:
-            aloge("fatal error! rotation[%d] is invalid!", nRotation);
+            LOGE("fatal error! rotation[%d] is invalid!", nRotation);
             blit.flag_h = G2D_BLT_NONE_0;
             break;
     }
@@ -4446,12 +4446,12 @@ ERRORTYPE VideoDecRotateFrame(const VideoPicture *pSrc, VideoPicture *pDst, VIDE
     err = ioctl(pVideoDecData->mG2DHandle, G2D_CMD_BITBLT_H, (unsigned long)&blit);
     if(err < 0)
     {
-        aloge("fatal error! bit-block(image) transfer failed");
+        LOGE("fatal error! bit-block(image) transfer failed");
         system("cd /sys/class/sunxi_dump;echo 0x14A8000,0x14A8100 > dump;cat dump");
         ret = ERR_VDEC_SYS_NOTREADY;
     }
 
-    //alogd("debug g2d[0x%x]: virAddr[0x%x][0x%x], phyAddr[0x%x][0x%x], size[%dx%d]", pVideoDecData->mG2DHandle,
+    //LOGD("debug g2d[0x%x]: virAddr[0x%x][0x%x], phyAddr[0x%x][0x%x], size[%dx%d]", pVideoDecData->mG2DHandle,
     //    pDst->pData0, pDst->pData1, pDst->phyYBufAddr, pDst->phyCBufAddr,
     //    pDst->nWidth, pDst->nHeight);
     //memset(pDes->VFrame.mpVirAddr[0], 0xff, pDes->VFrame.mWidth * pDes->VFrame.mHeight);
@@ -4470,7 +4470,7 @@ static void *VideoDecCompFrameBufferThread(void *pThreadData)
     
     VIDEODECDATATYPE *pVideoDecData = (VIDEODECDATATYPE *)pThreadData;
 
-    alogv("VideoDecoder CompFrameBufferThread start run...");
+    LOGV("VideoDecoder CompFrameBufferThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"MPP_VDecCompFrameBuffer", 0, 0, 0);
 
     while (1) 
@@ -4486,7 +4486,7 @@ PROCESS_MESSAGE:
             {// State transition command
                 if (pVideoDecData->mCompFBThreadState == (COMP_STATETYPE)(cmddata))
                 {
-                    alogd("comp FBThread same state[0x%x]", pVideoDecData->mCompFBThreadState);
+                    LOGD("comp FBThread same state[0x%x]", pVideoDecData->mCompFBThreadState);
                 }
                 else 
                 {
@@ -4498,9 +4498,9 @@ PROCESS_MESSAGE:
                         {
                             if (pVideoDecData->mCompFBThreadState != COMP_StateIdle)
                             {
-                                aloge("fatal error! VDecCompFBThread incorrect state transition [0x%x]->Loaded!", pVideoDecData->mCompFBThreadState);
+                                LOGE("fatal error! VDecCompFBThread incorrect state transition [0x%x]->Loaded!", pVideoDecData->mCompFBThreadState);
                             }
-                            alogd("return all VDec used frames");
+                            LOGD("return all VDec used frames");
                             pthread_mutex_lock(&pVideoDecData->mOutFrameListMutex);
                             if (!list_empty(&pVideoDecData->mUsedOutFrameList))
                             {
@@ -4511,7 +4511,7 @@ PROCESS_MESSAGE:
                                     int ret = ReturnPicture(pVideoDecData->pCedarV, (VideoPicture *)pEntry->mpPicture);
                                     if (ret != 0) 
                                     {
-                                        aloge("fatal error! Return Picture() fail ret[%d]", ret);
+                                        LOGE("fatal error! Return Picture() fail ret[%d]", ret);
                                     }
                                     list_move_tail(&pEntry->mList, &pVideoDecData->mIdleOutFrameList);
                                     
@@ -4524,7 +4524,7 @@ PROCESS_MESSAGE:
                                     }
                                     cnt++;
                                 }
-                                alogd("VDec CompFBThread release [%d]used frames!", cnt);
+                                LOGD("VDec CompFBThread release [%d]used frames!", cnt);
                                 
                                 if (pVideoDecData->mWaitOutFrameFullFlag) 
                                 {
@@ -4539,7 +4539,7 @@ PROCESS_MESSAGE:
                             }
                             pthread_mutex_unlock(&pVideoDecData->mOutFrameListMutex);
                             
-                            alogd("wait VDec CompIdleOutFrameList full");
+                            LOGD("wait VDec CompIdleOutFrameList full");
                             pthread_mutex_lock(&pVideoDecData->mCompOutFramesLock);
                             
                             pVideoDecData->mbCompFBThreadWaitOutFrameFull = TRUE;
@@ -4552,7 +4552,7 @@ PROCESS_MESSAGE:
                                 list_for_each(pList, &pVideoDecData->mCompReadyOutFrameList) { cnt++; }
                                 if (cnt < VDEC_COMP_FRAME_COUNT)
                                 {
-                                    alogd("wait CompIdleOutFrameList [%d]nodes to home", VDEC_COMP_FRAME_COUNT - cnt);
+                                    LOGD("wait CompIdleOutFrameList [%d]nodes to home", VDEC_COMP_FRAME_COUNT - cnt);
                                     pthread_cond_wait(&pVideoDecData->mCompFBThreadOutFrameFullCondition, &pVideoDecData->mCompOutFramesLock);
                                 } 
                                 else 
@@ -4562,7 +4562,7 @@ PROCESS_MESSAGE:
                             }
                             pVideoDecData->mbCompFBThreadWaitOutFrameFull = FALSE;
                             pthread_mutex_unlock(&pVideoDecData->mCompOutFramesLock);
-                            alogd("wait VDec CompIdleOutFrameList full done");
+                            LOGD("wait VDec CompIdleOutFrameList full done");
 
                             pthread_mutex_lock(&pVideoDecData->mCompFBThreadStateLock);
                             pVideoDecData->mCompFBThreadState = COMP_StateLoaded;
@@ -4572,7 +4572,7 @@ PROCESS_MESSAGE:
                         }
                         case COMP_StateIdle:
                         {
-                            alogd("VDec CompFBThread state[0x%x]->Idle!", pVideoDecData->mCompFBThreadState);
+                            LOGD("VDec CompFBThread state[0x%x]->Idle!", pVideoDecData->mCompFBThreadState);
                             pthread_mutex_lock(&pVideoDecData->mCompFBThreadStateLock);
                             pVideoDecData->mCompFBThreadState = COMP_StateIdle;
                             pthread_cond_signal(&pVideoDecData->mCondCompFBThreadState);
@@ -4591,13 +4591,13 @@ PROCESS_MESSAGE:
                             } 
                             else
                             {
-                                aloge("fatal error! wrong state[0x%x]->executing", pVideoDecData->mCompFBThreadState);
+                                LOGE("fatal error! wrong state[0x%x]->executing", pVideoDecData->mCompFBThreadState);
                             }
                             break;
                         }
                         default:
                         {
-                            aloge("fatal error! wrong dst state[0x%x]", cmddata);
+                            LOGE("fatal error! wrong dst state[0x%x]", cmddata);
                             break;
                         }
                     }
@@ -4610,11 +4610,11 @@ PROCESS_MESSAGE:
             } 
             else if (cmd == VDecComp_CompFrameBufferThread_InputFrameAvailable)
             {
-                alogv("VDec CompFBThread input frame available");
+                LOGV("VDec CompFBThread input frame available");
             } 
             else if (cmd == VDecComp_CompFrameBufferThread_OutFrameAvailable)
             {
-                alogv("VDec CompFBThread out frame available");
+                LOGV("VDec CompFBThread out frame available");
             } 
             //precede to process message
             goto PROCESS_MESSAGE;
@@ -4622,7 +4622,7 @@ PROCESS_MESSAGE:
         
         if (!pVideoDecData->mbUseCompFrame)
         {
-            aloge("fatal error! useCompFrame is false");
+            LOGE("fatal error! useCompFrame is false");
             TMessage_WaitQueueNotEmpty(&pVideoDecData->mCompFrameBufferThreadMessageQueue, 0);
             goto PROCESS_MESSAGE;
         }
@@ -4657,7 +4657,7 @@ PROCESS_MESSAGE:
             pOutputFrame = list_first_entry(&pVideoDecData->mCompIdleOutFrameList, VDecCompOutputFrame, mList);
             if (NULL == pOutputFrame->mpPicture)
             {
-                alogd("need init compFrame!");
+                LOGD("need init compFrame!");
                 ret = CompFrameInit(pOutputFrame, pInputFrame->mpPicture, pVideoDecData->cedarv_rotation);
                 if(ret != SUCCESS)
                 {
@@ -4695,15 +4695,15 @@ PROCESS_MESSAGE:
                     int commonErrCode = omxRet&0x1FFF;
                     if (EN_ERR_INCORRECT_STATE_OPERATION == commonErrCode) 
                     {
-                        alogd("Be careful! VDec output frame fail[0x%x], maybe next component status is Loaded, return frame!", omxRet);
+                        LOGD("Be careful! VDec output frame fail[0x%x], maybe next component status is Loaded, return frame!", omxRet);
                     }
                     else if(EN_ERR_SYS_NOTREADY == commonErrCode)
                     {
-                        alogv("frame is ignored.");
+                        LOGV("frame is ignored.");
                     }
                     else
                     {
-                        aloge("fatal error! errCode[0x%x]", omxRet);
+                        LOGE("fatal error! errCode[0x%x]", omxRet);
                     }
                     pthread_mutex_lock(&pVideoDecData->mCompOutFramesLock);
                     list_move(&pOutputFrame->mList, &pVideoDecData->mCompIdleOutFrameList);
@@ -4733,7 +4733,7 @@ _SelfFrameErr0:
                     int releaseRet = ReturnPicture(pVideoDecData->pCedarV, (VideoPicture *)pEntry->mpPicture);
                     if (releaseRet != 0)
                     {
-                        aloge("fatal error! Return Picture() fail ret[%d]", releaseRet);
+                        LOGE("fatal error! Return Picture() fail ret[%d]", releaseRet);
                     }
                 }
                 list_splice_tail_init(&pVideoDecData->mUsedOutFrameList, &pVideoDecData->mIdleOutFrameList);
@@ -4748,7 +4748,7 @@ _SelfFrameErr0:
     }
 
 EXIT:
-    alogv("VideoDec CompFrameBufferThread stopped");
+    LOGV("VideoDec CompFrameBufferThread stopped");
     return (void *)SUCCESS;
 }
 

@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "videoInput"
-#include <utils/plat_log.h>
+#include <log/log.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -64,7 +64,7 @@ static ERRORTYPE uvc_query(int fd, int cmd_id, const char *cmd_name, struct v4l2
         queryctrl->id = cmd_id;
         if(ioctl(fd, VIDIOC_QUERYCTRL, queryctrl) < 0)
         {
-            aloge("failed query %s, %s", cmd_name, strerror(errno));
+            LOGE("failed query %s, %s", cmd_name, strerror(errno));
         }
         else
         {
@@ -149,7 +149,7 @@ ERRORTYPE uvcInput_Construct(UVC_DEV UvcDev, int fd)
     pthread_mutex_lock(&gpUvcDevManager->mUvcDevManagerLock);
     if(SUCCESS == uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager))
     {
-        alogd("the UVC %s had open!", UvcDev);
+        LOGD("the UVC %s had open!", UvcDev);
         pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
         bResult = SUCCESS;
         return bResult;
@@ -165,7 +165,7 @@ ERRORTYPE uvcInput_Construct(UVC_DEV UvcDev, int fd)
     }
     if(UVC_MAX_CHN_NUM == i)
     {
-        aloge("the UVC Dev had enough, it had %d now", UVC_MAX_CHN_NUM);
+        LOGE("the UVC Dev had enough, it had %d now", UVC_MAX_CHN_NUM);
         pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
         return bResult;            
     }
@@ -173,7 +173,7 @@ ERRORTYPE uvcInput_Construct(UVC_DEV UvcDev, int fd)
     UvcChnManager *pUvcChnManager = (UvcChnManager *)malloc(sizeof *pUvcChnManager);
     if(NULL == pUvcChnManager)
     {
-        aloge("alloc %s UVC UvcChnManager error(%s)!", UvcDev, strerror(errno));        
+        LOGE("alloc %s UVC UvcChnManager error(%s)!", UvcDev, strerror(errno));        
         pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
         return bResult;
     }
@@ -181,7 +181,7 @@ ERRORTYPE uvcInput_Construct(UVC_DEV UvcDev, int fd)
     memset(pUvcChnManager, 0, sizeof *pUvcChnManager);
     if(strlen(UvcDev) >= UVC_MAX_DEV_NAME)
     {
-        aloge("the dev name %s had over %d", UvcDev, UVC_MAX_DEV_NAME);
+        LOGE("the dev name %s had over %d", UvcDev, UVC_MAX_DEV_NAME);
         goto error;
     }
     memcpy(pUvcChnManager->mUvcDevName, UvcDev, strlen(UvcDev)+1);
@@ -218,7 +218,7 @@ error:
        
         if(!list_empty(&pUvcChnManager->mChnList))
         {
-            aloge("fatal error! the % UVC had some channel still running when destroy it!");
+            LOGE("fatal error! the % UVC had some channel still running when destroy it!");
             goto Label;                  
         }
         //ummap
@@ -231,7 +231,7 @@ error:
                 {
                     if(munmap(pUvcChnManager->mpVideoBuffer[i], bufferlength) < 0)
                     {
-                        aloge("the %s UVC munmap buffer[%d] fail, %s", UvcDev, i, strerror(errno));                        
+                        LOGE("the %s UVC munmap buffer[%d] fail, %s", UvcDev, i, strerror(errno));                        
                     }
                 }
             }
@@ -270,7 +270,7 @@ ERRORTYPE UVC_Construct(void)
     gpUvcDevManager = (UvcDevManager *)malloc(sizeof(UvcDevManager));
     if(NULL == gpUvcDevManager)
     {
-        aloge("alloc gpUvcDevManager fail, %", strerror(errno));
+        LOGE("alloc gpUvcDevManager fail, %", strerror(errno));
         return bResult;
     }
     memset(gpUvcDevManager, 0, sizeof *gpUvcDevManager); 
@@ -291,7 +291,7 @@ ERRORTYPE UVC_Destruct(void)
             {
                 if(uvcInput_Destruct(gpUvcDevManager->mUvcChnManager[i]->mUvcDevName) != SUCCESS)
                 {
-                    aloge("can not destrcut % UVC", gpUvcDevManager->mUvcChnManager[i]->mUvcDevName);
+                    LOGE("can not destrcut % UVC", gpUvcDevManager->mUvcChnManager[i]->mUvcDevName);
                     return FAILURE;
                 }
             }            
@@ -309,7 +309,7 @@ UVC_CHN_MAP_S *uvcInput_CHN_MAP_S_Construct()
     UVC_CHN_MAP_S *pChnnel = (UVC_CHN_MAP_S *)malloc(sizeof(UVC_CHN_MAP_S));
     if(NULL == pChnnel)
     {
-        aloge("fatal error! malloc fail [%s]", strerror(errno));
+        LOGE("fatal error! malloc fail [%s]", strerror(errno));
         return NULL;
     }
     memset(pChnnel, 0, sizeof *pChnnel);
@@ -323,7 +323,7 @@ void uvcInput_CHN_MAP_S_Destruct(UVC_CHN_MAP_S *pChnnel)
     {
         if(pChnnel->mUvcComp)
         {
-            aloge("fatal error!, the %d channel componet need free before!", pChnnel->mUvcChn);
+            LOGE("fatal error!, the %d channel componet need free before!", pChnnel->mUvcChn);
             COMP_FreeHandle(pChnnel->mUvcComp);
             pChnnel->mUvcComp = NULL;
         }
@@ -344,7 +344,7 @@ ERRORTYPE uvcInput_addChannel(UVC_DEV UvcDev, UVC_CHN_MAP_S *pChn)
         UvcChnManager **ppUvcChnManager = NULL;
         if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
         {
-            aloge("fatal error! can not found %s UVC", UvcDev);
+            LOGE("fatal error! can not found %s UVC", UvcDev);
             pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
             return bResult;
         }
@@ -369,7 +369,7 @@ ERRORTYPE uvcInput_removeChannel(UVC_DEV UvcDev, UVC_CHN_MAP_S *pChn)
         UvcChnManager **ppUvcChnManager = NULL;
         if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
         {
-            aloge("fatal error! can not found %s UVC", UvcDev);
+            LOGE("fatal error! can not found %s UVC", UvcDev);
             pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
             return bResult;
         }
@@ -392,13 +392,13 @@ ERRORTYPE uvcInput_Open_Video(UVC_DEV UvcDev)
         int fd = open(UvcDev, O_RDWR, 0);
         if(fd < 0)
         {
-            aloge("the open %d UVC Camera fail!", UvcDev);
+            LOGE("the open %d UVC Camera fail!", UvcDev);
             return bResult;
         }
 
         if(uvcInput_Construct(UvcDev, fd) != SUCCESS)
         {
-            aloge("the %s UVC do not construct!", UvcDev);
+            LOGE("the %s UVC do not construct!", UvcDev);
             uvcInput_Destruct(UvcDev);
             return bResult;
         }
@@ -414,7 +414,7 @@ ERRORTYPE uvcInput_Close_Video(UVC_DEV UvcDev)
     {
         if(uvcInput_Destruct(UvcDev) != SUCCESS)
         {
-            aloge("the %s UVC do not destruct, and it means can not close fd", UvcDev);
+            LOGE("the %s UVC do not destruct, and it means can not close fd", UvcDev);
             return bResult;
         }
         
@@ -433,7 +433,7 @@ ERRORTYPE uvcInput_SetDevEnable(UVC_DEV UvcDev)
         UvcChnManager **ppUvcChnManager = NULL;
         if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
         {
-            aloge("fatal error! can not found %s UVC", UvcDev);
+            LOGE("fatal error! can not found %s UVC", UvcDev);
             pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
             return bResult;
         }
@@ -444,7 +444,7 @@ ERRORTYPE uvcInput_SetDevEnable(UVC_DEV UvcDev)
             int buffer_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
             if(ioctl(uvc_fd, VIDIOC_STREAMON, &buffer_type) < 0)
             {
-                aloge("the %UVC fail to start capture, %s", UvcDev, strerror(errno));
+                LOGE("the %UVC fail to start capture, %s", UvcDev, strerror(errno));
                 pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
                 return bResult;
             }
@@ -458,7 +458,7 @@ ERRORTYPE uvcInput_SetDevEnable(UVC_DEV UvcDev)
         }
         else
         {
-            alogd("Be careful! uvcDev[%s] already enable!", UvcDev);
+            LOGD("Be careful! uvcDev[%s] already enable!", UvcDev);
             bResult = SUCCESS;
         }
         pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
@@ -476,7 +476,7 @@ ERRORTYPE uvcInput_SetDevDisable(UVC_DEV UvcDev)
         UvcChnManager **ppUvcChnManager = NULL;
         if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
         {
-            aloge("fatal error! can not found %s UVC", UvcDev);
+            LOGE("fatal error! can not found %s UVC", UvcDev);
             pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
             return bResult;
         }
@@ -487,7 +487,7 @@ ERRORTYPE uvcInput_SetDevDisable(UVC_DEV UvcDev)
             int buffer_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
             if(ioctl(uvc_fd, VIDIOC_STREAMOFF, &buffer_type) < 0)
             {
-                aloge("the %s fail to stop capture, %s", UvcDev, strerror(errno));
+                LOGE("the %s fail to stop capture, %s", UvcDev, strerror(errno));
                 //pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
                 //return bResult;
             }  
@@ -509,7 +509,7 @@ ERRORTYPE uvcInput_SetDevDisable(UVC_DEV UvcDev)
         }     
         else
         {
-            alogd("Be careful! uvcDev[%s] already disable!", UvcDev);
+            LOGD("Be careful! uvcDev[%s] already disable!", UvcDev);
         }
         pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
         bResult = SUCCESS;
@@ -528,7 +528,7 @@ ERRORTYPE uvcInput_GetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
         UvcChnManager **ppUvcChnManager = NULL;
         if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
         {
-            aloge("fatal error! can not found %s UVC", UvcDev);
+            LOGE("fatal error! can not found %s UVC", UvcDev);
             pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
             return bResult;
         }
@@ -548,7 +548,7 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
 
     if(!UvcDev || !pAttr)
     {
-        //aloge("fatal error!!");
+        //LOGE("fatal error!!");
         return bResult;
     }
 
@@ -556,7 +556,7 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
     UvcChnManager **ppUvcChnManager = NULL;
     if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
     {
-        aloge("fatal error! can not found %s UVC", UvcDev);
+        LOGE("fatal error! can not found %s UVC", UvcDev);
         goto error;
     }
     UvcChnManager *pUvcChnManager = *ppUvcChnManager;
@@ -567,25 +567,25 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
     memset(&cap, 0, sizeof cap);
     if(ioctl(uvc_fd, VIDIOC_QUERYCAP, &cap) < 0)
     {
-        aloge(" the %s UVC fail to ioctl VIDIOC_QUERYCAP", UvcDev);
+        LOGE(" the %s UVC fail to ioctl VIDIOC_QUERYCAP", UvcDev);
         goto error;
     }
     capabilities = cap.device_caps ? : cap.capabilities;
     if(capabilities & V4L2_CAP_VIDEO_CAPTURE)
     {       
-        alogd("the %s UVC support video capture!", UvcDev);        
+        LOGD("the %s UVC support video capture!", UvcDev);        
     }
     else
     {
-        aloge("the %s UVC not support video capture!", UvcDev);
+        LOGE("the %s UVC not support video capture!", UvcDev);
         goto error;
     }
 
 #ifdef SHOW_INFO_OF_UVC
-    alogd("the %s UVC driver is %s", UvcDev, cap.driver);
-    alogd("the %s UVC card is %s", UvcDev, cap.card);
-    alogd("the %s UVC bus info is %s", UvcDev, cap.bus_info);
-    alogd("the version is %d", cap.version);
+    LOGD("the %s UVC driver is %s", UvcDev, cap.driver);
+    LOGD("the %s UVC card is %s", UvcDev, cap.card);
+    LOGD("the %s UVC bus info is %s", UvcDev, cap.bus_info);
+    LOGD("the version is %d", cap.version);
 #endif
 
     struct v4l2_fmtdesc fmt;
@@ -597,10 +597,10 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
     while(ioctl(uvc_fd, VIDIOC_ENUM_FMT, &fmt) == 0)
     {
         fmt.index++;
-        alogd("the %s UVC device can support %s capture pixelformat[0x%x]", UvcDev, fmt.description, fmt.pixelformat);  //UVC_NV12
+        LOGD("the %s UVC device can support %s capture pixelformat[0x%x]", UvcDev, fmt.description, fmt.pixelformat);  //UVC_NV12
         if(fmt.pixelformat == pAttr->mPixelformat)
         {
-            alogd("Congratulation: the %s UVC support %s capture pixelformat", UvcDev, fmt.description);
+            LOGD("Congratulation: the %s UVC support %s capture pixelformat", UvcDev, fmt.description);
             support_pixelformat = 1;
             nMatchFormatNum++;
             
@@ -612,24 +612,24 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
             format.fmt.pix.height = pAttr->mUvcVideo_Height;
             if(ioctl(uvc_fd, VIDIOC_TRY_FMT, &format) < 0)
             {
-                aloge("the %s UVC unable to set type frame!", UvcDev);
+                LOGE("the %s UVC unable to set type frame!", UvcDev);
                 goto error;
             }
             format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
             if(ioctl(uvc_fd, VIDIOC_S_FMT, &format) < 0)
             {
-                aloge("the %s UVC fail to set frame format!", UvcDev);
+                LOGE("the %s UVC fail to set frame format!", UvcDev);
                 goto error;
             }
             
             if(ioctl(uvc_fd, VIDIOC_G_FMT, &format) < 0)
             {
-                aloge("the %s UVC fail to get frame format!", UvcDev);    
+                LOGE("the %s UVC fail to get frame format!", UvcDev);    
                 goto error;
             }
             if(format.fmt.pix.width != pAttr->mUvcVideo_Width || format.fmt.pix.height != pAttr->mUvcVideo_Height)
             {
-                alogw("Be careful! you can not set %s UVC capture [%dx%d],and now they are [%dx%d]", 
+                LOGW("Be careful! you can not set %s UVC capture [%dx%d],and now they are [%dx%d]", 
                         UvcDev, pAttr->mUvcVideo_Width, pAttr->mUvcVideo_Height,
                         format.fmt.pix.width,  format.fmt.pix.height);
             }
@@ -641,19 +641,19 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
     }
     if(0 == support_pixelformat)
     {
-        aloge("fatal error! Unfortunation: the %s UVC do not support 0x%x pixelformat", UvcDev, pAttr->mPixelformat);
+        LOGE("fatal error! Unfortunation: the %s UVC do not support 0x%x pixelformat", UvcDev, pAttr->mPixelformat);
         goto error;
     }
     if(nMatchFormatNum > 1)
     {
-        alogd("Be careful! format match count[%d] > 1", nMatchFormatNum);
+        LOGD("Be careful! format match count[%d] > 1", nMatchFormatNum);
     }
     struct v4l2_streamparm streamparm;
     memset(&streamparm, 0, sizeof streamparm);
     streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if(ioctl(uvc_fd, VIDIOC_G_PARM, &streamparm) < 0)
     {
-        aloge("the %s UVC failed to get v4l2_streamparm!", UvcDev);
+        LOGE("the %s UVC failed to get v4l2_streamparm!", UvcDev);
         goto error;
     }
     
@@ -664,7 +664,7 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
         streamparm.parm.capture.timeperframe.numerator = 1;
         if(ioctl(uvc_fd, VIDIOC_S_PARM, &streamparm) < 0)
         {
-            aloge("the %s UVC can not set fps as %d, and default as %d", UvcDev, pAttr->mUvcVideo_Fps, fps);
+            LOGE("the %s UVC can not set fps as %d, and default as %d", UvcDev, pAttr->mUvcVideo_Fps, fps);
             pUvcChnManager->mUvcAttr.mUvcVideo_Fps = fps;
         }
         else
@@ -673,7 +673,7 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
             streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
             if(ioctl(uvc_fd, VIDIOC_G_PARM, &streamparm) < 0)
             {
-                aloge("the %s UVC failed to get v4l2_streamparm!", UvcDev);
+                LOGE("the %s UVC failed to get v4l2_streamparm!", UvcDev);
                 pUvcChnManager->mUvcAttr.mUvcVideo_Fps = fps;
             }
             else
@@ -685,7 +685,7 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
                 }
                 else
                 {
-                    aloge("why not can set %s UVC capturerate from %d to %d fps? maybe the device can not support,and now the rate is %d fps!", UvcDev, fps, pAttr->mUvcVideo_Fps, new_fps);
+                    LOGE("why not can set %s UVC capturerate from %d to %d fps? maybe the device can not support,and now the rate is %d fps!", UvcDev, fps, pAttr->mUvcVideo_Fps, new_fps);
                     pUvcChnManager->mUvcAttr.mUvcVideo_Fps = new_fps;                    
                 }
             }
@@ -705,7 +705,7 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
     }
     else
     {
-        alogd("Be careful! user set bufCnt[%d] > max[%d], set to max!", pAttr->mUvcVideo_BufCnt, BUFFER_COUNT);
+        LOGD("Be careful! user set bufCnt[%d] > max[%d], set to max!", pAttr->mUvcVideo_BufCnt, BUFFER_COUNT);
         pUvcChnManager->mUvcAttr.mUvcVideo_BufCnt = BUFFER_COUNT;
     }
     req.count = pUvcChnManager->mUvcAttr.mUvcVideo_BufCnt;
@@ -713,7 +713,7 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
     req.memory = V4L2_MEMORY_MMAP;
     if(ioctl(uvc_fd, VIDIOC_REQBUFS, &req) < 0)
     {
-        aloge("fatal error! the %s UVC reqbufs fail, %s", UvcDev, strerror(errno));
+        LOGE("fatal error! the %s UVC reqbufs fail, %s", UvcDev, strerror(errno));
         goto error;
     }
     
@@ -729,13 +729,13 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
         int bufferlength = 0;
         if(ioctl(uvc_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         {
-            aloge("the %s UVC querybuf fail, %s", strerror(errno));
+            LOGE("the %s UVC querybuf fail, %s", strerror(errno));
             pUvcChnManager->mBufferLength = bufferlength;
             goto error;
         }
         if(bufferindex != buffer.index)
         {
-            aloge("fatal error! index is not same with appointment, [%d]!=[%d]", buffer.index, bufferindex);
+            LOGE("fatal error! index is not same with appointment, [%d]!=[%d]", buffer.index, bufferindex);
         }
         pUvcChnManager->mUvcV4l2BufferInfo[buffer.index] = buffer;
         bufferlength = buffer.length;
@@ -743,14 +743,14 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
                                                         uvc_fd, buffer.m.offset);
         if(MAP_FAILED == pUvcChnManager->mpVideoBuffer[bufferindex])
         {
-            aloge("the %s UVC mmap fail, %s", UvcDev, strerror(errno));
+            LOGE("the %s UVC mmap fail, %s", UvcDev, strerror(errno));
             pUvcChnManager->mpVideoBuffer[bufferindex] = NULL;
             pUvcChnManager->mBufferLength = buffer.length;
             goto error;
         }
         if(ioctl(uvc_fd, VIDIOC_QBUF, &buffer) < 0)
         {
-            aloge("the %s UVC qbuf fail, %s", UvcDev, strerror(errno));
+            LOGE("the %s UVC qbuf fail, %s", UvcDev, strerror(errno));
             pUvcChnManager->mBufferLength = buffer.length;
             goto error;            
         }        
@@ -764,7 +764,7 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
         unsigned char *pIonMem = ion_allocMem(buffer.length * BUFFER_COUNT * 3);
         if(!pIonMem)
         {
-            aloge("error: ion_allocMem can not malloc %d bytes", pUvcChnManager->mBufferLength * BUFFER_COUNT);
+            LOGE("error: ion_allocMem can not malloc %d bytes", pUvcChnManager->mBufferLength * BUFFER_COUNT);
             goto error;
         }
         unsigned int pIonMemPhyAddr = ion_getMemPhyAddr(pIonMem);
@@ -786,7 +786,7 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
             unsigned char *pIonMem = ion_allocMem(alignLength);
             if(!pIonMem)
             {
-                aloge("error: ion_allocMem can not malloc %d bytes", alignLength);
+                LOGE("error: ion_allocMem can not malloc %d bytes", alignLength);
                 goto error;
             }   
             unsigned int pIonMemPhyAddr = ion_getMemPhyAddr(pIonMem);
@@ -811,7 +811,7 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
             }
             else
             {
-                aloge("fatal error! unknown pixel format[0x%x]", pUvcChnManager->mUvcAttr.mPixelformat);
+                LOGE("fatal error! unknown pixel format[0x%x]", pUvcChnManager->mUvcAttr.mPixelformat);
                 pUvcChnManager->mUvcCaptureFrame[bufferindex].VFrame.mpVirAddr[0] = pIonMem;
                 pUvcChnManager->mUvcCaptureFrame[bufferindex].VFrame.mPhyAddr[0] = pIonMemPhyAddr;
             }
@@ -820,14 +820,14 @@ ERRORTYPE uvcInput_SetDevAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
     }
 
     #ifdef SHOW_INFO_OF_UVC
-    alogd("the %s UVC capture fixformat is %x", UvcDev, pUvcChnManager->mUvcAttr.mPixelformat);
-    alogd("the %s UVC capture width is %d", UvcDev, pUvcChnManager->mUvcAttr.mUvcVideo_Width);
-    alogd("the %s UVC capture height is %d", UvcDev, pUvcChnManager->mUvcAttr.mUvcVideo_Height);
-    alogd("the %s UVC capture fps is %d", UvcDev, pUvcChnManager->mUvcAttr.mUvcVideo_Fps);
-    alogd("the %s UVC capture bufCount is %d", UvcDev, pUvcChnManager->mUvcAttr.mUvcVideo_BufCnt);
+    LOGD("the %s UVC capture fixformat is %x", UvcDev, pUvcChnManager->mUvcAttr.mPixelformat);
+    LOGD("the %s UVC capture width is %d", UvcDev, pUvcChnManager->mUvcAttr.mUvcVideo_Width);
+    LOGD("the %s UVC capture height is %d", UvcDev, pUvcChnManager->mUvcAttr.mUvcVideo_Height);
+    LOGD("the %s UVC capture fps is %d", UvcDev, pUvcChnManager->mUvcAttr.mUvcVideo_Fps);
+    LOGD("the %s UVC capture bufCount is %d", UvcDev, pUvcChnManager->mUvcAttr.mUvcVideo_BufCnt);
     #endif
 
-    alogw("the %s UVC had init!", UvcDev);
+    LOGW("the %s UVC had init!", UvcDev);
     bResult = SUCCESS;
 error:
 
@@ -850,12 +850,12 @@ static ERRORTYPE uvcInput_WaiteBuffer(UVC_DEV UvcDev, int fd, int nMilliSec)
     int ret = select(fd + 1, &fds, NULL, NULL, &tv);
     if(-1 == ret )
     {
-        aloge("the %s UVC select error!", UvcDev);
+        LOGE("the %s UVC select error!", UvcDev);
         return bResult;
     }
     else if(0 == ret)
     {
-        aloge("the %s UVC select timeout!", UvcDev);
+        LOGE("the %s UVC select timeout!", UvcDev);
         return bResult;
     }   
     bResult = SUCCESS;
@@ -870,7 +870,7 @@ static ERRORTYPE uvcInput_GetData(UVC_DEV UvcDev, VIDEO_FRAME_INFO_S *pstFrameIn
     UvcChnManager **ppUvcChnManager = NULL;
     if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
     {
-        aloge("fatal error! can not found %s UVC", UvcDev);
+        LOGE("fatal error! can not found %s UVC", UvcDev);
         pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
         return bResult;
     }
@@ -892,13 +892,13 @@ static ERRORTYPE uvcInput_GetData(UVC_DEV UvcDev, VIDEO_FRAME_INFO_S *pstFrameIn
 
     if(ioctl(uvc_fd, VIDIOC_DQBUF, &buffer) < 0)
     {
-        aloge("the %s UVC get frame fail, %s", UvcDev, strerror(errno));
+        LOGE("the %s UVC get frame fail, %s", UvcDev, strerror(errno));
         pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
         return bResult;
     }
     //if(buffer.index < 0 || buffer.index >= BUFFER_COUNT)
     //{
-    //    aloge("the %s UVC invalid buffer index: %d", UvcDev, buffer.index);
+    //    LOGE("the %s UVC invalid buffer index: %d", UvcDev, buffer.index);
     //    pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
     //    return bResult;
     //}
@@ -938,7 +938,7 @@ static ERRORTYPE uvcInput_GetData2(UvcChnManager *pUvcChnManager, VIDEO_FRAME_IN
     {
         if(pUvcChnManager->mUvcDevEnable) // check the uvc enable state, 
         {
-            aloge("the %s UVC get frame fail, %s", pUvcChnManager->mUvcDevName, strerror(errno));
+            LOGE("the %s UVC get frame fail, %s", pUvcChnManager->mUvcDevName, strerror(errno));
             usleep(200000);
         }
         return bResult;
@@ -1010,12 +1010,12 @@ static ERRORTYPE uvcInput_GetData2(UvcChnManager *pUvcChnManager, VIDEO_FRAME_IN
         }
         else if(V4L2_PIX_FMT_NV12 == pUvcChnManager->mUvcAttr.mPixelformat)
         {
-            aloge("sorry, this version do not support the V4L2_PIX_FMT_NV12 for UVC!!!");   
+            LOGE("sorry, this version do not support the V4L2_PIX_FMT_NV12 for UVC!!!");   
         }
     }
     else
     {
-        aloge("fatal error! why dqueue success, but index[%d] >=[%d]?", buffer.index, BUFFER_COUNT);
+        LOGE("fatal error! why dqueue success, but index[%d] >=[%d]?", buffer.index, BUFFER_COUNT);
     }
     
     return bResult;
@@ -1029,7 +1029,7 @@ ERRORTYPE uvcInput_ReleaseData2(UvcChnManager *pUvcChnManager, int buffer_index)
     int uvc_fd = pUvcChnManager->mFd;
     if(ioctl(uvc_fd, VIDIOC_QBUF, &pUvcChnManager->mUvcV4l2BufferInfo[buffer_index]) < 0)
     {
-        aloge("the %s UVC can not query %d buffer, %s", pUvcChnManager->mUvcDevName, buffer_index, strerror(errno));
+        LOGE("the %s UVC can not query %d buffer, %s", pUvcChnManager->mUvcDevName, buffer_index, strerror(errno));
         return bResult;
     }
     bResult = SUCCESS;
@@ -1043,7 +1043,7 @@ static ERRORTYPE uvcInput_ReleaseData(UVC_DEV UvcDev, VIDEO_FRAME_INFO_S *pstFra
     UvcChnManager **ppUvcChnManager = NULL;
     if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
     {
-        aloge("fatal error! can not found %s UVC", UvcDev);
+        LOGE("fatal error! can not found %s UVC", UvcDev);
         pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
         return bResult;
     }
@@ -1061,7 +1061,7 @@ ERRORTYPE uvcInput_RefsReduceAndRleaseData2(UvcChnManager *pUvcChnManager, VIDEO
     pthread_mutex_lock(&pUvcChnManager->mRefsLock);
     if(pUvcChnManager->mRefs[pstFrameInfo->mId] <= 0)
     {
-        aloge("fatal error! %s UVC, idx[%d]: ref=[%d] when reduce refs, check code!",
+        LOGE("fatal error! %s UVC, idx[%d]: ref=[%d] when reduce refs, check code!",
                             pUvcChnManager->mUvcDevName, pstFrameInfo->mId,
                                                pUvcChnManager->mRefs[pstFrameInfo->mId] );
     }
@@ -1085,7 +1085,7 @@ ERRORTYPE uvcInput_RefsReduceAndRleaseData(UVC_DEV UvcDev, VIDEO_FRAME_INFO_S *p
     UvcChnManager **ppUvcChnManager = NULL;
     if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
     {
-        aloge("fatal error! can not found %s UVC", UvcDev);
+        LOGE("fatal error! can not found %s UVC", UvcDev);
         pthread_mutex_unlock(&gpUvcDevManager->mUvcDevManagerLock);
         return bResult;
     }
@@ -1102,7 +1102,7 @@ static void *uvcInput_CapThread(void *pThreadData)
     UvcChnManager *pUvcChnManager = (UvcChnManager *)pThreadData;
     if(NULL == pUvcChnManager)
     {
-        aloge("fatal error, the UvcChnManager is NULL");
+        LOGE("fatal error, the UvcChnManager is NULL");
         return NULL;
     }
     VIDEO_FRAME_INFO_S	pstFrameInfo;
@@ -1110,7 +1110,7 @@ static void *uvcInput_CapThread(void *pThreadData)
     int num_buf = pUvcChnManager->mUvcAttr.mUvcVideo_BufCnt;
     int i, ret;
     prctl(PR_SET_NAME, "UVCCaptureThread", 0, 0, 0);
-    alogw("loop uvcInput_CapThread the UVC name is %s , fd = %d", pUvcChnManager->mUvcDevName, pUvcChnManager->mFd);
+    LOGW("loop uvcInput_CapThread the UVC name is %s , fd = %d", pUvcChnManager->mUvcDevName, pUvcChnManager->mFd);
     while(1)
     {
         if(0 == pUvcChnManager->mUvcDevEnable) //disable the UVC
@@ -1122,14 +1122,14 @@ static void *uvcInput_CapThread(void *pThreadData)
                     break;
                 }
                 usleep(100000);
-                alogd("Virvi Com not exit !!!");
+                LOGD("Virvi Com not exit !!!");
             }
 
             for(i = 0; i < num_buf; i++)
             {
                 if(0 != pUvcChnManager->mRefs[i])
                 {
-                    alogd("fatal error! Virvi Com not return all yuv frame !!! ");
+                    LOGD("fatal error! Virvi Com not return all yuv frame !!! ");
                     uvcInput_ReleaseData2(pUvcChnManager, i);
                     pUvcChnManager->mRefs[i] = 0;
                 }
@@ -1140,7 +1140,7 @@ static void *uvcInput_CapThread(void *pThreadData)
         memset(&pstFrameInfo, 0, sizeof pstFrameInfo);
         if(SUCCESS == uvcInput_GetData2(pUvcChnManager, &pstFrameInfo, nMilliSec))
         {   
-            //alogw("get one frame!");
+            //LOGW("get one frame!");
             UVC_CHN_MAP_S *pEntry;
             pthread_mutex_lock(&pUvcChnManager->mLock);
 
@@ -1148,7 +1148,7 @@ static void *uvcInput_CapThread(void *pThreadData)
             {
                 if(list_empty(&pUvcChnManager->mChnList))
                 {
-                    aloge("the %s UVC, No Virvi Component, drop this one yuv data.", pUvcChnManager->mUvcDevName);
+                    LOGE("the %s UVC, No Virvi Component, drop this one yuv data.", pUvcChnManager->mUvcDevName);
                     uvcInput_ReleaseData2(pUvcChnManager, pstFrameInfo.mId);
                     pthread_mutex_unlock(&pUvcChnManager->mLock);
                     continue;
@@ -1178,7 +1178,7 @@ static void *uvcInput_CapThread(void *pThreadData)
             }
             else
             {
-                aloge("fatal error! the %s UVC buf not return, refs id = %d,buffer index = %d, drop this yuv data",
+                LOGE("fatal error! the %s UVC buf not return, refs id = %d,buffer index = %d, drop this yuv data",
                                          pUvcChnManager->mUvcDevName, pUvcChnManager->mRefs[pstFrameInfo.mId],
                                                                                     pstFrameInfo.mId);
                 uvcInput_ReleaseData2(pUvcChnManager, pstFrameInfo.mId);               
@@ -1202,12 +1202,12 @@ static ERRORTYPE set_uvc_control(int fd, int cmd_id, int set_value, const char *
     memset(&queryctrl, 0, sizeof queryctrl);
     if(uvc_query(fd, cmd_id, cmd_name, &queryctrl) != SUCCESS)
     {
-        aloge("fatal error! the UVC maybe can not support %s set!", cmd_name);
+        LOGE("fatal error! the UVC maybe can not support %s set!", cmd_name);
         return bResult;
     }
     if(set_value > queryctrl.maximum && set_value < queryctrl.minimum)
     {
-        aloge("fatal error!, the set %s value  %d had not in range[%d   %d]", cmd_name, set_value, queryctrl.minimum, queryctrl.maximum);
+        LOGE("fatal error!, the set %s value  %d had not in range[%d   %d]", cmd_name, set_value, queryctrl.minimum, queryctrl.maximum);
         return bResult;
     }
 
@@ -1217,7 +1217,7 @@ static ERRORTYPE set_uvc_control(int fd, int cmd_id, int set_value, const char *
     control.value = set_value;
     if(ioctl(fd, VIDIOC_S_CTRL, &control) < 0)
     {
-        aloge("error! failed to set %s to %d, %s", cmd_name, set_value, strerror(errno));
+        LOGE("error! failed to set %s to %d, %s", cmd_name, set_value, strerror(errno));
         return bResult;
     }
 
@@ -1233,7 +1233,7 @@ static ERRORTYPE get_uvc_control(int fd, int cmd_id, int *get_value, const char 
     memset(&queryctrl, 0, sizeof queryctrl);
     if(uvc_query(fd, cmd_id, cmd_name, &queryctrl) != SUCCESS)
     {
-        aloge("fatal error! this UVC camera do not support %s ", cmd_name);
+        LOGE("fatal error! this UVC camera do not support %s ", cmd_name);
         return bResult;
     }
 
@@ -1242,7 +1242,7 @@ static ERRORTYPE get_uvc_control(int fd, int cmd_id, int *get_value, const char 
     control.id = cmd_id;
     if(ioctl(fd, VIDIOC_G_CTRL, &control) < 0)
     {
-        aloge("error! failed to get %s, %s", cmd_name, strerror(errno));
+        LOGE("error! failed to get %s, %s", cmd_name, strerror(errno));
         return bResult;
     }
     
@@ -1256,7 +1256,7 @@ ERRORTYPE uvcInput_SetControl(UVC_DEV UvcDev, int cmd_id, int set_value, const c
     UvcChnManager **ppUvcChnManager = NULL;
     if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
     {
-        aloge("fatal error! can not found %s UVC", UvcDev);
+        LOGE("fatal error! can not found %s UVC", UvcDev);
         return FAILURE;
     }
     UvcChnManager *pUvcChnManager = *ppUvcChnManager;
@@ -1270,7 +1270,7 @@ ERRORTYPE uvcInput_GetControl(UVC_DEV UvcDev, int cmd_id, int *get_value, const 
      UvcChnManager **ppUvcChnManager = NULL;
     if(uvcInput_SearchExitDev(UvcDev, &ppUvcChnManager) != SUCCESS)
     {
-        aloge("fatal error! can not found %s UVC", UvcDev);
+        LOGE("fatal error! can not found %s UVC", UvcDev);
         return FAILURE;
     }
     UvcChnManager *pUvcChnManager = *ppUvcChnManager;

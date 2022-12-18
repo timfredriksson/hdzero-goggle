@@ -41,7 +41,7 @@
   			!p->FileReadInfo->FlushAbsBits || !p->FileReadInfo->FSeek_AC320 || \
   			!p->FileReadInfo->FSeek_AC320_Origin || !p->FileReadInfo->BigLitEndianCheck) \
         { \
-            alib_loge("extern read/write api hasn't be initialised..."); \
+            LOGE("extern read/write api hasn't be initialised..."); \
             return -1; \
         }
 

@@ -1,7 +1,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "ByteIOContext"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -29,12 +29,12 @@ void put_buffer_cache(void *mov, ByteIOContext *s, char *buf, int size)
     {
         if(mov->tracks[0].enc)
         {
-            alogd("[%dx%d]Be careful, forbid to appear this case: fwrite [%d]kByte, [%lld]ms >40ms", 
+            LOGD("[%dx%d]Be careful, forbid to appear this case: fwrite [%d]kByte, [%lld]ms >40ms", 
                 __FUNCTION__, __LINE__, mov->tracks[0].enc->width, mov->tracks[0].enc->height, size/1024, (tm2-tm1)/1000);
         }
         else
         {
-            alogd("Be careful, forbid to appear this case: fwrite [%d]kByte, [%lld]ms >40ms", 
+            LOGD("Be careful, forbid to appear this case: fwrite [%d]kByte, [%lld]ms >40ms", 
                 __FUNCTION__, __LINE__, size/1024, (tm2-tm1)/1000);
         }
         

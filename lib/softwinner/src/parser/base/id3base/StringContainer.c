@@ -93,7 +93,7 @@ StringCtn* GenerateStringContainer()
 
     if(!strCtn)
     {
-        CDX_LOGE("No mem for StringContainer!");
+        LOGE("No mem for StringContainer!");
         return NULL;
     }
     memset(strCtn, 0x00, sizeof(StringCtn));
@@ -102,7 +102,7 @@ StringCtn* GenerateStringContainer()
     strCtn->clear = __stringClear;
     strCtn->string = __stringReturnStr;
     strCtn->setTo8(strCtn, "", strlen(""));
-    CDX_LOGV("Generating StringContainer finish...");
+    LOGV("Generating StringContainer finish...");
     return strCtn;
 }
 
@@ -114,7 +114,7 @@ kbool EraseStringContainer(void* arg)
     memcpy(&strCtn, arg, sizeof(strCtn));
     if(!strCtn)
     {
-        CDX_LOGW("StringContainer has already been free");
+        LOGW("StringContainer has already been free");
         return kfalse;
     }
 
@@ -126,7 +126,7 @@ kbool EraseStringContainer(void* arg)
     memset(strCtn, 0x00, sizeof(StringCtn));
     free(strCtn);
     memcpy(arg, &null_ptr, sizeof(arg));
-    CDX_LOGV("Free StringContainer finish...");
+    LOGV("Free StringContainer finish...");
     return ktrue;
 }
 //

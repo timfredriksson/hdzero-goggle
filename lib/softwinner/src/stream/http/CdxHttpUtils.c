@@ -99,12 +99,12 @@ cdx_int32 ReadChunkedSize(CdxStreamT *stream, cdx_char tmpLen[], cdx_int32 *size
         {
             if(ret == -2)
             {
-                CDX_LOGW("force stop ReadChunkedSize while get len.");
+                LOGW("force stop ReadChunkedSize while get len.");
                 strcpy(tmpLen, len);
                 *size = pos;
                 return -2;
             }
-            CDX_LOGE("Read failed.");
+            LOGE("Read failed.");
             return -1;
         }
 
@@ -115,7 +115,7 @@ cdx_int32 ReadChunkedSize(CdxStreamT *stream, cdx_char tmpLen[], cdx_int32 *size
             len[pos++] = byte;
             if(pos > 10)
             {
-                CDX_LOGE("chunked len is too big...");
+                LOGE("chunked len is too big...");
                 return -1;
             }
             continue;
@@ -125,7 +125,7 @@ cdx_int32 ReadChunkedSize(CdxStreamT *stream, cdx_char tmpLen[], cdx_int32 *size
             ret = CdxStreamRead(stream, &byte, 1);
             if(ret == -2)
             {
-                CDX_LOGW("force stop ReadChunkedSize while get LF.");
+                LOGW("force stop ReadChunkedSize while get LF.");
                 strcpy(tmpLen, len);
                 *size = pos;
                 return -3;
@@ -136,7 +136,7 @@ cdx_int32 ReadChunkedSize(CdxStreamT *stream, cdx_char tmpLen[], cdx_int32 *size
         }
         else
         {
-            CDX_LOGE("Something error happen, %d lencrlf.", byte);
+            LOGE("Something error happen, %d lencrlf.", byte);
             return -1;
         }
     }
@@ -161,10 +161,10 @@ cdx_int32 ReadChunkedData(CdxStreamT *stream, void *ptr, cdx_int32 size)
         {
             if(ret == -2)
             {
-                CDX_LOGW("force stop ReadChunkedDate.");
+                LOGW("force stop ReadChunkedDate.");
                 return pos>0 ? pos : -2;
             }
-            CDX_LOGE("Read failed.");
+            LOGE("Read failed.");
             return ret;
         }
         pos += ret;
@@ -175,21 +175,21 @@ cdx_int32 ReadChunkedData(CdxStreamT *stream, void *ptr, cdx_int32 size)
             {
                 if(ret == -2)
                 {
-                    CDX_LOGW("force stop ReadChunkedData.");
+                    LOGW("force stop ReadChunkedData.");
                     return -3; // force stop while read \r\n in data\r\n.
                 }
-                CDX_LOGE("read failed.");
+                LOGE("read failed.");
                 return -1;
             }
             else if(ret == 1)
             {
-                CDX_LOGW("force stop ReadChunkedData.");
+                LOGW("force stop ReadChunkedData.");
                 return -4; // force stop while read \n in data\r\n.
             }
 
             if(memcmp(dummy, "\r\n", 2) != 0)
             {
-                CDX_LOGE("Not end with crlf, check the content.");
+                LOGE("Not end with crlf, check the content.");
                 return -1;
             }
             break;
@@ -236,21 +236,21 @@ HttpCacheManagerT *CacheManagerCreate(int nCacheNum, int nCacheSize,
 
     if(nCacheNum * PRESERVE_RATIO <= 0)
     {
-        logw("preserve ratio too small.");
+        LOGW("preserve ratio too small.");
         return NULL;
     }
 
     p = (HttpCacheManagerT *)calloc(1, sizeof(*p));
     if(NULL == p)
     {
-        loge("calloc fail, size=%d.", (int)sizeof(*p));
+        LOGE("calloc fail, size=%d.", (int)sizeof(*p));
         return NULL;
     }
 
     p->cacheFifo.pCaches = (HttpCacheT *)calloc(nCacheNum, sizeof(HttpCacheT));
     if(NULL == p->cacheFifo.pCaches)
     {
-        loge("calloc fail, nCacheNum=%d", nCacheNum);
+        LOGE("calloc fail, nCacheNum=%d", nCacheNum);
         free(p);
         return NULL;
     }
@@ -271,7 +271,7 @@ void CacheManagerDestroy(HttpCacheManagerT *p)
 {
     if(NULL == p)
     {
-        loge("check param.");
+        LOGE("check param.");
         return;
     }
     pthread_mutex_destroy(&p->mutex);
@@ -303,7 +303,7 @@ void CacheManagerReset(HttpCacheManagerT *p, cdx_int64 nStartCachePos)
 {
     if(NULL == p || nStartCachePos < 0)
     {
-        loge("check param.");
+        LOGE("check param.");
         return;
     }
 
@@ -354,7 +354,7 @@ static void CacheFlushNode(HttpCacheT *c)
     node = c->pHead;
     if(node == NULL)
     {
-        loge("something wrong, call CacheGetNode first.");
+        LOGE("something wrong, call CacheGetNode first.");
         return;
     }
 
@@ -374,7 +374,7 @@ static inline int cacheFifoTooFull(HttpCacheFifoT *p)
     int invalidCacheNum = p->nCacheNum - validCacheNum(p);
     int preserveCacheNum = (p->nCacheNum * PRESERVE_RATIO <= 1) ?
         1 : (p->nCacheNum * PRESERVE_RATIO);
-    logv("invalidCacheNum=%d, preserveCacheNum=%d, p->nWritePos=%d, p->nReadPos=%d, %d",
+    LOGV("invalidCacheNum=%d, preserveCacheNum=%d, p->nWritePos=%d, p->nReadPos=%d, %d",
         invalidCacheNum, preserveCacheNum, p->nWritePos, p->nReadPos,
         (int)(p->nCacheNum * PRESERVE_RATIO));
     if (invalidCacheNum <= preserveCacheNum)
@@ -411,7 +411,7 @@ int CacheManagerRequestCache(HttpCacheManagerT *p, HttpCacheT **ppCache)
     //operate cache,
     if(NULL == p || NULL == ppCache)
     {
-        loge("check param.");
+        LOGE("check param.");
         return -2;
     }
 
@@ -421,14 +421,14 @@ int CacheManagerRequestCache(HttpCacheManagerT *p, HttpCacheT **ppCache)
 
     if(p->bUseup == 1)
     {
-        logv("cache used up.");
+        LOGV("cache used up.");
         pthread_mutex_unlock(&p->mutex);
         return -2;
     }
 
     if(cacheFifoTooFull(&p->cacheFifo))
     {
-        logv("so many data, wait.");
+        LOGV("so many data, wait.");
         pthread_mutex_unlock(&p->mutex);
         return -1;
     }
@@ -437,10 +437,10 @@ int CacheManagerRequestCache(HttpCacheManagerT *p, HttpCacheT **ppCache)
     nWritePos = p->cacheFifo.nWritePos;
     pCache = &p->cacheFifo.pCaches[nWritePos];
     HttpCacheNodeT *node = pCache->pOriHead;
-    logv("pCaches=%p, nWritePos=%d, node=%p", pCache, nWritePos, node);
+    LOGV("pCaches=%p, nWritePos=%d, node=%p", pCache, nWritePos, node);
     while(node != NULL)
     {
-        logv("will free node[%p]...", node);
+        LOGV("will free node[%p]...", node);
         pCache->pOriHead = node->pNext;
         free(node->pData);
         node->pData = NULL;
@@ -453,7 +453,7 @@ int CacheManagerRequestCache(HttpCacheManagerT *p, HttpCacheT **ppCache)
     pCache->nStartPos = p->nStartCachePos;
     if(p->nTotalSize > 0 && pCache->nStartPos >= p->nTotalSize)
     {
-        loge("check, pCache->nStartPos(%lld), p->nTotalSize(%lld).",
+        LOGE("check, pCache->nStartPos(%lld), p->nTotalSize(%lld).",
             pCache->nStartPos, p->nTotalSize);
         return -2;
     }
@@ -467,7 +467,7 @@ int CacheManagerRequestCache(HttpCacheManagerT *p, HttpCacheT **ppCache)
     if(p->nTotalSize > 0 && pCache->nEndPos == p->nTotalSize - 1)
     {
         p->bUseup = 1;
-        logv("cache useup 1.");
+        LOGV("cache useup 1.");
     }
 
     pCache->nNodeNum = (pCache->nEndPos - pCache->nStartPos) / p->nNodeSize + 1;
@@ -481,10 +481,10 @@ int CacheManagerRequestCache(HttpCacheManagerT *p, HttpCacheT **ppCache)
     if(p->nTotalSize > 0 && p->nStartCachePos == p->nTotalSize)
     {
         p->bUseup = 1;
-        logv("cache useup 1.");
+        LOGV("cache useup 1.");
     }
 
-    logv("request cache pCache(%p), p->cacheFifo.nWritePos=%d,"
+    LOGV("request cache pCache(%p), p->cacheFifo.nWritePos=%d,"
          " pCache->nCacheSize=%d, pCache->nNodeNum=%d, nNodeSize=%d, s-e(%lld, %lld)",
         pCache, p->cacheFifo.nWritePos-1,
         pCache->nCacheSize, pCache->nNodeNum, p->nNodeSize, pCache->nStartPos, pCache->nEndPos);
@@ -516,7 +516,7 @@ int CacheManagerSeekTo(HttpCacheManagerT *p, cdx_int64 pos)
         c = &p->cacheFifo.pCaches[i];
         if(pos >= c->nStartPos && pos < c->nStartPos + c->nDataSize + c->nPassedSize)
         {
-            logv("test cache=%p, pos=%lld, nStartPos=%lld, nDataSize=%d, nPassedSize=%d",
+            LOGV("test cache=%p, pos=%lld, nStartPos=%lld, nDataSize=%d, nPassedSize=%d",
                 c, pos, c->nStartPos, c->nDataSize, c->nPassedSize);
 
             HttpCacheNodeT *pNode = c->pOriHead;
@@ -547,9 +547,9 @@ int CacheManagerSeekTo(HttpCacheManagerT *p, cdx_int64 pos)
                 c->nPassedSize = pos - c->nStartPos;
                 c->nDataSize = tmp + c->nDataSize - c->nPassedSize ;
 
-                logv("seek in cache=%p, pos=%lld, nStartPos=%lld, nDataSize=%d, nPassedSize=%d",
+                LOGV("seek in cache=%p, pos=%lld, nStartPos=%lld, nDataSize=%d, nPassedSize=%d",
                     c, pos, c->nStartPos, c->nDataSize, c->nPassedSize);
-                logv("cache(%p), c.pHead(%p), c.nNodeValidSize(%d), "
+                LOGV("cache(%p), c.pHead(%p), c.nNodeValidSize(%d), "
                      "c.nNodeReadPos(%d), p->nReqDataPos(%lld), c.tmpNode(%p)"
                      "c->nDataSize(%d), c->nPassedSize(%d)",
                     &c, c->pHead, c->nNodeValidSize,
@@ -615,7 +615,7 @@ int CacheManagerAddData(HttpCacheManagerT *p, HttpCacheT *c, HttpCacheNodeT *nod
 
     if(node->nLength + c->nDataSize + c->nPassedSize > c->nCacheSize)
     {
-        logw("cache size(%d %d %d)(%d) > max cache size(%d), c=%p, r,w(%d, %d)", node->nLength, c->nDataSize,
+        LOGW("cache size(%d %d %d)(%d) > max cache size(%d), c=%p, r,w(%d, %d)", node->nLength, c->nDataSize,
             c->nPassedSize, node->nLength+c->nDataSize+c->nPassedSize, c->nCacheSize, c,
             p->cacheFifo.nReadPos, p->cacheFifo.nWritePos);
         pthread_mutex_unlock(&p->mutex);
@@ -625,11 +625,11 @@ int CacheManagerAddData(HttpCacheManagerT *p, HttpCacheT *c, HttpCacheNodeT *nod
     newNode = (HttpCacheNodeT *)calloc(1, sizeof(*newNode));
     if(NULL == newNode)
     {
-        loge("calloc fail.");
+        LOGE("calloc fail.");
         pthread_mutex_unlock(&p->mutex);
         return -1;
     }
-    logv("add data, node=%p, size=%d, cache=%p, c->nDataSize=%d, c->nPassedSize=%d,[%lld, %lld],"
+    LOGV("add data, node=%p, size=%d, cache=%p, c->nDataSize=%d, c->nPassedSize=%d,[%lld, %lld],"
         "p->cacheFifo.nReadPos=%d, p->cacheFifo.nWritePos=%d, c=%p",
         newNode, node->nLength, p, c->nDataSize, c->nPassedSize, c->nStartPos, c->nEndPos,
         p->cacheFifo.nReadPos, p->cacheFifo.nWritePos, c);
@@ -677,7 +677,7 @@ int CacheManagerRequestData(HttpCacheManagerT *p, int nRequireSize, void *buf)
 
     if(NULL == p || NULL == buf)
     {
-        loge("check param.");
+        LOGE("check param.");
         return -1;
     }
 
@@ -687,18 +687,18 @@ int CacheManagerRequestData(HttpCacheManagerT *p, int nRequireSize, void *buf)
     pthread_mutex_lock(&p->mutex);
     if(validCacheNum(&p->cacheFifo) == 1) //means this cache is writing && reading.
     {
-        logv("writing && reading the same HttpCacheT.");
+        LOGV("writing && reading the same HttpCacheT.");
     }
 
     c = &p->cacheFifo.pCaches[p->cacheFifo.nReadPos];
-    logv("nRequireSize=%d, c->nNodeValidSize=%d, c->cacheFifo.nReadPos,nWritePos=%d,%d, "
+    LOGV("nRequireSize=%d, c->nNodeValidSize=%d, c->cacheFifo.nReadPos,nWritePos=%d,%d, "
         "pCaches=%p, c->tmpNode(%p), curNodeNum=%d, nDatasize=%d, head=%p",
         nRequireSize, c->nNodeValidSize, p->cacheFifo.nReadPos, p->cacheFifo.nWritePos,
         c, c->tmpNode, c->nCurNodeNum, c->nDataSize, c->pHead);
 
     if(c->nNodeValidSize > 0 && c->tmpNode != NULL)
     {
-        logv("needLen=%d, c->nNodeValidSize=%d, nodelen=%d, curNodeNum=%d", needLen,
+        LOGV("needLen=%d, c->nNodeValidSize=%d, nodelen=%d, curNodeNum=%d", needLen,
             c->nNodeValidSize, c->tmpNode->nLength, c->nCurNodeNum);
 
         if(nRequireSize < c->nNodeValidSize)
@@ -728,7 +728,7 @@ int CacheManagerRequestData(HttpCacheManagerT *p, int nRequireSize, void *buf)
                 p->cacheFifo.nReadPos = (p->cacheFifo.nReadPos + 1) % p->cacheFifo.nCacheNum;
                 c = &p->cacheFifo.pCaches[p->cacheFifo.nReadPos];
                 c->nCurNodeNum = 0;
-                logv("c=%p, c->pHead=%p, size=%d, passedsize=%d, s-e(%lld, %lld), nodeNum=%d",
+                LOGV("c=%p, c->pHead=%p, size=%d, passedsize=%d, s-e(%lld, %lld), nodeNum=%d",
                     c, c->pHead, c->nDataSize, c->nPassedSize, c->nStartPos,
                     c->nEndPos, c->nNodeNum);
             }
@@ -751,7 +751,7 @@ int CacheManagerRequestData(HttpCacheManagerT *p, int nRequireSize, void *buf)
 
         c->nNodeValidSize = c->tmpNode->nLength;
         c->nNodeReadPos = 0;
-        logv("needLen=%d, c->nNodeValidSize=%d, nodelen=%d, curNodeNum=%d", needLen,
+        LOGV("needLen=%d, c->nNodeValidSize=%d, nodelen=%d, curNodeNum=%d", needLen,
             c->nNodeValidSize, c->tmpNode->nLength, c->nCurNodeNum);
 
         if(c->tmpNode->nLength > needLen)
@@ -781,7 +781,7 @@ int CacheManagerRequestData(HttpCacheManagerT *p, int nRequireSize, void *buf)
                 p->cacheFifo.nReadPos = (p->cacheFifo.nReadPos + 1) % p->cacheFifo.nCacheNum;
                 c = &p->cacheFifo.pCaches[p->cacheFifo.nReadPos];
                 c->nCurNodeNum = 0;
-                logv("c=%p, c->pHead=%p, size=%d, passedsize=%d, s-e(%lld, %lld), nodeNum=%d",
+                LOGV("c=%p, c->pHead=%p, size=%d, passedsize=%d, s-e(%lld, %lld), nodeNum=%d",
                     c, c->pHead, c->nDataSize, c->nPassedSize, c->nStartPos,
                     c->nEndPos, c->nNodeNum);
             }
@@ -804,7 +804,7 @@ int CacheManagerGetProbeData(HttpCacheManagerT *p, cdx_uint32 nRequireSize, void
 
     if(NULL == p || NULL == buf)
     {
-        loge("check param.");
+        LOGE("check param.");
         return -1;
     }
 
@@ -817,7 +817,7 @@ int CacheManagerGetProbeData(HttpCacheManagerT *p, cdx_uint32 nRequireSize, void
 
     if(p->probeNode != NULL)
     {
-        logv("node=%p, readSize=%d, node->nLength=%d, needSize=%d, p->probeNodeIdx=%d, cacheidx=%d",
+        LOGV("node=%p, readSize=%d, node->nLength=%d, needSize=%d, p->probeNodeIdx=%d, cacheidx=%d",
             p->probeNode, readSize, p->probeNode->nLength, needSize,
             p->probeNodeIdx, p->probeCacheIdx);
         node = p->probeNode;
@@ -849,7 +849,7 @@ int CacheManagerGetProbeData(HttpCacheManagerT *p, cdx_uint32 nRequireSize, void
         }
     }
 
-    logv("p->probeCacheIdx=%d, p->probeNodeIdx=%d, readSize=%d, needSize=%d, c->pProbeHead=%p",
+    LOGV("p->probeCacheIdx=%d, p->probeNodeIdx=%d, readSize=%d, needSize=%d, c->pProbeHead=%p",
         p->probeCacheIdx, p->probeNodeIdx, readSize, needSize, c->pProbeHead);
     while(1)
     {
@@ -858,7 +858,7 @@ int CacheManagerGetProbeData(HttpCacheManagerT *p, cdx_uint32 nRequireSize, void
 
 
         p->probeNode = c->pProbeHead;
-        logv("readSize=%d, needSize=%d, p->probeNodeIdx=%d,cacheidx=%d, p->probeNode=%p",
+        LOGV("readSize=%d, needSize=%d, p->probeNodeIdx=%d,cacheidx=%d, p->probeNode=%p",
             readSize, needSize, p->probeNodeIdx, p->probeCacheIdx, p->probeNode);
         if(NULL == p->probeNode)
             break;
@@ -869,7 +869,7 @@ int CacheManagerGetProbeData(HttpCacheManagerT *p, cdx_uint32 nRequireSize, void
             memcpy((unsigned char*)buf + readSize, node->pData, needSize);
             readSize += needSize;
             p->probeNodePos += needSize;
-            logv("readSize=%d, node->nLength=%d, needSize=%d", readSize, node->nLength, needSize);
+            LOGV("readSize=%d, node->nLength=%d, needSize=%d", readSize, node->nLength, needSize);
             break;
         }
         else
@@ -877,7 +877,7 @@ int CacheManagerGetProbeData(HttpCacheManagerT *p, cdx_uint32 nRequireSize, void
             memcpy((unsigned char*)buf + readSize, node->pData, node->nLength);
             readSize += node->nLength;
             needSize -= node->nLength;
-            logv("readSize=%d, node->nLength=%d, needSize=%d", readSize, node->nLength, needSize);
+            LOGV("readSize=%d, node->nLength=%d, needSize=%d", readSize, node->nLength, needSize);
             c->pProbeHead = node->pNext;
             p->probeNode = NULL;
             p->probeNodePos = 0;
@@ -905,13 +905,13 @@ HttpBandwidthT *CreateBandwidthEst(cdx_int32 mMaxIndex)
     b = (HttpBandwidthT *)calloc(1, sizeof(*b));
     if(b == NULL)
     {
-        loge("calloc failed, size=%d", (int)sizeof(*b));
+        LOGE("calloc failed, size=%d", (int)sizeof(*b));
         return NULL;
     }
     b->bandWidthHistory = (BandwidthEntryT *)calloc(mMaxIndex, sizeof(BandwidthEntryT));
     if(b->bandWidthHistory == NULL)
     {
-        loge("calloc failed, mMaxIndex=%d", mMaxIndex);
+        LOGE("calloc failed, mMaxIndex=%d", mMaxIndex);
         free(b);
         return NULL;
     }
@@ -932,7 +932,7 @@ void BandwidthEst(HttpBandwidthT *b, cdx_int32 numBytes, cdx_int64 delayUs)
     b->mTotalMeasureBytes += numBytes;
     b->mTotalMeasureTimeUs += delayUs;
 
-    logv("mTotalMeasureBytes(%d), mTotalMeasureTimeUs(%lld), mBandwidthNum(%d)",
+    LOGV("mTotalMeasureBytes(%d), mTotalMeasureTimeUs(%lld), mBandwidthNum(%d)",
         b->mTotalMeasureBytes, b->mTotalMeasureTimeUs, b->mBandwidthNum);
 
     b->mBandwidthNum++;

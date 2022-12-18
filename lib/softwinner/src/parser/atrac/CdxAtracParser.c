@@ -7,7 +7,7 @@
 * History :
 *   Author  : lszhang <lszhang@allwinnertech.com>
 *   Date    : 2014/08/08
-*   Comment : ´´½¨³õÊ¼°æ±¾£¬ÊµÏÖ atrc ½â¸´ÓÃ¹¦ÄÜ
+*   Comment : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½æ±¾ï¿½ï¿½Êµï¿½ï¿½ atrc ï¿½â¸´ï¿½Ã¹ï¿½ï¿½ï¿½
 */
 
 #define LOG_TAG "CdxAtracParser"
@@ -62,12 +62,12 @@ static int AtracDumpInfo(void *Parameter)
     ATRACParserImpl *atrac;
     atrac = (ATRACParserImpl *)Parameter;
 
-    CDX_LOGV("SampleRate %d", atrac->mSampleRate);
-    CDX_LOGV("Channels %d", atrac->mChannels);
-    CDX_LOGV("BitRate %d", atrac->mBitrate);
-    CDX_LOGV("mFrameSize %d", atrac->mFrameSize);
-    CDX_LOGV("mDuration %lld", atrac->mDuration);
-    CDX_LOGV("mFileSize %lld", atrac->mFileSize);
+    LOGV("SampleRate %d", atrac->mSampleRate);
+    LOGV("Channels %d", atrac->mChannels);
+    LOGV("BitRate %d", atrac->mBitrate);
+    LOGV("mFrameSize %d", atrac->mFrameSize);
+    LOGV("mDuration %lld", atrac->mDuration);
+    LOGV("mFileSize %lld", atrac->mFileSize);
 #endif
     return 0;
 }
@@ -172,7 +172,7 @@ static int CdxAtracParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *mediaIn
     atrac = (ATRACParserImpl *)parser;
     if(!atrac)
     {
-        CDX_LOGE("atrac file parser lib has not been initiated!");
+        LOGE("atrac file parser lib has not been initiated!");
         ret = -1;
         goto Exit;
     }
@@ -181,7 +181,7 @@ static int CdxAtracParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *mediaIn
     if(CdxStreamSeekAble(atrac->stream))
         mediaInfo->bSeekable = CDX_TRUE;
     else
-        CDX_LOGW("atrac file Unable To Seek");
+        LOGW("atrac file Unable To Seek");
 
     audio = &mediaInfo->program[0].audio[0];
     audio->eCodecFormat = AUDIO_CODEC_FORMAT_ATRC;
@@ -208,7 +208,7 @@ static int CdxAtracParserControl(CdxParserT *parser, cdx_int32 cmd, void *param)
     atrac = (ATRACParserImpl *)parser;
     if(!atrac)
     {
-        CDX_LOGE("Atrac file parser Control failed!");
+        LOGE("Atrac file parser Control failed!");
         return -1;
     }
 
@@ -225,7 +225,7 @@ static int CdxAtracParserControl(CdxParserT *parser, cdx_int32 cmd, void *param)
             CdxStreamClrForceStop(atrac->stream);
             break;
         default:
-            CDX_LOGW("not implement...(%d)", cmd);
+            LOGW("not implement...(%d)", cmd);
             break;
     }
     return 0;
@@ -237,7 +237,7 @@ static int CdxAtracParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     atrac = (ATRACParserImpl *)parser;
     if(!atrac)
     {
-        CDX_LOGE("Atrac file parser prefetch failed!");
+        LOGE("Atrac file parser prefetch failed!");
         return -1;
     }
 
@@ -251,7 +251,7 @@ static int CdxAtracParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
         atrac->mSeeking = CDX_FALSE;
     }
 
-    //CDX_LOGV("pkt length %d, pkt pts %lld", pkt->length, pkt->pts);
+    //LOGV("pkt length %d, pkt pts %lld", pkt->length, pkt->pts);
     return 0;
 }
 
@@ -266,7 +266,7 @@ static int CdxAtracParserRead(CdxParserT *parser, CdxPacketT *pkt)
     atrac = (ATRACParserImpl *)parser;
     if(!atrac)
     {
-        CDX_LOGE("Atrac file parser Read failed!");
+        LOGE("Atrac file parser Read failed!");
         ret = -1;
         goto Exit;
     }
@@ -290,21 +290,21 @@ static int CdxAtracParserRead(CdxParserT *parser, CdxPacketT *pkt)
     nRetSize= CdxStreamRead(atrac->stream, pkt->buf, nReadSize);
     if(nRetSize < 0)
     {
-        CDX_LOGE("File Read Fail");
+        LOGE("File Read Fail");
         atrac->mErrno = PSR_IO_ERR;
         ret = -1;
         goto Exit;
     }
     else if(nRetSize == 0)
     {
-        CDX_LOGV("Flie Read EOS");
+        LOGV("Flie Read EOS");
         atrac->mErrno = PSR_EOS;
         ret = -1;
         goto Exit;
     }
 Exit:
 #if ENABLE_FILE_DEBUG
-    CDX_LOGV("nReadPos %lld, nRetSize %d", nReadPos, nRetSize);
+    LOGV("nReadPos %lld, nRetSize %d", nReadPos, nRetSize);
     if(atrac->teeFd >= 0)
     {
         write(atrac->teeFd, pkt->buf, nRetSize);
@@ -323,7 +323,7 @@ static int CdxAtracParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeTy
     atrac = (ATRACParserImpl *)parser;
     if(!atrac)
     {
-        CDX_LOGE("Atrac file parser seekto failed!");
+        LOGE("Atrac file parser seekto failed!");
         ret = -1;
         goto Exit;
     }
@@ -338,17 +338,17 @@ static int CdxAtracParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeTy
     }
     else
     {
-        CDX_LOGW("SeekTime Negative");
+        LOGW("SeekTime Negative");
         ret = -1;
         goto Exit;
     }
 
     atrac->mSeekTime = nSeekBlock * 1024 * 1E6 / atrac->mSampleRate ;
     nSeekPos = (int64_t)nSeekBlock * atrac->mFrameSize + atrac->mHeadSize;
-    CDX_LOGV("SeekTime %lld, nSeekPos %lld", atrac->mSeekTime, nSeekPos);
+    LOGV("SeekTime %lld, nSeekPos %lld", atrac->mSeekTime, nSeekPos);
     if(CdxStreamSeek(atrac->stream, nSeekPos, SEEK_SET))
     {
-        CDX_LOGE("Atrac seekto failed!");
+        LOGE("Atrac seekto failed!");
         ret = -1;
         goto Exit;
     }
@@ -365,7 +365,7 @@ static cdx_uint32 CdxAtracParserAttribute(CdxParserT *parser)
     atrac = (ATRACParserImpl *)parser;
     if(!atrac)
     {
-        CDX_LOGE("Atrac file parser Attribute failed!");
+        LOGE("Atrac file parser Attribute failed!");
         ret = -1;
         goto Exit;
     }
@@ -382,7 +382,7 @@ static int CdxAtracParserGetStatus(CdxParserT *parser)
 #if 0
     if(CdxStreamEos(atrac->stream))
     {
-        CDX_LOGE("File EOS! ");
+        LOGE("File EOS! ");
         return atrac->mErrno = PSR_EOS;
     }
 #endif
@@ -396,7 +396,7 @@ static int CdxAtracParserClose(CdxParserT *parser)
     atrac = (ATRACParserImpl *)parser;
     if(!atrac)
     {
-        CDX_LOGE("Atrac file parser Close failed!");
+        LOGE("Atrac file parser Close failed!");
         ret = -1;
         goto Exit;
     }
@@ -432,12 +432,12 @@ CdxParserT *CdxAtracParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     int ret = 0;
     if(flags > 0)
     {
-        CDX_LOGI("Flag Not Zero");
+        LOGI("Flag Not Zero");
     }
     AtracParserImple = (ATRACParserImpl *)malloc(sizeof(ATRACParserImpl));
     if(AtracParserImple == NULL)
     {
-        CDX_LOGE("AtracParserOpen Failed");
+        LOGE("AtracParserOpen Failed");
         return NULL;
     }
     memset(AtracParserImple, 0, sizeof(ATRACParserImpl));
@@ -463,7 +463,7 @@ static int AtracProbe(CdxStreamProbeDataT *p)
 
     if(p->len < mTaglen + 5)
     {
-        CDX_LOGE("Atrac Probe Data Not Enough");
+        LOGE("Atrac Probe Data Not Enough");
         return CDX_FALSE;
     }
 
@@ -478,7 +478,7 @@ static cdx_uint32 CdxAtracParserProbe(CdxStreamProbeDataT *probeData)
 {
     if(probeData->len < ID3v2_HEADER_SIZE || !AtracProbe(probeData))
     {
-        CDX_LOGE("Atrac Probe Failed");
+        LOGE("Atrac Probe Failed");
         return 0;
     }
 

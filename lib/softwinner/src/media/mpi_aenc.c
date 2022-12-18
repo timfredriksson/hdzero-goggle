@@ -11,7 +11,7 @@
   History       :
 ******************************************************************************/
 #define LOG_TAG "mpi_aenc"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <stdlib.h>
@@ -62,12 +62,12 @@ ERRORTYPE AENC_Construct(void)
     }
     gpAencChnMap = (AencChnManager*)malloc(sizeof(AencChnManager));
     if (NULL == gpAencChnMap) {
-        aloge("alloc AencChnManager error(%s)!", strerror(errno));
+        LOGE("alloc AencChnManager error(%s)!", strerror(errno));
         return FAILURE;
     }
     ret = pthread_mutex_init(&gpAencChnMap->mLock, NULL);
     if (ret != 0) {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         free(gpAencChnMap);
         gpAencChnMap = NULL;
         return FAILURE;
@@ -80,7 +80,7 @@ ERRORTYPE AENC_Destruct(void)
 {
     if (gpAencChnMap != NULL) {
         if (!list_empty(&gpAencChnMap->mList)) {
-            aloge("fatal error! some aenc channel still running when destroy aenc device!");
+            LOGE("fatal error! some aenc channel still running when destroy aenc device!");
         }
         pthread_mutex_destroy(&gpAencChnMap->mLock);
         free(gpAencChnMap);
@@ -173,7 +173,7 @@ static AENC_CHN_MAP_S* AENC_CHN_MAP_S_Construct()
     AENC_CHN_MAP_S *pChannel = (AENC_CHN_MAP_S*)malloc(sizeof(AENC_CHN_MAP_S));
     if(NULL == pChannel)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pChannel, 0, sizeof(AENC_CHN_MAP_S));
@@ -185,7 +185,7 @@ static void AENC_CHN_MAP_S_Destruct(AENC_CHN_MAP_S *pChannel)
 {
     if(pChannel->mEncComp)
     {
-        aloge("fatal error! Aenc component need free before!");
+        LOGE("fatal error! Aenc component need free before!");
         COMP_FreeHandle(pChannel->mEncComp);
         pChannel->mEncComp = NULL;
     }
@@ -206,7 +206,7 @@ static ERRORTYPE AudioEncEventHandler(
     ret = ((MM_COMPONENTTYPE*)hComponent)->GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &AencChnInfo);
     if(ret == SUCCESS)
     {
-        alogv("audio encoder event, MppChannel[%d][%d][%d]", AencChnInfo.mModId, AencChnInfo.mDevId, AencChnInfo.mChnId);
+        LOGV("audio encoder event, MppChannel[%d][%d][%d]", AencChnInfo.mModId, AencChnInfo.mDevId, AencChnInfo.mChnId);
     }
     AENC_CHN_MAP_S *pChn = (AENC_CHN_MAP_S*)pAppData;
 
@@ -216,13 +216,13 @@ static ERRORTYPE AudioEncEventHandler(
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("audio encoder EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("audio encoder EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else
             {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
@@ -230,24 +230,24 @@ static ERRORTYPE AudioEncEventHandler(
         {
             if(ERR_AENC_SAMESTATE == nData1)
             {
-                alogv("set same state to aenc!");
+                LOGV("set same state to aenc!");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(ERR_AENC_INVALIDSTATE == nData1)
             {
-                aloge("why aenc state turn to invalid?");
+                LOGE("why aenc state turn to invalid?");
                 break;
             }
             else if(ERR_AENC_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("fatal error! aenc state transition incorrect.");
+                LOGE("fatal error! aenc state transition incorrect.");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
     return SUCCESS;
@@ -263,12 +263,12 @@ ERRORTYPE AW_MPI_AENC_CreateChn(AENC_CHN AeChn, const AENC_CHN_ATTR_S *pAttr)
 {
     if(!(AeChn>=0 && AeChn <AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     if(NULL == pAttr)
     {
-        aloge("fatal error! illagal AEncAttr!");
+        LOGE("fatal error! illagal AEncAttr!");
         return ERR_AENC_ILLEGAL_PARAM;
     }
     if (gpAencChnMap == NULL)
@@ -289,7 +289,7 @@ ERRORTYPE AW_MPI_AENC_CreateChn(AENC_CHN AeChn, const AENC_CHN_ATTR_S *pAttr)
     eRet = COMP_GetHandle((COMP_HANDLETYPE*)&pNode->mEncComp, CDX_ComponentNameAudioEncoder, (void*)pNode, &AudioEncCallback);
     if(eRet != SUCCESS)
     {
-        aloge("fatal error! get comp handle fail!");
+        LOGE("fatal error! get comp handle fail!");
     }
     MPP_CHN_S ChannelInfo;
     ChannelInfo.mModId = MOD_ID_AENC;
@@ -311,7 +311,7 @@ ERRORTYPE AW_MPI_AENC_DestroyChn(AENC_CHN AeChn)
     ERRORTYPE ret;
     if(!(AeChn>=0 && AeChn <AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -337,12 +337,12 @@ ERRORTYPE AW_MPI_AENC_DestroyChn(AENC_CHN AeChn)
             }
             else if(nCompState == COMP_StateInvalid)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             }
             else
             {
-                aloge("Fatal error! invalid AeChn[%d] state[0x%x]!", AeChn, nCompState);
+                LOGE("Fatal error! invalid AeChn[%d] state[0x%x]!", AeChn, nCompState);
                 eRet = FAILURE;
             }
 
@@ -361,13 +361,13 @@ ERRORTYPE AW_MPI_AENC_DestroyChn(AENC_CHN AeChn)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_AENC_BUSY;
         }
     }
     else
     {
-        aloge("fatal error! no Aenc component!");
+        LOGE("fatal error! no Aenc component!");
         list_del(&pChn->mList);
         AENC_CHN_MAP_S_Destruct(pChn);
         ret = SUCCESS;
@@ -379,7 +379,7 @@ ERRORTYPE AW_MPI_AENC_ResetChn(AENC_CHN AeChn)
 {
     if(!(AeChn>=0 && AeChn <AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -395,13 +395,13 @@ ERRORTYPE AW_MPI_AENC_ResetChn(AENC_CHN AeChn)
         eRet2 = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorAencResetChannel, NULL);
         if(eRet2 != SUCCESS)
         {
-            aloge("fatal error! reset channel fail[0x%x]!", eRet2);
+            LOGE("fatal error! reset channel fail[0x%x]!", eRet2);
         }
         return eRet2;
     }
     else
     {
-        aloge("wrong status[0x%x], can't reset aenc channel!", nCompState);
+        LOGE("wrong status[0x%x], can't reset aenc channel!", nCompState);
         return ERR_AENC_NOT_PERM;
     }
 }
@@ -410,7 +410,7 @@ ERRORTYPE AW_MPI_AENC_StartRecvPcm(AENC_CHN AeChn)
 {
     if(!(AeChn>=0 && AeChn<AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -427,14 +427,14 @@ ERRORTYPE AW_MPI_AENC_StartRecvPcm(AENC_CHN AeChn)
         eRet = pChn->mEncComp->SendCommand(pChn->mEncComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else
     {
-        alogd("AencChannelState[0x%x], do nothing!", nCompState);
+        LOGD("AencChannelState[0x%x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -444,7 +444,7 @@ ERRORTYPE AW_MPI_AENC_StopRecvPcm(AENC_CHN AeChn)
 {
     if(!(AeChn>=0 && AeChn < AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -461,19 +461,19 @@ ERRORTYPE AW_MPI_AENC_StopRecvPcm(AENC_CHN AeChn)
         eRet = pChn->mEncComp->SendCommand(pChn->mEncComp, COMP_CommandStateSet, COMP_StateIdle, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogv("AencChannelState[0x%x], do nothing!", nCompState);
+        LOGV("AencChannelState[0x%x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     else
     {
-        aloge("fatal error! check AencChannelState[0x%x]!", nCompState);
+        LOGE("fatal error! check AencChannelState[0x%x]!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -483,7 +483,7 @@ ERRORTYPE AW_MPI_AENC_Query(AENC_CHN AeChn, AENC_CHN_STAT_S *pStat)
 {
     if(!(AeChn>=0 && AeChn <AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -496,7 +496,7 @@ ERRORTYPE AW_MPI_AENC_Query(AENC_CHN AeChn, AENC_CHN_STAT_S *pStat)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_AENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorAencChnState, (void*)pStat);
@@ -507,7 +507,7 @@ ERRORTYPE AW_MPI_AENC_RegisterCallback(AENC_CHN AeChn, MPPCallbackInfo *pCallbac
 {
     if(!(AeChn>=0 && AeChn <AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -524,7 +524,7 @@ ERRORTYPE AW_MPI_AENC_SetChnAttr(AENC_CHN AeChn, const AENC_CHN_ATTR_S *pAttr)
 {
     if(!(AeChn>=0 && AeChn <AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -537,7 +537,7 @@ ERRORTYPE AW_MPI_AENC_SetChnAttr(AENC_CHN AeChn, const AENC_CHN_ATTR_S *pAttr)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_AENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorAencChnAttr, (void*)pAttr);
@@ -548,7 +548,7 @@ ERRORTYPE AW_MPI_AENC_GetChnAttr(AENC_CHN AeChn, AENC_CHN_ATTR_S *pAttr)
 {
     if(!(AeChn>=0 && AeChn <AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -561,7 +561,7 @@ ERRORTYPE AW_MPI_AENC_GetChnAttr(AENC_CHN AeChn, AENC_CHN_ATTR_S *pAttr)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_AENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorAencChnAttr, (void*)pAttr);
@@ -573,7 +573,7 @@ ERRORTYPE AW_MPI_AENC_GetFirstFrmPts(AENC_CHN AeChn,long long *a_pts)
 { 
     if(!(AeChn>=0 && AeChn<AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -596,7 +596,7 @@ ERRORTYPE AW_MPI_AENC_SendFrame(AENC_CHN AeChn, AUDIO_FRAME_S *pFrame, AEC_FRAME
 {
     if(!(AeChn>=0 && AeChn<AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -609,7 +609,7 @@ ERRORTYPE AW_MPI_AENC_SendFrame(AENC_CHN AeChn, AUDIO_FRAME_S *pFrame, AEC_FRAME
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_AENC_NOT_PERM;
     }
     COMP_BUFFERHEADERTYPE bufferHeader;
@@ -622,7 +622,7 @@ ERRORTYPE AW_MPI_AENC_GetStream(AENC_CHN AeChn, AUDIO_STREAM_S *pStream, int nMi
 {
     if(!(AeChn>=0 && AeChn<AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -632,12 +632,12 @@ ERRORTYPE AW_MPI_AENC_GetStream(AENC_CHN AeChn, AUDIO_STREAM_S *pStream, int nMi
     }
     if(NULL == pStream)
     {
-        aloge("fatal error! pStream == NULL!");
+        LOGE("fatal error! pStream == NULL!");
         return ERR_AENC_NULL_PTR;
     }
     if(nMilliSec < -1)
     {
-        aloge("fatal error! illegal nMilliSec[%d]!", nMilliSec);
+        LOGE("fatal error! illegal nMilliSec[%d]!", nMilliSec);
         return ERR_AENC_ILLEGAL_PARAM;
     }
     ERRORTYPE ret;
@@ -645,7 +645,7 @@ ERRORTYPE AW_MPI_AENC_GetStream(AENC_CHN AeChn, AUDIO_STREAM_S *pStream, int nMi
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_AENC_NOT_PERM;
     }
     AEncStream stAencStream;
@@ -659,7 +659,7 @@ ERRORTYPE AW_MPI_AENC_ReleaseStream(AENC_CHN AeChn, AUDIO_STREAM_S *pStream)
 {
     if(!(AeChn>=0 && AeChn<AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;
@@ -669,7 +669,7 @@ ERRORTYPE AW_MPI_AENC_ReleaseStream(AENC_CHN AeChn, AUDIO_STREAM_S *pStream)
     }
     if(NULL == pStream)
     {
-        aloge("fatal error! pStream == NULL!");
+        LOGE("fatal error! pStream == NULL!");
         return ERR_AENC_NULL_PTR;
     }
     ERRORTYPE ret;
@@ -677,7 +677,7 @@ ERRORTYPE AW_MPI_AENC_ReleaseStream(AENC_CHN AeChn, AUDIO_STREAM_S *pStream)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_AENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorAencReleaseStream, (void*)pStream);
@@ -688,7 +688,7 @@ int AW_MPI_AENC_GetHandle(AENC_CHN AeChn)
 {
     if(!(AeChn>=0 && AeChn <AENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", AeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", AeChn);
         return ERR_AENC_INVALID_CHNID;
     }
     AENC_CHN_MAP_S *pChn;

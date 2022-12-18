@@ -16,7 +16,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "log.h"
+#include <log/log.h>
 #include "CdcMessageQueue.h"
 #include "AwMessageQueue.h"
 
@@ -45,12 +45,12 @@ CdcMessageQueue* CdcMessageQueueCreate(int nMaxMessageNum, const char* pName)
 {
     MessageQueueContext* mqCtx;
     size_t nMessageSize = sizeof(CdcMessage);
-    logd("nMessageSize = %d",(int)nMessageSize);
+    LOGD("nMessageSize = %d",(int)nMessageSize);
 
     mqCtx = (MessageQueueContext*)malloc(sizeof(MessageQueueContext));
     if(mqCtx == NULL)
     {
-        loge("%s, allocate memory fail.", pName);
+        LOGE("%s, allocate memory fail.", pName);
         return NULL;
     }
     memset(mqCtx, 0, sizeof(MessageQueueContext));
@@ -61,7 +61,7 @@ CdcMessageQueue* CdcMessageQueueCreate(int nMaxMessageNum, const char* pName)
     mqCtx->Nodes = (MessageNode*)calloc(nMaxMessageNum, sizeof(MessageNode));
     if(mqCtx->Nodes == NULL)
     {
-        loge("%s, allocate memory for message nodes fail.", mqCtx->pName);
+        LOGE("%s, allocate memory for message nodes fail.", mqCtx->pName);
         if(mqCtx->pName != NULL)
             free(mqCtx->pName);
         free(mqCtx);
@@ -132,7 +132,7 @@ int CdcMessageQueuePostMessage(CdcMessageQueue* mq, CdcMessage* m)
 
     if(mqCtx->nCount >= mqCtx->nMaxMessageNum)
     {
-        loge("%s, message count exceed, current message count = %d, max message count = %d",
+        LOGE("%s, message count exceed, current message count = %d, max message count = %d",
                 mqCtx->pName, mqCtx->nCount, mqCtx->nMaxMessageNum);
         pthread_mutex_unlock(&mqCtx->mutex);
         return -1;
@@ -205,7 +205,7 @@ int CdcMessageQueueTryGetMessage(CdcMessageQueue* mq, CdcMessage* m, int64_t tim
 
     if(mqCtx->nCount <= 0)
     {
-        logv("%s, no message.", mqCtx->pName);
+        LOGV("%s, no message.", mqCtx->pName);
         pthread_mutex_unlock(&mqCtx->mutex);
         return -1;
     }
@@ -231,7 +231,7 @@ int CdcMessageQueueFlush(CdcMessageQueue* mq)
 
     mqCtx = (MessageQueueContext*)mq;
 
-    logi("%s, flush messages.", mqCtx->pName);
+    LOGI("%s, flush messages.", mqCtx->pName);
 
     pthread_mutex_lock(&mqCtx->mutex);
 

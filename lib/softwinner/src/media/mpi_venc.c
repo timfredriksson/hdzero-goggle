@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG
 #define LOG_TAG "mpi_venc"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <stdlib.h>
@@ -85,13 +85,13 @@ ERRORTYPE VENC_Construct(void)
     }
     gpVencChnMap = (VencChnManager*)malloc(sizeof(VencChnManager));
     if (NULL == gpVencChnMap) {
-        aloge("alloc VencChnManager error(%s)!", strerror(errno));
+        LOGE("alloc VencChnManager error(%s)!", strerror(errno));
         return FAILURE;
     }
     memset(gpVencChnMap, 0, sizeof(VencChnManager));
     ret = pthread_mutex_init(&gpVencChnMap->mLock, NULL);
     if (ret != 0) {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         free(gpVencChnMap);
         gpVencChnMap = NULL;
         return FAILURE;
@@ -104,7 +104,7 @@ ERRORTYPE VENC_Destruct(void)
 {
     if (gpVencChnMap != NULL) {
         if (!list_empty(&gpVencChnMap->mChnList)) {
-            aloge("fatal error! some venc channel still running when destroy venc device!");
+            LOGE("fatal error! some venc channel still running when destroy venc device!");
         }
         pthread_mutex_destroy(&gpVencChnMap->mLock);
         free(gpVencChnMap);
@@ -199,7 +199,7 @@ static VENC_CHN_MAP_S* VENC_CHN_MAP_S_Construct()
     VENC_CHN_MAP_S *pChannel = (VENC_CHN_MAP_S*)malloc(sizeof(VENC_CHN_MAP_S));
     if(NULL == pChannel)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pChannel, 0, sizeof(VENC_CHN_MAP_S));
@@ -212,7 +212,7 @@ static VENC_CHN_MAP_S* VENC_CHN_MAP_S_Construct()
     int err = pthread_mutex_init(&pChannel->mRegionLock, NULL);
     if(err!=0)
     {
-        aloge("fatal error! pthread mutex init fail!");
+        LOGE("fatal error! pthread mutex init fail!");
     }
     INIT_LIST_HEAD(&pChannel->mOverlayList);
     INIT_LIST_HEAD(&pChannel->mCoverList);
@@ -223,7 +223,7 @@ static void VENC_CHN_MAP_S_Destruct(VENC_CHN_MAP_S *pChannel)
 {
     if(pChannel->mEncComp)
     {
-        aloge("fatal error! Venc component need free before!");
+        LOGE("fatal error! Venc component need free before!");
         COMP_FreeHandle(pChannel->mEncComp);
         pChannel->mEncComp = NULL;
     }
@@ -238,7 +238,7 @@ static void VENC_CHN_MAP_S_Destruct(VENC_CHN_MAP_S *pChannel)
 //            free(pEntry);
 //            cnt++;
 //        }
-//        alogw("Be careful! must request all used [%d]frames before destruct venc channel[%d]!", cnt, pChannel->mVeChn);
+//        LOGW("Be careful! must request all used [%d]frames before destruct venc channel[%d]!", cnt, pChannel->mVeChn);
 //    }
 //    if(!list_empty(&pChannel->mIdleFrameList))
 //    {
@@ -250,7 +250,7 @@ static void VENC_CHN_MAP_S_Destruct(VENC_CHN_MAP_S *pChannel)
 //            free(pEntry);
 //            cnt++;
 //        }
-//        alogv("free [%d]idle frames before destruct venc channel[%d]!", cnt, pChannel->mVeChn);
+//        LOGV("free [%d]idle frames before destruct venc channel[%d]!", cnt, pChannel->mVeChn);
 //    }
 //    pthread_mutex_unlock(&pChannel->mFrameListLock);
 //    pthread_mutex_destroy(&pChannel->mFrameListLock);
@@ -287,7 +287,7 @@ static ERRORTYPE VideoEncEventHandler(
     ret = ((MM_COMPONENTTYPE*)hComponent)->GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &VencChnInfo);
     if(ret == SUCCESS)
     {
-        alogv("video encoder event, MppChannel[%d][%d][%d]", VencChnInfo.mModId, VencChnInfo.mDevId, VencChnInfo.mChnId);
+        LOGV("video encoder event, MppChannel[%d][%d][%d]", VencChnInfo.mModId, VencChnInfo.mDevId, VencChnInfo.mChnId);
     }
 	VENC_CHN_MAP_S *pChn = (VENC_CHN_MAP_S*)pAppData;
 
@@ -297,14 +297,14 @@ static ERRORTYPE VideoEncEventHandler(
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("video encoder EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("video encoder EventCmdComplete, current StateSet[%d]", nData2);
                 pChn->mStateTransitionError = SUCCESS;
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else
             {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
@@ -312,18 +312,18 @@ static ERRORTYPE VideoEncEventHandler(
         {
             if(ERR_VENC_SAMESTATE == nData1)
             {
-                alogv("set same state to venc!");
+                LOGV("set same state to venc!");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(ERR_VENC_INVALIDSTATE == nData1)
             {
-                aloge("why venc state turn to invalid?");
+                LOGE("why venc state turn to invalid?");
                 break;
             }
             else if(ERR_VENC_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("fatal error! venc state transition incorrect:%x.",nData2);
+                LOGE("fatal error! venc state transition incorrect:%x.",nData2);
                 if(nData2 == 0)     // no more detail error info
                 {
                     pChn->mStateTransitionError = ERR_VENC_INCORRECT_STATE_TRANSITION;
@@ -338,7 +338,7 @@ static ERRORTYPE VideoEncEventHandler(
             else if(ERR_VENC_TIMEOUT == nData1)
             {
                 uint64_t framePts = *(uint64_t*)pEventData;
-                alogw("Be careful! detect encode timeout, pts[%lld]us", framePts);
+                LOGW("Be careful! detect encode timeout, pts[%lld]us", framePts);
                 VENC_CHN_MAP_S *pChn = (VENC_CHN_MAP_S*)pAppData;
                 MPP_CHN_S ChannelInfo = {MOD_ID_VENC, 0, pChn->mVeChn};
                 CHECK_MPP_CALLBACK(pChn->mCallbackInfo.callback);
@@ -355,7 +355,7 @@ static ERRORTYPE VideoEncEventHandler(
             break;
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
 	return SUCCESS;
@@ -380,7 +380,7 @@ ERRORTYPE VideoEncEmptyBufferDone(
         pNode = malloc(sizeof(VEncFrameNode));
         if(NULL == pNode)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             pthread_mutex_unlock(&pChn->mFrameListLock);
             return ERR_VENC_NOMEM;
         }
@@ -431,12 +431,12 @@ ERRORTYPE AW_MPI_VENC_CreateChn(VENC_CHN VeChn, const VENC_CHN_ATTR_S *pAttr)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     if(NULL == pAttr)
     {
-        aloge("fatal error! illagal VencAttr!");
+        LOGE("fatal error! illagal VencAttr!");
         return ERR_VENC_ILLEGAL_PARAM;
     }
     if (gpVencChnMap == NULL) 
@@ -457,7 +457,7 @@ ERRORTYPE AW_MPI_VENC_CreateChn(VENC_CHN VeChn, const VENC_CHN_ATTR_S *pAttr)
     eRet = COMP_GetHandle((COMP_HANDLETYPE*)&pNode->mEncComp, CDX_ComponentNameVideoEncoder, (void*)pNode, &VideoEncCallback);
     if(eRet != SUCCESS)
     {
-        aloge("fatal error! get comp handle fail!");
+        LOGE("fatal error! get comp handle fail!");
     }
     MPP_CHN_S ChannelInfo;
     ChannelInfo.mModId = MOD_ID_VENC;
@@ -480,7 +480,7 @@ ERRORTYPE AW_MPI_VENC_DestroyChn(VENC_CHN VeChn)
     ERRORTYPE ret;
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -506,12 +506,12 @@ ERRORTYPE AW_MPI_VENC_DestroyChn(VENC_CHN VeChn)
             }
             else if(nCompState == COMP_StateInvalid)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             }
             else
             {
-                aloge("fatal error! invalid VeChn[%d] state[0x%x]!", VeChn, nCompState);
+                LOGE("fatal error! invalid VeChn[%d] state[0x%x]!", VeChn, nCompState);
                 eRet = FAILURE;
             }
 
@@ -530,13 +530,13 @@ ERRORTYPE AW_MPI_VENC_DestroyChn(VENC_CHN VeChn)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_VENC_BUSY;
         }
     }
     else
     {
-        aloge("fatal error! no Venc component!");
+        LOGE("fatal error! no Venc component!");
         list_del(&pChn->mList);
         VENC_CHN_MAP_S_Destruct(pChn);
         ret = SUCCESS;
@@ -548,12 +548,12 @@ ERRORTYPE AW_MPI_VENC_SetChnlPriority(VENC_CHN VeChn, unsigned int nPriority)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     if(nPriority >= 2)
     {
-        aloge("fatal error! illagal param!");
+        LOGE("fatal error! illagal param!");
         return ERR_VENC_ILLEGAL_PARAM;
     }
     VENC_CHN_MAP_S *pChn;
@@ -569,12 +569,12 @@ ERRORTYPE AW_MPI_VENC_GetChnlPriority(VENC_CHN VeChn, unsigned int *pPriority)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     if(NULL == pPriority)
     {
-        aloge("fatal error! illagal param!");
+        LOGE("fatal error! illagal param!");
         return ERR_VENC_ILLEGAL_PARAM;
     }
     VENC_CHN_MAP_S *pChn;
@@ -590,7 +590,7 @@ ERRORTYPE AW_MPI_VENC_ResetChn(VENC_CHN VeChn)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -606,13 +606,13 @@ ERRORTYPE AW_MPI_VENC_ResetChn(VENC_CHN VeChn)
         eRet2 = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencResetChannel, NULL);
         if(eRet2 != SUCCESS)
         {
-            aloge("fatal error! reset channel fail[0x%x]!", eRet2);
+            LOGE("fatal error! reset channel fail[0x%x]!", eRet2);
         }
         return eRet2;
     }
     else
     {
-        aloge("wrong status[0x%x], can't reset venc channel!", nCompState);
+        LOGE("wrong status[0x%x], can't reset venc channel!", nCompState);
         return ERR_VENC_NOT_PERM;
     }
 }
@@ -621,7 +621,7 @@ ERRORTYPE AW_MPI_VENC_StartRecvPicEx(VENC_CHN VeChn, VENC_RECV_PIC_PARAM_S *pRec
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -645,13 +645,13 @@ ERRORTYPE AW_MPI_VENC_StartRecvPicEx(VENC_CHN VeChn, VENC_RECV_PIC_PARAM_S *pRec
         }
         else
         {
-            aloge("fatal error! send command stateExecuting fail.");
+            LOGE("fatal error! send command stateExecuting fail.");
             ret = eRet;
         }
     }
     else
     {
-        alogd("VencChannelState[0x%x], do nothing!", nCompState);
+        LOGD("VencChannelState[0x%x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -666,7 +666,7 @@ ERRORTYPE AW_MPI_VENC_StopRecvPic(VENC_CHN VeChn)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -683,19 +683,19 @@ ERRORTYPE AW_MPI_VENC_StopRecvPic(VENC_CHN VeChn)
         eRet = pChn->mEncComp->SendCommand(pChn->mEncComp, COMP_CommandStateSet, COMP_StateIdle, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogv("VencChannelState[0x%x], do nothing!", nCompState);
+        LOGV("VencChannelState[0x%x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     else
     {
-        aloge("fatal error! check VencChannelState[0x%x]!", nCompState);
+        LOGE("fatal error! check VencChannelState[0x%x]!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -705,7 +705,7 @@ ERRORTYPE AW_MPI_VENC_Query(VENC_CHN VeChn, VENC_CHN_STAT_S *pStat)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -718,7 +718,7 @@ ERRORTYPE AW_MPI_VENC_Query(VENC_CHN VeChn, VENC_CHN_STAT_S *pStat)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencChnState, pStat);
@@ -729,7 +729,7 @@ ERRORTYPE AW_MPI_VENC_RegisterCallback(VENC_CHN VeChn, MPPCallbackInfo *pCallbac
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -746,7 +746,7 @@ ERRORTYPE AW_MPI_VENC_SetChnAttr(VENC_CHN VeChn, const VENC_CHN_ATTR_S *pAttr)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -759,7 +759,7 @@ ERRORTYPE AW_MPI_VENC_SetChnAttr(VENC_CHN VeChn, const VENC_CHN_ATTR_S *pAttr)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencChnAttr, (void*)pAttr);
@@ -770,7 +770,7 @@ ERRORTYPE AW_MPI_VENC_GetChnAttr(VENC_CHN VeChn, VENC_CHN_ATTR_S *pAttr)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -783,7 +783,7 @@ ERRORTYPE AW_MPI_VENC_GetChnAttr(VENC_CHN VeChn, VENC_CHN_ATTR_S *pAttr)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencChnAttr, (void*)pAttr);
@@ -794,7 +794,7 @@ ERRORTYPE AW_MPI_VENC_GetStream(VENC_CHN VeChn, VENC_STREAM_S *pStream, int nMil
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -804,12 +804,12 @@ ERRORTYPE AW_MPI_VENC_GetStream(VENC_CHN VeChn, VENC_STREAM_S *pStream, int nMil
     }
     if(NULL == pStream)
     {
-        aloge("fatal error! pStream == NULL!");
+        LOGE("fatal error! pStream == NULL!");
         return ERR_VENC_NULL_PTR;
     }
     if(nMilliSec < -1)
     {
-        aloge("fatal error! illegal nMilliSec[%d]!", nMilliSec);
+        LOGE("fatal error! illegal nMilliSec[%d]!", nMilliSec);
         return ERR_VENC_ILLEGAL_PARAM;
     }
     ERRORTYPE ret;
@@ -817,7 +817,7 @@ ERRORTYPE AW_MPI_VENC_GetStream(VENC_CHN VeChn, VENC_STREAM_S *pStream, int nMil
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     VEncStream stVencStream;
@@ -831,7 +831,7 @@ ERRORTYPE AW_MPI_VENC_ReleaseStream(VENC_CHN VeChn, VENC_STREAM_S *pStream)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -841,7 +841,7 @@ ERRORTYPE AW_MPI_VENC_ReleaseStream(VENC_CHN VeChn, VENC_STREAM_S *pStream)
     }
     if(NULL == pStream)
     {
-        aloge("fatal error! pStream == NULL!");
+        LOGE("fatal error! pStream == NULL!");
         return ERR_VENC_NULL_PTR;
     }
     ERRORTYPE ret;
@@ -849,7 +849,7 @@ ERRORTYPE AW_MPI_VENC_ReleaseStream(VENC_CHN VeChn, VENC_STREAM_S *pStream)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencReleaseStream, (void*)pStream);
@@ -860,7 +860,7 @@ ERRORTYPE AW_MPI_VENC_InsertUserData(VENC_CHN VeChn, unsigned char *pData, unsig
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -873,7 +873,7 @@ ERRORTYPE AW_MPI_VENC_InsertUserData(VENC_CHN VeChn, unsigned char *pData, unsig
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     DataSection stDataSection;
@@ -887,7 +887,7 @@ ERRORTYPE AW_MPI_VENC_SendFrame(VENC_CHN VeChn, VIDEO_FRAME_INFO_S *pFrame ,int 
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -900,7 +900,7 @@ ERRORTYPE AW_MPI_VENC_SendFrame(VENC_CHN VeChn, VIDEO_FRAME_INFO_S *pFrame ,int 
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     COMP_BUFFERHEADERTYPE bufferHeader;
@@ -913,7 +913,7 @@ ERRORTYPE AW_MPI_VENC_GetUsedFrame(VENC_CHN VeChn, VIDEO_FRAME_INFO_S *pFrame ,i
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -926,7 +926,7 @@ ERRORTYPE AW_MPI_VENC_GetUsedFrame(VENC_CHN VeChn, VIDEO_FRAME_INFO_S *pFrame ,i
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
 _TryToGetFrame:
@@ -979,7 +979,7 @@ ERRORTYPE AW_MPI_VENC_RequestIDR(VENC_CHN VeChn, BOOL bInstant)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -992,7 +992,7 @@ ERRORTYPE AW_MPI_VENC_RequestIDR(VENC_CHN VeChn, BOOL bInstant)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencRequestIDR, (void*)&bInstant);
@@ -1003,7 +1003,7 @@ int AW_MPI_VENC_GetHandle(VENC_CHN VeChn)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1028,7 +1028,7 @@ ERRORTYPE AW_MPI_VENC_SetRoiCfg(VENC_CHN VeChn, VENC_ROI_CFG_S *pVencRoiCfg)
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1041,7 +1041,7 @@ ERRORTYPE AW_MPI_VENC_SetRoiCfg(VENC_CHN VeChn, VENC_ROI_CFG_S *pVencRoiCfg)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencRoiCfg, (void*)pVencRoiCfg);
@@ -1052,7 +1052,7 @@ ERRORTYPE AW_MPI_VENC_GetRoiCfg(VENC_CHN VeChn, unsigned int nIndex, VENC_ROI_CF
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1069,7 +1069,7 @@ ERRORTYPE AW_MPI_VENC_GetRoiCfg(VENC_CHN VeChn, unsigned int nIndex, VENC_ROI_CF
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     pVencRoiCfg->Index = nIndex;
@@ -1081,7 +1081,7 @@ ERRORTYPE AW_MPI_VENC_SetH264SliceSplit(VENC_CHN VeChn, const VENC_PARAM_H264_SL
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1094,7 +1094,7 @@ ERRORTYPE AW_MPI_VENC_SetH264SliceSplit(VENC_CHN VeChn, const VENC_PARAM_H264_SL
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH264SliceSplit, (void*)pSliceSplit);
@@ -1106,7 +1106,7 @@ ERRORTYPE AW_MPI_VENC_GetH264SliceSplit(VENC_CHN VeChn, VENC_PARAM_H264_SLICE_SP
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1119,7 +1119,7 @@ ERRORTYPE AW_MPI_VENC_GetH264SliceSplit(VENC_CHN VeChn, VENC_PARAM_H264_SLICE_SP
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH264SliceSplit, (void*)pSliceSplit);
@@ -1130,7 +1130,7 @@ ERRORTYPE AW_MPI_VENC_SetH264InterPred(VENC_CHN VeChn, const VENC_PARAM_H264_INT
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1143,7 +1143,7 @@ ERRORTYPE AW_MPI_VENC_SetH264InterPred(VENC_CHN VeChn, const VENC_PARAM_H264_INT
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH264InterPred, (void*)pH264InterPred);
@@ -1154,7 +1154,7 @@ ERRORTYPE AW_MPI_VENC_GetH264InterPred(VENC_CHN VeChn, VENC_PARAM_H264_INTER_PRE
 {
     if(!(VeChn>=0 && VeChn <VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1167,7 +1167,7 @@ ERRORTYPE AW_MPI_VENC_GetH264InterPred(VENC_CHN VeChn, VENC_PARAM_H264_INTER_PRE
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH264InterPred, (void*)pH264InterPred);
@@ -1178,7 +1178,7 @@ ERRORTYPE AW_MPI_VENC_SetH264IntraPred(VENC_CHN VeChn, const VENC_PARAM_H264_INT
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1191,7 +1191,7 @@ ERRORTYPE AW_MPI_VENC_SetH264IntraPred(VENC_CHN VeChn, const VENC_PARAM_H264_INT
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH264IntraPred, (void*)pH264IntraPred);
@@ -1202,7 +1202,7 @@ ERRORTYPE AW_MPI_VENC_GetH264IntraPred(VENC_CHN VeChn, VENC_PARAM_H264_INTRA_PRE
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1215,7 +1215,7 @@ ERRORTYPE AW_MPI_VENC_GetH264IntraPred(VENC_CHN VeChn, VENC_PARAM_H264_INTRA_PRE
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH264IntraPred, (void*)pH264IntraPred);
@@ -1226,7 +1226,7 @@ ERRORTYPE AW_MPI_VENC_SetH264Trans(VENC_CHN VeChn, const VENC_PARAM_H264_TRANS_S
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1239,7 +1239,7 @@ ERRORTYPE AW_MPI_VENC_SetH264Trans(VENC_CHN VeChn, const VENC_PARAM_H264_TRANS_S
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH264Trans, (void*)pH264Trans);
@@ -1250,7 +1250,7 @@ ERRORTYPE AW_MPI_VENC_GetH264Trans(VENC_CHN VeChn, VENC_PARAM_H264_TRANS_S *pH26
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1263,7 +1263,7 @@ ERRORTYPE AW_MPI_VENC_GetH264Trans(VENC_CHN VeChn, VENC_PARAM_H264_TRANS_S *pH26
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH264Trans, (void*)pH264Trans);
@@ -1274,7 +1274,7 @@ ERRORTYPE AW_MPI_VENC_SetH264Entropy(VENC_CHN VeChn, const VENC_PARAM_H264_ENTRO
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1287,7 +1287,7 @@ ERRORTYPE AW_MPI_VENC_SetH264Entropy(VENC_CHN VeChn, const VENC_PARAM_H264_ENTRO
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH264Entropy, (void*)pH264EntropyEnc);
@@ -1298,7 +1298,7 @@ ERRORTYPE AW_MPI_VENC_GetH264Entropy(VENC_CHN VeChn, VENC_PARAM_H264_ENTROPY_S *
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1311,7 +1311,7 @@ ERRORTYPE AW_MPI_VENC_GetH264Entropy(VENC_CHN VeChn, VENC_PARAM_H264_ENTROPY_S *
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH264Entropy, (void*)pH264EntropyEnc);
@@ -1322,7 +1322,7 @@ ERRORTYPE AW_MPI_VENC_SetH264Poc(VENC_CHN VeChn, const VENC_PARAM_H264_POC_S *pH
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1335,7 +1335,7 @@ ERRORTYPE AW_MPI_VENC_SetH264Poc(VENC_CHN VeChn, const VENC_PARAM_H264_POC_S *pH
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH264Poc, (void*)pH264Poc);
@@ -1346,7 +1346,7 @@ ERRORTYPE AW_MPI_VENC_GetH264Poc(VENC_CHN VeChn, VENC_PARAM_H264_POC_S *pH264Poc
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1359,7 +1359,7 @@ ERRORTYPE AW_MPI_VENC_GetH264Poc(VENC_CHN VeChn, VENC_PARAM_H264_POC_S *pH264Poc
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH264Poc, (void*)pH264Poc);
@@ -1370,7 +1370,7 @@ ERRORTYPE AW_MPI_VENC_SetH264Dblk(VENC_CHN VeChn, const VENC_PARAM_H264_DBLK_S *
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1383,7 +1383,7 @@ ERRORTYPE AW_MPI_VENC_SetH264Dblk(VENC_CHN VeChn, const VENC_PARAM_H264_DBLK_S *
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH264Dblk, (void*)pH264Dblk);
@@ -1394,7 +1394,7 @@ ERRORTYPE AW_MPI_VENC_GetH264Dblk(VENC_CHN VeChn, VENC_PARAM_H264_DBLK_S *pH264D
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1407,7 +1407,7 @@ ERRORTYPE AW_MPI_VENC_GetH264Dblk(VENC_CHN VeChn, VENC_PARAM_H264_DBLK_S *pH264D
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH264Dblk, (void*)pH264Dblk);
@@ -1418,7 +1418,7 @@ ERRORTYPE AW_MPI_VENC_SetH264Vui(VENC_CHN VeChn, const VENC_PARAM_H264_VUI_S *pH
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1431,7 +1431,7 @@ ERRORTYPE AW_MPI_VENC_SetH264Vui(VENC_CHN VeChn, const VENC_PARAM_H264_VUI_S *pH
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH264Vui, (void*)pH264Vui);
@@ -1442,7 +1442,7 @@ ERRORTYPE AW_MPI_VENC_GetH264Vui(VENC_CHN VeChn, VENC_PARAM_H264_VUI_S *pH264Vui
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1455,7 +1455,7 @@ ERRORTYPE AW_MPI_VENC_GetH264Vui(VENC_CHN VeChn, VENC_PARAM_H264_VUI_S *pH264Vui
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH264Vui, (void*)pH264Vui);
@@ -1466,7 +1466,7 @@ ERRORTYPE AW_MPI_VENC_GetH264SpsPpsInfo(VENC_CHN VeChn, VencHeaderData *pH264Sps
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1488,7 +1488,7 @@ ERRORTYPE AW_MPI_VENC_SetJpegParam(VENC_CHN VeChn, const VENC_PARAM_JPEG_S *pJpe
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1501,7 +1501,7 @@ ERRORTYPE AW_MPI_VENC_SetJpegParam(VENC_CHN VeChn, const VENC_PARAM_JPEG_S *pJpe
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencJpegParam, (void*)pJpegParam);
@@ -1512,7 +1512,7 @@ ERRORTYPE AW_MPI_VENC_GetJpegParam(VENC_CHN VeChn, VENC_PARAM_JPEG_S *pJpegParam
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1525,7 +1525,7 @@ ERRORTYPE AW_MPI_VENC_GetJpegParam(VENC_CHN VeChn, VENC_PARAM_JPEG_S *pJpegParam
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencJpegParam, (void*)pJpegParam);
@@ -1536,7 +1536,7 @@ ERRORTYPE AW_MPI_VENC_SetJpegExifInfo(VENC_CHN VeChn, const VENC_EXIFINFO_S *pJp
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1549,7 +1549,7 @@ ERRORTYPE AW_MPI_VENC_SetJpegExifInfo(VENC_CHN VeChn, const VENC_EXIFINFO_S *pJp
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencJpegExifInfo, (void*)pJpegExifInfo);
@@ -1560,7 +1560,7 @@ ERRORTYPE AW_MPI_VENC_GetJpegExifInfo(VENC_CHN VeChn, VENC_EXIFINFO_S *pJpegExif
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1573,7 +1573,7 @@ ERRORTYPE AW_MPI_VENC_GetJpegExifInfo(VENC_CHN VeChn, VENC_EXIFINFO_S *pJpegExif
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_GetConfig(pChn->mEncComp, COMP_IndexVendorVencJpegExifInfo, (void*)pJpegExifInfo);
@@ -1584,7 +1584,7 @@ ERRORTYPE AW_MPI_VENC_GetJpegThumbBuffer(VENC_CHN VeChn, VENC_JPEG_THUMB_BUFFER_
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1597,7 +1597,7 @@ ERRORTYPE AW_MPI_VENC_GetJpegThumbBuffer(VENC_CHN VeChn, VENC_JPEG_THUMB_BUFFER_
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_GetConfig(pChn->mEncComp, COMP_IndexVendorVencJpegThumbBuffer, (void*)pThumbBuffer);
@@ -1608,7 +1608,7 @@ ERRORTYPE AW_MPI_VENC_SetMjpegParam(VENC_CHN VeChn, const VENC_PARAM_MJPEG_S *pM
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1621,7 +1621,7 @@ ERRORTYPE AW_MPI_VENC_SetMjpegParam(VENC_CHN VeChn, const VENC_PARAM_MJPEG_S *pM
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencMjpegParam, (void*)pMjpegParam);
@@ -1632,7 +1632,7 @@ ERRORTYPE AW_MPI_VENC_GetMjpegParam(VENC_CHN VeChn, VENC_PARAM_MJPEG_S *pMjpegPa
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1645,7 +1645,7 @@ ERRORTYPE AW_MPI_VENC_GetMjpegParam(VENC_CHN VeChn, VENC_PARAM_MJPEG_S *pMjpegPa
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencMjpegParam, (void*)pMjpegParam);
@@ -1656,7 +1656,7 @@ ERRORTYPE AW_MPI_VENC_SetFrameRate(VENC_CHN VeChn, const VENC_FRAME_RATE_S *pFra
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1669,7 +1669,7 @@ ERRORTYPE AW_MPI_VENC_SetFrameRate(VENC_CHN VeChn, const VENC_FRAME_RATE_S *pFra
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateIdle != nState && COMP_StateExecuting != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencFrameRate, (void*)pFrameRate);
@@ -1680,7 +1680,7 @@ ERRORTYPE AW_MPI_VENC_GetFrameRate(VENC_CHN VeChn, VENC_FRAME_RATE_S *pFrameRate
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1693,7 +1693,7 @@ ERRORTYPE AW_MPI_VENC_GetFrameRate(VENC_CHN VeChn, VENC_FRAME_RATE_S *pFrameRate
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencFrameRate, (void*)pFrameRate);
@@ -1704,7 +1704,7 @@ ERRORTYPE AW_MPI_VENC_SetTimeLapse(VENC_CHN VeChn, int64_t nTimeLapse)
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1717,7 +1717,7 @@ ERRORTYPE AW_MPI_VENC_SetTimeLapse(VENC_CHN VeChn, int64_t nTimeLapse)
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorTimeLapse, (void*)&nTimeLapse);
@@ -1727,7 +1727,7 @@ ERRORTYPE AW_MPI_VENC_GetTimeLapse(VENC_CHN VeChn, int64_t *pTimeLapse)
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1740,7 +1740,7 @@ ERRORTYPE AW_MPI_VENC_GetTimeLapse(VENC_CHN VeChn, int64_t *pTimeLapse)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_GetConfig(pChn->mEncComp, COMP_IndexVendorTimeLapse, (void*)pTimeLapse);
@@ -1751,7 +1751,7 @@ ERRORTYPE AW_MPI_VENC_GetRcParam(VENC_CHN VeChn, VENC_RC_PARAM_S *pRcParam)
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1764,7 +1764,7 @@ ERRORTYPE AW_MPI_VENC_GetRcParam(VENC_CHN VeChn, VENC_RC_PARAM_S *pRcParam)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencRcParam, (void*)pRcParam);
@@ -1775,7 +1775,7 @@ ERRORTYPE AW_MPI_VENC_SetRcParam(VENC_CHN VeChn, const VENC_RC_PARAM_S *pRcParam
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1788,7 +1788,7 @@ ERRORTYPE AW_MPI_VENC_SetRcParam(VENC_CHN VeChn, const VENC_RC_PARAM_S *pRcParam
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencRcParam, (void*)pRcParam);
@@ -1799,7 +1799,7 @@ ERRORTYPE AW_MPI_VENC_SetRefParam(VENC_CHN VeChn, const VENC_PARAM_REF_S *pstRef
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1812,7 +1812,7 @@ ERRORTYPE AW_MPI_VENC_SetRefParam(VENC_CHN VeChn, const VENC_PARAM_REF_S *pstRef
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencRefParam, (void*)pstRefParam);
@@ -1823,7 +1823,7 @@ ERRORTYPE AW_MPI_VENC_GetRefParam(VENC_CHN VeChn, VENC_PARAM_REF_S *pstRefParam)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1836,7 +1836,7 @@ ERRORTYPE AW_MPI_VENC_GetRefParam(VENC_CHN VeChn, VENC_PARAM_REF_S *pstRefParam)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencRefParam, (void*)pstRefParam);
@@ -1847,7 +1847,7 @@ ERRORTYPE AW_MPI_VENC_SetColor2Grey(VENC_CHN VeChn, const VENC_COLOR2GREY_S *pCh
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1860,7 +1860,7 @@ ERRORTYPE AW_MPI_VENC_SetColor2Grey(VENC_CHN VeChn, const VENC_COLOR2GREY_S *pCh
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencColor2Grey, (void*)pChnColor2Grey);
@@ -1871,7 +1871,7 @@ ERRORTYPE AW_MPI_VENC_GetColor2Grey(VENC_CHN VeChn, VENC_COLOR2GREY_S *pChnColor
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1884,7 +1884,7 @@ ERRORTYPE AW_MPI_VENC_GetColor2Grey(VENC_CHN VeChn, VENC_COLOR2GREY_S *pChnColor
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencColor2Grey, (void*)pChnColor2Grey);
@@ -1895,7 +1895,7 @@ ERRORTYPE AW_MPI_VENC_SetCrop(VENC_CHN VeChn, const VENC_CROP_CFG_S *pCropCfg)
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1908,7 +1908,7 @@ ERRORTYPE AW_MPI_VENC_SetCrop(VENC_CHN VeChn, const VENC_CROP_CFG_S *pCropCfg)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencCrop, (void*)pCropCfg);
@@ -1919,7 +1919,7 @@ ERRORTYPE AW_MPI_VENC_GetCrop(VENC_CHN VeChn, VENC_CROP_CFG_S *pCropCfg)
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1932,7 +1932,7 @@ ERRORTYPE AW_MPI_VENC_GetCrop(VENC_CHN VeChn, VENC_CROP_CFG_S *pCropCfg)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencCrop, (void*)pCropCfg);
@@ -1943,7 +1943,7 @@ ERRORTYPE AW_MPI_VENC_SetJpegSnapMode(VENC_CHN VeChn, VENC_JPEG_SNAP_MODE_E enJp
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1956,7 +1956,7 @@ ERRORTYPE AW_MPI_VENC_SetJpegSnapMode(VENC_CHN VeChn, VENC_JPEG_SNAP_MODE_E enJp
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencJpegSnapMode, (void*)&enJpegSnapMode);
@@ -1967,7 +1967,7 @@ ERRORTYPE AW_MPI_VENC_GetJpegSnapMode(VENC_CHN VeChn, VENC_JPEG_SNAP_MODE_E *pen
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -1980,7 +1980,7 @@ ERRORTYPE AW_MPI_VENC_GetJpegSnapMode(VENC_CHN VeChn, VENC_JPEG_SNAP_MODE_E *pen
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencJpegSnapMode, (void*)penJpegSnapMode);
@@ -1991,7 +1991,7 @@ ERRORTYPE AW_MPI_VENC_EnableIDR(VENC_CHN VeChn, BOOL bEnableIDR)
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2004,7 +2004,7 @@ ERRORTYPE AW_MPI_VENC_EnableIDR(VENC_CHN VeChn, BOOL bEnableIDR)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencEnableIDR, (void*)&bEnableIDR);
@@ -2015,7 +2015,7 @@ ERRORTYPE AW_MPI_VENC_GetStreamBufInfo(VENC_CHN VeChn, VENC_STREAM_BUF_INFO_S *p
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2028,7 +2028,7 @@ ERRORTYPE AW_MPI_VENC_GetStreamBufInfo(VENC_CHN VeChn, VENC_STREAM_BUF_INFO_S *p
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencStreamBufInfo, (void*)pStreamBufInfo);
@@ -2039,7 +2039,7 @@ ERRORTYPE AW_MPI_VENC_SetRcPriority(VENC_CHN VeChn, VENC_RC_PRIORITY_E enRcPrior
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2052,7 +2052,7 @@ ERRORTYPE AW_MPI_VENC_SetRcPriority(VENC_CHN VeChn, VENC_RC_PRIORITY_E enRcPrior
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencRcPriority, (void*)&enRcPriority);
@@ -2063,7 +2063,7 @@ ERRORTYPE AW_MPI_VENC_GetRcPriority(VENC_CHN VeChn, VENC_RC_PRIORITY_E *penRcPri
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2076,7 +2076,7 @@ ERRORTYPE AW_MPI_VENC_GetRcPriority(VENC_CHN VeChn, VENC_RC_PRIORITY_E *penRcPri
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencRcPriority, (void*)penRcPriority);
@@ -2087,7 +2087,7 @@ ERRORTYPE AW_MPI_VENC_SetH265SliceSplit(VENC_CHN VeChn, const VENC_PARAM_H265_SL
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2100,7 +2100,7 @@ ERRORTYPE AW_MPI_VENC_SetH265SliceSplit(VENC_CHN VeChn, const VENC_PARAM_H265_SL
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH265SliceSplit, (void*)pSliceSplit);
@@ -2111,7 +2111,7 @@ ERRORTYPE AW_MPI_VENC_GetH265SliceSplit(VENC_CHN VeChn, VENC_PARAM_H265_SLICE_SP
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2124,7 +2124,7 @@ ERRORTYPE AW_MPI_VENC_GetH265SliceSplit(VENC_CHN VeChn, VENC_PARAM_H265_SLICE_SP
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH265SliceSplit, (void*)pSliceSplit);
@@ -2135,7 +2135,7 @@ ERRORTYPE AW_MPI_VENC_SetH265PredUnit(VENC_CHN VeChn, const VENC_PARAM_H265_PU_S
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2148,7 +2148,7 @@ ERRORTYPE AW_MPI_VENC_SetH265PredUnit(VENC_CHN VeChn, const VENC_PARAM_H265_PU_S
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH265PredUnit, (void*)pPredUnit);
@@ -2159,7 +2159,7 @@ ERRORTYPE AW_MPI_VENC_GetH265PredUnit(VENC_CHN VeChn, VENC_PARAM_H265_PU_S *pPre
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2172,7 +2172,7 @@ ERRORTYPE AW_MPI_VENC_GetH265PredUnit(VENC_CHN VeChn, VENC_PARAM_H265_PU_S *pPre
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH265PredUnit, (void*)pPredUnit);
@@ -2183,7 +2183,7 @@ ERRORTYPE AW_MPI_VENC_SetH265Trans(VENC_CHN VeChn, const VENC_PARAM_H265_TRANS_S
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2196,7 +2196,7 @@ ERRORTYPE AW_MPI_VENC_SetH265Trans(VENC_CHN VeChn, const VENC_PARAM_H265_TRANS_S
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH265Trans, (void*)pH265Trans);
@@ -2207,7 +2207,7 @@ ERRORTYPE AW_MPI_VENC_GetH265Trans(VENC_CHN VeChn, VENC_PARAM_H265_TRANS_S *pH26
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2220,7 +2220,7 @@ ERRORTYPE AW_MPI_VENC_GetH265Trans(VENC_CHN VeChn, VENC_PARAM_H265_TRANS_S *pH26
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH265Trans, (void*)pH265Trans);
@@ -2231,7 +2231,7 @@ ERRORTYPE AW_MPI_VENC_SetH265Entropy(VENC_CHN VeChn, const VENC_PARAM_H265_ENTRO
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2244,7 +2244,7 @@ ERRORTYPE AW_MPI_VENC_SetH265Entropy(VENC_CHN VeChn, const VENC_PARAM_H265_ENTRO
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH265Entropy, (void*)pH265Entropy);
@@ -2255,7 +2255,7 @@ ERRORTYPE AW_MPI_VENC_GetH265Entropy(VENC_CHN VeChn, VENC_PARAM_H265_ENTROPY_S *
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2268,7 +2268,7 @@ ERRORTYPE AW_MPI_VENC_GetH265Entropy(VENC_CHN VeChn, VENC_PARAM_H265_ENTROPY_S *
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH265Entropy, (void*)pH265Entropy);
@@ -2279,7 +2279,7 @@ ERRORTYPE AW_MPI_VENC_SetH265Dblk(VENC_CHN VeChn, const VENC_PARAM_H265_DBLK_S *
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2292,7 +2292,7 @@ ERRORTYPE AW_MPI_VENC_SetH265Dblk(VENC_CHN VeChn, const VENC_PARAM_H265_DBLK_S *
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH265Dblk, (void*)pH265Dblk);
@@ -2303,7 +2303,7 @@ ERRORTYPE AW_MPI_VENC_GetH265Dblk(VENC_CHN VeChn, VENC_PARAM_H265_DBLK_S *pH265D
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2316,7 +2316,7 @@ ERRORTYPE AW_MPI_VENC_GetH265Dblk(VENC_CHN VeChn, VENC_PARAM_H265_DBLK_S *pH265D
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH265Dblk, (void*)pH265Dblk);
@@ -2327,7 +2327,7 @@ ERRORTYPE AW_MPI_VENC_SetH265Sao(VENC_CHN VeChn, const VENC_PARAM_H265_SAO_S *pH
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2340,7 +2340,7 @@ ERRORTYPE AW_MPI_VENC_SetH265Sao(VENC_CHN VeChn, const VENC_PARAM_H265_SAO_S *pH
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH265Sao, (void*)pH265Sao);
@@ -2351,7 +2351,7 @@ ERRORTYPE AW_MPI_VENC_GetH265Sao(VENC_CHN VeChn, VENC_PARAM_H265_SAO_S *pH265Sao
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2364,7 +2364,7 @@ ERRORTYPE AW_MPI_VENC_GetH265Sao(VENC_CHN VeChn, VENC_PARAM_H265_SAO_S *pH265Sao
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH265Sao, (void*)pH265Sao);
@@ -2375,7 +2375,7 @@ ERRORTYPE AW_MPI_VENC_SetH265Timing(VENC_CHN VeChn, const VENC_PARAM_H265_TIMING
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2388,7 +2388,7 @@ ERRORTYPE AW_MPI_VENC_SetH265Timing(VENC_CHN VeChn, const VENC_PARAM_H265_TIMING
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencH265Timing, (void*)pH265Timing);
@@ -2399,7 +2399,7 @@ ERRORTYPE AW_MPI_VENC_GetH265Timing(VENC_CHN VeChn, VENC_PARAM_H265_TIMING_S *pH
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2412,7 +2412,7 @@ ERRORTYPE AW_MPI_VENC_GetH265Timing(VENC_CHN VeChn, VENC_PARAM_H265_TIMING_S *pH
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencH265Timing, (void*)pH265Timing);
@@ -2423,7 +2423,7 @@ ERRORTYPE AW_MPI_VENC_SetFrameLostStrategy(VENC_CHN VeChn, const VENC_PARAM_FRAM
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2436,7 +2436,7 @@ ERRORTYPE AW_MPI_VENC_SetFrameLostStrategy(VENC_CHN VeChn, const VENC_PARAM_FRAM
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencFrameLostStrategy, (void*)pFrmLostParam);
@@ -2447,7 +2447,7 @@ ERRORTYPE AW_MPI_VENC_GetFrameLostStrategy(VENC_CHN VeChn, VENC_PARAM_FRAMELOST_
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2460,7 +2460,7 @@ ERRORTYPE AW_MPI_VENC_GetFrameLostStrategy(VENC_CHN VeChn, VENC_PARAM_FRAMELOST_
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencFrameLostStrategy, (void*)pFrmLostParam);
@@ -2471,7 +2471,7 @@ ERRORTYPE AW_MPI_VENC_SetSuperFrameCfg(VENC_CHN VeChn, const VENC_SUPERFRAME_CFG
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2484,7 +2484,7 @@ ERRORTYPE AW_MPI_VENC_SetSuperFrameCfg(VENC_CHN VeChn, const VENC_SUPERFRAME_CFG
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencSuperFrameCfg, (void*)pSuperFrmParam);
@@ -2495,7 +2495,7 @@ ERRORTYPE AW_MPI_VENC_GetSuperFrameCfg(VENC_CHN VeChn,VENC_SUPERFRAME_CFG_S *pSu
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2508,7 +2508,7 @@ ERRORTYPE AW_MPI_VENC_GetSuperFrameCfg(VENC_CHN VeChn,VENC_SUPERFRAME_CFG_S *pSu
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_GetConfig(pChn->mEncComp, COMP_IndexVendorVencSuperFrameCfg, (void*)pSuperFrmParam);
@@ -2519,7 +2519,7 @@ ERRORTYPE AW_MPI_VENC_SetIntraRefresh(VENC_CHN VeChn, VENC_PARAM_INTRA_REFRESH_S
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2532,7 +2532,7 @@ ERRORTYPE AW_MPI_VENC_SetIntraRefresh(VENC_CHN VeChn, VENC_PARAM_INTRA_REFRESH_S
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencIntraRefresh, (void*)pIntraRefresh);
@@ -2543,7 +2543,7 @@ ERRORTYPE AW_MPI_VENC_GetIntraRefresh(VENC_CHN VeChn, VENC_PARAM_INTRA_REFRESH_S
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2556,7 +2556,7 @@ ERRORTYPE AW_MPI_VENC_GetIntraRefresh(VENC_CHN VeChn, VENC_PARAM_INTRA_REFRESH_S
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_GetConfig(pChn->mEncComp, COMP_IndexVendorVencIntraRefresh, (void*)pIntraRefresh);
@@ -2567,7 +2567,7 @@ ERRORTYPE AW_MPI_VENC_SetSmartP(VENC_CHN VeChn, VencSmartFun *pSmartPParam)
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2580,7 +2580,7 @@ ERRORTYPE AW_MPI_VENC_SetSmartP(VENC_CHN VeChn, VencSmartFun *pSmartPParam)
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencSmartP, (void*)pSmartPParam);
@@ -2590,7 +2590,7 @@ ERRORTYPE AW_MPI_VENC_GetSmartP(VENC_CHN VeChn, VencSmartFun *pSmartPParam)
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2603,7 +2603,7 @@ ERRORTYPE AW_MPI_VENC_GetSmartP(VENC_CHN VeChn, VencSmartFun *pSmartPParam)
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_GetConfig(pChn->mEncComp, COMP_IndexVendorVencSmartP, (void*)pSmartPParam);
@@ -2614,7 +2614,7 @@ ERRORTYPE AW_MPI_VENC_SetBrightness(VENC_CHN VeChn, VencBrightnessS *pBrightness
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2627,7 +2627,7 @@ ERRORTYPE AW_MPI_VENC_SetBrightness(VENC_CHN VeChn, VencBrightnessS *pBrightness
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencBrightness, (void*)pBrightness);
@@ -2638,7 +2638,7 @@ ERRORTYPE AW_MPI_VENC_GetBrightness(VENC_CHN VeChn, VencBrightnessS *pBrightness
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2651,7 +2651,7 @@ ERRORTYPE AW_MPI_VENC_GetBrightness(VENC_CHN VeChn, VencBrightnessS *pBrightness
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_GetConfig(pChn->mEncComp, COMP_IndexVendorVencBrightness, (void*)pBrightness);
@@ -2662,7 +2662,7 @@ ERRORTYPE AW_MPI_VENC_SetQPMAP(VENC_CHN VeChn, const VencMBModeCtrl *pQPMAP)
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2675,7 +2675,7 @@ ERRORTYPE AW_MPI_VENC_SetQPMAP(VENC_CHN VeChn, const VencMBModeCtrl *pQPMAP)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencQPmap, (void*)pQPMAP);
@@ -2686,7 +2686,7 @@ ERRORTYPE AW_MPI_VENC_SetQPMAPMBInfoOutput(VENC_CHN VeChn, const VencMBInfo *pQp
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2699,7 +2699,7 @@ ERRORTYPE AW_MPI_VENC_SetQPMAPMBInfoOutput(VENC_CHN VeChn, const VencMBInfo *pQp
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencQPmapMBInfoOutput, (void*)pQpMapMBInfo);
@@ -2710,7 +2710,7 @@ ERRORTYPE AW_MPI_VENC_GetQPMAPMBSumInfoOutput(VENC_CHN VeChn, VencMBSumInfo *pQp
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2723,7 +2723,7 @@ ERRORTYPE AW_MPI_VENC_GetQPMAPMBSumInfoOutput(VENC_CHN VeChn, VencMBSumInfo *pQp
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_GetConfig(pChn->mEncComp, COMP_IndexVendorVencQPmapMBSumInfoOutput, (void*)pQpMapMBSumInfo);
@@ -2735,7 +2735,7 @@ ERRORTYPE AW_MPI_VENC_setOsdMaskRegions(VENC_CHN VeChn, VENC_OVERLAY_INFO *pOsdM
 {
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2748,7 +2748,7 @@ ERRORTYPE AW_MPI_VENC_setOsdMaskRegions(VENC_CHN VeChn, VENC_OVERLAY_INFO *pOsdM
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencOverLay, (void*)pOsdMaskRegion);
@@ -2765,7 +2765,7 @@ ERRORTYPE AW_MPI_VENC_SetVEFreq(VENC_CHN VeChn, int nFreq)
 {
     if(MM_INVALID_CHN == VeChn)
     {
-        alogd("change global ve freq[%d]->[%d]", gpVencChnMap->mVeFreq, nFreq);
+        LOGD("change global ve freq[%d]->[%d]", gpVencChnMap->mVeFreq, nFreq);
         pthread_mutex_lock(&gpVencChnMap->mLock);
         gpVencChnMap->mVeFreq = nFreq;
         pthread_mutex_unlock(&gpVencChnMap->mLock);
@@ -2773,7 +2773,7 @@ ERRORTYPE AW_MPI_VENC_SetVEFreq(VENC_CHN VeChn, int nFreq)
     }
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -2789,7 +2789,7 @@ ERRORTYPE AW_MPI_VENC_SetVEFreq(VENC_CHN VeChn, int nFreq)
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVEFreq, (void*)&gpVencChnMap->mVeFreq);
@@ -2813,7 +2813,7 @@ static __inline int checkRectValid(RECT_S rect)
 {
     if ((rect.X < 0) || (rect.Y < 0) || (rect.Width==0) || (rect.Height==0))
     {
-        aloge("invalid region rect!!");
+        LOGE("invalid region rect!!");
         return -1;
     }
     else
@@ -2840,7 +2840,7 @@ static unsigned int convert_INVERT_COLOR_MODE_E_to_vencMode(INVERT_COLOR_MODE_E 
             eVencMode = 3;
             break;
         default:
-            aloge("fatal error! unknown invert color mode[0x%x]", mppMode);
+            LOGE("fatal error! unknown invert color mode[0x%x]", mppMode);
             eVencMode = 2;
             break;
     }
@@ -2859,7 +2859,7 @@ static ERRORTYPE configVencOsd(VENC_CHN_MAP_S *pChn, VencOverlayInfoS *pVencOver
     {
         if(index >= MAX_OVERLAY_SIZE)
         {
-            alogw("Be careful! osd number[%d] is max!", index);
+            LOGW("Be careful! osd number[%d] is max!", index);
             break;
         }
         if(FALSE == pEntry->mbDraw)
@@ -2868,11 +2868,11 @@ static ERRORTYPE configVencOsd(VENC_CHN_MAP_S *pChn, VencOverlayInfoS *pVencOver
         }
         if(pEntry->mRgnChnAttr.enType != COVER_RGN)
         {
-            aloge("fatal error! rgn type[0x%x] wrong!", pEntry->mRgnChnAttr.enType);
+            LOGE("fatal error! rgn type[0x%x] wrong!", pEntry->mRgnChnAttr.enType);
         }
         if(pEntry->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType != AREA_RECT)
         {
-            aloge("fatal error! rgn area type[0x%x] wrong!", pEntry->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType);
+            LOGE("fatal error! rgn area type[0x%x] wrong!", pEntry->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType);
         }
         if (checkRectValid(pEntry->mRgnChnAttr.unChnAttr.stCoverChn.stRect) < 0)
         {
@@ -2899,7 +2899,7 @@ static ERRORTYPE configVencOsd(VENC_CHN_MAP_S *pChn, VencOverlayInfoS *pVencOver
     {
         if(index >= MAX_OVERLAY_SIZE)
         {
-            alogw("Be careful! osd number[%d] is max!", index);
+            LOGW("Be careful! osd number[%d] is max!", index);
             break;
         }
         if(FALSE == pEntry->mbDraw)
@@ -2908,7 +2908,7 @@ static ERRORTYPE configVencOsd(VENC_CHN_MAP_S *pChn, VencOverlayInfoS *pVencOver
         }
         if(pEntry->mRgnChnAttr.enType != OVERLAY_RGN)
         {
-            aloge("fatal error! rgn type[0x%x] wrong!", pEntry->mRgnChnAttr.enType);
+            LOGE("fatal error! rgn type[0x%x] wrong!", pEntry->mRgnChnAttr.enType);
         }
         if (pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.X < 0 || pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.Y < 0 
             || pEntry->mRgnAttr.unAttr.stOverlay.mSize.Width == 0 || pEntry->mRgnAttr.unAttr.stOverlay.mSize.Height == 0)
@@ -2941,7 +2941,7 @@ static ERRORTYPE configVencOsd(VENC_CHN_MAP_S *pChn, VencOverlayInfoS *pVencOver
         }
         else
         {
-            aloge("fatal error! unsupport overlay pixFmt[0x%x]", pEntry->mRgnAttr.unAttr.stOverlay.mPixelFmt);
+            LOGE("fatal error! unsupport overlay pixFmt[0x%x]", pEntry->mRgnAttr.unAttr.stOverlay.mPixelFmt);
         }
         if(!pEntry->mRgnChnAttr.unChnAttr.stOverlayChn.stInvertColor.bInvColEn)
         {
@@ -2973,7 +2973,7 @@ static BOOL compareRegionPriority(const RGN_CHN_ATTR_S *pFirst, const RGN_CHN_AT
 {
     if(pFirst->enType != pSecond->enType)
     {
-        aloge("fatal error! why rgnType is not match[0x%x]!=[0x%x]", pFirst->enType, pSecond->enType);
+        LOGE("fatal error! why rgnType is not match[0x%x]!=[0x%x]", pFirst->enType, pSecond->enType);
         return FALSE;
     }
     if(OVERLAY_RGN == pFirst->enType)
@@ -2996,13 +2996,13 @@ static BOOL compareRegionPriority(const RGN_CHN_ATTR_S *pFirst, const RGN_CHN_AT
         }
         else
         {
-            aloge("fatal error! not support cover type[0x%x]", pFirst->unChnAttr.stCoverChn.enCoverType);
+            LOGE("fatal error! not support cover type[0x%x]", pFirst->unChnAttr.stCoverChn.enCoverType);
             return FALSE;
         }
     }
     else
     {
-        aloge("fatal error! unsupport rgnType[0x%x]", pFirst->enType);
+        LOGE("fatal error! unsupport rgnType[0x%x]", pFirst->enType);
         return FALSE;
     }
 }
@@ -3012,19 +3012,19 @@ ERRORTYPE checkRegionValidForVenc(const RGN_ATTR_S *pRgnAttr, const RGN_CHN_ATTR
     ERRORTYPE ret = SUCCESS;
     if(pRgnAttr->enType != pRgnChnAttr->enType)
     {
-        aloge("fatal error! type[0x%x]!=[0x%x]", pRgnAttr->enType, pRgnChnAttr->enType);
+        LOGE("fatal error! type[0x%x]!=[0x%x]", pRgnAttr->enType, pRgnChnAttr->enType);
         return ERR_VENC_ILLEGAL_PARAM;
     }
     if(OVERLAY_RGN == pRgnAttr->enType)
     {
         if(pRgnAttr->unAttr.stOverlay.mSize.Width%16 != 0 || pRgnAttr->unAttr.stOverlay.mSize.Height%16 != 0)
         {
-            aloge("fatal error! overlay width[%d] and height[%d] must all 16 align!", pRgnAttr->unAttr.stOverlay.mSize.Width, pRgnAttr->unAttr.stOverlay.mSize.Height);
+            LOGE("fatal error! overlay width[%d] and height[%d] must all 16 align!", pRgnAttr->unAttr.stOverlay.mSize.Width, pRgnAttr->unAttr.stOverlay.mSize.Height);
             return ERR_VENC_ILLEGAL_PARAM;
         }
         if(pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.X%16 != 0 || pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.Y%16 != 0)
         {
-            aloge("fatal error! overlay position X[%d] and Y[%d] must all 16 align!", pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.X, pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.Y);
+            LOGE("fatal error! overlay position X[%d] and Y[%d] must all 16 align!", pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.X, pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.Y);
             return ERR_VENC_ILLEGAL_PARAM;
         }
     }
@@ -3033,7 +3033,7 @@ ERRORTYPE checkRegionValidForVenc(const RGN_ATTR_S *pRgnAttr, const RGN_CHN_ATTR
         if(pRgnChnAttr->unChnAttr.stCoverChn.stRect.X%16 != 0 || pRgnChnAttr->unChnAttr.stCoverChn.stRect.X%16 != 0
             || pRgnChnAttr->unChnAttr.stCoverChn.stRect.Width%16 != 0 || pRgnChnAttr->unChnAttr.stCoverChn.stRect.Height%16 != 0)
         {
-            aloge("fatal error! cover rect X[%d], Y[%d], W[%d], H[%d] must all 16 align!", 
+            LOGE("fatal error! cover rect X[%d], Y[%d], W[%d], H[%d] must all 16 align!", 
                 pRgnChnAttr->unChnAttr.stCoverChn.stRect.X, pRgnChnAttr->unChnAttr.stCoverChn.stRect.Y, 
                 pRgnChnAttr->unChnAttr.stCoverChn.stRect.Width, pRgnChnAttr->unChnAttr.stCoverChn.stRect.Height);
             return ERR_VENC_ILLEGAL_PARAM;
@@ -3047,7 +3047,7 @@ ERRORTYPE AW_MPI_VENC_SetRegion(VENC_CHN VeChn, RGN_HANDLE RgnHandle, RGN_ATTR_S
     ERRORTYPE ret = SUCCESS;
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3068,7 +3068,7 @@ ERRORTYPE AW_MPI_VENC_SetRegion(VENC_CHN VeChn, RGN_HANDLE RgnHandle, RGN_ATTR_S
     {
         if(RgnHandle == pEntry->mRgnHandle)
         {
-            aloge("fatal error! RgnHandle[%d] is already exist!", RgnHandle);
+            LOGE("fatal error! RgnHandle[%d] is already exist!", RgnHandle);
             ret = ERR_VENC_EXIST;
             goto _err0;
         }
@@ -3077,7 +3077,7 @@ ERRORTYPE AW_MPI_VENC_SetRegion(VENC_CHN VeChn, RGN_HANDLE RgnHandle, RGN_ATTR_S
     {
         if(RgnHandle == pEntry->mRgnHandle)
         {
-            aloge("fatal error! RgnHandle[%d] is already exist!", RgnHandle);
+            LOGE("fatal error! RgnHandle[%d] is already exist!", RgnHandle);
             ret = ERR_VENC_EXIST;
             goto _err0;
         }
@@ -3085,7 +3085,7 @@ ERRORTYPE AW_MPI_VENC_SetRegion(VENC_CHN VeChn, RGN_HANDLE RgnHandle, RGN_ATTR_S
     ChannelRegionInfo *pRegion = ChannelRegionInfo_Construct();
     if(NULL == pRegion)
     {
-        aloge("fatal error! malloc fail!");
+        LOGE("fatal error! malloc fail!");
         ret = ERR_VI_NOMEM;
         goto _err0;
     }
@@ -3100,7 +3100,7 @@ ERRORTYPE AW_MPI_VENC_SetRegion(VENC_CHN VeChn, RGN_HANDLE RgnHandle, RGN_ATTR_S
         pRegion->mBmp.mpData = malloc(nSize);
         if(NULL == pRegion->mBmp.mpData)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             free(pRegion);
             ret = ERR_VENC_NOMEM;
             goto _err0;
@@ -3166,7 +3166,7 @@ ERRORTYPE AW_MPI_VENC_SetRegion(VENC_CHN VeChn, RGN_HANDLE RgnHandle, RGN_ATTR_S
     }
     else
     {
-        aloge("fatal error! unsupport rgnType[0x%x]", pRegion->mRgnAttr.enType);
+        LOGE("fatal error! unsupport rgnType[0x%x]", pRegion->mRgnAttr.enType);
         if(pRegion->mBmp.mpData)
         {
             free(pRegion->mBmp.mpData);
@@ -3218,7 +3218,7 @@ ERRORTYPE AW_MPI_VENC_DeleteRegion(VENC_CHN VeChn, RGN_HANDLE RgnHandle)
     ERRORTYPE ret = SUCCESS;
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3254,7 +3254,7 @@ ERRORTYPE AW_MPI_VENC_DeleteRegion(VENC_CHN VeChn, RGN_HANDLE RgnHandle)
     }
     if(FALSE == bFind)
     {
-        aloge("fatal error! can't find rgnHandle[%d]", RgnHandle);
+        LOGE("fatal error! can't find rgnHandle[%d]", RgnHandle);
         ret = ERR_VENC_UNEXIST;
         goto _err0;
     }
@@ -3280,7 +3280,7 @@ ERRORTYPE AW_MPI_VENC_UpdateOverlayBitmap(VENC_CHN VeChn, RGN_HANDLE RgnHandle, 
     ERRORTYPE ret = SUCCESS;
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3307,7 +3307,7 @@ ERRORTYPE AW_MPI_VENC_UpdateOverlayBitmap(VENC_CHN VeChn, RGN_HANDLE RgnHandle, 
     }
     if(pRegion->mRgnAttr.enType != OVERLAY_RGN)
     {
-        aloge("fatal error! rgn type[0x%x] is not overlay!", pRegion->mRgnAttr.enType);
+        LOGE("fatal error! rgn type[0x%x] is not overlay!", pRegion->mRgnAttr.enType);
         ret = ERR_VENC_ILLEGAL_PARAM;
         goto _err0;
     }
@@ -3318,7 +3318,7 @@ ERRORTYPE AW_MPI_VENC_UpdateOverlayBitmap(VENC_CHN VeChn, RGN_HANDLE RgnHandle, 
         size0 = BITMAP_S_GetdataSize(&pRegion->mBmp);
         if(size0 != size1)
         {
-            aloge("fatal error! bmp size[%d]!=[%d]", size0, size1);
+            LOGE("fatal error! bmp size[%d]!=[%d]", size0, size1);
             free(pRegion->mBmp.mpData);
             pRegion->mBmp.mpData = NULL;
             pRegion->mbSetBmp = FALSE;
@@ -3330,14 +3330,14 @@ ERRORTYPE AW_MPI_VENC_UpdateOverlayBitmap(VENC_CHN VeChn, RGN_HANDLE RgnHandle, 
         pRegion->mBmp.mpData = malloc(size1);
         if(NULL == pRegion->mBmp.mpData)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
         }
         pRegion->mbSetBmp = TRUE;
     }
     memcpy(pRegion->mBmp.mpData, pBitmap->mpData, size1);
     if(pBitmap->mWidth != pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width || pBitmap->mHeight != pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height)
     {
-        alogw("Be careful! bitmap size[%dx%d] != region size[%dx%d], need update region size!", pBitmap->mWidth, pBitmap->mHeight, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height);
+        LOGW("Be careful! bitmap size[%dx%d] != region size[%dx%d], need update region size!", pBitmap->mWidth, pBitmap->mHeight, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height);
         pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width = pBitmap->mWidth;
         pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height = pBitmap->mHeight;
     }
@@ -3370,7 +3370,7 @@ ERRORTYPE AW_MPI_VENC_UpdateRegionChnAttr(VENC_CHN VeChn, RGN_HANDLE RgnHandle, 
     ERRORTYPE ret = SUCCESS;
     if(!(VeChn>=0 && VeChn<VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3415,13 +3415,13 @@ ERRORTYPE AW_MPI_VENC_UpdateRegionChnAttr(VENC_CHN VeChn, RGN_HANDLE RgnHandle, 
         BOOL bUpdate = FALSE;
         if(pRegion->mRgnChnAttr.bShow != pRgnChnAttr->bShow)
         {
-            alogd("bShow change [%d]->[%d]", pRegion->mRgnChnAttr.bShow, pRgnChnAttr->bShow);
+            LOGD("bShow change [%d]->[%d]", pRegion->mRgnChnAttr.bShow, pRgnChnAttr->bShow);
             bUpdate = TRUE;
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.X != pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.X
             || pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.Y != pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.Y)
         {
-            alogd("stPoint change [%d,%d]->[%d,%d]", 
+            LOGD("stPoint change [%d,%d]->[%d,%d]", 
                 pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.X,
                 pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.stPoint.Y,
                 pRgnChnAttr->unChnAttr.stOverlayChn.stPoint.X,
@@ -3431,12 +3431,12 @@ ERRORTYPE AW_MPI_VENC_UpdateRegionChnAttr(VENC_CHN VeChn, RGN_HANDLE RgnHandle, 
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mFgAlpha != pRgnChnAttr->unChnAttr.stOverlayChn.mFgAlpha)
         {
-            alogd("FgAlpha change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mFgAlpha, pRgnChnAttr->unChnAttr.stOverlayChn.mFgAlpha);
+            LOGD("FgAlpha change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mFgAlpha, pRgnChnAttr->unChnAttr.stOverlayChn.mFgAlpha);
             bUpdate = TRUE;
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mLayer != pRgnChnAttr->unChnAttr.stOverlayChn.mLayer)
         {
-            alogd("overlay priority(mLayer) change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mLayer, pRgnChnAttr->unChnAttr.stOverlayChn.mLayer);
+            LOGD("overlay priority(mLayer) change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mLayer, pRgnChnAttr->unChnAttr.stOverlayChn.mLayer);
             //need re-arrange pRegion's position in overlay list
             pRegion->mRgnChnAttr.unChnAttr.stOverlayChn.mLayer = pRgnChnAttr->unChnAttr.stOverlayChn.mLayer;
             if(!list_is_singular(&pChn->mOverlayList))
@@ -3485,19 +3485,19 @@ ERRORTYPE AW_MPI_VENC_UpdateRegionChnAttr(VENC_CHN VeChn, RGN_HANDLE RgnHandle, 
         BOOL bUpdate = FALSE;
         if(pRegion->mRgnChnAttr.bShow != pRgnChnAttr->bShow)
         {
-            alogd("bShow change [%d]->[%d]", pRegion->mRgnChnAttr.bShow, pRgnChnAttr->bShow);
+            LOGD("bShow change [%d]->[%d]", pRegion->mRgnChnAttr.bShow, pRgnChnAttr->bShow);
             bUpdate = TRUE;
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType != pRgnChnAttr->unChnAttr.stCoverChn.enCoverType)
         {
-            aloge("fatal error! cover type change [0x%x]->[0x%x]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType, pRgnChnAttr->unChnAttr.stCoverChn.enCoverType);
+            LOGE("fatal error! cover type change [0x%x]->[0x%x]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.enCoverType, pRgnChnAttr->unChnAttr.stCoverChn.enCoverType);
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.X != pRgnChnAttr->unChnAttr.stCoverChn.stRect.X
             || pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Y != pRgnChnAttr->unChnAttr.stCoverChn.stRect.Y
             || pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Width != pRgnChnAttr->unChnAttr.stCoverChn.stRect.Width
             || pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Height != pRgnChnAttr->unChnAttr.stCoverChn.stRect.Height)
         {
-            alogd("cover rect change [%d,%d,%d,%d]->[%d,%d,%d,%d]", 
+            LOGD("cover rect change [%d,%d,%d,%d]->[%d,%d,%d,%d]", 
                 pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.X, pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Y,
                 pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Width, pRegion->mRgnChnAttr.unChnAttr.stCoverChn.stRect.Height,
                 pRgnChnAttr->unChnAttr.stCoverChn.stRect.X, pRgnChnAttr->unChnAttr.stCoverChn.stRect.Y,
@@ -3506,12 +3506,12 @@ ERRORTYPE AW_MPI_VENC_UpdateRegionChnAttr(VENC_CHN VeChn, RGN_HANDLE RgnHandle, 
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mColor != pRgnChnAttr->unChnAttr.stCoverChn.mColor)
         {
-            alogd("cover color change [0x%x]->[0x%x]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mColor, pRgnChnAttr->unChnAttr.stCoverChn.mColor);
+            LOGD("cover color change [0x%x]->[0x%x]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mColor, pRgnChnAttr->unChnAttr.stCoverChn.mColor);
             bUpdate = TRUE;
         }
         if(pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mLayer != pRgnChnAttr->unChnAttr.stCoverChn.mLayer)
         {
-            alogd("cover priority(mLayer) change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mLayer, pRgnChnAttr->unChnAttr.stCoverChn.mLayer);
+            LOGD("cover priority(mLayer) change [%d]->[%d]", pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mLayer, pRgnChnAttr->unChnAttr.stCoverChn.mLayer);
             pRegion->mRgnChnAttr.unChnAttr.stCoverChn.mLayer = pRgnChnAttr->unChnAttr.stCoverChn.mLayer;
             if(!list_is_singular(&pChn->mCoverList))
             {
@@ -3553,7 +3553,7 @@ ERRORTYPE AW_MPI_VENC_UpdateRegionChnAttr(VENC_CHN VeChn, RGN_HANDLE RgnHandle, 
     }
     else
     {
-        aloge("fatal error! rgn type[0x%x]", pRgnChnAttr->enType);
+        LOGE("fatal error! rgn type[0x%x]", pRgnChnAttr->enType);
     }
     pthread_mutex_unlock(&pChn->mRegionLock);
     return ret;
@@ -3567,7 +3567,7 @@ ERRORTYPE AW_MPI_VENC_Set3DNR(VENC_CHN VeChn, int b3DNRFlag)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3580,7 +3580,7 @@ ERRORTYPE AW_MPI_VENC_Set3DNR(VENC_CHN VeChn, int b3DNRFlag)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVenc3DNR, (void*)&b3DNRFlag);
@@ -3591,7 +3591,7 @@ ERRORTYPE AW_MPI_VENC_Get3DNR(VENC_CHN VeChn, int *b3DNRFlag)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3604,7 +3604,7 @@ ERRORTYPE AW_MPI_VENC_Get3DNR(VENC_CHN VeChn, int *b3DNRFlag)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVenc3DNR, (void*)b3DNRFlag);
@@ -3615,7 +3615,7 @@ ERRORTYPE AW_MPI_VENC_SetHorizonFlip(VENC_CHN VeChn, BOOL bHorizonFlipFlag)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3628,7 +3628,7 @@ ERRORTYPE AW_MPI_VENC_SetHorizonFlip(VENC_CHN VeChn, BOOL bHorizonFlipFlag)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencHorizonFlip, (void*)&bHorizonFlipFlag);
@@ -3639,7 +3639,7 @@ ERRORTYPE AW_MPI_VENC_GetHorizonFlip(VENC_CHN VeChn, BOOL *bpHorizonFlipFlag)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3652,7 +3652,7 @@ ERRORTYPE AW_MPI_VENC_GetHorizonFlip(VENC_CHN VeChn, BOOL *bpHorizonFlipFlag)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencHorizonFlip, (void*)bpHorizonFlipFlag);
@@ -3663,7 +3663,7 @@ ERRORTYPE AW_MPI_VENC_SetAdaptiveIntraInP(VENC_CHN VeChn, BOOL bAdaptiveIntraInP
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3676,7 +3676,7 @@ ERRORTYPE AW_MPI_VENC_SetAdaptiveIntraInP(VENC_CHN VeChn, BOOL bAdaptiveIntraInP
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorVencAdaptiveIntraInP, (void*)&bAdaptiveIntraInPFlag);
@@ -3687,7 +3687,7 @@ ERRORTYPE AW_MPI_VENC_EnableNullSkip(VENC_CHN VeChn, BOOL bEnable)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3700,7 +3700,7 @@ ERRORTYPE AW_MPI_VENC_EnableNullSkip(VENC_CHN VeChn, BOOL bEnable)
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateIdle != nState)
     {
-        alogw("Be careful! not call in recommended state[0x%x]!", nState);
+        LOGW("Be careful! not call in recommended state[0x%x]!", nState);
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencEnableNullSkip, (void*)&bEnable);
     return ret;    
@@ -3710,7 +3710,7 @@ ERRORTYPE AW_MPI_VENC_EnablePSkip(VENC_CHN VeChn, BOOL bEnable)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3723,7 +3723,7 @@ ERRORTYPE AW_MPI_VENC_EnablePSkip(VENC_CHN VeChn, BOOL bEnable)
     ret = COMP_GetState(pChn->mEncComp, &nState);
     if(COMP_StateIdle != nState)
     {
-        alogw("Be careful! not call in recommended state[0x%x]!", nState);
+        LOGW("Be careful! not call in recommended state[0x%x]!", nState);
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencEnablePSkip, (void*)&bEnable);
     return ret;
@@ -3733,7 +3733,7 @@ ERRORTYPE AW_MPI_VENC_ForbidDiscardingFrame(VENC_CHN VeChn, BOOL bForbid)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3749,7 +3749,7 @@ ERRORTYPE AW_MPI_VENC_GetCacheState(VENC_CHN VeChn, CacheState *pCacheState)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3762,7 +3762,7 @@ ERRORTYPE AW_MPI_VENC_GetCacheState(VENC_CHN VeChn, CacheState *pCacheState)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorVencCacheState, pCacheState);
@@ -3773,7 +3773,7 @@ ERRORTYPE AW_MPI_VENC_SaveBsFile(VENC_CHN VeChn, VencSaveBSFile *pSaveParam)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3786,7 +3786,7 @@ ERRORTYPE AW_MPI_VENC_SaveBsFile(VENC_CHN VeChn, VencSaveBSFile *pSaveParam)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], save bs file only in executing or idle!", nState);
+        LOGE("wrong state[0x%x], save bs file only in executing or idle!", nState);
         return ERR_VENC_NOT_PERM;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorSaveBSFile, pSaveParam);
@@ -3797,7 +3797,7 @@ ERRORTYPE AW_MPI_VENC_SetProcSet(VENC_CHN VeChn, VeProcSet *pVeProcSet)
 {
     if(!(VeChn >= 0 && VeChn < VENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VeChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VeChn);
         return ERR_VENC_INVALID_CHNID;
     }
     VENC_CHN_MAP_S *pChn;
@@ -3810,7 +3810,7 @@ ERRORTYPE AW_MPI_VENC_SetProcSet(VENC_CHN VeChn, VeProcSet *pVeProcSet)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], open ve proc info only in executing or idle!", nState);
+        LOGE("wrong state[0x%x], open ve proc info only in executing or idle!", nState);
         return ERR_VENC_INCORRECT_STATE_OPERATION;
     }
     ret = COMP_SetConfig(pChn->mEncComp, COMP_IndexVendorVencProcSet, pVeProcSet);

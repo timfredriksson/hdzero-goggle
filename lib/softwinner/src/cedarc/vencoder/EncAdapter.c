@@ -11,7 +11,7 @@
  * and should not be removed.
  */
 
-#include "log.h"
+#include <log/log.h>
 
 #include "EncAdapter.h"
 
@@ -106,7 +106,7 @@ unsigned int EncAdapterGetICVersion(void* nTopBaseAddr)
         value = *((unsigned int*)((char *)nTopBaseAddr + 0xe4));
         if(value == 0)
         {
-            loge("can not get the ve version ,both 0xf0 and 0xe4 is 0x00000000\n");
+            LOGE("can not get the ve version ,both 0xf0 and 0xe4 is 0x00000000");
             return 0;
         }
         else
@@ -121,10 +121,10 @@ void EncAdapterPrintTopVEReg(void* pTopBaseAddr)
     int i;
     volatile int *ptr = (int*)pTopBaseAddr;
 
-    logd("--------- register of top level ve base:%p -----------\n",ptr);
+    LOGD("--------- register of top level ve base:%p -----------",ptr);
     for(i=0;i<16;i++)
     {
-        logd("reg%02x:%08x %08x %08x %08x",i*16,ptr[0],ptr[1],ptr[2],ptr[3]);
+        LOGD("reg%02x:%08x %08x %08x %08x",i*16,ptr[0],ptr[1],ptr[2],ptr[3]);
         ptr += 4;
     }
 }
@@ -134,10 +134,10 @@ void EncAdapterPrintEncReg(void* pTopBaseAddr)
     int i;
     volatile int *ptr = (int*)((unsigned long)pTopBaseAddr + 0xB00);
 
-    logd("--------- register of ve encoder base:%p -----------\n",ptr);
+    LOGD("--------- register of ve encoder base:%p -----------",ptr);
     for(i=0;i<16;i++)
     {
-        logd("reg%02x:%08x %08x %08x %08x",i*16,ptr[0],ptr[1],ptr[2],ptr[3]);
+        LOGD("reg%02x:%08x %08x %08x %08x",i*16,ptr[0],ptr[1],ptr[2],ptr[3]);
         ptr += 4;
     }
 }
@@ -149,10 +149,10 @@ void EncAdapterPrintIspReg(void* pTopBaseAddr)
     int i;
     volatile int *ptr = (int*)((unsigned long)pTopBaseAddr + 0xA00);
 
-    logd("--------- register of ve isp base:%p -----------\n",ptr);
+    LOGD("--------- register of ve isp base:%p -----------",ptr);
     for(i=0;i<16;i++)
     {
-        logd("reg%02x:%08x %08x %08x %08x",i*16,ptr[0],ptr[1],ptr[2],ptr[3]);
+        LOGD("reg%02x:%08x %08x %08x %08x",i*16,ptr[0],ptr[1],ptr[2],ptr[3]);
         ptr += 4;
     }
 }

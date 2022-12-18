@@ -18,13 +18,15 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "VideoRender_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //#include <threads.h>
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/prctl.h>
 
 #include <mm_component.h>
@@ -145,7 +147,7 @@ static int convertColorPrimary2ColorSpace(int nColorPrimary)
             cdxColorSpace = VENC_YCC;
             break;
         default:
-            aloge("fatal error! unknown video full range[%d]", nVideoFullRange);
+            LOGE("fatal error! unknown video full range[%d]", nVideoFullRange);
             cdxColorSpace = VENC_YCC;
             break;
     }
@@ -154,7 +156,7 @@ static int convertColorPrimary2ColorSpace(int nColorPrimary)
 
 ERRORTYPE PropertyGet_PlayFrameInterval(int64_t *pInterval)
 {
-    alogv("play frame interval use 40fps as default");
+    LOGV("play frame interval use 40fps as default");
     *pInterval = 1000000/40;
     //return ERR_VO_NOT_SUPPORT;
     return SUCCESS;
@@ -163,10 +165,10 @@ ERRORTYPE PropertyGet_PlayFrameInterval(int64_t *pInterval)
     int len = property_get(PROP_KEY_PLAY_FRAME_INTERVAL, prop_value, NULL);
     if(len <= 0)
     {
-        alogd("key[%s] is not find", PROP_KEY_PLAY_FRAME_INTERVAL);
+        LOGD("key[%s] is not find", PROP_KEY_PLAY_FRAME_INTERVAL);
         return ERR_VO_NOT_SUPPORT;
     }
-    alogd("key[%s] value[%s]ms", PROP_KEY_PLAY_FRAME_INTERVAL, prop_value);
+    LOGD("key[%s] value[%s]ms", PROP_KEY_PLAY_FRAME_INTERVAL, prop_value);
     *pInterval = (int64_t)atoi(prop_value)*1000;
     return SUCCESS;
     */
@@ -179,12 +181,12 @@ ERRORTYPE VideoRenderAddFrame_l(
     VOCompInputFrame *pNode;
     if(list_empty(&pVideoRenderData->mVideoInputFrameIdleList))
     {
-        alogw("input frame list is empty, increase one");
+        LOGW("input frame list is empty, increase one");
         // return error if there is no more memory
         pNode = (VOCompInputFrame*)malloc(sizeof(VOCompInputFrame));
         if(NULL == pNode)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             return ERR_VO_NO_MEM;
         }
         memset(pNode, 0, sizeof(VOCompInputFrame));
@@ -233,7 +235,7 @@ ERRORTYPE VideoRenderReleaseFrame_l(
             omxRet = COMP_FillThisBuffer(pVideoRenderData->sInPortTunnelInfo[VDR_PORT_SUFFIX_VIDEO].hTunnel, &obh);
             if(omxRet != SUCCESS)
             {
-                aloge("fatal error! fill this buffer fail[0x%x], nId=[%d], check code!", omxRet, pFrame->mFrameInfo.mId);
+                LOGE("fatal error! fill this buffer fail[0x%x], nId=[%d], check code!", omxRet, pFrame->mFrameInfo.mId);
             }
             else
             {
@@ -253,7 +255,7 @@ ERRORTYPE VideoRenderReleaseFrame_l(
     }
     else
     {
-        aloge("fatal error! not find pFrame[%p], pictureId[%d] in used list.", pFrame, pFrame->mFrameInfo.mId);
+        LOGE("fatal error! not find pFrame[%p], pictureId[%d] in used list.", pFrame, pFrame->mFrameInfo.mId);
         omxRet = ERR_VO_ILLEGAL_PARAM;
     }
     return omxRet;
@@ -284,7 +286,7 @@ ANativeWindowBufferCedarXWrapper* VideoRenderANWBufferComeBack(VIDEORENDERDATATY
 {
     if(list_empty(&pVideoRenderData->mANWBuffersList))
     {
-        aloge("fatal error! ANWBuffersList is empty!");
+        LOGE("fatal error! ANWBuffersList is empty!");
         return NULL;
     }
     int num = 0;
@@ -307,7 +309,7 @@ ANativeWindowBufferCedarXWrapper* VideoRenderANWBufferComeBack(VIDEORENDERDATATY
             }
             else
             {
-                aloge("fatal error! ANativeWindowBufferCedarXWrapper not match:\n"
+                LOGE("fatal error! ANativeWindowBufferCedarXWrapper not match:"
                     "[%dx%d][%d][0x%x][0x%x][%p][%p][%p][%d]\n"
                     "[%dx%d][%d][0x%x][0x%x][%p][%p][%p][%d]\n", 
                     pEntry->mANWBuffer.width, pEntry->mANWBuffer.height, pEntry->mANWBuffer.stride, 
@@ -329,7 +331,7 @@ ANativeWindowBufferCedarXWrapper* VideoRenderANWBufferComeBack(VIDEORENDERDATATY
             }
             else
             {
-                aloge("fatal error! why this ANWB dst[%p] is not goto GUI?", pEntry->mANWBuffer.dst);
+                LOGE("fatal error! why this ANWB dst[%p] is not goto GUI?", pEntry->mANWBuffer.dst);
             }
             
             if(0 == num)
@@ -339,7 +341,7 @@ ANativeWindowBufferCedarXWrapper* VideoRenderANWBufferComeBack(VIDEORENDERDATATY
             }
             else
             {
-                aloge("fatal error! more AndroidNativeWindowBuffer has buffer[%p]!", pEntry->mANWBuffer.dst);
+                LOGE("fatal error! more AndroidNativeWindowBuffer has buffer[%p]!", pEntry->mANWBuffer.dst);
                 num++;
             }
         }
@@ -367,7 +369,7 @@ VOCompInputFrame* VideoRenderFindUsedFrameByANWBuffer(VIDEORENDERDATATYPE *pVide
     }
     else
     {
-        aloge("fatal error! not find frame[%p] in used list.", pANWB->dst);
+        LOGE("fatal error! not find frame[%p] in used list.", pANWB->dst);
         return NULL;
     }
 }
@@ -377,7 +379,7 @@ static ANativeWindowBufferCedarXWrapper* VideoRenderFindANWBufferByFrame(VIDEORE
 {
     if(list_empty(&pVideoRenderData->mANWBuffersList))
     {
-        aloge("fatal error! ANWBuffersList is empty!");
+        LOGE("fatal error! ANWBuffersList is empty!");
         return NULL;
     }
     int num = 0;
@@ -394,7 +396,7 @@ static ANativeWindowBufferCedarXWrapper* VideoRenderFindANWBufferByFrame(VIDEORE
             }
             else
             {
-                aloge("fatal error! more AndroidNativeWindowBuffer has buffer[%p]!", pEntry->mANWBuffer.dst);
+                LOGE("fatal error! more AndroidNativeWindowBuffer has buffer[%p]!", pEntry->mANWBuffer.dst);
                 num++;
             }
         }
@@ -422,7 +424,7 @@ static ERRORTYPE VideoRenderDestroyANWBuffersInfo(VIDEORENDERDATATYPE *pVideoRen
             }
             else
             {
-                alogw("fatal error! CancelFrame fail[%d]", ret);
+                LOGW("fatal error! CancelFrame fail[%d]", ret);
             }
         }
     }
@@ -441,14 +443,14 @@ static ERRORTYPE VideoRenderCreateANWBuffersInfo(VIDEORENDERDATATYPE *pVideoRend
     VRANWBuffer *pBuf;
     if(!list_empty(&pVideoRenderData->mANWBuffersList))
     {
-        aloge("fatal error! why ANWBuffersList is not empty!");
+        LOGE("fatal error! why ANWBuffersList is not empty!");
     }
     for(i=0; i<pANWBuffersInfo->mnBufNum; i++)
     {
         pBuf = (VRANWBuffer*)malloc(sizeof(VRANWBuffer));
         if(NULL == pBuf)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             return ERR_VO_NO_MEM;
         }
         memset(pBuf, 0, sizeof(VRANWBuffer));
@@ -675,7 +677,7 @@ ERRORTYPE VideoRenderSetTimeActiveRefClock(
     }
     else
     {
-        aloge("fatal error! check RefClock[0x%x]", pRefClock->eClock);
+        LOGE("fatal error! check RefClock[0x%x]", pRefClock->eClock);
         pVideoRenderData->is_ref_clock = FALSE;
     }
     return eError;
@@ -696,7 +698,7 @@ ERRORTYPE VideoRenderSeek(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if(cnt > 2)
     {
-        aloge("fatal error! why VR_HW used frame[%d]>2? check code!", cnt);
+        LOGE("fatal error! why VR_HW used frame[%d]>2? check code!", cnt);
     }
     VOCompInputFrame    *pEntry, *pTmp;
     COMP_BUFFERHEADERTYPE    obh;
@@ -707,7 +709,7 @@ ERRORTYPE VideoRenderSeek(PARAM_IN COMP_HANDLETYPE hComponent)
         VideoRenderReleaseFrame_l(pVideoRenderData, pEntry);
         cnt++;
     }
-    alogd("VR seek, release [%d]input video Frame!", cnt);
+    LOGD("VR seek, release [%d]input video Frame!", cnt);
     pthread_mutex_unlock(&pVideoRenderData->mVideoInputFrameListMutex);
     return eError;
 }
@@ -716,7 +718,7 @@ ERRORTYPE VideoRenderSwitchAudio(PARAM_IN COMP_HANDLETYPE hComponent)
 {
     VIDEORENDERDATATYPE *pVideoRenderData = (VIDEORENDERDATATYPE*)((MM_COMPONENTTYPE*)hComponent)->pComponentPrivate;
     ERRORTYPE eError = SUCCESS;
-    alogd("need start to play again after switch audio!");
+    LOGD("need start to play again after switch audio!");
     pVideoRenderData->render_seeking_flag = 1;
     return eError;
 }
@@ -725,7 +727,7 @@ ERRORTYPE VideoRenderSetStreamEof(PARAM_IN COMP_HANDLETYPE hComponent)
 {
     VIDEORENDERDATATYPE *pVideoRenderData = (VIDEORENDERDATATYPE*)((MM_COMPONENTTYPE*)hComponent)->pComponentPrivate;
     ERRORTYPE eError = SUCCESS;
-    alogv("videoRender end flag is set");
+    LOGV("videoRender end flag is set");
     pVideoRenderData->priv_flag |= CDX_comp_PRIV_FLAGS_STREAMEOF;
     message_t   msg;
     msg.command = VRenderComp_InputFrameAvailable;
@@ -747,7 +749,7 @@ ERRORTYPE VideoRenderShow(PARAM_IN COMP_HANDLETYPE hComponent, BOOL bShowFlag)
     ERRORTYPE eError = SUCCESS;
     if(pVideoRenderData->mbShowPicFlag == bShowFlag)
     {
-        alogd("vo already [%s]", bShowFlag?"show":"hide");
+        LOGD("vo already [%s]", bShowFlag?"show":"hide");
         return eError;
     }
     pVideoRenderData->mbShowPicFlag = bShowFlag;
@@ -783,7 +785,7 @@ ERRORTYPE VideoRenderSetVRenderMode(
     VIDEORENDERDATATYPE *pVideoRenderData = (VIDEORENDERDATATYPE*)((MM_COMPONENTTYPE*)hComponent)->pComponentPrivate;
     ERRORTYPE eError = SUCCESS;
     pVideoRenderData->VRenderMode = mode;
-    alogd("CDX use VideoRenderMode = %d", pVideoRenderData->VRenderMode);
+    LOGD("CDX use VideoRenderMode = %d", pVideoRenderData->VRenderMode);
     return eError;
 }
 
@@ -940,7 +942,7 @@ ERRORTYPE VideoRenderGetConfig(
             break;
         }
         default:
-            aloge("fatal error! unknown index[0x%x]", nIndex);
+            LOGE("fatal error! unknown index[0x%x]", nIndex);
             eError = ERR_VO_ILLEGAL_PARAM;
             break;
     }
@@ -1046,7 +1048,7 @@ ERRORTYPE VideoRenderSetConfig(
         }
         default:
         {
-            aloge("fatal error! unknown nIndex[0x%x] in state[%d]", nIndex, pVideoRenderData->state);
+            LOGE("fatal error! unknown nIndex[0x%x] in state[%d]", nIndex, pVideoRenderData->state);
             eError = ERR_VO_ILLEGAL_PARAM;
             break;
         }
@@ -1066,11 +1068,11 @@ ERRORTYPE VideoRenderComponentTunnelRequest(
     VIDEORENDERDATATYPE *pVideoRenderData = (VIDEORENDERDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if (pVideoRenderData->state == COMP_StateExecuting)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if(pVideoRenderData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request can't be in state[0x%x]", pVideoRenderData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]", pVideoRenderData->state);
         eError = ERR_VO_CHN_INCORRECT_STATE_OPERATION;
         goto COMP_CMD_FAIL;
     }
@@ -1093,7 +1095,7 @@ ERRORTYPE VideoRenderComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_VO_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1110,7 +1112,7 @@ ERRORTYPE VideoRenderComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_VO_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1127,7 +1129,7 @@ ERRORTYPE VideoRenderComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_VO_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1138,7 +1140,7 @@ ERRORTYPE VideoRenderComponentTunnelRequest(
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup)
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         goto COMP_CMD_FAIL;
     }
@@ -1155,7 +1157,7 @@ ERRORTYPE VideoRenderComponentTunnelRequest(
     if(pPortDef->eDir == COMP_DirOutput)
     {
         if (pVideoRenderData->mOutputPortTunnelFlag) {
-            aloge("VO_Comp outport already bind, why bind again?!");
+            LOGE("VO_Comp outport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -1166,7 +1168,7 @@ ERRORTYPE VideoRenderComponentTunnelRequest(
     else
     {
         if (pVideoRenderData->mInputPortTunnelFlags[VDR_PORT_SUFFIX_CLOCK] && pVideoRenderData->mInputPortTunnelFlags[VDR_PORT_SUFFIX_VIDEO]) {
-            aloge("VO_Comp inport already bind, why bind again?!");
+            LOGE("VO_Comp inport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -1177,7 +1179,7 @@ ERRORTYPE VideoRenderComponentTunnelRequest(
         COMP_GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput)
         {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_VO_ILLEGAL_PARAM;
             goto COMP_CMD_FAIL;
         }
@@ -1186,7 +1188,7 @@ ERRORTYPE VideoRenderComponentTunnelRequest(
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
         {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -1212,7 +1214,7 @@ ERRORTYPE VideoRenderEmptyThisBuffer(
     pthread_mutex_lock(&pVideoRenderData->mStateMutex);
     if(pVideoRenderData->state!=COMP_StateIdle && pVideoRenderData->state!=COMP_StateExecuting && pVideoRenderData->state!=COMP_StatePause)
     {
-        alogd("call function in invalid state[0x%x]!", pVideoRenderData->state);
+        LOGD("call function in invalid state[0x%x]!", pVideoRenderData->state);
         pthread_mutex_unlock(&pVideoRenderData->mStateMutex);
         return ERR_VO_CHN_INCORRECT_STATE_OPERATION;
     }
@@ -1226,10 +1228,10 @@ ERRORTYPE VideoRenderEmptyThisBuffer(
     }
     
     /*
-    alogd("inPts[%lld]ms", (int64_t)pInFrame->VFrame.mpts/1000);
+    LOGD("inPts[%lld]ms", (int64_t)pInFrame->VFrame.mpts/1000);
     if((int64_t)pInFrame->VFrame.mpts - pVideoRenderData->mLastRenderFramePts > 60*1000)
     {
-        alogw("Be careful! pts jump[%lld]ms, [%lld]ms-[%lldms]", ((int64_t)pInFrame->VFrame.mpts - pVideoRenderData->mLastRenderFramePts)/1000, (int64_t)pInFrame->VFrame.mpts/1000, pVideoRenderData->mLastRenderFramePts/1000);
+        LOGW("Be careful! pts jump[%lld]ms, [%lld]ms-[%lldms]", ((int64_t)pInFrame->VFrame.mpts - pVideoRenderData->mLastRenderFramePts)/1000, (int64_t)pInFrame->VFrame.mpts/1000, pVideoRenderData->mLastRenderFramePts/1000);
     }
     */
 
@@ -1270,7 +1272,7 @@ ERRORTYPE VideoRenderEmptyThisBuffer(
         }
         else
         {
-            aloge("fatal error! inputPortIndex[%u] match nothing!", pBuffer->nInputPortIndex);
+            LOGE("fatal error! inputPortIndex[%u] match nothing!", pBuffer->nInputPortIndex);
             eError = ERR_VO_ILLEGAL_PARAM;
         }
     }
@@ -1310,11 +1312,11 @@ ERRORTYPE VideoRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent) {
     msg.command = eCmd;
     put_message(&pVideoRenderData->cmd_queue, &msg);
 
-    alogv("wait video render component exit!...");
+    LOGV("wait video render component exit!...");
     // Wait for thread to exit so we can get the status into "error"
     pthread_join(pVideoRenderData->thread_id, (void*) &eError);
 
-    alogv("video render component exited 0!");
+    LOGV("video render component exited 0!");
 
     message_destroy(&pVideoRenderData->cmd_queue);
 
@@ -1327,11 +1329,11 @@ ERRORTYPE VideoRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent) {
     pthread_mutex_lock(&pVideoRenderData->mVideoInputFrameListMutex);
     if (!list_empty(&pVideoRenderData->mVideoInputFrameUsedList)) 
     {
-        aloge("fatal error! inputUsedFrame must be 0!");
+        LOGE("fatal error! inputUsedFrame must be 0!");
     }
     if (!list_empty(&pVideoRenderData->mVideoInputFrameReadyList)) 
     {
-        aloge("fatal error! inputReadyFrame must be 0!");
+        LOGE("fatal error! inputReadyFrame must be 0!");
     }
     if (!list_empty(&pVideoRenderData->mVideoInputFrameIdleList)) 
     {
@@ -1352,7 +1354,7 @@ ERRORTYPE VideoRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent) {
         pVideoRenderData = NULL;
     }
 
-    alogv("video render component exited 1!");
+    LOGV("video render component exited 1!");
 
     return eError;
 }
@@ -1371,7 +1373,7 @@ ERRORTYPE VideoRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     // Create private data
     pVideoRenderData = (VIDEORENDERDATATYPE *) malloc(sizeof(VIDEORENDERDATATYPE));
     memset(pVideoRenderData, 0x0, sizeof(VIDEORENDERDATATYPE));
-    alogv("hComponent %p, pVideoRenderData %p", hComponent, pVideoRenderData);
+    LOGV("hComponent %p, pVideoRenderData %p", hComponent, pVideoRenderData);
     pComp->pComponentPrivate = (void*) pVideoRenderData;
     pVideoRenderData->state = COMP_StateLoaded;
     pVideoRenderData->hSelf = hComponent;
@@ -1384,7 +1386,7 @@ ERRORTYPE VideoRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pVideoRenderData->mStateMutex, NULL);
     if(err!=0)
     {
-        aloge("fatal error! pthread mutex init fail!");
+        LOGE("fatal error! pthread mutex init fail!");
         eError = ERR_VO_SYS_NOTREADY;
         goto EXIT0;
     }
@@ -1396,7 +1398,7 @@ ERRORTYPE VideoRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         VOCompInputFrame *pNode = (VOCompInputFrame*)malloc(sizeof(VOCompInputFrame));
         if (NULL == pNode) 
         {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             break;
         }
         memset(pNode, 0, sizeof(VOCompInputFrame));
@@ -1406,7 +1408,7 @@ ERRORTYPE VideoRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pVideoRenderData->mVideoInputFrameListMutex, NULL);
     if(err!=0)
     {
-        aloge("fatal error! pthread mutex init fail!");
+        LOGE("fatal error! pthread mutex init fail!");
         eError = ERR_VO_NO_MEM;
         goto EXIT2;
     }
@@ -1448,7 +1450,7 @@ ERRORTYPE VideoRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if(message_create(&pVideoRenderData->cmd_queue) < 0)
     {
-        aloge("message error!\n");
+        LOGE("message error!");
         eError = ERR_VO_SYS_NOTREADY;
         goto EXIT3;
     }
@@ -1577,7 +1579,7 @@ PROCESS_MESSAGE:
                     {
                         if (pVideoRenderData->state != COMP_StateIdle)
                         {
-                            aloge("fatal error! VideoRender incorrect state transition [0x%x]->Loaded!", pVideoRenderData->state);
+                            LOGE("fatal error! VideoRender incorrect state transition [0x%x]->Loaded!", pVideoRenderData->state);
                             pVideoRenderData->pCallbacks->EventHandler(
                                     pVideoRenderData->hSelf, 
                                     pVideoRenderData->pAppData,
@@ -1588,7 +1590,7 @@ PROCESS_MESSAGE:
                         }
                         ERRORTYPE   omxRet;
                             //release all frames.
-                        alogv("release all frames to VDec, when state[0x%x]->[0x%x]", pVideoRenderData->state, COMP_StateLoaded);
+                        LOGV("release all frames to VDec, when state[0x%x]->[0x%x]", pVideoRenderData->state, COMP_StateLoaded);
                         pthread_mutex_lock(&pVideoRenderData->mVideoInputFrameListMutex);
                         if(!list_empty(&pVideoRenderData->mVideoInputFrameUsedList))
                         {
@@ -1598,7 +1600,7 @@ PROCESS_MESSAGE:
                             {
                                 cnt++;
                             }
-                            alogd("release [%d]used inputFrame! state[%d->loaded]", cnt, pVideoRenderData->state);
+                            LOGD("release [%d]used inputFrame! state[%d->loaded]", cnt, pVideoRenderData->state);
                             VOCompInputFrame *pEntry, *pTmp;
                             list_for_each_entry_safe(pEntry, pTmp, &pVideoRenderData->mVideoInputFrameUsedList, mList)
                             {
@@ -1613,7 +1615,7 @@ PROCESS_MESSAGE:
                             {
                                 cnt++;
                             }
-                            alogd("release [%d]unused inputFrame! state[%d->loaded]", cnt, pVideoRenderData->state);
+                            LOGD("release [%d]unused inputFrame! state[%d->loaded]", cnt, pVideoRenderData->state);
                             VOCompInputFrame    *pEntry, *pTmp;
                             list_for_each_entry_safe(pEntry, pTmp, &pVideoRenderData->mVideoInputFrameReadyList, mList)
                             {
@@ -1643,12 +1645,12 @@ PROCESS_MESSAGE:
                         }
                         else
                         {
-                            alogv("VideoRender state[0x%x]->Idle!", pVideoRenderData->state);
+                            LOGV("VideoRender state[0x%x]->Idle!", pVideoRenderData->state);
                             if ((pVideoRenderData->state == COMP_StateExecuting) || (pVideoRenderData->state == COMP_StatePause))
                             {
                                 //release all frames.  //for vi comp will wait for all frame buffer release when stop chn(vi state to idle)
                                 ERRORTYPE omxRet;
-                                alogv("release all frames");
+                                LOGV("release all frames");
                                 pthread_mutex_lock(&pVideoRenderData->mVideoInputFrameListMutex);
                                 if(!list_empty(&pVideoRenderData->mVideoInputFrameUsedList))
                                 {
@@ -1658,7 +1660,7 @@ PROCESS_MESSAGE:
                                     {
                                         cnt++;
                                     }
-                                    alogd("release [%d]used inputFrame!", cnt);
+                                    LOGD("release [%d]used inputFrame!", cnt);
                                     VOCompInputFrame *pEntry, *pTmp;
                                     list_for_each_entry_safe(pEntry, pTmp, &pVideoRenderData->mVideoInputFrameUsedList, mList)
                                     {
@@ -1673,7 +1675,7 @@ PROCESS_MESSAGE:
                                     {
                                         cnt++;
                                     }
-                                    alogd("release [%d]unused inputFrame!", cnt);
+                                    LOGD("release [%d]unused inputFrame!", cnt);
                                     VOCompInputFrame    *pEntry, *pTmp;
                                     list_for_each_entry_safe(pEntry, pTmp, &pVideoRenderData->mVideoInputFrameReadyList, mList)
                                     {
@@ -1714,7 +1716,7 @@ PROCESS_MESSAGE:
                                 pVideoRenderData->wait_time_out = 0;
                                 if(pVideoRenderData->render_seeking_flag)
                                 {
-                                    alogd("seek in idle state?");
+                                    LOGD("seek in idle state?");
                                     pVideoRenderData->render_seeking_flag = 0;
                                 }
                             }
@@ -1797,15 +1799,15 @@ PROCESS_MESSAGE:
             }
             else if (cmd == VRenderComp_InputFrameAvailable)
             {
-                alogv("inputFrameAvailable");
+                LOGV("inputFrameAvailable");
             }
             else if (cmd == VRenderComp_ChangeANativeWindow)
             {          
                 if(pVideoRenderData->state!=COMP_StatePause)
                 {
-                    aloge("fatal error! state[%d] is not pause when change window", pVideoRenderData->state);
+                    LOGE("fatal error! state[%d] is not pause when change window", pVideoRenderData->state);
                 }
-                alogd("change Android Native Window");
+                LOGD("change Android Native Window");
                 if(pVideoRenderData->hnd_cdx_video_render_init_flag)
                 {
                     if(VideoRender_GUI == pVideoRenderData->VRenderMode)
@@ -1815,7 +1817,7 @@ PROCESS_MESSAGE:
                         pthread_mutex_lock(&pVideoRenderData->mVideoInputFrameListMutex);
                         if(!list_empty(&pVideoRenderData->mVideoInputFrameUsedList))
                         {
-                            alogd("release used video frame!");
+                            LOGD("release used video frame!");
                             VOCompInputFrame *pEntry, *pTmp;
                             list_for_each_entry_safe(pEntry, pTmp, &pVideoRenderData->mVideoInputFrameUsedList, mList)
                             {
@@ -1827,7 +1829,7 @@ PROCESS_MESSAGE:
                         int nCancelFrameRet;
                         if(!list_empty(&pVideoRenderData->mVideoInputFrameReadyList))
                         {
-                            alogd("release all inputVideoFrame!");
+                            LOGD("release all inputVideoFrame!");
                             VOCompInputFrame    *pEntry, *pTmp;
                             list_for_each_entry_safe(pEntry, pTmp, &pVideoRenderData->mVideoInputFrameReadyList, mList)
                             {
@@ -1835,7 +1837,7 @@ PROCESS_MESSAGE:
                                 ANativeWindowBufferCedarXWrapper *pANWBuffer = VideoRenderFindANWBufferByFrame(pVideoRenderData, pEntry);
                                 if(NULL == pANWBuffer)
                                 {
-                                    alogw("fatal error! not find ANWBuffer for VideoPicture!");
+                                    LOGW("fatal error! not find ANWBuffer for VideoPicture!");
                                     //pVideoRenderData->state = COMP_StateInvalid;
                                     //goto PROCESS_MESSAGE;
                                     continue;
@@ -1847,7 +1849,7 @@ PROCESS_MESSAGE:
                                 }
                                 else
                                 {
-                                    aloge("fatal error! CancelFrame fail[%d]", nCancelFrameRet);
+                                    LOGE("fatal error! CancelFrame fail[%d]", nCancelFrameRet);
                                 }
                             }
                         }
@@ -1860,7 +1862,7 @@ PROCESS_MESSAGE:
                 }
                 else
                 {
-                    alogd("Be careful! not init video render when change Android Native Window in state[%d]", pVideoRenderData->state);
+                    LOGD("Be careful! not init video render when change Android Native Window in state[%d]", pVideoRenderData->state);
                 }
                 pVideoRenderData->pCallbacks->EventHandler(pVideoRenderData->hSelf,
                                                            pVideoRenderData->pAppData,
@@ -1871,7 +1873,7 @@ PROCESS_MESSAGE:
             }
             else if (cmd == VRenderComp_ResolutionChange)
             {
-                alogd("Resolution Change");
+                LOGD("Resolution Change");
                 pVideoRenderData->mResolutionChangeFlag = TRUE;
             }
             else if(cmd == VRenderComp_StoreFrame)
@@ -1925,12 +1927,12 @@ PROCESS_MESSAGE:
                             pDstEntry = pEntry;
                         }
                     }
-                    alogd("match voPts[%lld]-dstPts[%lld]=[%lld]us", pDstEntry->mFrameInfo.VFrame.mpts, framePts, minInterval);
+                    LOGD("match voPts[%lld]-dstPts[%lld]=[%lld]us", pDstEntry->mFrameInfo.VFrame.mpts, framePts, minInterval);
                     if(MM_PIXEL_FORMAT_YVU_SEMIPLANAR_420 == pDstEntry->mFrameInfo.VFrame.mPixelFormat)
                     {
                         char DbgStoreFilePath[256];
                         snprintf(DbgStoreFilePath, 256, "/tmp/pic[%d][%lldus].nv21", pVideoRenderData->mStoreFrameCnt++, pDstEntry->mFrameInfo.VFrame.mpts);
-                        alogw("prepare store frame in file[%s]", DbgStoreFilePath);
+                        LOGW("prepare store frame in file[%s]", DbgStoreFilePath);
                         FILE *dbgFp = fopen(DbgStoreFilePath, "wb");
                         if(dbgFp != NULL)
                         {
@@ -1942,16 +1944,16 @@ PROCESS_MESSAGE:
                                 if(pDstEntry->mFrameInfo.VFrame.mpVirAddr[i] != NULL)
                                 {
                                     fwrite(pDstEntry->mFrameInfo.VFrame.mpVirAddr[i], 1, yuvSize[i], dbgFp);
-                                    alogd("virAddr[%d]=[%p], length=[%d]", i, pDstEntry->mFrameInfo.VFrame.mpVirAddr[i], yuvSize[i]);
+                                    LOGD("virAddr[%d]=[%p], length=[%d]", i, pDstEntry->mFrameInfo.VFrame.mpVirAddr[i], yuvSize[i]);
                                 }
                             }
                             fclose(dbgFp);
-                            alogd("store frame in file[%s]", DbgStoreFilePath);
+                            LOGD("store frame in file[%s]", DbgStoreFilePath);
                         }
                     }
                     else
                     {
-                        aloge("other pixel format[0x%x], need support!", pDstEntry->mFrameInfo.VFrame.mPixelFormat);
+                        LOGE("other pixel format[0x%x], need support!", pDstEntry->mFrameInfo.VFrame.mPixelFormat);
                     }
                     
                 }
@@ -2002,7 +2004,7 @@ PROCESS_MESSAGE:
                         }
                         else
                         {
-                            alogd("get vdec FbmBufInfo fail, wait 50ms!");
+                            LOGD("get vdec FbmBufInfo fail, wait 50ms!");
                             if(TMessage_WaitQueueNotEmpty(&pVideoRenderData->cmd_queue, 50) > 0)
                             {
                                 goto PROCESS_MESSAGE;
@@ -2015,7 +2017,7 @@ PROCESS_MESSAGE:
                     if(SUCCESS != pVideoRenderData->hnd_cdx_video_render->init(pVideoRenderData->hnd_cdx_video_render, 
                         pVideoRenderData->VRenderMode, (void*)&nativeWindowInitPara, (void*)&anwBuffersInfo))
                     {
-                        alogw("fatal error! init ANativeWindow fail! state to OMX StateInvalid");
+                        LOGW("fatal error! init ANativeWindow fail! state to OMX StateInvalid");
                         pVideoRenderData->state = COMP_StateInvalid;
                         goto PROCESS_MESSAGE;
                     }
@@ -2025,7 +2027,7 @@ PROCESS_MESSAGE:
                     INIT_LIST_HEAD(&setFrameBuffersParam.mFramesOwnedByANW);
                     if(SUCCESS != COMP_SetConfig(hnd_vdec_comp, COMP_IndexVendorFrameBuffers, (void*)&setFrameBuffersParam))
                     {
-                        alogw("fatal error! set gpu buffers to vdec fail! state to OMX StateInvalid");
+                        LOGW("fatal error! set gpu buffers to vdec fail! state to OMX StateInvalid");
                         pVideoRenderData->state = COMP_StateInvalid;
                         goto PROCESS_MESSAGE;
                     }
@@ -2039,7 +2041,7 @@ PROCESS_MESSAGE:
                     }
                     if(cnt > 0)
                     {
-                        aloge("fatal error! check videoInputFrameUsedList, it has [%d] used frames.", cnt);
+                        LOGE("fatal error! check videoInputFrameUsedList, it has [%d] used frames.", cnt);
                     }
                     list_splice_tail(&setFrameBuffersParam.mFramesOwnedByANW, &pVideoRenderData->mVideoInputFrameUsedList);
                     pthread_mutex_unlock(&pVideoRenderData->mVideoInputFrameListMutex);
@@ -2055,11 +2057,11 @@ PROCESS_MESSAGE:
             {
                 if(pVideoRenderData->mResolutionChangeFlag)
                 {
-                    alogd("Resolution Change, vrender display all old frames, vdec can ReopenVideoEngine() and continue to decode!");
+                    LOGD("Resolution Change, vrender display all old frames, vdec can ReopenVideoEngine() and continue to decode!");
                     //return usedInputframes because we will ReopenVideoEngine().
                     if(!list_empty(&pVideoRenderData->mVideoInputFrameUsedList))
                     {
-                        alogd("release used video frame!");
+                        LOGD("release used video frame!");
                         VOCompInputFrame *pEntry, *pTmp;
                         ERRORTYPE omxRet;
                         list_for_each_entry_safe(pEntry, pTmp, &pVideoRenderData->mVideoInputFrameUsedList, mList)
@@ -2076,7 +2078,7 @@ PROCESS_MESSAGE:
                     }
                     else
                     {
-                        alogd("Be careful! not init video render when resolution change in state[%d]", pVideoRenderData->state);
+                        LOGD("Be careful! not init video render when resolution change in state[%d]", pVideoRenderData->state);
                     }
                     pVideoRenderData->mVideoDisplayWidth = -1;
                     pVideoRenderData->mVideoDisplayHeight = -1;
@@ -2088,7 +2090,7 @@ PROCESS_MESSAGE:
                 pthread_mutex_unlock(&pVideoRenderData->mVideoInputFrameListMutex);
                 if(pVideoRenderData->priv_flag & CDX_comp_PRIV_FLAGS_STREAMEOF)
                 {
-                    alogd("videoRender notify EOF!");
+                    LOGD("videoRender notify EOF!");
                     pVideoRenderData->pCallbacks->EventHandler(pVideoRenderData->hSelf, pVideoRenderData->pAppData, COMP_EventBufferFlag, 0, 0, NULL);
                     pVideoRenderData->state = COMP_StateIdle;
                     goto PROCESS_MESSAGE;
@@ -2096,7 +2098,7 @@ PROCESS_MESSAGE:
                 TMessage_WaitQueueNotEmpty(&pVideoRenderData->cmd_queue, 0);
                 if(pVideoRenderData->priv_flag & CDX_comp_PRIV_FLAGS_STREAMEOF)
                 {
-                    alogd("videoRender notify EOF!");
+                    LOGD("videoRender notify EOF!");
                     pVideoRenderData->pCallbacks->EventHandler(pVideoRenderData->hSelf, pVideoRenderData->pAppData, COMP_EventBufferFlag, 0, 0, NULL);
                     pVideoRenderData->state = COMP_StateIdle;
                 }
@@ -2121,7 +2123,7 @@ PROCESS_MESSAGE:
                     || pVideoRenderData->mVideoDisplayTopX != pic->VFrame.mOffsetLeft
                     || pVideoRenderData->mVideoDisplayTopY != pic->VFrame.mOffsetTop)
                 {
-                    alogw("Be careful! resolution has changed! oldSize[%d,%d][%dx%d],newSize[%d,%d][%dx%d]", 
+                    LOGW("Be careful! resolution has changed! oldSize[%d,%d][%dx%d],newSize[%d,%d][%dx%d]", 
                         pVideoRenderData->mVideoDisplayTopX, pVideoRenderData->mVideoDisplayTopY, pVideoRenderData->mVideoDisplayWidth, pVideoRenderData->mVideoDisplayHeight, 
                         pic->VFrame.mOffsetLeft, pic->VFrame.mOffsetTop, pic->VFrame.mOffsetRight-pic->VFrame.mOffsetLeft, pic->VFrame.mOffsetBottom-pic->VFrame.mOffsetTop);
                     pVideoRenderData->mVideoDisplayTopX = pic->VFrame.mOffsetLeft;
@@ -2133,12 +2135,12 @@ PROCESS_MESSAGE:
                 if(0==pVideoRenderData->hnd_cdx_video_render_init_flag)
                 {
                     //init video render
-                    alogv("request first frame, init video_render, param: display_width[%d], display_height[%d], colorFormat[0x%x]", 
+                    LOGV("request first frame, init video_render, param: display_width[%d], display_height[%d], colorFormat[0x%x]", 
                         pic->VFrame.mOffsetRight-pic->VFrame.mOffsetLeft, pic->VFrame.mOffsetBottom-pic->VFrame.mOffsetTop, pic->VFrame.mPixelFormat);
                     /*{
                         char DbgStoreFilePath[256];
                         snprintf(DbgStoreFilePath, 256, "/mnt/extsd/pic.nv21");
-                        alogw("prepare store frame in file[%s]", DbgStoreFilePath);
+                        LOGW("prepare store frame in file[%s]", DbgStoreFilePath);
                         FILE *dbgFp = fopen(DbgStoreFilePath, "wb");
                         if(dbgFp != NULL)
                         {
@@ -2150,11 +2152,11 @@ PROCESS_MESSAGE:
                                 if(pic->VFrame.mpVirAddr[i] != NULL)
                                 {
                                     fwrite(pic->VFrame.mpVirAddr[i], 1, yuvSize[i], dbgFp);
-                                    alogd("virAddr[%d]=[%p], length=[%d]", i, pic->VFrame.mpVirAddr[i], yuvSize[i]);
+                                    LOGD("virAddr[%d]=[%p], length=[%d]", i, pic->VFrame.mpVirAddr[i], yuvSize[i]);
                                 }
                             }
                             fclose(dbgFp);
-                            alogd("store frame in file[%s]", DbgStoreFilePath);
+                            LOGD("store frame in file[%s]", DbgStoreFilePath);
                         }
                     }*/
                     if(VideoRender_HW == pVideoRenderData->VRenderMode)
@@ -2183,13 +2185,13 @@ PROCESS_MESSAGE:
                                                                NULL);
                         pVideoRenderData->hnd_cdx_video_render_init_flag = 1;
                         pVideoRenderData->mbNeedNotifyDisplaySize = FALSE;
-                        alogd("init video_render, param: displayRect[%d,%d][%dx%d], bufSize[%dx%d], vdecColorFormat[0x%x]", 
+                        LOGD("init video_render, param: displayRect[%d,%d][%dx%d], bufSize[%dx%d], vdecColorFormat[0x%x]", 
                             hwcInitPara.mnDisplayTopX, hwcInitPara.mnDisplayTopY, 
                             hwcInitPara.mnDisplayWidth, hwcInitPara.mnDisplayHeight,
                             hwcInitPara.mnBufWidth, hwcInitPara.mnBufHeight, 
                             hwcInitPara.mePixelFormat);
                         /*{
-                            alogd("store first frame,len[%d]", pic->VFrame.mStride[0]);
+                            LOGD("store first frame,len[%d]", pic->VFrame.mStride[0]);
                             FILE* pFp = fopen("/mnt/extsd/pic[0].raw", "wb");
                             fwrite(pic->VFrame.mpVirAddr[0], 1, pic->VFrame.mStride[0], pFp);
                             fclose(pFp);
@@ -2211,7 +2213,7 @@ PROCESS_MESSAGE:
                     }
                     else
                     {
-                        alogw("fatal error! videoRender GUI must init video render at begin!");
+                        LOGW("fatal error! videoRender GUI must init video render at begin!");
                         pVideoRenderData->state = COMP_StateInvalid;
                         goto PROCESS_MESSAGE;
                     }
@@ -2224,22 +2226,22 @@ PROCESS_MESSAGE:
                 if(CDX_OK == nRenderRet)
                 {
                     //lltime_stamp2 = CDX_GetNowUs();
-                    alogw("vdec output pixel_format[0x%x], not support!", pic->VFrame.mPixelFormat);
+                    LOGW("vdec output pixel_format[0x%x], not support!", pic->VFrame.mPixelFormat);
                     //need copy to gpu frame.
 //                        lltime_stamp3 = CDX_GetNowUs();
 //                        total_interval += (lltime_stamp3 - lltime_stamp2);
 //                        dec_cnt++;
-//                        alogd("lltime_stamp2[%lld], lltime_stamp3[%lld], interval[%lld]", lltime_stamp2, lltime_stamp3, lltime_stamp3-lltime_stamp2);
-//                        alogd("average_interval=[%lld], [%lld]/[%lld]", total_interval/dec_cnt, total_interval, dec_cnt);
+//                        LOGD("lltime_stamp2[%lld], lltime_stamp3[%lld], interval[%lld]", lltime_stamp2, lltime_stamp3, lltime_stamp3-lltime_stamp2);
+//                        LOGD("average_interval=[%lld], [%lld]/[%lld]", total_interval/dec_cnt, total_interval, dec_cnt);
                 }
                 else if(CDX_NO_NATIVE_WINDOW == nRenderRet)
                 {
                     // mNativeWindow == NULL, we process as dequeue frame success!
-                    alogd("ret[%d], pts[%lld]us, NativeWindow=NULL, consider dequeue frame success!", nRenderRet, pic->VFrame.mpts);
+                    LOGD("ret[%d], pts[%lld]us, NativeWindow=NULL, consider dequeue frame success!", nRenderRet, pic->VFrame.mpts);
                 }
                 else
                 {
-                    alogw("fatal error! ret[%d], pts[%lld]us, why dequeue frame fail?", nRenderRet, pic->VFrame.mpts);
+                    LOGW("fatal error! ret[%d], pts[%lld]us, why dequeue frame fail?", nRenderRet, pic->VFrame.mpts);
                     //if dequeue frame from gui fail, we ReleaseBuffer immediately, consider as display successful.
                     VideoRenderReleaseFrame(pVideoRenderData, pFrame);
                     goto PROCESS_MESSAGE;
@@ -2247,7 +2249,7 @@ PROCESS_MESSAGE:
             }
             
             media_video_time = pic->VFrame.mpts;
-            //alogd("newPicture.rotate_angle=%d", newPicture.rotate_angle);
+            //LOGD("newPicture.rotate_angle=%d", newPicture.rotate_angle);
             if(pVideoRenderData->render_seeking_flag || (pVideoRenderData->video_rend_flag & VIDEO_RENDER_FIRST_FRAME_FLAG))
             {
                 pVideoRenderData->pCallbacks->EventHandler(pVideoRenderData->hSelf, pVideoRenderData->pAppData, COMP_EventKeyFrameDecoded, 0, 0, (void *)&media_video_time);
@@ -2259,7 +2261,7 @@ PROCESS_MESSAGE:
                 //****************************************************************************************************//
                 //* if it is not for wifi display, we need to wait some time for synchronization.
                 //****************************************************************************************************//
-                //alogv("av_sync %d, stream_source_type %d", pVideoRenderData->av_sync, pVideoRenderData->stream_source_type);
+                //LOGV("av_sync %d, stream_source_type %d", pVideoRenderData->av_sync, pVideoRenderData->stream_source_type);
                 if(pVideoRenderData->av_sync && hnd_clock_comp)
                 {
                     int vpsspeed = 0;
@@ -2272,7 +2274,7 @@ PROCESS_MESSAGE:
                         int sleep_time = (int)(media_video_time - media_clock_time);
                         if(sleep_time > 200*1000)
                         {
-                            alogw("videorender sleep too long[%d]us, media_video_time:%lld media_clock_time:%lld", sleep_time, media_video_time, media_clock_time);
+                            LOGW("videorender sleep too long[%d]us, media_video_time:%lld media_clock_time:%lld", sleep_time, media_video_time, media_clock_time);
                             int delayTime = (sleep_time *100/(100+vpsspeed))/1000;
                             if(delayTime > 3*1000)
                             {
@@ -2292,7 +2294,7 @@ PROCESS_MESSAGE:
                         }
                         else
                         {
-                            alogw("sleep none!!");
+                            LOGW("sleep none!!");
                         }
                     }
                     else if(media_video_time + 100000< media_clock_time && media_clock_time > 0)
@@ -2301,7 +2303,7 @@ PROCESS_MESSAGE:
                         //when vps > 0, we must give up some frames to guarantee av sync.
                         if(vpsspeed > 0)
                         {
-                            alogd("vps[%d], V:[%lld]ms S:[%lld]ms DIFF:[%lld]ms, give up frame!",
+                            LOGD("vps[%d], V:[%lld]ms S:[%lld]ms DIFF:[%lld]ms, give up frame!",
                                 vpsspeed, media_video_time/1000, time_stamp.nTimestamp/1000, media_video_time/1000-time_stamp.nTimestamp/1000);
                         }
                     }
@@ -2312,7 +2314,7 @@ PROCESS_MESSAGE:
             //* send the new frame to display.
             //****************************************************************************************************//
 //          hnd_clock_comp->GetConfig(hnd_clock_comp,OMX_IndexConfigTimeCurrentMediaTime, &time_stamp);
-//          alogv("     V:%lld S:%lld DIFF:%lld", media_video_time/1000, time_stamp.nTimestamp/1000, media_video_time/1000-time_stamp.nTimestamp/1000);
+//          LOGV("     V:%lld S:%lld DIFF:%lld", media_video_time/1000, time_stamp.nTimestamp/1000, media_video_time/1000-time_stamp.nTimestamp/1000);
 
             if(VideoRender_HW == pVideoRenderData->VRenderMode)
             {
@@ -2348,7 +2350,7 @@ PROCESS_MESSAGE:
                 }
                 if(cnt > pVideoRenderData->mDispBufNum + 1)
                 {
-                    aloge("fatal error! why VR_HW used frame[%d]>[%d]? check code!", cnt, pVideoRenderData->mDispBufNum + 1);
+                    LOGE("fatal error! why VR_HW used frame[%d]>[%d]? check code!", cnt, pVideoRenderData->mDispBufNum + 1);
                 }
                 VOCompInputFrame *pEntry;
                 while(cnt>pVideoRenderData->mDispBufNum)
@@ -2364,7 +2366,7 @@ PROCESS_MESSAGE:
                 nRenderRet = pVideoRenderData->hnd_cdx_video_render->enqueue_frame(pVideoRenderData->hnd_cdx_video_render, &pVideoRenderData->mANativeWindowBuffer);
                 if(nRenderRet != SUCCESS)
                 {
-                    aloge("fatal error! videoRender_SW queue frame fail!");
+                    LOGE("fatal error! videoRender_SW queue frame fail!");
                 }
                 VideoRenderReleaseFrame(pVideoRenderData, pFrame);
             }
@@ -2374,7 +2376,7 @@ PROCESS_MESSAGE:
                 ANativeWindowBufferCedarXWrapper *pANWBuffer = VideoRenderFindANWBufferByFrame(pVideoRenderData, pFrame);
                 if(NULL == pANWBuffer)
                 {
-                    alogw("fatal error! not find ANWBuffer for VideoPicture!");
+                    LOGW("fatal error! not find ANWBuffer for VideoPicture!");
                     pVideoRenderData->state = COMP_StateInvalid;
                     goto PROCESS_MESSAGE;
                 }
@@ -2405,7 +2407,7 @@ PROCESS_MESSAGE:
                 }
                 else
                 {
-                    alogw("fatal error! QueueFrame fail[%d]", nQueueFrameRet);
+                    LOGW("fatal error! QueueFrame fail[%d]", nQueueFrameRet);
                 }
                 nDequeueFrameRet = pVideoRenderData->hnd_cdx_video_render->dequeue_frame(pVideoRenderData->hnd_cdx_video_render, &pVideoRenderData->mANativeWindowBuffer);
                 if(SUCCESS == nDequeueFrameRet)
@@ -2421,17 +2423,17 @@ PROCESS_MESSAGE:
                 else if(CDX_NO_NATIVE_WINDOW == nDequeueFrameRet)
                 {
                     // mNativeWindow == NULL, we process as dequeue frame success!
-                    alogd("NativeWindow=NULL, ret[%d], pts[%lld]us, consider dequeue frame success!", nDequeueFrameRet, pic->VFrame.mpts);
+                    LOGD("NativeWindow=NULL, ret[%d], pts[%lld]us, consider dequeue frame success!", nDequeueFrameRet, pic->VFrame.mpts);
                 }
                 else
                 {
-                    aloge("fatal error! ret[%d], pts[%lld], why dequeue frame fail?", nDequeueFrameRet, pic->VFrame.mpts);
+                    LOGE("fatal error! ret[%d], pts[%lld], why dequeue frame fail?", nDequeueFrameRet, pic->VFrame.mpts);
                     //if dequeue frame from gui fail, we ReleaseBuffer immediately, consider as display successful.
                 }
             }
             else
             {
-                alogw("fatal error! pVideoRenderData->VRenderMode[%d]", pVideoRenderData->VRenderMode);
+                LOGW("fatal error! pVideoRenderData->VRenderMode[%d]", pVideoRenderData->VRenderMode);
             }
             if(!pVideoRenderData->mbRenderingStart)
             {
@@ -2458,14 +2460,14 @@ PROCESS_MESSAGE:
                         int time_out = 0;
                         time_stamp.nPortIndex = p_clock_tunnel->nTunnelPortIndex;
                         time_stamp.nTimestamp = media_video_time;
-                        alogd("video set config start time to [%lld]us", time_stamp.nTimestamp);
+                        LOGD("video set config start time to [%lld]us", time_stamp.nTimestamp);
                         COMP_SetConfig(hnd_clock_comp, COMP_IndexConfigTimeClientStartTime, &time_stamp);
                         while(pVideoRenderData->start_to_play != TRUE)
                         {
                             usleep(20*1000);
                             if(pVideoRenderData->wait_time_out > 150)
                             {
-                                alogd(" video wait too long, force clock component to start.");
+                                LOGD(" video wait too long, force clock component to start.");
                                 COMP_SetConfig(hnd_clock_comp, COMP_IndexVendorConfigTimeClientForceStart, &time_stamp);
                                 pVideoRenderData->wait_time_out = 0;
                             }
@@ -2473,13 +2475,13 @@ PROCESS_MESSAGE:
 
                             if(get_message_count(&pVideoRenderData->cmd_queue) > 0)
                             {
-                                alogd("video wait to start, meet a message come!");
+                                LOGD("video wait to start, meet a message come!");
                                 goto PROCESS_MESSAGE;
                             }
 
                             if(pVideoRenderData->priv_flag & CDX_comp_PRIV_FLAGS_STREAMEOF)
                             {
-                                alogd("videoRender notify EOF!");
+                                LOGD("videoRender notify EOF!");
                                 pVideoRenderData->pCallbacks->EventHandler(pVideoRenderData->hSelf, pVideoRenderData->pAppData, COMP_EventBufferFlag, 0, 0, NULL);
                                 pVideoRenderData->state = COMP_StateIdle;
                                 break;
@@ -2494,7 +2496,7 @@ PROCESS_MESSAGE:
                 }
                 else
                 {
-                    alogw("fatal error! frame Pts[%lld]us is invalid!", media_video_time);
+                    LOGW("fatal error! frame Pts[%lld]us is invalid!", media_video_time);
                 }
             }
         }
@@ -2504,7 +2506,7 @@ PROCESS_MESSAGE:
         }
     }
 EXIT:
-    alogv("Video Render ComponentThread stopped");
+    LOGV("Video Render ComponentThread stopped");
     return (void*) SUCCESS;
 
 }

@@ -13,7 +13,7 @@
  */
 
 #define LOG_TAG "mpi_eis"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 /* ref platform headers */
 #include <errno.h>
@@ -67,26 +67,26 @@ static ERRORTYPE VideoEISEventHandler(PARAM_IN COMP_HANDLETYPE hComponent, PARAM
     switch (eEvent) {
         case COMP_EventCmdComplete: {
             if (COMP_CommandStateSet == nData1) {
-                alogv("video vi EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("video vi EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
             } else {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
             }
             break;
         }
         case COMP_EventError: {
             if (ERR_EIS_SAMESTATE == nData1) {
-                alogv("Set same state to EIS component!");
+                LOGV("Set same state to EIS component!");
                 cdx_sem_up(&pChn->mSemCompCmd);
             } else if (ERR_EIS_INVALIDSTATE == nData1) {
-                aloge("Why EIS component state turn to invalid?");
+                LOGE("Why EIS component state turn to invalid?");
             } else if (ERR_EIS_INCORRECT_STATE_TRANSITION == nData1) {
-                aloge("Fatal error! EIS component state transition incorrect.");
+                LOGE("Fatal error! EIS component state transition incorrect.");
             }
             break;
         }
         default: {
-            aloge("Fatal error! unknown event[0x%x]", eEvent);
+            LOGE("Fatal error! unknown event[0x%x]", eEvent);
             break;
         }
     }
@@ -154,14 +154,14 @@ ERRORTYPE EIS_Construct(void)
     }
     g_pEISChnMng = (EISChnManager*)malloc(sizeof(EISChnManager));
     if (NULL == g_pEISChnMng) {
-        aloge("alloc EISChnManager error(%s)!", strerror(errno));
+        LOGE("alloc EISChnManager error(%s)!", strerror(errno));
         return ERR_EIS_NOMEM;
     }
     memset(g_pEISChnMng, 0, sizeof(EISChnManager));
 
     iRet = pthread_mutex_init(&g_pEISChnMng->mLock, NULL);
     if (iRet != 0) {
-        aloge("fatal error! EIS channel's mutex init fail");
+        LOGE("fatal error! EIS channel's mutex init fail");
         free(g_pEISChnMng);
         g_pEISChnMng = NULL;
         return ERR_EIS_SYS_NOTREADY;
@@ -177,7 +177,7 @@ ERRORTYPE EIS_Destruct(void)
     if (g_pEISChnMng == NULL) {
         return SUCCESS;
     } else if (!list_empty(&g_pEISChnMng->mChnList)) {
-        aloge("fatal error! some EIS channel still running when destroy EIS!");
+        LOGE("fatal error! some EIS channel still running when destroy EIS!");
         return ERR_EIS_BUSY;
     } else {
         pthread_mutex_destroy(&g_pEISChnMng->mLock);
@@ -246,7 +246,7 @@ static EIS_CHN_MAP_S *createEIS_CHN_MAP_S(void)
 
     pEISChn = malloc(sizeof(EIS_CHN_MAP_S));
     if (NULL == pEISChn) {
-        aloge("alloc EIS_CHN_MAP_S failed!!");
+        LOGE("alloc EIS_CHN_MAP_S failed!!");
         return NULL;
     }
     memset(pEISChn, 0, sizeof(EIS_CHN_MAP_S));
@@ -271,13 +271,13 @@ ERRORTYPE AW_MPI_EIS_CreateChn(EIS_CHN EISChn, EIS_ATTR_S *pstAttr)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS == eRet) {
-        aloge("EISChn[%d] has exist!!\n", EISChn);
+        LOGE("EISChn[%d] has exist!!", EISChn);
         return ERR_EIS_EXIST;
     }
 
     pNode = createEIS_CHN_MAP_S();
     if (NULL == pNode) {
-        aloge("create EIS channel struct failed!!");
+        LOGE("create EIS channel struct failed!!");
         eRet = ERR_EIS_NOMEM;
         goto ECrtEISChn;
     }
@@ -286,7 +286,7 @@ ERRORTYPE AW_MPI_EIS_CreateChn(EIS_CHN EISChn, EIS_ATTR_S *pstAttr)
     eRet = COMP_GetHandle((COMP_HANDLETYPE *)&(pNode->mEISComp), CDX_ComponentNameEIS,
                 (void *)pNode, &VideoEISCallback);
     if (eRet != SUCCESS) {
-        aloge("get component handle failed!!");
+        LOGE("get component handle failed!!");
         goto EGetCompHdl;
     }
 
@@ -302,7 +302,7 @@ ERRORTYPE AW_MPI_EIS_CreateChn(EIS_CHN EISChn, EIS_ATTR_S *pstAttr)
     eRet = COMP_SendCommand(pNode->mEISComp, COMP_CommandStateSet, COMP_StateIdle, NULL);
     if (eRet != SUCCESS) {
         //TODO : shoudle we do something?
-        aloge("Fatel error, set EIS[%d] into COMP_StateIdle failed.!!");
+        LOGE("Fatel error, set EIS[%d] into COMP_StateIdle failed.!!");
     }
     cdx_sem_down(&pNode->mSemCompCmd);
     eRet = addChannel(pNode);
@@ -323,14 +323,14 @@ AW_S32 AW_MPI_EIS_DestroyChn(EIS_CHN EISChn)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
     if (pNode && pNode->mEISComp) {
         COMP_STATETYPE nCompState;
         if (SUCCESS != COMP_GetState(pNode->mEISComp, &nCompState)) {
-            aloge("fatal error! get EIS component's status fail!");
+            LOGE("fatal error! get EIS component's status fail!");
             eRet = ERR_EIS_BUSY;
             goto ECompBusy;
         }
@@ -347,7 +347,7 @@ AW_S32 AW_MPI_EIS_DestroyChn(EIS_CHN EISChn)
                 eRet = SUCCESS;
                 break;
             default: {
-                aloge("fatal error! invalid EIS component state[0x%x]!", nCompState);
+                LOGE("fatal error! invalid EIS component state[0x%x]!", nCompState);
                 eRet = FAILURE;
             } break;
         }
@@ -373,14 +373,14 @@ static AW_S32 setEISSpecAttrs(EIS_CHN EISChn, COMP_INDEXTYPE iIndex, void *pstAt
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
     if (pNode && pNode->mEISComp) {
         COMP_STATETYPE nCompState;
         if (SUCCESS != COMP_GetState(pNode->mEISComp, &nCompState)) {
-            aloge("fatal error! get EIS component's status fail!");
+            LOGE("fatal error! get EIS component's status fail!");
             eRet = ERR_EIS_BUSY;
             goto ECompBusy;
         }
@@ -390,7 +390,7 @@ static AW_S32 setEISSpecAttrs(EIS_CHN EISChn, COMP_INDEXTYPE iIndex, void *pstAt
                 eRet = COMP_SetConfig(pNode->mEISComp, iIndex, pstAttr);
             } break;
             default: {
-                aloge("fatal error! invalid EIS component state[0x%x]!", nCompState);
+                LOGE("fatal error! invalid EIS component state[0x%x]!", nCompState);
                 eRet = ERR_EIS_NOT_PERM;
             } break;
         }
@@ -417,7 +417,7 @@ AW_S32 AW_MPI_EIS_GetChnAttr(EIS_CHN EISChn, EIS_ATTR_S *pstAttr)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
@@ -472,7 +472,7 @@ AW_S32 AW_MPI_EIS_EnableChn(EIS_CHN EISChn)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
@@ -487,7 +487,7 @@ AW_S32 AW_MPI_EIS_EnableChn(EIS_CHN EISChn)
             /* if we are in COMP_StateExecuting state, the EnableFlag has already be set.
             * in Loaded or Invalid state, we can't set this flag.
             */
-            aloge("Enable EIS component in wrong state[%d] do nothing!", nCompState);
+            LOGE("Enable EIS component in wrong state[%d] do nothing!", nCompState);
             eRet = ERR_EIS_BUSY;
         } break;
     }
@@ -503,7 +503,7 @@ AW_S32 AW_MPI_EIS_DisableChn(EIS_CHN EISChn)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
@@ -514,7 +514,7 @@ AW_S32 AW_MPI_EIS_DisableChn(EIS_CHN EISChn)
         case COMP_StateExecuting: {
             /* if we are in COMP_StateExecuting state, the EnableFlag can't be clear.
             */
-            aloge("Disbale EIS component in wrong state[%d] do nothing!", nCompState);
+            LOGE("Disbale EIS component in wrong state[%d] do nothing!", nCompState);
             eRet = ERR_EIS_BUSY;
         } break;
         default: {
@@ -537,7 +537,7 @@ AW_S32 AW_MPI_EIS_FlushChn(EIS_CHN EISChn, int iSync)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
@@ -549,7 +549,7 @@ AW_S32 AW_MPI_EIS_FlushChn(EIS_CHN EISChn, int iSync)
             cdx_sem_down(&pNode->mSemCompCmd);
         }
     } else {
-        aloge("Do flush channel operation in a wrong state[%d]", nCompState);
+        LOGE("Do flush channel operation in a wrong state[%d]", nCompState);
         eRet = ERR_EIS_BUSY;
     }
 
@@ -564,7 +564,7 @@ AW_S32 AW_MPI_EIS_StartChn(EIS_CHN EISChn)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
@@ -581,7 +581,7 @@ AW_S32 AW_MPI_EIS_StartChn(EIS_CHN EISChn)
             eRet = SUCCESS;
             break;
         default: {
-            aloge("EIS component wrong state translate [0x%x->0x%x], do nothing!",
+            LOGE("EIS component wrong state translate [0x%x->0x%x], do nothing!",
                 nCompState, COMP_StateExecuting);
             eRet = ERR_EIS_INCORRECT_STATE_TRANSITION;
         } break;
@@ -598,7 +598,7 @@ AW_S32 AW_MPI_EIS_StopChn(EIS_CHN EISChn)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
@@ -615,7 +615,7 @@ AW_S32 AW_MPI_EIS_StopChn(EIS_CHN EISChn)
             eRet = SUCCESS;
             break;
         default: {
-            aloge("EIS component wrong state translate [0x%x->0x%x], do nothing!",
+            LOGE("EIS component wrong state translate [0x%x->0x%x], do nothing!",
                 nCompState, COMP_StateExecuting);
             eRet = ERR_EIS_INCORRECT_STATE_TRANSITION;
         } break;
@@ -634,7 +634,7 @@ AW_S32 AW_MPI_EIS_GetData(EIS_CHN EISChn, VIDEO_FRAME_INFO_S *pstFrameInfo, AW_S
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
@@ -645,7 +645,7 @@ AW_S32 AW_MPI_EIS_GetData(EIS_CHN EISChn, VIDEO_FRAME_INFO_S *pstFrameInfo, AW_S
 
     eRet = COMP_GetState(pNode->mEISComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("get frame in wrong state[0x%x], return!", nState);
+        LOGE("get frame in wrong state[0x%x], return!", nState);
         return ERR_EIS_NOT_PERM;
     }
 
@@ -663,7 +663,7 @@ AW_S32 AW_MPI_EIS_ReleaseData(EIS_CHN EISChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
@@ -674,7 +674,7 @@ AW_S32 AW_MPI_EIS_ReleaseData(EIS_CHN EISChn, VIDEO_FRAME_INFO_S *pstFrameInfo)
 
     eRet = COMP_GetState(pNode->mEISComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("release frame in wrong state[0x%x], return!", nState);
+        LOGE("release frame in wrong state[0x%x], return!", nState);
         return ERR_EIS_NOT_PERM;
     }
 
@@ -692,13 +692,13 @@ AW_S32 AW_MPI_EIS_SendPic(EIS_CHN EISChn, VIDEO_FRAME_INFO_S *pstFrameInfo, AW_S
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
     eRet = COMP_GetState(pNode->mEISComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("release frame in wrong state[0x%x], return!", nState);
+        LOGE("release frame in wrong state[0x%x], return!", nState);
         return ERR_EIS_NOT_PERM;
     }
 
@@ -722,13 +722,13 @@ AW_S32 AW_MPI_EIS_SendGyroPacket(EIS_CHN EISChn, EIS_GYRO_PACKET_S *pstGyroPacke
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
     eRet = COMP_GetState(pNode->mEISComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("release frame in wrong state[0x%x], return!", nState);
+        LOGE("release frame in wrong state[0x%x], return!", nState);
         return ERR_EIS_NOT_PERM;
     }
 
@@ -749,7 +749,7 @@ ERRORTYPE AW_MPI_EIS_RegisterCallback(EIS_CHN EISChn, MPPCallbackInfo *pCallback
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
@@ -772,13 +772,13 @@ AW_S32 AW_MPI_EIS_SetEISFreq(EIS_CHN EISChn, int nFreq)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
     eRet = COMP_GetState(pNode->mEISComp, &nState);
     if (COMP_StateIdle != nState) {
-        aloge("release frame in wrong state[0x%x], return!", nState);
+        LOGE("release frame in wrong state[0x%x], return!", nState);
         return ERR_EIS_NOT_PERM;
     }
 
@@ -798,13 +798,13 @@ AW_S32 AW_MPI_EIS_GetEISFreq(EIS_CHN EISChn, int* nFreq)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
     eRet = COMP_GetState(pNode->mEISComp, &nState);
     if (COMP_StateInvalid == nState || COMP_StateLoaded == nState) {
-        aloge("release frame in wrong state[0x%x], return!", nState);
+        LOGE("release frame in wrong state[0x%x], return!", nState);
         return ERR_EIS_NOT_PERM;
     }
 
@@ -823,18 +823,18 @@ ERRORTYPE AW_MPI_EIS_Debug_StoreFrame(EIS_CHN EISChn, const char* pDirPath)
     MPI_EIS_CHECK_CHN_VALID(EISChn);
     eRet = searchExistChannel(EISChn, &pNode);
     if (SUCCESS != eRet) {
-        aloge("EISChn[%d] is unexist!!\n", EISChn);
+        LOGE("EISChn[%d] is unexist!!", EISChn);
         return ERR_EIS_UNEXIST;
     }
 
     if(NULL == pDirPath) {
-        aloge("must set a directory path! return now");
+        LOGE("must set a directory path! return now");
         return ERR_EIS_INVALID_PARA;
     }
 
     eRet = COMP_GetState(pNode->mEISComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("release frame in wrong state[0x%x], return!", nState);
+        LOGE("release frame in wrong state[0x%x], return!", nState);
         return ERR_EIS_NOT_PERM;
     }
 

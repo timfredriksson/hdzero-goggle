@@ -13,7 +13,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "mpi_ao"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <plat_type.h>
@@ -32,7 +32,7 @@ static AO_CHANNEL_S *AOChannel_Construct(void)
 {
     AO_CHANNEL_S *pChn = (AO_CHANNEL_S*)malloc(sizeof(AO_CHANNEL_S));
     if (pChn == NULL) {
-        aloge("alloc AO_CHANNEL_S error[%s]!", strerror(errno));
+        LOGE("alloc AO_CHANNEL_S error[%s]!", strerror(errno));
         return NULL;
     }
     memset(pChn, 0, sizeof(AO_CHANNEL_S));
@@ -44,7 +44,7 @@ static void AOChannel_Destruct(AO_CHANNEL_S *pChn)
 {
     if (pChn != NULL) {
         if (pChn->mpComp != NULL) {
-            aloge("fatal error! AO component need free before!");
+            LOGE("fatal error! AO component need free before!");
             COMP_FreeHandle(pChn->mpComp);
             pChn->mpComp = NULL;
         }
@@ -68,11 +68,11 @@ static ERRORTYPE AOChannel_EventHandler(
         case COMP_EventCmdComplete:
         {
             if(COMP_CommandStateSet == nData1) {
-                //alogv("audio device EventCmdComplete, current StateSet[%d]", nData2);
+                //LOGV("audio device EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             } else {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
@@ -87,7 +87,7 @@ static ERRORTYPE AOChannel_EventHandler(
             break;
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
     return SUCCESS;
@@ -191,7 +191,7 @@ ERRORTYPE AW_MPI_AO_EnableChn(AUDIO_DEV AudioDevId, AO_CHN AoChn)
 
     audioHw_AO_Dev_lock(AudioDevId);
     if (audioHw_AO_IsDevStarted(AudioDevId)) {
-        alogw("AODev has started when enableChn(%d)! It must be started by other chns!", AoChn);
+        LOGW("AODev has started when enableChn(%d)! It must be started by other chns!", AoChn);
     }
     if (audioHw_AO_IsDevConfigured(AudioDevId)) {
         AW_MPI_AO_Enable(AudioDevId);
@@ -209,7 +209,7 @@ ERRORTYPE AW_MPI_AO_EnableChn(AUDIO_DEV AudioDevId, AO_CHN AoChn)
     ERRORTYPE eRet = SUCCESS;
     eRet = COMP_GetHandle((COMP_HANDLETYPE*)&pChn->mpComp, CDX_ComponentNameAOChannel, (void*)pChn, &AOChannel_Callback);
     if (eRet != SUCCESS) {
-        aloge("fatal error! get comp handle fail!");
+        LOGE("fatal error! get comp handle fail!");
         return ERR_AO_NOT_ENABLED;
     }
     MPP_CHN_S ChannelInfo;
@@ -265,12 +265,12 @@ ERRORTYPE AW_MPI_AO_DisableChn(AUDIO_DEV AudioDevId, AO_CHN AoChn)
             }
             else if(nCompState == COMP_StateInvalid)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             }
             else
             {
-                aloge("fatal error! invalid VoChn[%d] state[0x%x]!", AoChn, nCompState);
+                LOGE("fatal error! invalid VoChn[%d] state[0x%x]!", AoChn, nCompState);
                 eRet = FAILURE;
             }
 
@@ -290,13 +290,13 @@ ERRORTYPE AW_MPI_AO_DisableChn(AUDIO_DEV AudioDevId, AO_CHN AoChn)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_AO_BUSY;
         }
     }
     else
     {
-        aloge("fatal error! no AO component!");
+        LOGE("fatal error! no AO component!");
         list_del(&pChn->mList);
         AOChannel_Destruct(pChn);
         AW_MPI_AO_Disable(AudioDevId);
@@ -338,7 +338,7 @@ ERRORTYPE AW_MPI_AO_SetPcmCardType(AUDIO_DEV AudioDevId, AO_CHN AoChn, PCM_CARD_
     }
     else
     {
-        aloge("fatal error! why AoChn(%d) state is %d? should set pcm_card when idle!!!", AoChn, nCompState);
+        LOGE("fatal error! why AoChn(%d) state is %d? should set pcm_card when idle!!!", AoChn, nCompState);
         ret = ERR_AO_INCORRECT_STATE_OPERATION;
     }
 
@@ -363,10 +363,10 @@ ERRORTYPE AW_MPI_AO_StartChn(AUDIO_DEV AudioDevId, AO_CHN AoChn)
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     } else if (COMP_StateExecuting == nCompState) {
-        alogd("AOChannel[%d] already stateExecuting.", AoChn);
+        LOGD("AOChannel[%d] already stateExecuting.", AoChn);
         ret = SUCCESS;
     } else {
-        aloge("wrong status[0x%x], can't start ao channel!", nCompState);
+        LOGE("wrong status[0x%x], can't start ao channel!", nCompState);
         ret = ERR_AO_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -397,12 +397,12 @@ ERRORTYPE AW_MPI_AO_StopChn(AUDIO_DEV AudioDevId, AO_CHN AoChn)
     }
     else if (COMP_StateIdle == nCompState)
     {
-        alogd("AOChannel[%d] already stateIdle.", AoChn);
+        LOGD("AOChannel[%d] already stateIdle.", AoChn);
         ret = SUCCESS;
     }
     else
     {
-        aloge("wrong status[0x%x], can't stop ao channel!", nCompState);
+        LOGE("wrong status[0x%x], can't stop ao channel!", nCompState);
         ret = ERR_AO_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -502,24 +502,24 @@ ERRORTYPE AW_MPI_AO_PauseChn(AUDIO_DEV AudioDevId, AO_CHN AoChn)
         eRet = pChn->mpComp->SendCommand(pChn->mpComp, COMP_CommandStateSet, COMP_StatePause, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command statePause fail!");
+            LOGE("fatal error! Send command statePause fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StatePause == nCompState)
     {
-        alogd("AOChannel[%d] already statePause.", AoChn);
+        LOGD("AOChannel[%d] already statePause.", AoChn);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("AOChannel[%d] stateIdle, can't turn to statePause!", AoChn);
+        LOGD("AOChannel[%d] stateIdle, can't turn to statePause!", AoChn);
         ret = ERR_AO_INCORRECT_STATE_OPERATION;
     }
     else
     {
-        aloge("fatal error! check AoChannel[%d] State[0x%x]!", AoChn, nCompState);
+        LOGE("fatal error! check AoChannel[%d] State[0x%x]!", AoChn, nCompState);
         ret = ERR_AO_INCORRECT_STATE_OPERATION;
     }
     return ret;
@@ -548,24 +548,24 @@ ERRORTYPE AW_MPI_AO_ResumeChn(AUDIO_DEV AudioDevId, AO_CHN AoChn)
         eRet = pChn->mpComp->SendCommand(pChn->mpComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command statePause fail!");
+            LOGE("fatal error! Send command statePause fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateExecuting == nCompState)
     {
-        alogd("AOChannel[%d] already stateExecuting.", AoChn);
+        LOGD("AOChannel[%d] already stateExecuting.", AoChn);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("AOChannel[%d] stateIdle, can't turn to stateExecuting!", AoChn);
+        LOGD("AOChannel[%d] stateIdle, can't turn to stateExecuting!", AoChn);
         ret = ERR_AO_INCORRECT_STATE_OPERATION;
     }
     else
     {
-        aloge("fatal error! check AoChannel[%d] State[0x%x]!", AoChn, nCompState);
+        LOGE("fatal error! check AoChannel[%d] State[0x%x]!", AoChn, nCompState);
         ret = ERR_AO_INCORRECT_STATE_OPERATION;
     }
     return ret;
@@ -594,7 +594,7 @@ ERRORTYPE AW_MPI_AO_Seek(AUDIO_DEV AudioDevId, AO_CHN AoChn)
     }
     else
     {
-        aloge("fatal error! can't seek in AOChannel[%d] State[0x%x]!", AoChn, nCompState);
+        LOGE("fatal error! can't seek in AOChannel[%d] State[0x%x]!", AoChn, nCompState);
         ret = ERR_AO_INCORRECT_STATE_OPERATION;
     }
     return ret;
@@ -687,7 +687,7 @@ ERRORTYPE AW_MPI_AO_SetStreamEof(AUDIO_DEV AudioDevId, AO_CHN AoChn, BOOL bEofFl
     ret = pChn->mpComp->GetState(pChn->mpComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-       aloge("wrong state[0x%x], return!", nState);
+       LOGE("wrong state[0x%x], return!", nState);
        return ERR_AO_NOT_PERM;
     }
     if(bEofFlag)

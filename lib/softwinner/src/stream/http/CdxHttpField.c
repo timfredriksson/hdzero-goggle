@@ -167,14 +167,14 @@ int CdxHttpResponseAppend(CdxHttpHeaderT *httpHdr, char *response, int length)
     }
     if((unsigned)length > SIZE_MAX - httpHdr->bufferSize - 1)
     {
-        CDX_LOGE("********************Bad size in memory (re)allocation\n");
+        LOGE("********************Bad size in memory (re)allocation");
         return -1;
     }
     httpHdr->buffer = realloc(httpHdr->buffer, httpHdr->bufferSize+length+1);
     // buffer: response(2K). why realloc:in while, may append one more times..
     if(httpHdr->buffer==NULL)
     {
-        CDX_LOGE("********************Memory (re)allocation failed\n");
+        LOGE("********************Memory (re)allocation failed");
         return -1;
     }
     memcpy(httpHdr->buffer + httpHdr->bufferSize, response, length);
@@ -211,14 +211,14 @@ void CdxHttpSetField(CdxHttpHeaderT *httpHdr, const char *fieldName)
     newField = malloc(sizeof(CdxHttpFieldT));
     if(newField==NULL)
     {
-        CDX_LOGE("**********************************Memory allocation failed\n");
+        LOGE("**********************************Memory allocation failed");
         return;
     }
     newField->next = NULL;
     newField->fieldName = malloc(strlen(fieldName)+1);
     if(newField->fieldName==NULL)
     {
-        CDX_LOGE("*************************Memory allocation failed\n");
+        LOGE("*************************Memory allocation failed");
         free(newField);
         newField = NULL;
         return;
@@ -261,7 +261,7 @@ int ParseCookie(char *cookie, char **name_value)
     char *copy = strdup(cookie);
     if(!copy)
     {
-        CDX_LOGE("malloc fail.");
+        LOGE("malloc fail.");
         return -1;
     }
     cdx_uint32 offset = 0;
@@ -320,7 +320,7 @@ int ParseCookie(char *cookie, char **name_value)
 
         char *key = TrimChar(attr);
         char *val = TrimChar(equalPos + 1);
-        CDX_LOGD("key=%s value=%s", key, val);
+        LOGD("key=%s value=%s", key, val);
         //tolower_str(key);
         if(!strcasecmp("path", key))
         {
@@ -351,7 +351,7 @@ void ProcessCookies(CdxHttpHeaderT *httpHdr)
         pathLen[count] = ParseCookie(cookie, &cookies[count]);
         if(pathLen[count] <= 0 || cookies[count] == NULL)
         {
-            CDX_LOGE("it is a bug.");
+            LOGE("it is a bug.");
             break;
         }
         count++;
@@ -418,7 +418,7 @@ int CdxHttpResponseParse(CdxHttpHeaderT *httpHdr)
     hdrPtr = strstr(httpHdr->buffer, " " );//"HTTP/1.1 "
     if(hdrPtr==NULL )
     {
-        CDX_LOGE("No space separator found.");
+        LOGE("No space separator found.");
         return -1;
     }
     len = hdrPtr-httpHdr->buffer;
@@ -433,7 +433,7 @@ int CdxHttpResponseParse(CdxHttpHeaderT *httpHdr)
         if(sscanf(httpHdr->protocol+5,"1.%d", &(httpHdr->httpMinorVersion))!=1)
             //--write to httpHdr->httpMinorVersion
         {
-            CDX_LOGE("No HTTP minor version.");
+            LOGE("No HTTP minor version.");
             return -1;
         }
     }
@@ -441,7 +441,7 @@ int CdxHttpResponseParse(CdxHttpHeaderT *httpHdr)
     // Get the status code
     if(sscanf(++hdrPtr, "%d", &(httpHdr->statusCode)) != 1)
     {
-        CDX_LOGE("No status code.");
+        LOGE("No status code.");
         return -1;
     }
     hdrPtr += 4;
@@ -450,14 +450,14 @@ int CdxHttpResponseParse(CdxHttpHeaderT *httpHdr)
     ptr = strstr(hdrPtr, "\n" );
     if(ptr == NULL)
     {
-        CDX_LOGE("No reason phrase.");
+        LOGE("No reason phrase.");
         return -1;
     }
     len = ptr-hdrPtr;
     httpHdr->reasonPhrase = malloc(len+1);
     if(httpHdr->reasonPhrase==NULL)
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         return -1;
     }
     strncpy(httpHdr->reasonPhrase, hdrPtr, len );
@@ -475,7 +475,7 @@ int CdxHttpResponseParse(CdxHttpHeaderT *httpHdr)
         ptr = strstr(httpHdr->buffer, "\n\n" );
         if(ptr==NULL)
         {
-            CDX_LOGE("No CRLF CRLF found.");
+            LOGE("No CRLF CRLF found.");
             return -1;
         }
         hdrSepLen = 2;
@@ -523,7 +523,7 @@ int CdxHttpResponseParse(CdxHttpHeaderT *httpHdr)
         // Response has data!
         httpHdr->body = httpHdr->buffer + posHdrSep + hdrSepLen;
         httpHdr->bodySize = httpHdr->bufferSize - (posHdrSep + hdrSepLen);
-//        CDX_LOGD("*************** httpHdr->bodySize = %zu",httpHdr->bodySize);
+//        LOGD("*************** httpHdr->bodySize = %zu",httpHdr->bodySize);
     }
     httpHdr->posHdrSep = posHdrSep;
 
@@ -533,13 +533,13 @@ int CdxHttpResponseParse(CdxHttpHeaderT *httpHdr)
         char *tmpBuf = calloc(1, httpHdr->bufferSize);
         if(tmpBuf == NULL)
         {
-            CDX_LOGE("malloc fail.");
+            LOGE("malloc fail.");
             return -1;
         }
         memcpy(tmpBuf, httpHdr->buffer, posHdrSep);
-        CDX_LOGV("===================================================");
-        CDX_LOGV("%s", tmpBuf);
-        CDX_LOGV("===================================================");
+        LOGV("===================================================");
+        LOGV("%s", tmpBuf);
+        LOGV("===================================================");
         free(tmpBuf);
     }
     ProcessCookies(httpHdr);
@@ -557,7 +557,7 @@ void CdxHttpSetUri(CdxHttpHeaderT *httpHdr, const char *uri)
     httpHdr->uri = malloc(strlen(uri)+1);
     if(httpHdr->uri == NULL )
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         return;
     }
     strcpy(httpHdr->uri, uri);
@@ -644,7 +644,7 @@ int CdxHttpAddBasicAuthentication(CdxHttpHeaderT *httpHdr, const char *username,
     usrPass = malloc(strlen(username)+passLen+2);
     if(usrPass==NULL)
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         goto out;
     }
 
@@ -655,14 +655,14 @@ int CdxHttpAddBasicAuthentication(CdxHttpHeaderT *httpHdr, const char *username,
     b64UsrPass = malloc(encodedLen);
     if(b64UsrPass==NULL)
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         goto out;
     }
 
     outLen = CdxPase64Encode(usrPass, strlen(usrPass), b64UsrPass, encodedLen);
     if(outLen < 0)
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         goto out;
     }
 
@@ -671,7 +671,7 @@ int CdxHttpAddBasicAuthentication(CdxHttpHeaderT *httpHdr, const char *username,
     auth = malloc(encodedLen+22);
     if(auth == NULL)
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         goto out;
     }
 
@@ -768,7 +768,7 @@ char* CdxHttpBuildRequest(CdxHttpHeaderT *httpHdr)
     httpHdr->buffer = malloc(len+1);
     if(httpHdr->buffer == NULL)
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         if(uri)
         {
             free(uri);

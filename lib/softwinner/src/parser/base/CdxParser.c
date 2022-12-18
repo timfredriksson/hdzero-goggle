@@ -10,7 +10,7 @@
 
 #include <CdxParser.h>
 
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 #include <CdxList.h>
 
@@ -394,7 +394,7 @@ int AwParserRegister(CdxParserCreatorT *creator, CdxParserTypeT type,
 static void AwParserInit(void) __attribute__((constructor));
 void AwParserInit(void)
 {
-    CDX_LOGI("aw parser init...");
+    LOGI("aw parser init...");
 
     /* Make HLS be the first one since:
      * 1. HLS is widely used
@@ -464,7 +464,7 @@ void AwParserInit(void)
 #if ENABLE_SPECIAL_PARSER
     AwParserRegister(&specialStreamParserCtor, CDX_PARSER_AWSPECIALSTREAM, &specialStreamKeyInfo);
 #endif //ENABLE_SPECIAL_PARSER
-    CDX_LOGD("aw parser size:%d",parserList.size);
+    LOGD("aw parser size:%d",parserList.size);
     return ;
 }
 
@@ -574,13 +574,13 @@ out:
 
     if (retPsrNode)
     {
-        CDX_LOGI("I think it's something about '%s', type id(%d)",
+        LOGI("I think it's something about '%s', type id(%d)",
             retPsrNode->keyInfo->comment ? retPsrNode->keyInfo->comment : "unknow",
             retPsrNode->type);
     }
     else
     {
-        CDX_LOGW("Sorry, I don't know what it is!");
+        LOGW("Sorry, I don't know what it is!");
     }
     return retPsrNode;
 }
@@ -655,7 +655,7 @@ probe:
         cdx_int32 ret;
         if(probeDataOld->len < size && retryTimes < 1)
         {
-            CDX_LOGD("increase probe size, and try again.");
+            LOGD("increase probe size, and try again.");
             ret = CdxStreamControl(stream, STREAM_CMD_SET_PROBE_SIZE, &size);
             if(ret == 0)
             {
@@ -665,19 +665,19 @@ probe:
         }
         if(maxScoreNode)
             goto found;
-        CDX_LOGW("Sorry, I don't know what it is!");
+        LOGW("Sorry, I don't know what it is!");
         return NULL;
     }
 
 found:
-    CDX_LOGD("Good, it's '%s'",
+    LOGD("Good, it's '%s'",
             maxScoreNode->keyInfo->comment ? maxScoreNode->keyInfo->comment : "unknow");
     probeDataOld->sync_pos = probeData->sync_pos;
     parser = maxScoreNode->creator->create(stream, flags);
     if (!parser)
         return NULL;
     parser->type = maxScoreNode->type;
-    CDX_LOGD("parser type(%d)", parser->type);
+    LOGD("parser type(%d)", parser->type);
     return parser;
 }
 int CdxParserOpen(CdxStreamT *stream, cdx_uint32 flags, pthread_mutex_t *mutex, cdx_bool *exit,
@@ -688,7 +688,7 @@ int CdxParserOpen(CdxStreamT *stream, cdx_uint32 flags, pthread_mutex_t *mutex, 
 
     if(exit && *exit)
     {
-        CDX_LOGW("open parser user cancel.");
+        LOGW("open parser user cancel.");
         if(mutex)
             pthread_mutex_unlock(mutex);
         return -1;
@@ -700,7 +700,7 @@ int CdxParserOpen(CdxStreamT *stream, cdx_uint32 flags, pthread_mutex_t *mutex, 
 
     if(!*parser)
     {
-        CDX_LOGW("should not be here.");
+        LOGW("should not be here.");
         return -1;
     }
     int ret;
@@ -709,7 +709,7 @@ int CdxParserOpen(CdxStreamT *stream, cdx_uint32 flags, pthread_mutex_t *mutex, 
         ret = CdxParserControl(*parser, parserTasks->cmd, parserTasks->param);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserControl fail, cmd=%d", parserTasks->cmd);
+            LOGE("CdxParserControl fail, cmd=%d", parserTasks->cmd);
             return ret;
         }
         parserTasks = parserTasks->next;
@@ -722,18 +722,18 @@ int CdxParserPrepare(CdxDataSourceT *source, cdx_uint32 flags, pthread_mutex_t *
         ContorlTask *streamTasks)
 {
 
-    CDX_LOGD("source uri '%s'", source->uri);
+    LOGD("source uri '%s'", source->uri);
     int ret = CdxStreamOpen(source, mutex, exit, stream, streamTasks);
     if (ret < 0)
     {
-        CDX_LOGE("open stream fail, uri(%s)", source->uri);
+        LOGE("open stream fail, uri(%s)", source->uri);
         goto out;
     }
 
     ret = CdxParserOpen(*stream, flags, mutex, exit, parser, parserTasks);
     if (ret < 0)
     {
-        CDX_LOGE("open parser fail, uri(%s)", source->uri);
+        LOGE("open parser fail, uri(%s)", source->uri);
         goto out;
     }
 

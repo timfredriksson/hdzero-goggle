@@ -12,7 +12,7 @@
 #define LOG_TAG "CdxDashParser"
 
 #include <assert.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include "CdxDashParser.h"
 
 #define CDX_DASH_MAX_PATH 200
@@ -66,13 +66,13 @@ static int H264Extract(char* extraData, int extarDataLen, char** buf, int* size)
         {
             sps_num = *(sps_data++) & 0x1f;
         }
-        CDX_LOGD("sps_num = %d", sps_num);
+        LOGD("sps_num = %d", sps_num);
 
         for(; sps_num>0; sps_num--)
         {
             sps_size = (*(sps_data++) << 8);
             sps_size    += *(sps_data++);
-            CDX_LOGD("sps_size = %d", sps_size);
+            LOGD("sps_size = %d", sps_size);
             memcpy(*buf, sps_data, sps_size);
             *buf += sps_size;
             *size += sps_size;
@@ -129,7 +129,7 @@ char* CdxUrlConcatenate(const char* pParentName, const char* pPathName)
 
     if((strlen(pParentName)>CDX_DASH_MAX_PATH) || (strlen(pPathName)>CDX_DASH_MAX_PATH))
     {
-        CDX_LOGW(" the length of url longer than 200, not support");
+        LOGW(" the length of url longer than 200, not support");
         return NULL;
     }
 
@@ -301,7 +301,7 @@ int CdxDashRepIndexInit(CdxDashParser* dashStream, awPeriod* period)
         }
         else
         {
-            CDX_LOGI("Be Careful: adaptation set and representation do not have mimetype!");
+            LOGI("Be Careful: adaptation set and representation do not have mimetype!");
             break;
         }
 
@@ -336,14 +336,14 @@ int CdxDashRepIndexInit(CdxDashParser* dashStream, awPeriod* period)
         }
         else if(!strncmp(mime_type, "subtitle", 8)) //maybe is not 'subtitle'
         {
-            CDX_LOGI(" subtitle is not supported now!");
+            LOGI(" subtitle is not supported now!");
             dashStream->mediaStream[2].activeAdapSetIndex = i;  //audio
             dashStream->mediaStream[2].activeRepSetIndex = 0;  //bandwidth
             dashStream->hasSubtitle = 1;
         }
         else
         {
-            CDX_LOGW(" unkown group type <%s>\n", rep->mime_type);
+            LOGW(" unkown group type <%s>", rep->mime_type);
         }
 
     }
@@ -428,7 +428,7 @@ int CdxDashGetSegmentDuration(awRepresentation *rep, awAdaptionSet *set, awPerio
 
         if(timeline)
         {
-            CDX_LOGW("get duration from timeline is not supported yet!");
+            LOGW("get duration from timeline is not supported yet!");
             return -1;
         }
         else
@@ -497,7 +497,7 @@ int CdxDashGetSegmentDuration(awRepresentation *rep, awAdaptionSet *set, awPerio
 
     if(timeline)
     {
-        CDX_LOGW("get duration from timeline is not supported yet!");
+        LOGW("get duration from timeline is not supported yet!");
         return -1;
     }
     else
@@ -535,7 +535,7 @@ int CdxDashGetSegmentIndex(int active_rep, awAdaptionSet *set, awPeriod *period,
     int count = aw_list_count(set->representation);
     if(!count)
     {
-        CDX_LOGW("the adaptation set do not have any reprensentation, we cannot get the index");
+        LOGW("the adaptation set do not have any reprensentation, we cannot get the index");
         return -1;
     }
     awRepresentation* rep = aw_list_get(set->representation, active_rep);
@@ -551,7 +551,7 @@ int CdxDashGetSegmentIndex(int active_rep, awAdaptionSet *set, awPeriod *period,
     {
         *segmentDuration = seg_duration;
     }
-    //CDX_LOGD("timeUs = %lld, segduration = %lld", timeUs, seg_duration);
+    //LOGD("timeUs = %lld, segduration = %lld", timeUs, seg_duration);
     return ret;
 }
 
@@ -726,7 +726,7 @@ static int CdxDashResolveUrl(CdxDashParser* dashStream, awPeriod* period,awAdapt
     if (!rep->segmentList && !set->segmentList && !period->segmentList &&
             !rep->segmentTemplate && !set->segmentTemplate && !period->segmentTemplate)
     {
-        //LOGD("single url is test. url = %s\n", url);
+        //LOGD("single url is test. url = %s", url);
         //awMpdURL* res_url;
         //awSegmentBase* base_seg = NULL;
         if(itemIndex > 0)
@@ -974,7 +974,7 @@ static int CdxDashResolveUrl(CdxDashParser* dashStream, awPeriod* period,awAdapt
         {
             free(url);
             free(solvedTemplate);
-            printf("the template url is not right.\n");
+            LOGI("the template url is not right.");
             return -1;
         }
 
@@ -1021,7 +1021,7 @@ static int CdxDashResolveUrl(CdxDashParser* dashStream, awPeriod* period,awAdapt
         }
         else if(!strcmp(firstSep+1, "Index"))
         {
-            CDX_LOGI("wrong template index, using number instead.\n ");
+            LOGI("wrong template index, using number instead.\n ");
             sprintf(cdFormat, cdPrintFormat, startNumber + itemIndex);
             strcat(solvedTemplate, cdFormat);
         }
@@ -1073,7 +1073,7 @@ static int CdxDashResolveUrl(CdxDashParser* dashStream, awPeriod* period,awAdapt
         }
         else
         {
-            CDX_LOGI("[DASH] Unknown template identifier- disabling rep\n\n");
+            LOGI("[DASH] Unknown template identifier- disabling rep");
             *outUrl = NULL;
             free(url);
             free(solvedTemplate);
@@ -1123,10 +1123,10 @@ int CdxDashInitSegmentUrl(CdxDashParser* dashStream, int type)
 
     if(!aw_list_count(v_rep->baseURLs))
     {
-        CDX_LOGD("--- segment mp4 file");
+        LOGD("--- segment mp4 file");
         dashStream->mediaStream[type].flag |= SEGMENT_MP4;
     }
-    CDX_LOGD("++++ baseUrl num = %d", aw_list_count(v_rep->baseURLs));
+    LOGD("++++ baseUrl num = %d", aw_list_count(v_rep->baseURLs));
 
     // video representation
     //if(v_rep)
@@ -1135,12 +1135,12 @@ int CdxDashInitSegmentUrl(CdxDashParser* dashStream, int type)
                                 CDX_DASH_RESOLVE_URL_INIT, 0, &initUrl, &segmentDuration);
         if(ret < 0)
         {
-            CDX_LOGE("resolve init segment url error!\n");
+            LOGE("resolve init segment url error!");
             if(initUrl)
                 free(initUrl);
             return ret;
         }
-        //CDX_LOGD("--dash-- init url = %s", initUrl);
+        //LOGD("--dash-- init url = %s", initUrl);
 
         // there is no init segment, the init segment is in the first media segment
         if(!initUrl)
@@ -1166,7 +1166,7 @@ int CdxDashInitSegmentUrl(CdxDashParser* dashStream, int type)
                                NULL, NULL);
         if(ret < 0)
         {
-            CDX_LOGE("--- parser prepare failed");
+            LOGE("--- parser prepare failed");
             return -1;
         }
     }
@@ -1190,14 +1190,14 @@ int CdxDashGetSegmentUrl(CdxDashParser* dashStream,
                             activeSegmentIndex, &segmentUrl, &segmentDuration);
     if(ret)
     {
-        CDX_LOGE("resolve init segment url error!\n");
+        LOGE("resolve init segment url error!");
         if(segmentUrl)
         {
             free(segmentUrl);
         }
         return ret;
     }
-    CDX_LOGD("**** segment url = %s", segmentUrl);
+    LOGD("**** segment url = %s", segmentUrl);
     dashStream->tmpUrl = segmentUrl;
     // if the segment is not exist
     if(!segmentUrl)
@@ -1234,7 +1234,7 @@ int CdxDashSeekToTime(CdxDashParser* impl, cdx_int64 timeMs, int type,
                                  set, period, mpd, timeMs, &segmentDuration);
     if(ret < 0)
     {
-        CDX_LOGW("-- get segment index error!");
+        LOGW("-- get segment index error!");
         return -1;
     }
 
@@ -1261,17 +1261,17 @@ int CdxDashSeekToTime(CdxDashParser* impl, cdx_int64 timeMs, int type,
                             &impl->mediaStream[type].stream, NULL);
         if(ret < 0)
         {
-            CDX_LOGW("the stream can not open");
+            LOGW("the stream can not open");
             return -1;
         }
-        CDX_LOGD("segment url = %s", impl->mediaStream[type].datasource->uri);
+        LOGD("segment url = %s", impl->mediaStream[type].datasource->uri);
         //impl->mediaStream[type].parser = CdxParserPrepare(
         //                                  impl->mediaStream[type].datasource, 0, &impl->exitFlag);
         ret = CdxParserControl(impl->mediaStream[type].parser,
                                CDX_PSR_CMD_REPLACE_STREAM, (void*) impl->mediaStream[type].stream);
         if(ret < 0)
         {
-            CDX_LOGW("*** dash replace stream error!");
+            LOGW("*** dash replace stream error!");
             return -1;
         }
 
@@ -1279,7 +1279,7 @@ int CdxDashSeekToTime(CdxDashParser* impl, cdx_int64 timeMs, int type,
     }
 
     impl->mediaStream[type].baseTime = time*1000;
-    CDX_LOGD("---- baseTime = %lld, activeSegmentIndex = %d",
+    LOGD("---- baseTime = %lld, activeSegmentIndex = %d",
              time, impl->mediaStream[type].activeSegmentIndex);
     ret = CdxParserSeekTo(impl->mediaStream[type].parser, (timeMs-time)*1000, seekModeType);
     if(ret < 0)
@@ -1337,7 +1337,7 @@ static int CdxDashRepIndexFromBandwidth(CdxDashParser* impl, unsigned int bandwi
     impl->mediaStream[type].activeRepSetIndex = (impl->mediaStream[type].activeRepSetIndex + 1)%4;
 
 #endif
-    CDX_LOGD("---- switch stream: %d", repIdx);
+    LOGD("---- switch stream: %d", repIdx);
     return 1;
 }
 
@@ -1363,13 +1363,13 @@ static int CdxDashMediaStreamPacket(CdxDashParser* impl, CdxPacketT * pkt, int t
         ret = CdxParserPrefetch(impl->mediaStream[type].parser, pkt);
         if(ret < 0)
         {
-            CDX_LOGE(" prefetch error!");
+            LOGE(" prefetch error!");
             return -1;
         }
         ret = CdxParserRead(impl->mediaStream[type].parser, pkt);
         if(ret < 0)
         {
-            CDX_LOGE(" read error!");
+            LOGE(" read error!");
             return -1;
         }
     }
@@ -1408,7 +1408,7 @@ static int CdxDashMediaStreamPacket(CdxDashParser* impl, CdxPacketT * pkt, int t
         {
             //***< the url is not exist, so the end of url
             impl->mediaStream[type].eou = 1;
-            CDX_LOGI("end of segment url");
+            LOGI("end of segment url");
             return 0;
         }
         impl->mediaStream[type].activeSegmentIndex ++;
@@ -1441,13 +1441,13 @@ void* CdxDashVideoStreamThread(void* p_arg)
         CdxPacketT *pkt = (CdxPacketT*)malloc(sizeof(CdxPacketT));
         if(!pkt)
         {
-            CDX_LOGE("malloc a packet error!");
+            LOGE("malloc a packet error!");
             break;
         }
         ret = CdxDashMediaStreamPacket(impl, pkt, 0);
         if(ret < 0)
         {
-            CDX_LOGE(" prefetch error!");
+            LOGE(" prefetch error!");
             break;
         }
 
@@ -1493,7 +1493,7 @@ void* CdxDashOpenThread(void* p_arg)
         ret = CdxStreamRead(impl->stream, impl->mpdBuffer+readSize, impl->mpdSize-readSize);
         if(ret < 0)
         {
-            CDX_LOGW("--- download mpd file error");
+            LOGW("--- download mpd file error");
             goto err;
         }
         readSize += ret;
@@ -1503,7 +1503,7 @@ void* CdxDashOpenThread(void* p_arg)
     impl->mpd = ParseMpdFile(NULL, -1, impl->mpdBuffer,readSize, NULL, 0);
     if(!impl->mpd)
     {
-        CDX_LOGE("parse mpd file error!");
+        LOGE("parse mpd file error!");
         goto err;
     }
 
@@ -1513,15 +1513,15 @@ void* CdxDashOpenThread(void* p_arg)
     awPeriod* period = aw_list_get(impl->mpd->periods, impl->activePeriodIndex);
     if(!period)
     {
-        CDX_LOGE("Error - cannot start: no enough periods or representation.\n");
+        LOGE("Error - cannot start: no enough periods or representation.");
         goto err;
     }
 
     int nb_set = aw_list_count(period->adaptationSets);
-    CDX_LOGI("the number of adaptation set is %d", nb_set);
+    LOGI("the number of adaptation set is %d", nb_set);
     if(!nb_set)
     {
-        CDX_LOGE("Error - cannot start: no enough periods or representation.\n");
+        LOGE("Error - cannot start: no enough periods or representation.");
         goto err;
     }
 
@@ -1542,7 +1542,7 @@ void* CdxDashOpenThread(void* p_arg)
         ret = CdxDashInitSegmentUrl(impl, 0);
         if(ret < 0)
         {
-            CDX_LOGE("video _initsegment_url error!\n");
+            LOGE("video _initsegment_url error!");
             goto err;
         }
         impl->streamPts[0] = 0;
@@ -1554,7 +1554,7 @@ void* CdxDashOpenThread(void* p_arg)
         ret = CdxDashInitSegmentUrl(impl, 1);
         if(ret < 0)
         {
-            CDX_LOGE("audio _initsegment_url error!\n");
+            LOGE("audio _initsegment_url error!");
             goto err;
         }
         impl->streamPts[1] = 0;
@@ -1565,7 +1565,7 @@ void* CdxDashOpenThread(void* p_arg)
         ret = CdxDashInitSegmentUrl(impl, 2);
         if(ret < 0)
         {
-            CDX_LOGE("subtitle _initsegment_url error!\n");
+            LOGE("subtitle _initsegment_url error!");
             goto err;
         }
         impl->streamPts[2] = 0;
@@ -1578,7 +1578,7 @@ void* CdxDashOpenThread(void* p_arg)
     return NULL;
 
 err:
-    CDX_LOGW("--- open failed");
+    LOGW("--- open failed");
     impl->mStatus = PSR_OPEN_FAIL;
     CdxAtomicDec(&impl->ref);
     return NULL;
@@ -1660,7 +1660,7 @@ static int CdxDashGetCacheState(CdxDashParser *impl, struct ParserCacheStateS *c
     // TODO: we only get the video cacheState, excluding audio
     if (CdxParserControl(impl->mediaStream[0].parser, CDX_PSR_CMD_GET_CACHESTATE, cacheState) < 0)
     {
-        CDX_LOGE("CDX_PSR_CMD_STREAM_CONTROL fail");
+        LOGE("CDX_PSR_CMD_STREAM_CONTROL fail");
         return -1;
     }
 
@@ -1682,14 +1682,14 @@ static int CdxDashCheckVideoStream(CdxDashParser *impl)
     ret = CdxDashGetCacheState(impl, &parserCS);
     if(ret < 0)
     {
-        CDX_LOGE("get cache state failed");
+        LOGE("get cache state failed");
         return -1;
     }
 
     ret = CdxDashRepIndexFromBandwidth(impl, parserCS.nBandwidthKbps, 0);
     if(ret < 0)
     {
-        CDX_LOGE("get representation index failed");
+        LOGE("get representation index failed");
         return -1;
     }
 
@@ -1745,7 +1745,7 @@ static cdx_int32 __CdxDashParserClose(CdxParserT *parser)
     CdxAtomicDec(&DashPsr->ref);
     while ((ret = CdxAtomicRead(&DashPsr->ref)) != 0)
     {
-        CDX_LOGD("wait for ref = %d", ret);
+        LOGD("wait for ref = %d", ret);
         usleep(10000);
     }
     pthread_join(DashPsr->openTid, NULL);
@@ -1766,7 +1766,7 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
 
     if(impl->mStatus == CDX_DASH_PREFETCHED)
     {
-        CDX_LOGW("care, prefetch in prefected status...");
+        LOGW("care, prefetch in prefected status...");
         pkt->length   = impl->packet.length;
         pkt->type     = impl->packet.type;
         pkt->pts      = impl->packet.pts;
@@ -1778,7 +1778,7 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
 
     if((impl->mediaStream[0].eos ) && (impl->mediaStream[1].eos) && (impl->mediaStream[2].eos))
     {
-        CDX_LOGD("dash parser end, status: %d", impl->mStatus);
+        LOGD("dash parser end, status: %d", impl->mStatus);
         impl->mErrno = PSR_EOS;
         impl->mStatus = CDX_DASH_IDLE;
         return -1;
@@ -1799,7 +1799,7 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
     int status = CdxParserGetStatus(impl->mediaStream[impl->prefetchType].parser);
     if(status == PSR_INVALID)
     {
-        CDX_LOGD("the status is PSR_INVALID, we can not prefetch");
+        LOGD("the status is PSR_INVALID, we can not prefetch");
         impl->mStatus = CDX_DASH_IDLE;
         return -1;
     }
@@ -1812,7 +1812,7 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
             if(impl->exitFlag)
             {
                 impl->mStatus = CDX_DASH_IDLE;
-                CDX_LOGW("--- force Stop");
+                LOGW("--- force Stop");
                 return -1;
             }
             impl->mStatus = CDX_DASH_PREFETCHING;
@@ -1841,7 +1841,7 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
                           impl->mediaStream[impl->prefetchType].activeRepSetIndex);
         if(!rep)
         {
-            CDX_LOGE("-- get representation failed, repIdx(%d)",
+            LOGE("-- get representation failed, repIdx(%d)",
                      impl->mediaStream[impl->prefetchType].activeRepSetIndex);
             impl->mStatus = CDX_DASH_IDLE;
             return -1;
@@ -1854,19 +1854,19 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
             ret = CdxDashCheckVideoStream(impl);
             if(ret < 0)
             {
-                CDX_LOGE("-- check video stream failed");
+                LOGE("-- check video stream failed");
                 return -1;
             }
             else if(ret == 1)
             {
                 // need change resolution for video stream
-                CDX_LOGD("--- change resolution");
+                LOGD("--- change resolution");
                 if(impl->hasVideo)
                 {
                     ret = CdxDashInitSegmentUrl(impl, 0);
                     if(ret < 0)
                     {
-                        CDX_LOGE("video _initsegment_url error!\n");
+                        LOGE("video _initsegment_url error!");
                         return -1;
                     }
 
@@ -1880,14 +1880,14 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
                     H264Extract(mediaInfo.program[0].video[0].pCodecSpecificData,
                                 mediaInfo.program[0].video[0].nCodecSpecificDataLen, &buf, &size);
 
-                    CDX_LOGD("-- extradataSize = %d, size=%d",
+                    LOGD("-- extradataSize = %d, size=%d",
                              mediaInfo.program[0].video[0].nCodecSpecificDataLen, size);
                     buf = impl->extraBuffer;
                     Wb32(&buf, size);
 
                     for(i=0; i<size+4; i++)
                     {
-                        CDX_LOGD("buffer[%d]=%d", i, impl->extraBuffer[i]);
+                        LOGD("buffer[%d]=%d", i, impl->extraBuffer[i]);
                     }
 
                     impl->extraBufferSize = size +4;
@@ -1903,7 +1903,7 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
         if(ret < 0)
         {
             impl->mStatus = CDX_DASH_IDLE;
-            CDX_LOGE("** get next segment Url error");
+            LOGE("** get next segment Url error");
             return ret;
         }
         impl->mediaStream[impl->prefetchType].datasource->uri = impl->tmpUrl;
@@ -1926,7 +1926,7 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
                                (void*)impl->mediaStream[impl->prefetchType].stream);
         if(ret < 0)
         {
-            CDX_LOGW("*** dash replace stream error!");
+            LOGW("*** dash replace stream error!");
             impl->mStatus = CDX_DASH_IDLE;
             return -1;
         }
@@ -1952,31 +1952,31 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
         {
             if(!impl->exitFlag)
             {
-                CDX_LOGE(" prefetch error! ret(%d)", ret);
+                LOGE(" prefetch error! ret(%d)", ret);
                 impl->mErrno = PSR_UNKNOWN_ERR;
             }
 
             impl->mStatus = CDX_DASH_IDLE;
-            CDX_LOGE("--- prefetch failed");
+            LOGE("--- prefetch failed");
             return -1;
         }
         pkt->pts += impl->mediaStream[impl->prefetchType].baseTime;
     }
     else if(status == PSR_USER_CANCEL)
     {
-        CDX_LOGD("force stop");
+        LOGD("force stop");
         impl->mStatus = CDX_DASH_IDLE;
         return -1;
     }
     else
     {
-        CDX_LOGE("error");
+        LOGE("error");
         impl->mErrno = PSR_IO_ERR;
         impl->mStatus = CDX_DASH_IDLE;
         return -1;
     }
 
-    //CDX_LOGD("type = %d, pts = %lld, length = %d", pkt->type, pkt->pts, pkt->length);
+    //LOGD("type = %d, pts = %lld, length = %d", pkt->type, pkt->pts, pkt->length);
 
     impl->streamPts[impl->prefetchType] = pkt->pts;
 
@@ -1987,7 +1987,7 @@ static cdx_int32 __CdxDashParserPrefetch(CdxParserT *parser, CdxPacketT * pkt)
     impl->packet.flags     = pkt->flags;
     impl->mStatus = CDX_DASH_PREFETCHED;
 
-    //CDX_LOGD("type = %d, streamindex = %d, pts = %lld, length = %d, duration = %lld",
+    //LOGD("type = %d, streamindex = %d, pts = %lld, length = %d, duration = %lld",
     //        pkt->type, pkt->streamIndex, pkt->pts, pkt->length, pkt->duration);
     return 0;
 }
@@ -1999,7 +1999,7 @@ static cdx_int32 __CdxDashParserRead(CdxParserT *parser, CdxPacketT *pkt)
     impl = (CdxDashParser *)parser;
     if(impl->mErrno == PSR_INVALID)
     {
-        CDX_LOGE("the status is PSR_INVALID, we can not get media info!");
+        LOGE("the status is PSR_INVALID, we can not get media info!");
         return -1;
     }
 
@@ -2014,7 +2014,7 @@ static cdx_int32 __CdxDashParserRead(CdxParserT *parser, CdxPacketT *pkt)
     if(impl->switchFlag == 1)
     {
 
-        CDX_LOGD("--- extradata stream");
+        LOGD("--- extradata stream");
         if(pkt->length <= pkt->buflen)
         {
             memcpy(pkt->buf, impl->extraBuffer, pkt->length);
@@ -2048,7 +2048,7 @@ static cdx_int32 __CdxDashParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *
     while(impl->mErrno == PSR_INVALID)
     {
         usleep(100);
-        CDX_LOGE("the status is PSR_INVALID, we can not get media info!");
+        LOGE("the status is PSR_INVALID, we can not get media info!");
     }
     memset(pMediaInfo, 0, sizeof(CdxMediaInfoT));
 
@@ -2061,7 +2061,7 @@ static cdx_int32 __CdxDashParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *
         ret = CdxParserGetMediaInfo(impl->mediaStream[0].parser, pVideoMediaInfo);
         if(ret < 0)
         {
-            CDX_LOGE("video stream getMediaInfo error!");
+            LOGE("video stream getMediaInfo error!");
             goto error;
         }
         pMediaInfo->program[0].videoNum = pVideoMediaInfo->program[0].videoNum;
@@ -2069,7 +2069,7 @@ static cdx_int32 __CdxDashParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *
 
         if(pMediaInfo->program[0].videoNum > 1)
         {
-            CDX_LOGE("  video number(%d) > 1", pMediaInfo->program[0].videoNum);
+            LOGE("  video number(%d) > 1", pMediaInfo->program[0].videoNum);
             goto error;
         }
 
@@ -2088,7 +2088,7 @@ static cdx_int32 __CdxDashParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *
         ret = CdxParserGetMediaInfo(impl->mediaStream[1].parser, pAudioMediaInfo);
         if(ret < 0)
         {
-            CDX_LOGE("video stream getMediaInfo error!");
+            LOGE("video stream getMediaInfo error!");
             goto error;
         }
         pMediaInfo->program[0].audioNum = pAudioMediaInfo->program[0].audioNum;
@@ -2109,7 +2109,7 @@ static cdx_int32 __CdxDashParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *
         ret = CdxParserGetMediaInfo(impl->mediaStream[2].parser, pSubtitleMediaInfo);
         if(ret < 0)
         {
-            CDX_LOGE("video stream getMediaInfo error!");
+            LOGE("video stream getMediaInfo error!");
             goto error;
         }
         pMediaInfo->program[0].subtitleNum = pSubtitleMediaInfo->program[0].subtitleNum;
@@ -2122,7 +2122,7 @@ static cdx_int32 __CdxDashParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *
         }
     }
 
-    CDX_LOGD("--- videoNum = %d, audioNum = %d",
+    LOGD("--- videoNum = %d, audioNum = %d",
              pMediaInfo->program[0].videoNum, pMediaInfo->program[0].audioNum);
 
     pMediaInfo->programNum = 1;
@@ -2218,7 +2218,7 @@ cdx_int32 __CdxDashParserForceStop(CdxParserT *parser)
 
     impl->mStatus = CDX_DASH_IDLE;
 
-    CDX_LOGD("-- dash forcestop end");
+    LOGD("-- dash forcestop end");
     return 0;
 }
 
@@ -2250,7 +2250,7 @@ cdx_int32 __CdxDashParserClrForceStop(CdxParserT *parser)
     impl->mStatus = CDX_DASH_IDLE;
     impl->mErrno = PSR_OK;
 
-    CDX_LOGD("-- dash clr forcestop end");
+    LOGD("-- dash clr forcestop end");
     return 0;
 }
 
@@ -2262,7 +2262,7 @@ static int __CdxDashParserControl(CdxParserT *parser, int cmd, void *param)
 
     if(!parser)
     {
-        CDX_LOGW(" the parser is not exit, error!");
+        LOGW(" the parser is not exit, error!");
         return -1;
     }
 
@@ -2270,7 +2270,7 @@ static int __CdxDashParserControl(CdxParserT *parser, int cmd, void *param)
     {
     case CDX_PSR_CMD_SWITCH_AUDIO:
     case CDX_PSR_CMD_SWITCH_SUBTITLE:
-        CDX_LOGI(" dash parser is not support switch stream yet!!!");
+        LOGI(" dash parser is not support switch stream yet!!!");
         break;
 
     case CDX_PSR_CMD_SET_FORCESTOP:
@@ -2294,7 +2294,7 @@ cdx_int32 __CdxDashParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeT
     impl->mStatus = CDX_DASH_SEEKING;
     if(!impl->mpd->mediaPresentationDuration)
     {
-        CDX_LOGW("live mode is not need seekTo");
+        LOGW("live mode is not need seekTo");
         impl->mStatus = CDX_DASH_IDLE;
         return -1;
     }
@@ -2307,7 +2307,7 @@ cdx_int32 __CdxDashParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeT
 
     if((timeMs<0))
     {
-        CDX_LOGE("the parameter of seekTo error, <%lld>ms", timeMs);
+        LOGE("the parameter of seekTo error, <%lld>ms", timeMs);
         impl->mStatus = CDX_DASH_IDLE;
         return -1;
     }
@@ -2316,7 +2316,7 @@ cdx_int32 __CdxDashParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeT
     int periodIdx = CdxDashPeriodIndexFromTime(impl, timeMs);
     if(periodIdx != impl->activePeriodIndex)
     {
-        CDX_LOGW("!!! the period index changed because of seektotime, we do not support yet!");
+        LOGW("!!! the period index changed because of seektotime, we do not support yet!");
         impl->activePeriodIndex = periodIdx;
 
         // TODO:
@@ -2359,7 +2359,7 @@ cdx_int32 __CdxDashParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeT
         }
         impl->streamPts[2] = timeUs;
     }
-    CDX_LOGD("video pts = %lld, audio pts = %lld", impl->streamPts[0], impl->streamPts[1]);
+    LOGD("video pts = %lld, audio pts = %lld", impl->streamPts[0], impl->streamPts[1]);
 
     impl->mStatus = CDX_DASH_IDLE;
     return 0;
@@ -2396,7 +2396,7 @@ static int __CdxDashParserInit(CdxParserT *parser)
         ret = CdxStreamRead(impl->stream, impl->mpdBuffer+readSize, impl->mpdSize-readSize);
         if(ret < 0)
         {
-            CDX_LOGW("--- download mpd file error");
+            LOGW("--- download mpd file error");
             goto err;
         }
         readSize += ret;
@@ -2406,7 +2406,7 @@ static int __CdxDashParserInit(CdxParserT *parser)
     impl->mpd = ParseMpdFile(NULL, -1, impl->mpdBuffer,readSize, NULL, 0);
     if(!impl->mpd)
     {
-        CDX_LOGE("parse mpd file error!");
+        LOGE("parse mpd file error!");
         goto err;
     }
 
@@ -2416,15 +2416,15 @@ static int __CdxDashParserInit(CdxParserT *parser)
     awPeriod* period = aw_list_get(impl->mpd->periods, impl->activePeriodIndex);
     if(!period)
     {
-        CDX_LOGE("Error - cannot start: no enough periods or representation.\n");
+        LOGE("Error - cannot start: no enough periods or representation.");
         goto err;
     }
 
     int nb_set = aw_list_count(period->adaptationSets);
-    CDX_LOGI("the number of adaptation set is %d", nb_set);
+    LOGI("the number of adaptation set is %d", nb_set);
     if(!nb_set)
     {
-        CDX_LOGE("Error - cannot start: no enough periods or representation.\n");
+        LOGE("Error - cannot start: no enough periods or representation.");
         goto err;
     }
 
@@ -2445,7 +2445,7 @@ static int __CdxDashParserInit(CdxParserT *parser)
         ret = CdxDashInitSegmentUrl(impl, 0);
         if(ret < 0)
         {
-            CDX_LOGE("video _initsegment_url error!\n");
+            LOGE("video _initsegment_url error!");
             goto err;
         }
         impl->streamPts[0] = 0;
@@ -2457,7 +2457,7 @@ static int __CdxDashParserInit(CdxParserT *parser)
         ret = CdxDashInitSegmentUrl(impl, 1);
         if(ret < 0)
         {
-            CDX_LOGE("audio _initsegment_url error!\n");
+            LOGE("audio _initsegment_url error!");
             goto err;
         }
         impl->streamPts[1] = 0;
@@ -2468,7 +2468,7 @@ static int __CdxDashParserInit(CdxParserT *parser)
         ret = CdxDashInitSegmentUrl(impl, 2);
         if(ret < 0)
         {
-            CDX_LOGE("subtitle _initsegment_url error!\n");
+            LOGE("subtitle _initsegment_url error!");
             goto err;
         }
         impl->streamPts[2] = 0;
@@ -2481,7 +2481,7 @@ static int __CdxDashParserInit(CdxParserT *parser)
     return 0;
 
 err:
-    CDX_LOGW("--- open failed");
+    LOGW("--- open failed");
     impl->mErrno = PSR_OPEN_FAIL;
     impl->mStatus = CDX_DASH_IDLE;
     CdxAtomicDec(&impl->ref);
@@ -2512,14 +2512,14 @@ static CdxParserT *__CdxDashParserOpen(CdxStreamT *stream, cdx_uint32 flag)
     impl = CdxMalloc(sizeof(CdxDashParser));
     if(impl == NULL)
     {
-        CDX_LOGE("dash parser malloc error!");
+        LOGE("dash parser malloc error!");
         goto open_error;
     }
     memset(impl, 0x00, sizeof(CdxDashParser));
     impl->mErrno = PSR_INVALID;
     impl->parserinfo.ops = &dashParserOps;
     impl->stream = stream;
-    CDX_LOGD("---- stream = %p", stream);
+    LOGD("---- stream = %p", stream);
     impl->mStatus = CDX_DASH_INITIALIZED;
     impl->streamPts[0] = 0xfffffffffffffff;
     impl->streamPts[1] = 0xfffffffffffffff;
@@ -2530,19 +2530,19 @@ static CdxParserT *__CdxDashParserOpen(CdxStreamT *stream, cdx_uint32 flag)
     ret = CdxDashInitMediaStream(&impl->mediaStream[0]);
     if(ret < 0)
     {
-        CDX_LOGE("init video stream error!");
+        LOGE("init video stream error!");
         goto open_error;
     }
     ret = CdxDashInitMediaStream(&impl->mediaStream[1]);
     if(ret < 0)
     {
-        CDX_LOGE("init audio stream error!");
+        LOGE("init audio stream error!");
         goto open_error;
     }
     ret = CdxDashInitMediaStream(&impl->mediaStream[2]);
     if(ret < 0)
     {
-        CDX_LOGE("init subtitle stream error!");
+        LOGE("init subtitle stream error!");
         goto open_error;
     }
 
@@ -2553,7 +2553,7 @@ static CdxParserT *__CdxDashParserOpen(CdxStreamT *stream, cdx_uint32 flag)
     ret = CdxStreamGetMetaData(stream, "uri", (void **)&tmpUrl);
     if(ret < 0)
     {
-        CDX_LOGE("get the uri of the stream error!");
+        LOGE("get the uri of the stream error!");
         goto open_error;
     }
     urlLen = strlen(tmpUrl)+1;
@@ -2583,7 +2583,7 @@ static CdxParserT *__CdxDashParserOpen(CdxStreamT *stream, cdx_uint32 flag)
     return &impl->parserinfo;
 
 open_error:
-    CDX_LOGE("open failed");
+    LOGE("open failed");
     if(stream)
     {
         CdxStreamClose(stream);
@@ -2602,7 +2602,7 @@ static cdx_uint32 __CdxDashParserProbe(CdxStreamProbeDataT *probeData)
     /* check file header */
     if(strstr(probeData->buf, "MPD"))
     {
-        CDX_LOGD("it is a mpd file, so dash parser");
+        LOGD("it is a mpd file, so dash parser");
         return 100;
     }
 

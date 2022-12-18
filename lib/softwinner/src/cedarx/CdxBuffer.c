@@ -10,7 +10,7 @@
 
 #include <CdxTypes.h>
 #include <CdxMemory.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxAtomic.h>
 //#include <CdxBaseErrno.h>
 

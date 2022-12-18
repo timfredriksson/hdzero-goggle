@@ -1,6 +1,6 @@
 
 
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <stdlib.h>
@@ -51,12 +51,12 @@ ERRORTYPE TENC_Construct(void)
     }
     gpTencChnMap = (TencChnManager*)malloc(sizeof(TencChnManager));
     if (NULL == gpTencChnMap) {
-        aloge("fatal error!alloc TencChnManager error(%s)!", strerror(errno));
+        LOGE("fatal error!alloc TencChnManager error(%s)!", strerror(errno));
         return FAILURE;
     }
     ret = pthread_mutex_init(&gpTencChnMap->mLock, NULL);
     if (ret != 0) {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         free(gpTencChnMap);
         gpTencChnMap = NULL;
         return FAILURE;
@@ -69,7 +69,7 @@ ERRORTYPE TENC_Destruct(void)
 {
     if (gpTencChnMap != NULL) {
         if (!list_empty(&gpTencChnMap->mList)) {
-            aloge("fatal error! some tenc channel still running when destroy aenc device!");
+            LOGE("fatal error! some tenc channel still running when destroy aenc device!");
         }
         pthread_mutex_destroy(&gpTencChnMap->mLock);
         free(gpTencChnMap);
@@ -175,7 +175,7 @@ static void TENC_CHN_MAP_S_Destruct(TENC_CHN_MAP_S *pChannel)
     {
         if(NULL!=pChannel->mEncComp)
         {
-            aloge("fatal error! Tenc component need free before!");
+            LOGE("fatal error! Tenc component need free before!");
             COMP_FreeHandle(pChannel->mEncComp);
             pChannel->mEncComp = NULL;
         }
@@ -198,13 +198,13 @@ static ERRORTYPE TextEncEventHandler( PARAM_IN COMP_HANDLETYPE hComponent,
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("encoder EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("encoder EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else
             {
-                alogd("Low probability! what command[0x%x]?", nData1);
+                LOGD("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
@@ -217,18 +217,18 @@ static ERRORTYPE TextEncEventHandler( PARAM_IN COMP_HANDLETYPE hComponent,
             }
             else if(ERR_TENC_INVALIDSTATE == nData1)
             {
-                aloge("why tenc state turn to invalid?");
+                LOGE("why tenc state turn to invalid?");
                 break;
             }
             else if(ERR_TENC_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("fatal error! tenc state transition incorrect.");
+                LOGE("fatal error! tenc state transition incorrect.");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
     return SUCCESS;
@@ -245,12 +245,12 @@ ERRORTYPE AW_MPI_TENC_CreateChn(TENC_CHN TeChn, const TENC_CHN_ATTR_S *pAttr)
 
     if(!(TeChn>=0 && TeChn <TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid AeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid AeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     if(NULL == pAttr)
     {
-        aloge("fatal error! illagal AEncAttr!");
+        LOGE("fatal error! illagal AEncAttr!");
         return ERR_TENC_ILLEGAL_PARAM;
     }
     if (NULL == gpTencChnMap)
@@ -274,7 +274,7 @@ ERRORTYPE AW_MPI_TENC_CreateChn(TENC_CHN TeChn, const TENC_CHN_ATTR_S *pAttr)
     eRet = COMP_GetHandle((COMP_HANDLETYPE*)&pNode->mEncComp, CDX_ComponentNameTextEncoder, (void*)pNode, &TextEncCallback);
     if(eRet != SUCCESS)
     {
-        aloge("fatal error! get comp handle fail!");
+        LOGE("fatal error! get comp handle fail!");
     } 
     
     MPP_CHN_S ChannelInfo;
@@ -300,7 +300,7 @@ ERRORTYPE AW_MPI_TENC_DestroyChn(TENC_CHN TeChn)
     
     if(!(TeChn>=0 && TeChn <TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;
@@ -327,12 +327,12 @@ ERRORTYPE AW_MPI_TENC_DestroyChn(TENC_CHN TeChn)
             }
             else if(nCompState == COMP_StateInvalid)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             }
             else
             {
-                aloge("Fatal error! invalid TeChn[%d] state[0x%x]!", TeChn, nCompState);
+                LOGE("Fatal error! invalid TeChn[%d] state[0x%x]!", TeChn, nCompState);
                 eRet = FAILURE;
             }
 
@@ -351,13 +351,13 @@ ERRORTYPE AW_MPI_TENC_DestroyChn(TENC_CHN TeChn)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_TENC_BUSY;
         }
     }
     else
     {
-        aloge("fatal error! no tenc component!");
+        LOGE("fatal error! no tenc component!");
         list_del(&pChn->mList);
         TENC_CHN_MAP_S_Destruct(pChn);
         ret = SUCCESS;
@@ -369,7 +369,7 @@ ERRORTYPE AW_MPI_TENC_ResetChn(TENC_CHN TeChn)
 {
     if(!(TeChn>=0 && TeChn <TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;
@@ -386,14 +386,14 @@ ERRORTYPE AW_MPI_TENC_ResetChn(TENC_CHN TeChn)
         eRet2 = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorTencResetChannel, NULL);
         if(eRet2 != SUCCESS)
         {
-            aloge("fatal error! reset channel fail[0x%x]!", eRet2);
+            LOGE("fatal error! reset channel fail[0x%x]!", eRet2);
         }
         
         return eRet2;
     }
     else
     {
-        aloge("wrong status[0x%x], can't reset aenc channel!", nCompState);
+        LOGE("wrong status[0x%x], can't reset aenc channel!", nCompState);
         return ERR_TENC_NOT_PERM;
     }
 }
@@ -402,7 +402,7 @@ ERRORTYPE AW_MPI_TENC_StartRecvText(TENC_CHN TeChn)
 {
     if(!(TeChn>=0 && TeChn<TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;
@@ -419,7 +419,7 @@ ERRORTYPE AW_MPI_TENC_StartRecvText(TENC_CHN TeChn)
         eRet = pChn->mEncComp->SendCommand(pChn->mEncComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         
         cdx_sem_down(&pChn->mSemCompCmd); 
@@ -427,7 +427,7 @@ ERRORTYPE AW_MPI_TENC_StartRecvText(TENC_CHN TeChn)
     }
     else
     {
-        alogd("TencChannelState[0x%x], do nothing!", nCompState);
+        LOGD("TencChannelState[0x%x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -437,7 +437,7 @@ ERRORTYPE AW_MPI_TENC_StopRecvText(TENC_CHN TeChn)
 {
     if(!(TeChn>=0 && TeChn < TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;
@@ -454,7 +454,7 @@ ERRORTYPE AW_MPI_TENC_StopRecvText(TENC_CHN TeChn)
         eRet = pChn->mEncComp->SendCommand(pChn->mEncComp, COMP_CommandStateSet, COMP_StateIdle, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         
         cdx_sem_down(&pChn->mSemCompCmd);
@@ -462,12 +462,12 @@ ERRORTYPE AW_MPI_TENC_StopRecvText(TENC_CHN TeChn)
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogv("TencChannelState[0x%x], do nothing!", nCompState);
+        LOGV("TencChannelState[0x%x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     else
     {
-        aloge("fatal error! check TencChannelState[0x%x]!", nCompState);
+        LOGE("fatal error! check TencChannelState[0x%x]!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -477,7 +477,7 @@ ERRORTYPE AW_MPI_TENC_RegisterCallback(TENC_CHN TeChn, MPPCallbackInfo *pCallbac
 {
     if(!(TeChn>=0 && TeChn <TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;
@@ -494,7 +494,7 @@ ERRORTYPE AW_MPI_TENC_SetChnAttr(TENC_CHN TeChn, const TENC_CHN_ATTR_S *pAttr)
 {
     if(!(TeChn>=0 && TeChn <TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;
@@ -507,7 +507,7 @@ ERRORTYPE AW_MPI_TENC_SetChnAttr(TENC_CHN TeChn, const TENC_CHN_ATTR_S *pAttr)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_TENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorTencChnAttr, (void*)pAttr);
@@ -519,7 +519,7 @@ ERRORTYPE AW_MPI_TENC_GetChnAttr(TENC_CHN TeChn, TENC_CHN_ATTR_S *pAttr)
 {
     if(!(TeChn>=0 && TeChn <TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;
@@ -532,7 +532,7 @@ ERRORTYPE AW_MPI_TENC_GetChnAttr(TENC_CHN TeChn, TENC_CHN_ATTR_S *pAttr)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_TENC_NOT_PERM;
     }
     ret = pChn->mEncComp->GetConfig(pChn->mEncComp, COMP_IndexVendorTencChnAttr, (void*)pAttr);
@@ -543,7 +543,7 @@ ERRORTYPE AW_MPI_TENC_SendFrame(TENC_CHN TeChn, TEXT_FRAME_S *pFrame)
 {
     if(!(TeChn>=0 && TeChn<TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;
@@ -556,7 +556,7 @@ ERRORTYPE AW_MPI_TENC_SendFrame(TENC_CHN TeChn, TEXT_FRAME_S *pFrame)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_TENC_NOT_PERM;
     }
     COMP_BUFFERHEADERTYPE bufferHeader;
@@ -569,7 +569,7 @@ ERRORTYPE AW_MPI_TENC_GetStream(TENC_CHN TeChn, TEXT_STREAM_S *pStream, int nMil
 {
     if(!(TeChn>=0 && TeChn<TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;
@@ -579,12 +579,12 @@ ERRORTYPE AW_MPI_TENC_GetStream(TENC_CHN TeChn, TEXT_STREAM_S *pStream, int nMil
     }
     if(NULL == pStream)
     {
-        aloge("fatal error! pStream == NULL!");
+        LOGE("fatal error! pStream == NULL!");
         return ERR_TENC_NULL_PTR;
     }
     if(nMilliSec < -1)
     {
-        aloge("fatal error! illegal nMilliSec[%d]!", nMilliSec);
+        LOGE("fatal error! illegal nMilliSec[%d]!", nMilliSec);
         return ERR_TENC_ILLEGAL_PARAM;
     }
     ERRORTYPE ret;
@@ -592,7 +592,7 @@ ERRORTYPE AW_MPI_TENC_GetStream(TENC_CHN TeChn, TEXT_STREAM_S *pStream, int nMil
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_TENC_NOT_PERM;
     }
     TEncStream stTencStream;
@@ -608,7 +608,7 @@ ERRORTYPE AW_MPI_TENC_ReleaseStream(TENC_CHN TeChn, TEXT_STREAM_S *pStream)
 {
     if(!(TeChn>=0 && TeChn<TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;
@@ -618,7 +618,7 @@ ERRORTYPE AW_MPI_TENC_ReleaseStream(TENC_CHN TeChn, TEXT_STREAM_S *pStream)
     }
     if(NULL == pStream)
     {
-        aloge("fatal error! pStream == NULL!");
+        LOGE("fatal error! pStream == NULL!");
         return ERR_TENC_NULL_PTR;
     }
     ERRORTYPE ret;
@@ -626,7 +626,7 @@ ERRORTYPE AW_MPI_TENC_ReleaseStream(TENC_CHN TeChn, TEXT_STREAM_S *pStream)
     ret = pChn->mEncComp->GetState(pChn->mEncComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_TENC_NOT_PERM;
     }
     ret = pChn->mEncComp->SetConfig(pChn->mEncComp, COMP_IndexVendorTencReleaseStream, (void*)pStream);
@@ -637,7 +637,7 @@ int AW_MPI_TENC_GetHandle(TENC_CHN TeChn)
 {
     if(!(TeChn>=0 && TeChn <TENC_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid TeChn[%d]!", TeChn);
+        LOGE("fatal error! invalid TeChn[%d]!", TeChn);
         return ERR_TENC_INVALID_CHNID;
     }
     TENC_CHN_MAP_S *pChn = NULL;

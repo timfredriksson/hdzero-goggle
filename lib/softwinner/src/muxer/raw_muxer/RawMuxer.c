@@ -1,6 +1,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "RawMuxer"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +11,7 @@ int RawMuxerWriteVos(void *handle, unsigned char *vosData, unsigned int vosLen, 
 {
 	RAWCONTEXT *RawMuxerCtx = (RAWCONTEXT *)handle;
 	RAWTRACK *track = RawMuxerCtx->Track[idx];
-	alogv("RawMuxerWriteVos idx:%d len:%d",idx,vosLen);
+	LOGV("RawMuxerWriteVos idx:%d len:%d",idx,vosLen);
 	if(vosLen)
 	{
 		track->CodecInfo.extradata = (unsigned char *)malloc(vosLen);
@@ -135,7 +135,7 @@ int RawMuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
 		
 		if (NULL == pMediaInf)
 		{
-			aloge("error in param\n");
+			LOGE("error in param");
 			return -1;
 		}
 		
@@ -181,7 +181,7 @@ int RawMuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
 		//mov->tracks[1].trackDuration = (unsigned int)(((CDX_U64)uParam * mov->tracks[1].timescale) / 1000);
 		break;
     case SETFALLOCATELEN:
-        aloge("fatal error, not support SETFALLOCATELEN");
+        LOGE("fatal error, not support SETFALLOCATELEN");
         break;
 	case SETCACHEFD2:
 		RawMuxerCtx->datasource_desc.ext_fd_desc.fd = uParam;
@@ -190,12 +190,12 @@ int RawMuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
 			RawMuxerCtx->OutStreamHandle = create_outstream_handle(&RawMuxerCtx->datasource_desc);
             if (NULL == RawMuxerCtx->OutStreamHandle)
             {
-                aloge("SET CACHEFD2 create_outstream_handle error.");
+                LOGE("SET CACHEFD2 create_outstream_handle error.");
                 return -1;
             }
 		}
 		else {
-			aloge("RawMuxerCtx->OutStreamHandle not NULL");
+			LOGE("RawMuxerCtx->OutStreamHandle not NULL");
 		}
 		break;
 
@@ -206,12 +206,12 @@ int RawMuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
 			RawMuxerCtx->OutStreamHandle = create_outstream_handle(&RawMuxerCtx->datasource_desc);
             if (NULL == RawMuxerCtx->OutStreamHandle)
             {
-                aloge("SETOUTURL create_outstream_handle error.");
+                LOGE("SETOUTURL create_outstream_handle error.");
                 return -1;
             }
 		}
 		else {
-			aloge("RawMuxerCtx->OutStreamHandle not NULL");
+			LOGE("RawMuxerCtx->OutStreamHandle not NULL");
 		}
 		break;
 
@@ -222,12 +222,12 @@ int RawMuxerIoctrl(void *handle, unsigned int uCmd, unsigned int uParam, void *p
 			RawMuxerCtx->OutStreamHandle = create_outstream_handle(&RawMuxerCtx->datasource_desc);
             if (NULL == RawMuxerCtx->OutStreamHandle)
             {
-                aloge("REGISTER_WRITE_CALLBACK create_outstream_handle error.");
+                LOGE("REGISTER_WRITE_CALLBACK create_outstream_handle error.");
                 return -1;
             }
 		}
 		else {
-			aloge("RawMuxerCtx->OutStreamHandle not NULL");
+			LOGE("RawMuxerCtx->OutStreamHandle not NULL");
 		}
 		break;
 

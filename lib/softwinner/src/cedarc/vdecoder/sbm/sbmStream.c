@@ -21,7 +21,7 @@
 
 //#include "secureMemoryAdapter.h"
 
-#include "log.h"
+#include <log/log.h>
 
 #define SBM_FRAME_FIFO_SIZE (2048)  //* store 2048 frames of bitstream data at maximum.
 
@@ -66,13 +66,13 @@ int SbmStreamInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
 
     if(pSbmConfig == NULL)
     {
-        loge(" pSbmConfig is null");
+        LOGE(" pSbmConfig is null");
         return -1;
     }
 
     if(pSbmConfig->nSbmBufferTotalSize <= 0)
     {
-        loge(" pSbmConfig->nBufferSize(%d) is invalid",pSbmConfig->nSbmBufferTotalSize);
+        LOGE(" pSbmConfig->nBufferSize(%d) is invalid",pSbmConfig->nSbmBufferTotalSize);
         return -1;
     }
 
@@ -86,7 +86,7 @@ int SbmStreamInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
 
     if(pSbmBuf == NULL)
     {
-        loge("pSbmBuf == NULL.");
+        LOGE("pSbmBuf == NULL.");
         return -1;
     }
 
@@ -94,7 +94,7 @@ int SbmStreamInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
                                                  * sizeof(VideoStreamDataInfo));
     if(pSbm->frameFifo.pFrames == NULL)
     {
-        loge("sbm->frameFifo.pFrames == NULL.");
+        LOGE("sbm->frameFifo.pFrames == NULL.");
         free(pSbm);
         if(pSbm->mConfig.bVirFlag == 1)
             free(pSbmBuf);
@@ -112,7 +112,7 @@ int SbmStreamInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
     ret = pthread_mutex_init(&pSbm->mutex, NULL);
     if(ret != 0)
     {
-        loge("pthread_mutex_init failed.");
+        LOGE("pthread_mutex_init failed.");
         free(pSbm->frameFifo.pFrames);
         free(pSbm);
 
@@ -205,7 +205,7 @@ void SbmStreamReset(SbmInterface* pSelf)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return;
     }
 
@@ -245,7 +245,7 @@ void *SbmStreamGetBufferAddress(SbmInterface* pSelf)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return NULL;
     }
 
@@ -272,7 +272,7 @@ int SbmStreamGetBufferSize(SbmInterface* pSelf)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return 0;
     }
 
@@ -299,7 +299,7 @@ int SbmStreamGetStreamFrameNum(SbmInterface* pSelf)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return 0;
     }
 
@@ -326,7 +326,7 @@ int SbmStreamGetStreamDataSize(SbmInterface* pSelf)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return 0;
     }
 
@@ -339,7 +339,7 @@ char* SbmStreamGetBufferWritePointer(SbmInterface* pSelf)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return 0;
     }
 
@@ -354,7 +354,7 @@ void* SbmStreamGetBufferDataInfo(SbmInterface* pSelf)
 
     if(pSbm == NULL )
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return NULL;
     }
 
@@ -365,7 +365,7 @@ void* SbmStreamGetBufferDataInfo(SbmInterface* pSelf)
 
     if(pSbm->frameFifo.nUnReadFrameNum == 0)
     {
-        logv("nUnReadFrameNum == 0.");
+        LOGV("nUnReadFrameNum == 0.");
         unlock(pSbm);
         return NULL;
     }
@@ -374,7 +374,7 @@ void* SbmStreamGetBufferDataInfo(SbmInterface* pSelf)
 
     if(pDataInfo == NULL)
     {
-        loge("request failed.");
+        LOGE("request failed.");
         unlock(pSbm);
         return NULL;
     }
@@ -407,7 +407,7 @@ int SbmStreamRequestBuffer(SbmInterface* pSelf, int nRequireSize,
 
     if(pSbm == NULL || ppBuf == NULL || pBufSize == NULL)
     {
-        loge("input error.");
+        LOGE("input error.");
         return -1;
     }
 
@@ -416,7 +416,7 @@ int SbmStreamRequestBuffer(SbmInterface* pSelf, int nRequireSize,
 
     if(pSbm->frameFifo.nValidFrameNum >= pSbm->frameFifo.nMaxFrameNum)
     {
-        logv("nValidFrameNum >= nMaxFrameNum.");
+        LOGV("nValidFrameNum >= nMaxFrameNum.");
         unlock(pSbm);
         return -1;
     }
@@ -438,7 +438,7 @@ int SbmStreamRequestBuffer(SbmInterface* pSelf, int nRequireSize,
     }
     else
     {
-        loge("no free buffer.");
+        LOGE("no free buffer.");
         unlock(pSbm);
         return -1;
     }
@@ -470,7 +470,7 @@ int SbmStreamAddStream(SbmInterface* pSelf, VideoStreamDataInfo *pDataInfo)
 
     if(pSbm == NULL || pDataInfo == NULL)
     {
-        loge("input error.");
+        LOGE("input error.");
         return -1;
     }
 
@@ -479,20 +479,20 @@ int SbmStreamAddStream(SbmInterface* pSelf, VideoStreamDataInfo *pDataInfo)
 
     if(pDataInfo->pData == 0)
     {
-        loge("data buffer is NULL.\n");
+        LOGE("data buffer is NULL.");
         unlock(pSbm);
         return -1;
     }
     if(pSbm->frameFifo.nValidFrameNum >= pSbm->frameFifo.nMaxFrameNum)
     {
-        loge("nValidFrameNum > nMaxFrameNum.");
+        LOGE("nValidFrameNum > nMaxFrameNum.");
         unlock(pSbm);
         return -1;
     }
 
     if(pDataInfo->nLength + pSbm->nValidDataSize > pSbm->nStreamBufferSize)
     {
-        loge("no free buffer.");
+        LOGE("no free buffer.");
         unlock(pSbm);
         return -1;
     }
@@ -548,7 +548,7 @@ VideoStreamDataInfo *SbmStreamRequestStream(SbmInterface* pSelf)
 
     if(pSbm == NULL )
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return NULL;
     }
 
@@ -559,7 +559,7 @@ VideoStreamDataInfo *SbmStreamRequestStream(SbmInterface* pSelf)
 
     if(pSbm->frameFifo.nUnReadFrameNum == 0)
     {
-        logv("nUnReadFrameNum == 0.");
+        LOGV("nUnReadFrameNum == 0.");
         unlock(pSbm);
         return NULL;
     }
@@ -568,7 +568,7 @@ VideoStreamDataInfo *SbmStreamRequestStream(SbmInterface* pSelf)
 
     if(pDataInfo == NULL)
     {
-        loge("request failed.");
+        LOGE("request failed.");
         unlock(pSbm);
         return NULL;
     }
@@ -609,7 +609,7 @@ int SbmStreamReturnStream(SbmInterface* pSelf, VideoStreamDataInfo *pDataInfo)
 
     if(pSbm == NULL || pDataInfo == NULL)
     {
-        loge("input error.");
+        LOGE("input error.");
         return -1;
     }
 
@@ -620,7 +620,7 @@ int SbmStreamReturnStream(SbmInterface* pSelf, VideoStreamDataInfo *pDataInfo)
 
     if(pSbm->frameFifo.nValidFrameNum == 0)
     {
-        loge("nValidFrameNum == 0.");
+        LOGE("nValidFrameNum == 0.");
         unlock(pSbm);
         return -1;
     }
@@ -633,7 +633,7 @@ int SbmStreamReturnStream(SbmInterface* pSelf, VideoStreamDataInfo *pDataInfo)
     pSbm->frameFifo.nUnReadFrameNum++;
     if(pDataInfo != &pSbm->frameFifo.pFrames[nReadPos])
     {
-        loge("wrong frame sequence.");
+        LOGE("wrong frame sequence.");
         abort();
     }
 
@@ -669,7 +669,7 @@ int SbmStreamFlushStream(SbmInterface* pSelf, VideoStreamDataInfo *pDataInfo)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return -1;
     }
 
@@ -680,7 +680,7 @@ int SbmStreamFlushStream(SbmInterface* pSelf, VideoStreamDataInfo *pDataInfo)
 
     if(pSbm->frameFifo.nValidFrameNum == 0)
     {
-        loge("no valid frame.");
+        LOGE("no valid frame.");
         unlock(pSbm);
         return -1;
     }
@@ -688,7 +688,7 @@ int SbmStreamFlushStream(SbmInterface* pSelf, VideoStreamDataInfo *pDataInfo)
     nFlushPos = pSbm->frameFifo.nFlushPos;
     if(pDataInfo != &pSbm->frameFifo.pFrames[nFlushPos])
     {
-        loge("not current nFlushPos.");
+        LOGE("not current nFlushPos.");
         unlock(pSbm);
         abort();
         return -1;
@@ -729,13 +729,13 @@ static void unlock(SbmStream *pSbm)
 
 SbmInterface* GetSbmInterfaceStream()
 {
-    logd("******* sbm-type: Stream*******");
+    LOGD("******* sbm-type: Stream*******");
 
     SbmStream* pSbmStream = NULL;
     pSbmStream = (SbmStream*)malloc(sizeof(SbmStream));
     if(pSbmStream == NULL)
     {
-        loge("malloc for sbm stream struct failed");
+        LOGE("malloc for sbm stream struct failed");
         return NULL;
     }
 

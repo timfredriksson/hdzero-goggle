@@ -572,7 +572,7 @@ static int GetFrame(AacParserImplS *impl)
             nBytes = AACFindSyncWord(readPtr,bytesLeft);
             if(nBytes<0)
             {
-                CDX_LOGE("AACFindSyncWord error");
+                LOGE("AACFindSyncWord error");
                 return -1;
             }
             nSyncLen  += nBytes;
@@ -599,7 +599,7 @@ static int GetFrame(AacParserImplS *impl)
                 nSyncLen +=1;
                 if(nSyncLen > READLEN)//maybe sync too long
                 {
-                    CDX_LOGW("SyncWord :%d",nBytes);
+                    LOGW("SyncWord :%d",nBytes);
                     impl->readPtr += nSyncLen;
                     impl->bytesLeft -= nSyncLen;
                     nSyncLen = 0;
@@ -633,7 +633,7 @@ static int GetFrame(AacParserImplS *impl)
             nBytes = AACFindSyncWord_LATM(readPtr,bytesLeft);
             if(nBytes<0)
             {
-                CDX_LOGE("LATMFindSyncWord error");
+                LOGE("LATMFindSyncWord error");
                 return -1;
             }
             readPtr +=nBytes;
@@ -650,7 +650,7 @@ static int GetFrame(AacParserImplS *impl)
                 retVal = -1;
                 if(nSyncLen > READLEN)//maybe sync too long
                 {
-                    CDX_LOGW("SyncWord :%d",nBytes);
+                    LOGW("SyncWord :%d",nBytes);
                     impl->readPtr += nSyncLen;
                     impl->bytesLeft -= nSyncLen;
                     nSyncLen = 0;
@@ -876,7 +876,7 @@ static int UnpackADIFHeader(AacParserImplS *impl,unsigned char *ptr,int len)
     //if (AIF->ulChannels < 0 || AIF->ulSampleRate < 0 || AIF->ulSampleRate >= 12)
     if (ulChannels < 0 || ulSampleRate < 0 || ulSampleRate >= 12)
     {
-        CDX_LOGE("ERROR: ulChannels:%d,ulSampleRate[0-11]:%d ",ulChannels,ulSampleRate);
+        LOGE("ERROR: ulChannels:%d,ulSampleRate[0-11]:%d ",ulChannels,ulSampleRate);
         return ERROR;
     }
     impl->ulChannels  = ulChannels;
@@ -908,7 +908,7 @@ static cdx_int32 AacProbe(cdx_uint8 *ptr)
             int state = ((ptr[offset]&0xff) << 16) | ((ptr[offset+1]&0xff) << 8) |
                     ((ptr[offset+2]&0xff));
             latm_size = state & LATM_SIZE_MASK;
-            CDX_LOGD("latm_size : %d", latm_size);
+            LOGD("latm_size : %d", latm_size);
             /*
                 For our aac parser at least have 4096 buffer size to avoid out of range
                 The most important, a aac frame has only 1024 samples, that is the size
@@ -920,17 +920,17 @@ static cdx_int32 AacProbe(cdx_uint8 *ptr)
             }
             if(((ptr[offset + latm_size]&0xff)==0x56)&&((ptr[offset + latm_size + 1]&0xe0)==0xe0))
             {
-                CDX_LOGD("This is realy latm...");
+                LOGD("This is realy latm...");
             }
             else
             {
-                CDX_LOGE("This is not latm...");
+                LOGE("This is not latm...");
                 return CDX_FALSE;
             }
         }
         return CDX_TRUE;
     }
-    //CDX_LOGD("Cannot Sync to a AAC header!!!");
+    //LOGD("Cannot Sync to a AAC header!!!");
     return CDX_FALSE;
 }
 
@@ -955,7 +955,7 @@ static int AacInit(CdxParserT* parameter)
     ret = CdxStreamRead(impl->stream, (void *)impl->readBuf, READLEN);
     if(ret != READLEN)
     {
-        CDX_LOGE("CdxStreamRead error");
+        LOGE("CdxStreamRead error");
         goto AAC_error;
     }
     while(needOffset + 7 < READLEN)
@@ -965,11 +965,11 @@ static int AacInit(CdxParserT* parameter)
         needOffset++;
     }
 
-    CDX_LOGD("First frame needOffset : %d", needOffset);
+    LOGD("First frame needOffset : %d", needOffset);
 
     if(needOffset + 7 >= READLEN)
     {
-        CDX_LOGE("Too Many Rubbish data!");
+        LOGE("Too Many Rubbish data!");
         goto AAC_error;
     }
     else if(needOffset > 0)
@@ -987,7 +987,7 @@ static int AacInit(CdxParserT* parameter)
         ret = UnpackADIFHeader(impl,impl->readBuf,READLEN);
         if(ret==ERROR)
         {
-            CDX_LOGE("UnpackADIFHeader error");
+            LOGE("UnpackADIFHeader error");
             goto AAC_error;
         }
     }
@@ -1013,7 +1013,7 @@ static int AacInit(CdxParserT* parameter)
             }
             if(i != 0)
             {
-                CDX_LOGW("Before we begin to judge ADTS or LATM, we shift %d bytes. It is strange,\
+                LOGW("Before we begin to judge ADTS or LATM, we shift %d bytes. It is strange,\
                         'cause we has done it before!!!!", i);
                 goto AAC_error;
             }
@@ -1035,13 +1035,13 @@ static int AacInit(CdxParserT* parameter)
                 {
                     if(CdxStreamSeek(impl->stream,readlength,SEEK_SET))
                     {
-                        CDX_LOGE("CdxStreamSeek error");
+                        LOGE("CdxStreamSeek error");
                         goto AAC_error;
                     }
                     ret = CdxStreamRead(impl->stream, (void *)impl->readBuf, READLEN);
                     if(ret != READLEN)
                     {
-                        CDX_LOGE("CdxStreamRead error");
+                        LOGE("CdxStreamRead error");
                         goto AAC_error;
                     }
                     nBytes = 0;
@@ -1050,27 +1050,27 @@ static int AacInit(CdxParserT* parameter)
                 nBytes = AACFindSyncWord(impl->readBuf,READLEN - nBytes);//maybe 4*1024;
                 if(nBytes<0)
                 {
-                    CDX_LOGE("AACFindSyncWord error");
+                    LOGE("AACFindSyncWord error");
                     goto AAC_error;
                 }
                 readlength += nBytes;
                 if(impl->dFileSize > 0 && readlength >= impl->dFileSize)
                 {
                     readlength =impl->dFileSize;
-                    CDX_LOGE("dFileSize error");
+                    LOGE("dFileSize error");
                     goto AAC_error;
                 }
                 if(nBytes+7>READLEN)
                 {
                     if(CdxStreamSeek(impl->stream,readlength,SEEK_SET))
                     {
-                        CDX_LOGE("CdxStreamSeek error");
+                        LOGE("CdxStreamSeek error");
                         goto AAC_error;
                     }
                     ret = CdxStreamRead(impl->stream, (void *)impl->readBuf, READLEN);
                     if(ret != READLEN)
                     {
-                        CDX_LOGE("CdxStreamRead error");
+                        LOGE("CdxStreamRead error");
                         goto AAC_error;
                     }
                     nBytes = 0;
@@ -1109,7 +1109,7 @@ static int AacInit(CdxParserT* parameter)
                             if(CdxStreamSeek(impl->stream,readlength +
                                              fhADTS.nFrameLength,SEEK_SET))
                             {
-                                CDX_LOGE("CdxStreamSeek error");
+                                LOGE("CdxStreamSeek error");
                                 goto AAC_error;
                             }
                             ret = CdxStreamRead(impl->stream, (void *)cBuf, 2);
@@ -1126,7 +1126,7 @@ static int AacInit(CdxParserT* parameter)
                                     ret = CdxStreamRead(impl->stream, (void *)(&(cBuf[1])), 1);
                                     if(ret != 1)
                                     {
-                                        CDX_LOGE("CdxStreamRead error");
+                                        LOGE("CdxStreamRead error");
                                         goto AAC_error;
                                     }
                                     break;
@@ -1137,7 +1137,7 @@ static int AacInit(CdxParserT* parameter)
                                     ret = CdxStreamRead(impl->stream, (void *)cBuf, 2);
                                     if(ret != 2)
                                     {
-                                        CDX_LOGE("CdxStreamRead error");
+                                        LOGE("CdxStreamRead error");
                                         goto AAC_error;
                                     }
                                     break;
@@ -1167,13 +1167,13 @@ static int AacInit(CdxParserT* parameter)
                 }
                 if(readlength-needOffset>2*1024)
                 {
-                    CDX_LOGE("readlength error");
+                    LOGE("readlength error");
                     goto AAC_error;
                 }
             }
             if(i==ERRORFAMENUM)
             {
-                CDX_LOGE("ERRORFAMENUM error");
+                LOGE("ERRORFAMENUM error");
                 goto AAC_error;
             }
             impl->ulSampleRate = sampRateTab[fhADTS.ucSampRateIdx];
@@ -1261,7 +1261,7 @@ static int AacInit(CdxParserT* parameter)
                                     ret = CdxStreamRead(impl->stream, (void *)(&(cBuf[1])), 1);
                                     if(ret != 1)
                                     {
-                                        CDX_LOGE("CdxStreamRead error");
+                                        LOGE("CdxStreamRead error");
                                         goto AAC_error;
                                     }
                                     break;
@@ -1272,7 +1272,7 @@ static int AacInit(CdxParserT* parameter)
                                     ret = CdxStreamRead(impl->stream, (void *)cBuf, 2);
                                     if(ret != 2)
                                     {
-                                        CDX_LOGE("CdxStreamRead error");
+                                        LOGE("CdxStreamRead error");
                                         goto AAC_error;
                                     }
                                     break;
@@ -1342,7 +1342,7 @@ static int AacInit(CdxParserT* parameter)
         {
             if(CdxStreamSeek(impl->stream,impl->uFirstFrmOffset,SEEK_SET))
             {
-                CDX_LOGE("CdxStreamSeek error");
+                LOGE("CdxStreamSeek error");
                 goto AAC_error;
             }
 
@@ -1393,14 +1393,14 @@ static int AacInit(CdxParserT* parameter)
             //AAC_format = AAC_FF_ADTS;
             if(impl->ulBitRate>impl->ulSampleRate*impl->ulChannels*16)
             {
-                CDX_LOGE("aac ulBitRate error.rate:%d,fs:%d,ch:%d",impl->ulBitRate,
+                LOGE("aac ulBitRate error.rate:%d,fs:%d,ch:%d",impl->ulBitRate,
                       impl->ulSampleRate,impl->ulChannels);
                 goto AAC_error;//for aac not nBitRate lag
             }
 
             if(CdxStreamSeek(impl->stream,needOffset,SEEK_SET))
             {
-                CDX_LOGE("CdxStreamSeek error");
+                LOGE("CdxStreamSeek error");
                 goto AAC_error;
             }
             //Reset the readBuf...
@@ -1411,10 +1411,10 @@ static int AacInit(CdxParserT* parameter)
     impl->bytesLeft = 0;
     impl->mErrno = PSR_OK;
     pthread_cond_signal(&impl->cond);
-    CDX_LOGW("AAC ulDuration:%lld",impl->ulDuration);
+    LOGW("AAC ulDuration:%lld",impl->ulDuration);
     return 0;
 AAC_error:
-    CDX_LOGE("AacOpenThread fail!!!");
+    LOGE("AacOpenThread fail!!!");
     impl->mErrno = PSR_OPEN_FAIL;
     pthread_cond_signal(&impl->cond);
     return -1;
@@ -1440,7 +1440,7 @@ static cdx_int32 __AacParserControl(CdxParserT *parser, cdx_int32 cmd, void *par
         CdxStreamClrForceStop(impl->stream);
         break;
     case CDX_PSR_CMD_REPLACE_STREAM:
-        CDX_LOGD("replace stream!!!");
+        LOGD("replace stream!!!");
         if(impl->stream)
         {
             CdxStreamClose(impl->stream);
@@ -1452,19 +1452,19 @@ static cdx_int32 __AacParserControl(CdxParserT *parser, cdx_int32 cmd, void *par
     case CDX_PSR_CMD_STREAM_SEEK:
         if(!impl->stream)
         {
-            CDX_LOGE("mAACParser->cdxStream == NULL, can not stream control");
+            LOGE("mAACParser->cdxStream == NULL, can not stream control");
             return -1;
         }
         if(!CdxStreamSeekAble(impl->stream))
         {
-            CDX_LOGV("CdxStreamSeekAble == 0");
+            LOGV("CdxStreamSeekAble == 0");
             return 0;
         }
         streamSeekPos = *(cdx_int64 *)param;
         ret = CdxStreamSeek(impl->stream, streamSeekPos, SEEK_SET);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamSeek fail");
+            LOGE("CdxStreamSeek fail");
         }
         memset(impl->readBuf,0x00,2*1024*6*6);
         impl->readPtr = impl->readBuf;
@@ -1472,7 +1472,7 @@ static cdx_int32 __AacParserControl(CdxParserT *parser, cdx_int32 cmd, void *par
         ret = GetNextFrame(impl);
         if(ret<0)
         {
-            CDX_LOGE("Controll GetNextFrame error");
+            LOGE("Controll GetNextFrame error");
             return CDX_FAILURE;
         }
         impl->eofReached = 0;
@@ -1481,7 +1481,7 @@ static cdx_int32 __AacParserControl(CdxParserT *parser, cdx_int32 cmd, void *par
 
         break;
     default :
-        CDX_LOGW("not implement...(%d)", cmd);
+        LOGW("not implement...(%d)", cmd);
         break;
     }
     impl->nFlags = cmd;
@@ -1503,19 +1503,19 @@ static cdx_int32 __AacParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
         ret = CdxStreamRead(impl->stream, (void *)impl->readBuf, AAC_MAINBUF_SIZE);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamRead fail");
+            LOGE("CdxStreamRead fail");
             impl->mErrno = PSR_IO_ERR;
             return CDX_FAILURE;
         }
         else if(ret == 0)
         {
-           CDX_LOGD("CdxStream EOS");
+           LOGD("CdxStream EOS");
            impl->mErrno = PSR_EOS;
            return CDX_FAILURE;
         }
         if(ret != AAC_MAINBUF_SIZE)
         {
-           CDX_LOGD("CdxStream EOS");
+           LOGD("CdxStream EOS");
            impl->mErrno = PSR_EOS;
         }
 
@@ -1530,12 +1530,12 @@ static cdx_int32 __AacParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
         {
             if(impl->eofReached)
             {
-                CDX_LOGD("CdxStream EOS");
+                LOGD("CdxStream EOS");
                 impl->mErrno = PSR_EOS;
             }
             pkt->length = impl->bytesLeft;
             pkt->pts = -1;
-            CDX_LOGW("maybe sync err");
+            LOGW("maybe sync err");
         }
         else
         {
@@ -1544,10 +1544,10 @@ static cdx_int32 __AacParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
         }
     }
 
-    CDX_LOGV("****len:%d,",pkt->length);
+    LOGV("****len:%d,",pkt->length);
     if(pkt->length == 0)
     {
-       CDX_LOGD("CdxStream EOS");
+       LOGD("CdxStream EOS");
        impl->mErrno = PSR_EOS;
        return CDX_FAILURE;
     }
@@ -1579,14 +1579,14 @@ static cdx_int32 __AacParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
     impl->readPtr   += pkt->length;
     impl->bytesLeft -= pkt->length;
-    CDX_LOGV("****len:%d,",pkt->length);
+    LOGV("****len:%d,",pkt->length);
     if(pkt->pts != -1)
     {
         impl->nFrames++;
     }
     if(pkt->length == 0)
     {
-       CDX_LOGD("CdxStream EOS");
+       LOGD("CdxStream EOS");
        impl->mErrno = PSR_EOS;
        return CDX_FAILURE;
     }
@@ -1605,7 +1605,7 @@ static cdx_int32 __AacParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *medi
 
     if(impl->mErrno != PSR_OK)
     {
-        CDX_LOGW("audio parse status no PSR_OK");
+        LOGW("audio parse status no PSR_OK");
         return CDX_FAILURE;
     }
 
@@ -1641,9 +1641,9 @@ static cdx_int32 __AacParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *medi
     //cdxProgram->audio[0].nMaxBitRate;
     //cdxProgram->audio[0].nFlags
     cdxProgram->audio[0].nBlockAlign     = 0;//impl->WavFormat.nBlockAlign;
-    //CDX_LOGD("eSubCodecFormat:0x%04x,ch:%d,fs:%d",cdxProgram->audio[0].eSubCodecFormat,
+    //LOGD("eSubCodecFormat:0x%04x,ch:%d,fs:%d",cdxProgram->audio[0].eSubCodecFormat,
     //            cdxProgram->audio[0].nChannelNum,cdxProgram->audio[0].nSampleRate);
-    //CDX_LOGD("AAC ulDuration:%d",cdxProgram->duration);
+    //LOGD("AAC ulDuration:%d",cdxProgram->duration);
 
     return CDX_SUCCESS;
 }
@@ -1659,7 +1659,7 @@ static cdx_int32 __AacParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
 
     if(!impl->bSeekable)
     {
-        CDX_LOGD("bSeekable = 0");
+        LOGD("bSeekable = 0");
         return CDX_FAILURE;
     }
     nFrames = (timeUs/1000000) * impl->ulSampleRate /1024;
@@ -1676,7 +1676,7 @@ static cdx_int32 __AacParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
             }
             if(ret<0)
             {
-                CDX_LOGE("GetNextFrame error");
+                LOGE("GetNextFrame error");
                 return CDX_FAILURE;
             }
         }
@@ -1691,7 +1691,7 @@ static cdx_int32 __AacParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
             ret = GetBeforeFrame(impl);
             if(ret<0)
             {
-                CDX_LOGE("GetBeforeFrame error");
+                LOGE("GetBeforeFrame error");
                 return CDX_FAILURE;
             }
          }
@@ -1701,7 +1701,7 @@ static cdx_int32 __AacParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
     }
     // TODO: not implement now...
     pthread_cond_signal(&impl->cond);
-    CDX_LOGI("TODO, seek to now...");
+    LOGI("TODO, seek to now...");
     return CDX_SUCCESS;
 }
 
@@ -1722,7 +1722,7 @@ static cdx_int32 __AacParserGetStatus(CdxParserT *parser)
 #if 0
     if (CdxStreamEos(impl->stream))
     {
-        CDX_LOGE("file PSR_EOS! ");
+        LOGE("file PSR_EOS! ");
         return PSR_EOS;
     }
 #endif
@@ -1758,7 +1758,7 @@ static cdx_uint32 __AacParserProbe(CdxStreamProbeDataT *probeData)
     CDX_CHECK(probeData);
     if(probeData->len < 7)
     {
-        CDX_LOGE("Probe data is not enough.");
+        LOGE("Probe data is not enough.");
         return 0;
     }
 
@@ -1808,7 +1808,7 @@ static cdx_uint32 __AacParserProbe(CdxStreamProbeDataT *probeData)
     else if (max_frames >= 1)
         score = 1;
 
-    CDX_LOGD("aac probe score %d", score);
+    LOGD("aac probe score %d", score);
 
     if(score < 25)//unreliable... kill it
     {

@@ -7,7 +7,7 @@
 * History :
 *   Author  : Ls Zhang <lszhang@allwinnertech.com>
 *   Date    : 2014/08/08
-*   Comment : ´´½¨³õÊ¼°æ±¾£¬ÊµÏÖ WAV µÄ½â¸´ÓÃ¹¦ÄÜ
+*   Comment : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½æ±¾ï¿½ï¿½Êµï¿½ï¿½ WAV ï¿½Ä½â¸´ï¿½Ã¹ï¿½ï¿½ï¿½
 */
 
 #include <CdxTypes.h>
@@ -436,7 +436,7 @@ static int WavInit(CdxParserT* parameter)
     pthread_cond_signal(&impl->cond);
     return 0;
 OPENFAILURE:
-    CDX_LOGE("WavOpenThread fail!!!");
+    LOGE("WavOpenThread fail!!!");
     impl->mErrno = PSR_OPEN_FAIL;
     pthread_cond_signal(&impl->cond);
     return -1;
@@ -461,7 +461,7 @@ static cdx_int32 __WavParserControl(CdxParserT *parser, cdx_int32 cmd, void *par
         CdxStreamClrForceStop(impl->stream);
         break;
     default :
-        CDX_LOGW("not implement...(%d)", cmd);
+        LOGW("not implement...(%d)", cmd);
         break;
     }
     impl->nFlags = cmd;
@@ -512,23 +512,23 @@ static cdx_int32 __WavParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
     if(read_length < 0)
     {
-        CDX_LOGE("CdxStreamRead fail");
+        LOGE("CdxStreamRead fail");
         impl->mErrno = PSR_IO_ERR;
         return CDX_FAILURE;
     }
     else if(read_length == 0)
     {
-       CDX_LOGD("CdxStream EOS");
+       LOGD("CdxStream EOS");
        impl->mErrno = PSR_EOS;
        return CDX_FAILURE;
     }
-    //logv("****len:%d,plen:%d",read_length,pkt->length);
+    //LOGV("****len:%d,plen:%d",read_length,pkt->length);
     pkt->length = read_length;
     impl->dFileOffset += read_length;
     impl->nFrames++;
     if(read_length == 0)
     {
-        CDX_LOGW("audio parse no data");
+        LOGW("audio parse no data");
         return CDX_FAILURE;
     }
 
@@ -547,7 +547,7 @@ static cdx_int32 __WavParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *medi
 
     if(impl->mErrno != PSR_OK)
     {
-        CDX_LOGE("audio parse status no PSR_OK");
+        LOGE("audio parse status no PSR_OK");
         return CDX_FAILURE;
     }
 
@@ -576,7 +576,7 @@ static cdx_int32 __WavParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *medi
     //cdxProgram->audio[0].nMaxBitRate;
     //cdxProgram->audio[0].nFlags
     cdxProgram->audio[0].nBlockAlign     = impl->WavFormat.nBlockAlign;
-    //CDX_LOGD("eSubCodecFormat:0x%04x,ch:%d,fs:%d",cdxProgram->audio[0].eSubCodecFormat,
+    //LOGD("eSubCodecFormat:0x%04x,ch:%d,fs:%d",cdxProgram->audio[0].eSubCodecFormat,
               //cdxProgram->audio[0].nChannelNum,cdxProgram->audio[0].nSampleRate);
     return CDX_SUCCESS;
 }
@@ -591,13 +591,13 @@ static cdx_int32 __WavParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
     nFrames = (timeUs/1000000) * impl->WavFormat.nSamplesPerSec /impl->nFrameSamples;
     file_location = nFrames *  impl->nFrameLen;
     file_location += impl->nHeadLen;
-    //CDX_LOGD("wav seek :%d pts:%lld,now pts:%lld,nFrames:%d,samples:%d",file_location,timeUs,
+    //LOGD("wav seek :%d pts:%lld,now pts:%lld,nFrames:%d,samples:%d",file_location,timeUs,
 
     if(file_location!= impl->dFileOffset)
     {
         if(impl->dFileSize > 0 && file_location > impl->dFileSize)
         {
-            CDX_LOGW("CdxStreamSeek overange, seek to(%d), filesz(%lld)",
+            LOGW("CdxStreamSeek overange, seek to(%d), filesz(%lld)",
                     file_location, impl->dFileSize);
             file_location = impl->dFileSize;
         }
@@ -606,14 +606,14 @@ static cdx_int32 __WavParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekMod
 
         if(CdxStreamSeek(impl->stream,file_location,SEEK_SET))
         {
-              CDX_LOGE("CdxStreamSeek fail");
+              LOGE("CdxStreamSeek fail");
               return CDX_FAILURE;
         }
     }
     impl->nFrames = nFrames;
     impl->dFileOffset = file_location;
     // TODO: not implement now...
-    CDX_LOGI("TODO, seek to now...");
+    LOGI("TODO, seek to now...");
     return CDX_SUCCESS;
 }
 
@@ -633,7 +633,7 @@ static cdx_int32 __WavParserGetStatus(CdxParserT *parser)
 #if 0
     if (CdxStreamEos(impl->stream))
     {
-        CDX_LOGE("file PSR_EOS! ");
+        LOGE("file PSR_EOS! ");
         return PSR_EOS;
     }
 #endif
@@ -727,11 +727,11 @@ static cdx_int32 Mp3Probe(CdxStreamProbeDataT *p){
 
             len += 10;
             inout_pos += len;
-            CDX_LOGD("Wav parser : skipped ID3 tag, new starting offset is %lld (0x%016llx)",
+            LOGD("Wav parser : skipped ID3 tag, new starting offset is %lld (0x%016llx)",
                  inout_pos, inout_pos);
             if(inout_pos != 0)
             {
-                CDX_LOGD("Wav parser : this is ID3 first : %lld",inout_pos);
+                LOGD("Wav parser : this is ID3 first : %lld",inout_pos);
                 return 0;
             }
         }
@@ -752,7 +752,7 @@ static cdx_int32 Mp3Probe(CdxStreamProbeDataT *p){
     do {
         if (pos >= inout_pos + MAXBYTESCHECKED) {
             // Don't scan forever.
-            CDX_LOGW("giving up at offset %lld", pos);
+            LOGW("giving up at offset %lld", pos);
             break;
         }
 
@@ -804,7 +804,7 @@ static cdx_int32 Mp3Probe(CdxStreamProbeDataT *p){
             --remainingBytes;
             continue;
         }
-        CDX_LOGV("found possible 1st frame at %lld (header = 0x%08x)", pos, header);
+        LOGV("found possible 1st frame at %lld (header = 0x%08x)", pos, header);
         // We found what looks like a valid frame,
         // now find its successors.
 
@@ -825,7 +825,7 @@ static cdx_int32 Mp3Probe(CdxStreamProbeDataT *p){
             //}
 
             cdx_uint32 test_header = AV_RB32(tmp);
-            CDX_LOGV("subsequent header is %08x", test_header);
+            LOGV("subsequent header is %08x", test_header);
             if ((test_header & MpegMask) != (header & MpegMask)) {
                 valid = 0;
                 break;
@@ -839,7 +839,7 @@ static cdx_int32 Mp3Probe(CdxStreamProbeDataT *p){
                 break;
             }
 
-            CDX_LOGV("found subsequent frame #%d at %lld", j + 2, test_pos);
+            LOGV("found subsequent frame #%d at %lld", j + 2, test_pos);
             test_pos += test_frame_size;
         }
 
@@ -848,7 +848,7 @@ static cdx_int32 Mp3Probe(CdxStreamProbeDataT *p){
             out_header = header;
 
         } else {
-            CDX_LOGW("Wav parser : no dice, no valid sequence of frames found.");
+            LOGW("Wav parser : no dice, no valid sequence of frames found.");
         }
 
         ++pos;
@@ -888,11 +888,11 @@ static cdx_int32 DcaProbe(CdxStreamProbeDataT *p)
     max = markers[1] > markers[0];
     max = markers[2] > markers[max] ? 2 : max;
     if (markers[max] > 3 && p->len / markers[max] < 32*1024 &&  markers[max] * 4 > sum * 3){
-        CDX_LOGD("DTS PARSER");
+        LOGD("DTS PARSER");
         return CDX_TRUE;
     }else if(sum)
     {
-        CDX_LOGD("DTS PARSER");
+        LOGD("DTS PARSER");
         return CDX_TRUE;
     }
 
@@ -907,7 +907,7 @@ static cdx_int32 WavProbe(CdxStreamProbeDataT *p)
 
     if(Mp3Probe(p))
     {
-        CDX_LOGD("Wav wrapped mp3, return out!!");
+        LOGD("Wav wrapped mp3, return out!!");
         return CDX_FALSE;
     }
     if(d[8] == 'W' && d[9] == 'A' && d[10] == 'V' && d[11] == 'E' )
@@ -922,7 +922,7 @@ static cdx_int32 WavProbe(CdxStreamProbeDataT *p)
                 return CDX_TRUE;
         }
     }
-    CDX_LOGE("audio probe fail!!!");
+    LOGE("audio probe fail!!!");
     return CDX_FALSE;
 }
 
@@ -931,13 +931,13 @@ static cdx_uint32 __WavParserProbe(CdxStreamProbeDataT *probeData)
     CDX_CHECK(probeData);
     if(probeData->len < 32)
     {
-        CDX_LOGW("Probe data is not enough.");
+        LOGW("Probe data is not enough.");
         return 0;
     }
 
     if(!WavProbe(probeData))
     {
-        CDX_LOGE("wav probe failed.");
+        LOGE("wav probe failed.");
         return 0;
     }
     return 100;

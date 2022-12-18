@@ -8,7 +8,7 @@
  *
  */
 
-#include <cdx_log.h>
+#include <log/log.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -93,14 +93,14 @@ int DlOpenPlugin(CdxPluginNodeS *plugin)
         return 0;
 
     if(plugin->comment != NULL)
-        logd("plugin %s comment is \"%s\"",plugin->id,plugin->comment);
-    logd("plugin open lib: %s",plugin->lib);
+        LOGD("plugin %s comment is \"%s\"",plugin->id,plugin->comment);
+    LOGD("plugin open lib: %s",plugin->lib);
     libFd = dlopen(plugin->lib, RTLD_NOW);
     PluginInitFunc *PluginInit = NULL;
 
     if (libFd == NULL)
     {
-        loge("dlopen '%s' fail: %s", plugin->lib, dlerror());
+        LOGE("dlopen '%s' fail: %s", plugin->lib, dlerror());
         return 0;
     }
 
@@ -109,11 +109,11 @@ int DlOpenPlugin(CdxPluginNodeS *plugin)
         PluginInit = dlsym(libFd, plugin->init);
         if (PluginInit == NULL)
         {
-            logw("Invalid plugin,function %s not found.",plugin->init);
+            LOGW("Invalid plugin,function %s not found.",plugin->init);
             plugin->isload = 1;
             return 1;
         }
-        logd("plugin init : %s", plugin->init);
+        LOGD("plugin init : %s", plugin->init);
         PluginInit(); /* call init plugin */
     }
     plugin->isload = 1;
@@ -143,7 +143,7 @@ int LoadPlugin(CdxPluginListS *loadlist,const char *id)
         ret = LoadPlugin(loadlist,plugin->reference);
         if (ret != 1)
         {
-            loge("load plugin %s fail,because load it's reference %s fail",
+            LOGE("load plugin %s fail,because load it's reference %s fail",
                  plugin->id,plugin->reference);
             return 0;
         }
@@ -175,7 +175,7 @@ CdxPluginNodeS* ReadPluginEntry(const char *entry)
     ret = IniParserFindEntry(entry);
     if (ret == 1)
     {
-        logd("read plugin entry %s ok.",entry);
+        LOGD("read plugin entry %s ok.",entry);
         pluginNode = malloc(sizeof(*pluginNode));
         memset(pluginNode, 0x00, sizeof(*pluginNode));
 
@@ -191,7 +191,7 @@ CdxPluginNodeS* ReadPluginEntry(const char *entry)
     }
     else
     {
-        logd("read plugin entry %s fail!",entry);
+        LOGD("read plugin entry %s fail!",entry);
     }
 
     return pluginNode;
@@ -199,7 +199,7 @@ CdxPluginNodeS* ReadPluginEntry(const char *entry)
 
 void CdxPluginLoadList(CdxPluginListS *loadlist,const char *key)
 {
-    logd("Load Plugin list %s",key);
+    LOGD("Load Plugin list %s",key);
     int index = 0;
     int ret = -1;
     char plugin_entry[64]="";
@@ -218,8 +218,8 @@ void CdxPluginLoadList(CdxPluginListS *loadlist,const char *key)
         index++;
     }
 
-    logd("have config %d entry",loadlist->size);
-    logd("start to open %s lib",key);
+    LOGD("have config %d entry",loadlist->size);
+    LOGD("start to open %s lib",key);
 
     CdxListForEachEntry(pluginNode, &loadlist->list, node)
     {
@@ -228,7 +228,7 @@ void CdxPluginLoadList(CdxPluginListS *loadlist,const char *key)
             ret = LoadPlugin(loadlist,pluginNode->id);
             if (ret != 1)
             {
-                logd("load %s id %s fail!",key,pluginNode->id);
+                LOGD("load %s id %s fail!",key,pluginNode->id);
             }
         }
     }
@@ -236,7 +236,7 @@ void CdxPluginLoadList(CdxPluginListS *loadlist,const char *key)
 
 void CdxPluginInit(void)
 {
-    logd("Plugin init!");
+    LOGD("Plugin init!");
     static int has_init = 0;
 
     CdxListInit(&g_adecoder_list.list);

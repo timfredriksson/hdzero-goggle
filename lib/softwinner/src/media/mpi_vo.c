@@ -1,7 +1,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mpi_vo"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //#include <cutils/log.h>
 //#include <cutils/properties.h>
@@ -123,7 +123,7 @@ static VO_CHN_MAP_S* VO_CHN_MAP_S_Construct()
     VO_CHN_MAP_S *pChannel = (VO_CHN_MAP_S*)malloc(sizeof(VO_CHN_MAP_S));
     if(NULL == pChannel)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pChannel, 0, sizeof(VO_CHN_MAP_S));
@@ -135,7 +135,7 @@ static void VO_CHN_MAP_S_Destruct(VO_CHN_MAP_S *pChannel)
 {
     if(pChannel->mComp)
     {
-        aloge("fatal error! VO component need free before!");
+        LOGE("fatal error! VO component need free before!");
         COMP_FreeHandle(pChannel->mComp);
         pChannel->mComp = NULL;
     }
@@ -209,7 +209,7 @@ static VOLayerInfo* VOLayerInfo_Construct()
     VOLayerInfo *pVOLayerInfo = (VOLayerInfo*)malloc(sizeof(VOLayerInfo));
     if(NULL == pVOLayerInfo)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pVOLayerInfo, 0, sizeof(VOLayerInfo));
@@ -284,7 +284,7 @@ static VODevInfo* VODevInfo_Construct()
     VODevInfo *pVODevInfo = (VODevInfo*)malloc(sizeof(VODevInfo));
     if(NULL == pVODevInfo)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pVODevInfo, 0, sizeof(VODevInfo));
@@ -302,53 +302,53 @@ ERRORTYPE VO_Construct(void)
     int ret;
     if (gpVODevManager != NULL) 
     {
-        alogd("already construct vo");
+        LOGD("already construct vo");
         return SUCCESS;
     }
     gpVODevManager = (VODevManager*)malloc(sizeof(VODevManager));
     if (NULL == gpVODevManager)
     {
-        aloge("alloc VODevManager error(%s)!", strerror(errno));
+        LOGE("alloc VODevManager error(%s)!", strerror(errno));
         return FAILURE;
     }
     ret = pthread_mutex_init(&gpVODevManager->mLock, NULL);
     if (ret != 0) 
     {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
     }
     INIT_LIST_HEAD(&gpVODevManager->mVODevList);
 
     gpVOLayerManager = (VOLayerManager*)malloc(sizeof(VOLayerManager));
     if (NULL == gpVOLayerManager)
     {
-        aloge("alloc VOLayerManager error(%s)!", strerror(errno));
+        LOGE("alloc VOLayerManager error(%s)!", strerror(errno));
         eError = ERR_VO_NO_MEM;
         goto VOLayer_fail;
     }
     ret = pthread_mutex_init(&gpVOLayerManager->mLock, NULL);
     if (ret != 0) 
     {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
     }
     INIT_LIST_HEAD(&gpVOLayerManager->mVOLayerList);
 
     gpVOChnManager = (VOChnManager*)malloc(sizeof(VOChnManager));
     if (NULL == gpVOChnManager)
     {
-        aloge("alloc VOChnManager error(%s)!", strerror(errno));
+        LOGE("alloc VOChnManager error(%s)!", strerror(errno));
         eError = ERR_VO_NO_MEM;
         goto VOChn_fail;
     }
     ret = pthread_mutex_init(&gpVOChnManager->mLock, NULL);
     if (ret != 0) 
     {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
     }
     INIT_LIST_HEAD(&gpVOChnManager->mList);
 
     if(hw_display_init()!=0)
     {
-        aloge("fatal error! hw display init fail!");
+        LOGE("fatal error! hw display init fail!");
         eError = ERR_VO_SYS_NOTREADY;
         goto hw_display_init_fail;
     }
@@ -374,14 +374,14 @@ ERRORTYPE VO_Destruct(void)
 {
     if(NULL == gpVODevManager)
     {
-        alogd("already destruct vo");
+        LOGD("already destruct vo");
         return SUCCESS;
     }
     if (gpVOChnManager != NULL) 
     {
         if (!list_empty(&gpVOChnManager->mList)) 
         {
-            aloge("fatal error! some vo channel still running when destroy vo device!");
+            LOGE("fatal error! some vo channel still running when destroy vo device!");
         }
         pthread_mutex_destroy(&gpVOChnManager->mLock);
         free(gpVOChnManager);
@@ -391,11 +391,11 @@ ERRORTYPE VO_Destruct(void)
     {
         if (!list_empty(&gpVOLayerManager->mVOLayerList)) 
         {
-            aloge("fatal error! some vo layer still running when disable vo!");
+            LOGE("fatal error! some vo layer still running when disable vo!");
             VOLayerInfo *pEntry;
             list_for_each_entry(pEntry, &gpVOLayerManager->mVOLayerList, mList)
             {
-                alogd("VOLayerInfo: layerId[%d], dispRect[%d,%d,%d,%d], Priority[%d], alphaMode[%d], alphaValue[%d]", 
+                LOGD("VOLayerInfo: layerId[%d], dispRect[%d,%d,%d,%d], Priority[%d], alphaMode[%d], alphaValue[%d]", 
                     pEntry->mVoLayer, 
                     pEntry->mLayerAttr.stDispRect.X, pEntry->mLayerAttr.stDispRect.Y,
                     pEntry->mLayerAttr.stDispRect.Width, pEntry->mLayerAttr.stDispRect.Height,
@@ -410,7 +410,7 @@ ERRORTYPE VO_Destruct(void)
     {
         if (!list_empty(&gpVODevManager->mVODevList)) 
         {
-            aloge("fatal error! some vo dev still running when disable vo!");
+            LOGE("fatal error! some vo dev still running when disable vo!");
         }
         pthread_mutex_destroy(&gpVODevManager->mLock);
         free(gpVODevManager);
@@ -444,7 +444,7 @@ static ERRORTYPE VideoRenderEventHandler(
 //    ret = COMP_GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &VOChnInfo);
 //    if(ret == SUCCESS)
 //    {
-//        alogv("video render event, MppChannel[%d][%d][%d]", VOChnInfo.mModId, VOChnInfo.mDevId, VOChnInfo.mChnId);
+//        LOGV("video render event, MppChannel[%d][%d][%d]", VOChnInfo.mModId, VOChnInfo.mDevId, VOChnInfo.mChnId);
 //    }
 	VO_CHN_MAP_S *pChn = (VO_CHN_MAP_S*)pAppData;
 
@@ -454,18 +454,18 @@ static ERRORTYPE VideoRenderEventHandler(
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("vo EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("vo EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(COMP_CommandVendorChangeANativeWindow == nData1)
             {
-                alogd("change video layer?");
+                LOGD("change video layer?");
                 break;
             }
             else
             {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
@@ -473,23 +473,23 @@ static ERRORTYPE VideoRenderEventHandler(
         {
             if(ERR_VO_CHN_SAMESTATE == nData1)
             {
-                alogv("set same state to vo!");
+                LOGV("set same state to vo!");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(ERR_VO_CHN_INVALIDSTATE == nData1)
             {
-                aloge("why vo state turn to invalid?");
+                LOGE("why vo state turn to invalid?");
                 break;
             }
             else if(ERR_VO_CHN_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("fatal error! vo state transition incorrect.");
+                LOGE("fatal error! vo state transition incorrect.");
                 break;
             }
             else
             {
-                aloge("fatal error! unknown error[0x%x]!", nData1);
+                LOGE("fatal error! unknown error[0x%x]!", nData1);
                 break;
             }
         }
@@ -505,7 +505,7 @@ static ERRORTYPE VideoRenderEventHandler(
         }
         case COMP_EventKeyFrameDecoded:
         {
-            alogd("KeyFrameDecoded, pts[%lld]us", *(int64_t*)pEventData);
+            LOGD("KeyFrameDecoded, pts[%lld]us", *(int64_t*)pEventData);
             break;
         }
         case COMP_EventVideoDisplaySize:
@@ -532,7 +532,7 @@ static ERRORTYPE VideoRenderEventHandler(
             break;
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
 	return SUCCESS;
@@ -664,7 +664,7 @@ VO_INTF_SYNC_E map_disp_tv_mode_to_VO_INTF_SYNC_E(disp_tv_mode tv_mode)
     	case DISP_TV_MOD_PAL_NC:
     	case DISP_TV_MOD_PAL_NC_SVIDEO:
         default:
-            aloge("fatal error! Unknown tv_mode 0x%x", tv_mode);
+            LOGE("fatal error! Unknown tv_mode 0x%x", tv_mode);
             eIntfSync = VO_OUTPUT_BUTT;
             break;
     }
@@ -737,7 +737,7 @@ disp_tv_mode map_VO_INTF_SYNC_E_to_disp_tv_mode(VO_INTF_SYNC_E eIntfSync)
         case VO_OUTPUT_240X320_50:
         case VO_OUTPUT_240X320_60:
         default:
-            aloge("fatal error! Unknown vo interface sync 0x%x", eIntfSync);
+            LOGE("fatal error! Unknown vo interface sync 0x%x", eIntfSync);
             tv_mode = DISP_TV_MOD_576I;
             break;
     }
@@ -750,7 +750,7 @@ ERRORTYPE AW_MPI_VO_Enable(VO_DEV VoDev)
     int ret;
     if (NULL == gpVODevManager) 
     {
-        aloge("fatal error! VODevManager is not init!");
+        LOGE("fatal error! VODevManager is not init!");
         return ERR_VO_SYS_NOTREADY;
     }
     if(SUCCESS == searchExistVODevInfo(VoDev, NULL))
@@ -768,7 +768,7 @@ ERRORTYPE AW_MPI_VO_Enable(VO_DEV VoDev)
     }
     else
     {
-        aloge("fatal error! get disp type fail!");
+        LOGE("fatal error! get disp type fail!");
         eError = ERR_VO_NOT_SUPPORT;
         goto get_disp_type_fail;
     }
@@ -825,7 +825,7 @@ ERRORTYPE AW_MPI_VO_SetPubAttr(VO_DEV VoDev, const VO_PUB_ATTR_S *pstPubAttr)
     }
     if(bUpdateFlag)
     {
-        alogd("vo interface changed, [0x%x, 0x%x]->[0x%x, 0x%x]", 
+        LOGD("vo interface changed, [0x%x, 0x%x]->[0x%x, 0x%x]", 
             pCurPubAttr->enIntfType, pCurPubAttr->enIntfSync, pstPubAttr->enIntfType, pstPubAttr->enIntfSync);
         disp_output_type disp_type = map_VO_INTF_TYPE_E_to_disp_output_type(pstPubAttr->enIntfType);
         disp_tv_mode tv_mode = map_VO_INTF_SYNC_E_to_disp_tv_mode(pstPubAttr->enIntfSync);
@@ -836,7 +836,7 @@ ERRORTYPE AW_MPI_VO_SetPubAttr(VO_DEV VoDev, const VO_PUB_ATTR_S *pstPubAttr)
         }
         else
         {
-            aloge("fatal error! hwd switch_vo_device error! ret:%d", ret);
+            LOGE("fatal error! hwd switch_vo_device error! ret:%d", ret);
             eError = ERR_VO_NOT_SUPPORT;
         }
     }
@@ -867,10 +867,10 @@ ERRORTYPE AW_MPI_VO_GetHdmiHwMode(VO_DEV VoDev, VO_INTF_SYNC_E *mode)
     disp_tv_mode disp_mode;
     eError = hwd_get_hdmi_hw_mode(&disp_mode);
     if (eError == -1) {
-        aloge("there has no hdmi device!!\n");
+        LOGE("there has no hdmi device!!");
         return ERR_VO_DEV_NOT_CONFIG;
     } else if (eError == 1) {
-        aloge("there has no supported display mode for this hdmi device!!\n");
+        LOGE("there has no supported display mode for this hdmi device!!");
         return ERR_VO_NOT_SUPPORT;
     } else if (eError == SUCCESS) {
         *mode = map_disp_tv_mode_to_VO_INTF_SYNC_E(disp_mode);
@@ -907,7 +907,7 @@ ERRORTYPE AW_MPI_VO_EnableVideoLayer(VO_LAYER VoLayer)
     }
     else
     {
-        aloge("fatal error! why request hlay[%d] fail?", VoLayer);
+        LOGE("fatal error! why request hlay[%d] fail?", VoLayer);
         eError = ERR_VO_DEV_NOT_ENABLE;
     }
     return eError;
@@ -960,7 +960,7 @@ ERRORTYPE AW_MPI_VO_AddOutsideVideoLayer(VO_LAYER VoLayer)
     }
     else
     {
-        alogd("fatal error! why hlay[%d] is not request?", VoLayer);
+        LOGD("fatal error! why hlay[%d] is not request?", VoLayer);
     }
     addVOLayerInfo(pVOLayerInfo);
     return eError;
@@ -1025,7 +1025,7 @@ ERRORTYPE AW_MPI_VO_SetVideoLayerAttr(VO_LAYER VoLayer, const VO_VIDEO_LAYER_ATT
     {
         int channel  = HD2CHN(VoLayer);
         int layer_id = HD2LYL(VoLayer);
-        alogd("ch[%d]lyl[%d]:dispRect changed, [%d, %d, %dx%d]->[%d, %d, %dx%d]", channel, layer_id,
+        LOGD("ch[%d]lyl[%d]:dispRect changed, [%d, %d, %dx%d]->[%d, %d, %dx%d]", channel, layer_id,
             pCurAttr->stDispRect.X, pCurAttr->stDispRect.Y, pCurAttr->stDispRect.Width, pCurAttr->stDispRect.Height,
             pstLayerAttr->stDispRect.X, pstLayerAttr->stDispRect.Y, pstLayerAttr->stDispRect.Width, pstLayerAttr->stDispRect.Height);
         struct view_info dispRect;
@@ -1065,7 +1065,7 @@ ERRORTYPE AW_MPI_VO_SetVideoLayerPriority(VO_LAYER VoLayer, unsigned int uPriori
     VOLayerInfo *pVOLayerInfo = NULL;
     if(uPriority<ZORDER_MIN || uPriority > ZORDER_MAX)
     {
-        alogw("video layer priority[%d] is invalid, valid scope[%d, %d]", uPriority, ZORDER_MIN, ZORDER_MAX);
+        LOGW("video layer priority[%d] is invalid, valid scope[%d, %d]", uPriority, ZORDER_MIN, ZORDER_MAX);
         return ERR_VO_ILLEGAL_PARAM;
     }
     if(SUCCESS != searchExistVOLayerInfo(VoLayer, &pVOLayerInfo))
@@ -1075,14 +1075,14 @@ ERRORTYPE AW_MPI_VO_SetVideoLayerPriority(VO_LAYER VoLayer, unsigned int uPriori
     pthread_mutex_lock(&gpVOLayerManager->mLock);
     if(pVOLayerInfo->mPriority != uPriority)
     {
-        alogd("layer[%d] priority changed [%d]->[%d]", pVOLayerInfo->mVoLayer, pVOLayerInfo->mPriority, uPriority);
+        LOGD("layer[%d] priority changed [%d]->[%d]", pVOLayerInfo->mVoLayer, pVOLayerInfo->mPriority, uPriority);
         VOLayerInfo* pEntry;
         BOOL bFindFlag = FALSE;
         list_for_each_entry(pEntry, &gpVOLayerManager->mVOLayerList, mList)
         {
             if(pEntry->mPriority == uPriority)
             {
-                alogd("layer[%d] take priority[%d], need exchange", pEntry->mVoLayer, uPriority);
+                LOGD("layer[%d] take priority[%d], need exchange", pEntry->mVoLayer, uPriority);
                 bFindFlag = TRUE;
                 break;
             }
@@ -1127,7 +1127,7 @@ ERRORTYPE AW_MPI_VO_SetVideoLayerAlpha(VO_LAYER VoLayer, VO_VIDEO_LAYER_ALPHA_S 
     VO_VIDEO_LAYER_ALPHA_S *pCurAlpha = &pVOLayerInfo->mAlpha;
     if(pCurAlpha->mAlphaMode!=pAlpha->mAlphaMode || pCurAlpha->mAlphaValue!=pAlpha->mAlphaValue)
     {
-        alogd("video layer alpha changed, [%d, %d]->[%d, %d]", pCurAlpha->mAlphaMode, pCurAlpha->mAlphaValue, pAlpha->mAlphaMode, pAlpha->mAlphaValue);
+        LOGD("video layer alpha changed, [%d, %d]->[%d, %d]", pCurAlpha->mAlphaMode, pCurAlpha->mAlphaValue, pAlpha->mAlphaMode, pAlpha->mAlphaValue);
         disp_layer_config config;
         memset(&config, 0, sizeof(disp_layer_config));
         config.channel  = HD2CHN(VoLayer);
@@ -1164,7 +1164,7 @@ ERRORTYPE AW_MPI_VO_EnableChn(VO_LAYER VoLayer, VO_CHN VoChn)
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     pthread_mutex_lock(&gpVOChnManager->mLock);
@@ -1182,7 +1182,7 @@ ERRORTYPE AW_MPI_VO_EnableChn(VO_LAYER VoLayer, VO_CHN VoChn)
     eRet = COMP_GetHandle((COMP_HANDLETYPE*)&pNode->mComp, CDX_ComponentNameVideoRender, (void*)pNode, &VideoRenderCallback);
     if(eRet != SUCCESS)
     {
-        aloge("fatal error! get comp handle fail!");
+        LOGE("fatal error! get comp handle fail!");
     }
     MPP_CHN_S ChannelInfo;
     ChannelInfo.mModId = MOD_ID_VOU;
@@ -1206,7 +1206,7 @@ ERRORTYPE AW_MPI_VO_DisableChn(VO_LAYER VoLayer, VO_CHN VoChn)
     ERRORTYPE ret;
     if(!(VoChn>=0 && VoChn <VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1232,12 +1232,12 @@ ERRORTYPE AW_MPI_VO_DisableChn(VO_LAYER VoLayer, VO_CHN VoChn)
             }
             else if(nCompState == COMP_StateInvalid)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             }
             else
             {
-                aloge("fatal error! invalid VoChn[%d] state[0x%x]!", VoChn, nCompState);
+                LOGE("fatal error! invalid VoChn[%d] state[0x%x]!", VoChn, nCompState);
                 eRet = FAILURE;
             }
 
@@ -1256,13 +1256,13 @@ ERRORTYPE AW_MPI_VO_DisableChn(VO_LAYER VoLayer, VO_CHN VoChn)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_VO_BUSY;
         }
     }
     else
     {
-        aloge("fatal error! no VO component!");
+        LOGE("fatal error! no VO component!");
         list_del(&pChn->mList);
         VO_CHN_MAP_S_Destruct(pChn);
         ret = SUCCESS;
@@ -1282,7 +1282,7 @@ ERRORTYPE AW_MPI_VO_RegisterCallback(VO_LAYER VoLayer, VO_CHN VoChn, MPPCallback
 {
     if(!(VoChn>=0 && VoChn <VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1299,7 +1299,7 @@ ERRORTYPE AW_MPI_VO_SetChnAttr(VO_LAYER VoLayer, VO_CHN VoChn, const VO_CHN_ATTR
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1312,7 +1312,7 @@ ERRORTYPE AW_MPI_VO_SetChnAttr(VO_LAYER VoLayer, VO_CHN VoChn, const VO_CHN_ATTR
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     ret = pChn->mComp->SetConfig(pChn->mComp, COMP_IndexVendorVOChnAttr, (void*)pstChnAttr);
@@ -1323,7 +1323,7 @@ ERRORTYPE AW_MPI_VO_GetChnAttr(VO_LAYER VoLayer, VO_CHN VoChn, VO_CHN_ATTR_S *ps
 {
     if(!(VoChn>=0 && VoChn <VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VeChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VeChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1336,7 +1336,7 @@ ERRORTYPE AW_MPI_VO_GetChnAttr(VO_LAYER VoLayer, VO_CHN VoChn, VO_CHN_ATTR_S *ps
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     ret = pChn->mComp->GetConfig(pChn->mComp, COMP_IndexVendorVOChnAttr, (void*)pstChnAttr);
@@ -1347,7 +1347,7 @@ ERRORTYPE AW_MPI_VO_SetChnField(VO_LAYER VoLayer, VO_CHN VoChn, const VO_DISPLAY
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1360,7 +1360,7 @@ ERRORTYPE AW_MPI_VO_SetChnField(VO_LAYER VoLayer, VO_CHN VoChn, const VO_DISPLAY
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     ret = pChn->mComp->SetConfig(pChn->mComp, COMP_IndexVendorVOChnDisplayField, (void*)&enField);
@@ -1371,7 +1371,7 @@ ERRORTYPE AW_MPI_VO_GetChnField(VO_LAYER VoLayer, VO_CHN VoChn, VO_DISPLAY_FIELD
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1384,7 +1384,7 @@ ERRORTYPE AW_MPI_VO_GetChnField(VO_LAYER VoLayer, VO_CHN VoChn, VO_DISPLAY_FIELD
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     ret = pChn->mComp->GetConfig(pChn->mComp, COMP_IndexVendorVOChnDisplayField, (void*)pField);
@@ -1395,7 +1395,7 @@ ERRORTYPE AW_MPI_VO_SetChnDispBufNum(VO_LAYER VoLayer, VO_CHN VoChn, unsigned in
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1408,7 +1408,7 @@ ERRORTYPE AW_MPI_VO_SetChnDispBufNum(VO_LAYER VoLayer, VO_CHN VoChn, unsigned in
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     ret = pChn->mComp->SetConfig(pChn->mComp, COMP_IndexVendorVODispBufNum, (void*)&uBufNum);
@@ -1419,7 +1419,7 @@ ERRORTYPE AW_MPI_VO_GetChnDispBufNum(VO_LAYER VoLayer, VO_CHN VoChn, unsigned in
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1432,7 +1432,7 @@ ERRORTYPE AW_MPI_VO_GetChnDispBufNum(VO_LAYER VoLayer, VO_CHN VoChn, unsigned in
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     ret = pChn->mComp->GetConfig(pChn->mComp, COMP_IndexVendorVODispBufNum, (void*)puBufNum);
@@ -1443,7 +1443,7 @@ ERRORTYPE AW_MPI_VO_GetDisplaySize (VO_LAYER VoLayer, VO_CHN VoChn, SIZE_S *pDis
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1456,7 +1456,7 @@ ERRORTYPE AW_MPI_VO_GetDisplaySize (VO_LAYER VoLayer, VO_CHN VoChn, SIZE_S *pDis
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState)
     {
-        alogw("call in wrong state[0x%x], maybe display size is not right", nState);
+        LOGW("call in wrong state[0x%x], maybe display size is not right", nState);
     }
     ret = pChn->mComp->GetConfig(pChn->mComp, COMP_IndexVendorVOChnDisplaySize, (void*)pDisplaySize);
     return ret;
@@ -1466,7 +1466,7 @@ ERRORTYPE AW_MPI_VO_StartChn(VO_LAYER VoLayer, VO_CHN VoChn)
 {
     if(!(VoChn>=0 && VoChn <VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1483,19 +1483,19 @@ ERRORTYPE AW_MPI_VO_StartChn(VO_LAYER VoLayer, VO_CHN VoChn)
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command stateExecuting fail!");
+            LOGE("fatal error! Send command stateExecuting fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateExecuting == nCompState)
     {
-        alogd("VOChannel[%d] already stateExecuting.", VoChn);
+        LOGD("VOChannel[%d] already stateExecuting.", VoChn);
         ret = SUCCESS;
     }
     else
     {
-        aloge("fatal error! check voChannel[%d]State[0x%x]!", VoChn, nCompState);
+        LOGE("fatal error! check voChannel[%d]State[0x%x]!", VoChn, nCompState);
         ret = ERR_VO_CHN_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -1505,7 +1505,7 @@ ERRORTYPE AW_MPI_VO_StopChn(VO_LAYER VoLayer, VO_CHN VoChn)
 {
     if(!(VoChn>=0 && VoChn <VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1522,19 +1522,19 @@ ERRORTYPE AW_MPI_VO_StopChn(VO_LAYER VoLayer, VO_CHN VoChn)
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StateIdle, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command stateIdle fail!");
+            LOGE("fatal error! Send command stateIdle fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("VOChannel[%d] already stateIdle.", VoChn);
+        LOGD("VOChannel[%d] already stateIdle.", VoChn);
         ret = SUCCESS;
     }
     else
     {
-        aloge("fatal error! check voLayer[%d] voChannel[%d]State[0x%x]!", VoLayer, VoChn, nCompState);
+        LOGE("fatal error! check voLayer[%d] voChannel[%d]State[0x%x]!", VoLayer, VoChn, nCompState);
         ret = ERR_VO_CHN_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -1544,7 +1544,7 @@ ERRORTYPE AW_MPI_VO_PauseChn (VO_LAYER VoLayer, VO_CHN VoChn)
 {
     if(!(VoChn>=0 && VoChn <VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1561,24 +1561,24 @@ ERRORTYPE AW_MPI_VO_PauseChn (VO_LAYER VoLayer, VO_CHN VoChn)
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StatePause, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command statePause fail!");
+            LOGE("fatal error! Send command statePause fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StatePause == nCompState)
     {
-        alogd("VOChannel[%d] already statePause.", VoChn);
+        LOGD("VOChannel[%d] already statePause.", VoChn);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("VOChannel[%d] stateIdle, can't turn to statePause!", VoChn);
+        LOGD("VOChannel[%d] stateIdle, can't turn to statePause!", VoChn);
         ret = ERR_VO_CHN_INCORRECT_STATE_TRANSITION;
     }
     else
     {
-        aloge("fatal error! check voChannel[%d]State[0x%x]!", VoChn, nCompState);
+        LOGE("fatal error! check voChannel[%d]State[0x%x]!", VoChn, nCompState);
         ret = ERR_VO_CHN_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -1588,7 +1588,7 @@ ERRORTYPE AW_MPI_VO_ResumeChn(VO_LAYER VoLayer, VO_CHN VoChn)
 {
     if(!(VoChn>=0 && VoChn <VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1605,24 +1605,24 @@ ERRORTYPE AW_MPI_VO_ResumeChn(VO_LAYER VoLayer, VO_CHN VoChn)
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command statePause fail!");
+            LOGE("fatal error! Send command statePause fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateExecuting == nCompState)
     {
-        alogd("VOChannel[%d] already stateExecuting.", VoChn);
+        LOGD("VOChannel[%d] already stateExecuting.", VoChn);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("VOChannel[%d] stateIdle, can't turn to stateExecuting!", VoChn);
+        LOGD("VOChannel[%d] stateIdle, can't turn to stateExecuting!", VoChn);
         ret = ERR_VO_CHN_INCORRECT_STATE_TRANSITION;
     }
     else
     {
-        aloge("fatal error! check voChannel[%d]State[0x%x]!", VoChn, nCompState);
+        LOGE("fatal error! check voChannel[%d]State[0x%x]!", VoChn, nCompState);
         ret = ERR_VO_CHN_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -1632,7 +1632,7 @@ ERRORTYPE AW_MPI_VO_Seek(VO_LAYER VoLayer, VO_CHN VoChn)
 {
     if(!(VoChn>=0 && VoChn <VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1650,7 +1650,7 @@ ERRORTYPE AW_MPI_VO_Seek(VO_LAYER VoLayer, VO_CHN VoChn)
     }
     else
     {
-        aloge("fatal error! can't seek in voChannel[%d]State[0x%x]!", VoChn, nCompState);
+        LOGE("fatal error! can't seek in voChannel[%d]State[0x%x]!", VoChn, nCompState);
         ret = ERR_VO_CHN_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -1669,7 +1669,7 @@ ERRORTYPE AW_MPI_VO_SetStreamEof(VO_LAYER VoLayer, VO_CHN VoChn, BOOL bEofFlag)
 {
     if(!(VoChn>=0 && VoChn <VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1682,7 +1682,7 @@ ERRORTYPE AW_MPI_VO_SetStreamEof(VO_LAYER VoLayer, VO_CHN VoChn, BOOL bEofFlag)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-       aloge("wrong state[0x%x], return!", nState);
+       LOGE("wrong state[0x%x], return!", nState);
        return ERR_VO_NOT_PERMIT;
     }
     if(bEofFlag)
@@ -1700,7 +1700,7 @@ ERRORTYPE AW_MPI_VO_ShowChn(VO_LAYER VoLayer, VO_CHN VoChn)
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1713,7 +1713,7 @@ ERRORTYPE AW_MPI_VO_ShowChn(VO_LAYER VoLayer, VO_CHN VoChn)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     BOOL bShowFlag = TRUE;
@@ -1725,7 +1725,7 @@ ERRORTYPE AW_MPI_VO_HideChn(VO_LAYER VoLayer, VO_CHN VoChn)
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1738,7 +1738,7 @@ ERRORTYPE AW_MPI_VO_HideChn(VO_LAYER VoLayer, VO_CHN VoChn)
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     BOOL bShowFlag = FALSE;
@@ -1748,18 +1748,18 @@ ERRORTYPE AW_MPI_VO_HideChn(VO_LAYER VoLayer, VO_CHN VoChn)
 
 ERRORTYPE AW_MPI_VO_SetZoomInWindow(VO_LAYER VoLayer, VO_CHN VoChn, const VO_ZOOM_ATTR_S *pstZoomAttr)
 {
-    aloge("need implement");
+    LOGE("need implement");
     return ERR_VO_NOT_SUPPORT;
 }
 ERRORTYPE AW_MPI_VO_GetZoomInWindow(VO_LAYER VoLayer, VO_CHN VoChn, VO_ZOOM_ATTR_S *pstZoomAttr)
 {
-    aloge("need implement");
+    LOGE("need implement");
     return ERR_VO_NOT_SUPPORT;
 }
 
 ERRORTYPE AW_MPI_VO_SetVideoScalingMode(VO_LAYER VoLayer, VO_CHN VoChn, int mode)
 {
-    aloge("unsupported temporary");
+    LOGE("unsupported temporary");
     return ERR_VO_NOT_SUPPORT;
 }
 
@@ -1767,7 +1767,7 @@ ERRORTYPE AW_MPI_VO_GetChnPts   (VO_LAYER VoLayer, VO_CHN VoChn, uint64_t *pChnP
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1780,7 +1780,7 @@ ERRORTYPE AW_MPI_VO_GetChnPts   (VO_LAYER VoLayer, VO_CHN VoChn, uint64_t *pChnP
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     COMP_TIME_CONFIG_TIMESTAMPTYPE timeStamp;
@@ -1793,7 +1793,7 @@ ERRORTYPE AW_MPI_VO_SendFrame(VO_LAYER VoLayer, VO_CHN VoChn, VIDEO_FRAME_INFO_S
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1806,7 +1806,7 @@ ERRORTYPE AW_MPI_VO_SendFrame(VO_LAYER VoLayer, VO_CHN VoChn, VIDEO_FRAME_INFO_S
     ret = pChn->mComp->GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     COMP_BUFFERHEADERTYPE compBuffer;
@@ -1819,7 +1819,7 @@ ERRORTYPE AW_MPI_VO_Debug_StoreFrame(VO_LAYER VoLayer, VO_CHN VoChn, uint64_t fr
 {
     if(!(VoChn>=0 && VoChn<VO_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid VoChn[%d]!", VoChn);
+        LOGE("fatal error! invalid VoChn[%d]!", VoChn);
         return ERR_VO_INVALID_CHNID;
     }
     VO_CHN_MAP_S *pChn;
@@ -1832,7 +1832,7 @@ ERRORTYPE AW_MPI_VO_Debug_StoreFrame(VO_LAYER VoLayer, VO_CHN VoChn, uint64_t fr
     ret = COMP_GetState(pChn->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StatePause != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_VO_NOT_PERMIT;
     }
     ret = COMP_SetConfig(pChn->mComp, COMP_IndexVendorStoreFrame, (void*)&framePts);

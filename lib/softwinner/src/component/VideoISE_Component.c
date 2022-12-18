@@ -12,7 +12,7 @@
  ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "VideoIse_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 // ref platform headers
 #include <errno.h>
@@ -77,16 +77,16 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
         {
             if(EN_ERR_EFUSE_ERROR == hresult)
             {
-                aloge("mo efuse check fail,return %#010x",hresult);
+                LOGE("mo efuse check fail,return %#010x",hresult);
                 return ERR_ISE_EFUSE_ERROR;
             }
             else
             {
-                aloge("Create MO handle fail,return %#010x",hresult);
+                LOGE("Create MO handle fail,return %#010x",hresult);
                 return ERR_ISE_ILLEGAL_PARAM;
             }
         }
-        alogd("%p",pVideoIseData->fish_handle);
+        LOGD("%p",pVideoIseData->fish_handle);
 #ifdef VIDEO_ISE_SETMOATTR_TIME_DEBUG
         struct timeval tpstart,tpend;
         float timeuse;
@@ -96,7 +96,7 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
         hresult = ISE_SetAttr_Mo(&pVideoIseData->fish_handle);
         if (0 != hresult)
         {
-            aloge("Set Mo attr fail,return %#010x",hresult);
+            LOGE("Set Mo attr fail,return %#010x",hresult);
             return ERR_ISE_ILLEGAL_PARAM;
         }
 
@@ -104,7 +104,7 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
         gettimeofday(&tpend,NULL);
         timeuse=1000000*(tpend.tv_sec-tpstart.tv_sec)+(tpend.tv_usec-tpstart.tv_usec);
         timeuse/=1000;
-        alogd("------>Initial Used Time:%f ms<------\n", timeuse);
+        LOGD("------>Initial Used Time:%f ms<------", timeuse);
 #endif
 #endif
 //#endif
@@ -115,8 +115,8 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
         if(pChnAttr->pChnAttr->mode_attr.mDFish.handle_mode != HANDLE_BY_HARDWARE &&
                 pChnAttr->pChnAttr->mode_attr.mDFish.handle_mode != HANDLE_BY_SOFT)
         {
-            alogd("bi handle mode:%d",pChnAttr->pChnAttr->mode_attr.mDFish.handle_mode);
-            alogd("user not set bi handle mode,use default handle by handware mode.");
+            LOGD("bi handle mode:%d",pChnAttr->pChnAttr->mode_attr.mDFish.handle_mode);
+            LOGD("user not set bi handle mode,use default handle by handware mode.");
             pVideoIseData->dfish_handle_mode = HANDLE_BY_HARDWARE;
         }
         else
@@ -133,19 +133,19 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
     	if(pVideoIseData->dfish_handle_mode == HANDLE_BY_HARDWARE)
     	{
 #if (MPPCFG_ISE_BI == OPTION_ISE_BI_ENABLE)
-    	    alogd("creat hardware handle");
+    	    LOGD("creat hardware handle");
             pVideoIseData->dfish_handle_by_hardware = NULL;
             hresult = ISE_Create_Bi(pVideoIseData_dfish_cfg,&pVideoIseData->dfish_handle_by_hardware);
             if (0 != hresult)
             {
                 if(EN_ERR_EFUSE_ERROR == hresult)
                 {
-                    aloge("bi efuse check fail,return %#010x",hresult);
+                    LOGE("bi efuse check fail,return %#010x",hresult);
                     return ERR_ISE_EFUSE_ERROR;
                 }
                 else
                 {
-                    aloge("Create Bi hardware handle fail,return %#010x",hresult);
+                    LOGE("Create Bi hardware handle fail,return %#010x",hresult);
                     return ERR_ISE_ILLEGAL_PARAM;
                 }
             }
@@ -159,7 +159,7 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
             hresult = ISE_SetAttr_Bi(&pVideoIseData->dfish_handle_by_hardware);
             if (0 != hresult)
             {
-                aloge("Set Bi hardware attr fail,return %#010x",hresult);
+                LOGE("Set Bi hardware attr fail,return %#010x",hresult);
                 return ERR_ISE_ILLEGAL_PARAM;
             }
 
@@ -167,7 +167,7 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
         gettimeofday(&tpend,NULL);
         timeuse=1000000*(tpend.tv_sec-tpstart.tv_sec)+(tpend.tv_usec-tpstart.tv_usec);
         timeuse/=1000;
-        alogd("------>Set Bi attr Used Time:%f ms<------\n", timeuse);
+        LOGD("------>Set Bi attr Used Time:%f ms<------", timeuse);
 #endif
 
 #endif
@@ -176,19 +176,19 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
     	else if(pVideoIseData->dfish_handle_mode == HANDLE_BY_SOFT)
     	{
 #if (MPPCFG_ISE_BI_SOFT == OPTION_ISE_BI_SOFT_ENABLE)
-    	    alogd("creat soft handle");
+    	    LOGD("creat soft handle");
     	    pVideoIseData->dfish_handle_by_soft = NULL;
     	    hresult = ISE_Create_BI_Soft(pVideoIseData_dfish_cfg, &pVideoIseData->dfish_handle_by_soft);
             if (0 != hresult)
             {
                 if(EN_ERR_EFUSE_ERROR == hresult)
                 {
-                    aloge("bi soft efuse check fail,return %#010x",hresult);
+                    LOGE("bi soft efuse check fail,return %#010x",hresult);
                     return ERR_ISE_EFUSE_ERROR;
                 }
                 else
                 {
-                    aloge("Create Bi soft handle fail,return %#010x",hresult);
+                    LOGE("Create Bi soft handle fail,return %#010x",hresult);
                     return ERR_ISE_ILLEGAL_PARAM;
                 }
             }
@@ -202,7 +202,7 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
             hresult = ISE_SetConfig_BI_Soft(&pVideoIseData->dfish_handle_by_soft);
             if (0 != hresult)
             {
-                aloge("Set Bi soft config fail,return %#010x",hresult);
+                LOGE("Set Bi soft config fail,return %#010x",hresult);
                 return ERR_ISE_ILLEGAL_PARAM;
             }
 
@@ -210,7 +210,7 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
         gettimeofday(&tpend,NULL);
         timeuse=1000000*(tpend.tv_sec-tpstart.tv_sec)+(tpend.tv_usec-tpstart.tv_usec);
         timeuse/=1000;
-        alogd("------>Set Bi soft config Used Time:%f ms<------\n", timeuse);
+        LOGD("------>Set Bi soft config Used Time:%f ms<------", timeuse);
 #endif
 #endif
     	}
@@ -243,12 +243,12 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
         {
             if(EN_ERR_EFUSE_ERROR == hresult)
             {
-                aloge("sti efuse check fail,return %#010x",hresult);
+                LOGE("sti efuse check fail,return %#010x",hresult);
                 return ERR_ISE_EFUSE_ERROR;
             }
             else
             {
-                aloge("Create Sti handle fail,return %#010x",hresult);
+                LOGE("Create Sti handle fail,return %#010x",hresult);
                 return ERR_ISE_ILLEGAL_PARAM;
             }
         }
@@ -257,7 +257,7 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
         gettimeofday(&tpend,NULL);
         timeuse=1000000*(tpend.tv_sec-tpstart.tv_sec)+(tpend.tv_usec-tpstart.tv_usec);
         timeuse/=1000;
-        alogd("------>Creat Sti Handle Used Time:%f ms<------\n", timeuse);
+        LOGD("------>Creat Sti Handle Used Time:%f ms<------", timeuse);
 #endif
 
         if(pChnAttr_ise_cfg->ise_proccfg.bgfgmode_en == 1)
@@ -267,21 +267,21 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
                                         &bgfg_intvl, sizeof(int), &pVideoIseData->ise_handle);
             if (0 != hresult)
             {
-                aloge("Set Sti bgfg intvl attr fail");
+                LOGE("Set Sti bgfg intvl attr fail");
             }
             int getbgd_intvl = pChnAttr_ise_cfg->ise_bgfg.getbgd_intvl;
             hresult = ISE_SetConfig_Sti((int)ISE_SETCFG_GETBGD_INTVL_PARAM,
                                         &getbgd_intvl, sizeof(int), &pVideoIseData->ise_handle);
             if (0 != hresult)
             {
-                aloge("Set Sti getbgd intvl attr fail");
+                LOGE("Set Sti getbgd intvl attr fail");
             }
             int bgfg_sleep_ms = pChnAttr_ise_cfg->ise_bgfg.bgfg_sleep_ms;
             hresult = ISE_SetConfig_Sti((int)ISE_SETCFG_BGFG_SLEEP_MS_PARAM,
                                         &bgfg_sleep_ms, sizeof(int), &pVideoIseData->ise_handle);
             if (0 != hresult)
             {
-                aloge("Set Sti bgfg sleep_ms attr fail");
+                LOGE("Set Sti bgfg sleep_ms attr fail");
             }
         }
 //#endif
@@ -289,7 +289,7 @@ static ERRORTYPE Hal_CreateIseHandle(VIDEOISEDATATYPE *pVideoIseData, IseChnAttr
     }
     else
     {
-        aloge("No ise mode. Must select ise mode. 1.one fish; 2.two fish; 3.ise fish.\r\n");
+        LOGE("No ise mode. Must select ise mode. 1.one fish; 2.two fish; 3.ise fish.");
         return ERR_ISE_ILLEGAL_PARAM;
     }
     return 0;
@@ -299,7 +299,7 @@ static ERRORTYPE Hal_DestroyIseHandle(VIDEOISEDATATYPE *pVideoIseData, ISE_GROUP
 {
     if(pVideoIseData == NULL)
     {
-        aloge("fatal error! pVideoIseData is NULL");
+        LOGE("fatal error! pVideoIseData is NULL");
         return ERR_ISE_ILLEGAL_PARAM;
     }
     if (ISEMODE_ONE_FISHEYE == pGrpAttr->iseMode)
@@ -308,12 +308,12 @@ static ERRORTYPE Hal_DestroyIseHandle(VIDEOISEDATATYPE *pVideoIseData, ISE_GROUP
 #if (MPPCFG_ISE_MO == OPTION_ISE_MO_ENABLE)
         if(pVideoIseData->fish_handle == NULL)
         {
-            aloge("fatal error! pVideoIseData is NULL");
+            LOGE("fatal error! pVideoIseData is NULL");
             return ERR_ISE_ILLEGAL_PARAM;
         }
-        alogd("%p",pVideoIseData->fish_handle);
+        LOGD("%p",pVideoIseData->fish_handle);
         ISE_Destroy_Mo(&pVideoIseData->fish_handle);
-        alogd("ISE_Destroy_Mo end");
+        LOGD("ISE_Destroy_Mo end");
         pVideoIseData->fish_handle = NULL;
 #endif
 //#endif
@@ -350,7 +350,7 @@ static ERRORTYPE Hal_DestroyIseHandle(VIDEOISEDATATYPE *pVideoIseData, ISE_GROUP
     }
     else
     {
-        aloge("No ise mode. Must select ise mode. 1.one fish; 2.two fish; 3.ise.\r\n");
+        LOGE("No ise mode. Must select ise mode. 1.one fish; 2.two fish; 3.ise.");
         return -1;
     }
     return SUCCESS;
@@ -374,7 +374,7 @@ static ERRORTYPE Hal_UpdateIseConfig(VIDEOISEDATATYPE *pVideoIseData, ISE_CHN_AT
     }
     else
     {
-       aloge("No ise mode. Must select ise mode. 1.one fish; 2.two fish; 3.ise.\r\n");
+       LOGE("No ise mode. Must select ise mode. 1.one fish; 2.two fish; 3.ise.");
        return -1;
     }
     
@@ -394,7 +394,7 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
         hresult = Hal_CreateIseHandle(pVideoIseData, pIseChnAttr);
         if(hresult != 0)
         {
-            aloge("fatal error!,creat hanle failed");
+            LOGE("fatal error!,creat hanle failed");
             return ERR_ISE_ILLEGAL_PARAM;
         }
     }
@@ -420,7 +420,7 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
         pthread_mutex_lock(&pVideoIseData->mMutexChnListLock);
         if (list_empty(&pVideoIseData->mIdleChnAttrList))
         {
-            // alogw("Low probability! sinkInfo is not enough, increase one!");
+            // LOGW("Low probability! sinkInfo is not enough, increase one!");
             ISEChnNode_t *pNode = (ISEChnNode_t *)malloc(sizeof(ISEChnNode_t));
             if (pNode)
             {
@@ -430,7 +430,7 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
             }
             else
             {
-                aloge("fatal error! malloc fail[%s]!", strerror(errno));
+                LOGE("fatal error! malloc fail[%s]!", strerror(errno));
                 eRet = ERR_ISE_ILLEGAL_PARAM;
                 pthread_mutex_unlock(&pVideoIseData->mMutexChnListLock);
                 return eRet;
@@ -513,12 +513,12 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
         if(pIseChnAttr->pChnAttr->buffer_num != 0)
         {
             pEntry->mIseOutBufNum = pIseChnAttr->pChnAttr->buffer_num;
-            alogd("port%d use user appoint buffer num %d",pEntry->mIseChn,pEntry->mIseOutBufNum);
+            LOGD("port%d use user appoint buffer num %d",pEntry->mIseChn,pEntry->mIseOutBufNum);
         }
         else
         {
             pEntry->mIseOutBufNum = 5;
-            alogd("port%d use default buffer num %d",pEntry->mIseChn,pEntry->mIseOutBufNum);
+            LOGD("port%d use default buffer num %d",pEntry->mIseChn,pEntry->mIseOutBufNum);
         }
 
         for (i = 0; i < pEntry->mIseOutBufNum; i++)
@@ -534,7 +534,7 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
                  if (NULL == pEntry->mpOutBuf->mIseOut.out_luma_mmu_Addr[iseChnId])
                  {
                      eRet = FAILURE;
-                     aloge("Add ise chn%d, Palloc pano_luma failed.",iseChnId);
+                     LOGE("Add ise chn%d, Palloc pano_luma failed.",iseChnId);
                  }
                  memset(pEntry->mpOutBuf->mIseOut.out_luma_mmu_Addr[iseChnId], 0x0, width * height);
                  pEntry->mpOutBuf->mIseOut.out_luma_phy_Addr[iseChnId] =
@@ -546,7 +546,7 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
                  if (NULL == pEntry->mpOutBuf->mIseOut.out_chroma_u_mmu_Addr[iseChnId])
                  {
                      eRet = FAILURE;
-                     aloge("Add ise chn x, Palloc pano_chroma failed.\r\n");
+                     LOGE("Add ise chn x, Palloc pano_chroma failed.");
                  }
                  memset(pEntry->mpOutBuf->mIseOut.out_chroma_u_mmu_Addr[iseChnId], 0x0, width * height / 2);
                  pEntry->mpOutBuf->mIseOut.out_chroma_u_phy_Addr[iseChnId] =
@@ -564,7 +564,7 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
                       ion_allocMem(width * height);
                     if (NULL == pEntry->mpOutBuf->mStiOut.pano_luma_mmu_Addr) {
                         eRet = FAILURE;
-                        aloge("Add ise chn x, Palloc pano_luma failed.\r\n");
+                        LOGE("Add ise chn x, Palloc pano_luma failed.");
                     }
                     memset(pEntry->mpOutBuf->mStiOut.pano_luma_mmu_Addr, 0x0, width * height);
                     pEntry->mpOutBuf->mStiOut.pano_luma_phy_Addr =
@@ -576,14 +576,14 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
                     ion_allocMem(width * height / 2);
                     if (NULL == pEntry->mpOutBuf->mStiOut.pano_chroma_mmu_Addr) {
                         eRet = FAILURE;
-                        aloge("Add ise chn x, Palloc pano_chroma failed.\r\n");
+                        LOGE("Add ise chn x, Palloc pano_chroma failed.");
                     }
                     memset(pEntry->mpOutBuf->mStiOut.pano_chroma_mmu_Addr , 0x0, width * height / 2);
                     pEntry->mpOutBuf->mStiOut.pano_chroma_phy_Addr =
                       (unsigned int)ion_getMemPhyAddr(pEntry->mpOutBuf->mStiOut.pano_chroma_mmu_Addr);
                     pEntry->mpOutBuf->VFrame.VFrame.mpVirAddr[1] = pEntry->mpOutBuf->mStiOut.pano_chroma_mmu_Addr;
                     pEntry->mpOutBuf->VFrame.VFrame.mPhyAddr[1] = pEntry->mpOutBuf->mStiOut.pano_chroma_phy_Addr;
-                    /*alogd("Port[%d]data_index=%d:phy:y=%d,uv=%d.\r\n", iseChnId, i,
+                    /*LOGD("Port[%d]data_index=%d:phy:y=%d,uv=%d.", iseChnId, i,
                             pEntry->mpOutBuf->VFrame.VFrame.mPhyAddr[0],
                             pEntry->mpOutBuf->VFrame.VFrame.mPhyAddr[1]);*/
                 }
@@ -593,7 +593,7 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
                       ion_allocMem(width * height);
                     if (NULL == pEntry->mpOutBuf->mStiOut.scalar_luma_mmu_Addr[pEntry->mIseChn-1]) {
                         eRet = FAILURE;
-                        aloge("Add ise chn x, Palloc scaler_luma failed.\r\n");
+                        LOGE("Add ise chn x, Palloc scaler_luma failed.");
                     }
                     memset(pEntry->mpOutBuf->mStiOut.scalar_luma_mmu_Addr[pEntry->mIseChn-1], 0x0, width * height);
                     pEntry->mpOutBuf->mStiOut.scalar_luma_phy_Addr[pEntry->mIseChn-1] =
@@ -605,14 +605,14 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
                     ion_allocMem(width * height / 2);
                     if (NULL == pEntry->mpOutBuf->mStiOut.scalar_chroma_mmu_Addr[pEntry->mIseChn-1]) {
                         eRet = FAILURE;
-                        aloge("Add ise chn x, Palloc scaler_chroma failed.\r\n");
+                        LOGE("Add ise chn x, Palloc scaler_chroma failed.");
                     }
                     memset(pEntry->mpOutBuf->mStiOut.scalar_chroma_mmu_Addr[pEntry->mIseChn-1] , 0x0, width * height / 2);
                     pEntry->mpOutBuf->mStiOut.scalar_chroma_phy_Addr[pEntry->mIseChn-1] =
                       (unsigned int)ion_getMemPhyAddr(pEntry->mpOutBuf->mStiOut.scalar_chroma_mmu_Addr[pEntry->mIseChn-1]);
                     pEntry->mpOutBuf->VFrame.VFrame.mpVirAddr[1] = pEntry->mpOutBuf->mStiOut.scalar_chroma_mmu_Addr[pEntry->mIseChn-1];
                     pEntry->mpOutBuf->VFrame.VFrame.mPhyAddr[1] = pEntry->mpOutBuf->mStiOut.scalar_chroma_phy_Addr[pEntry->mIseChn-1];
-                    /*alogd("Port[%d]data_index=%d:phy:y=%d,uv=%d.\r\n", iseChnId, i,
+                    /*LOGD("Port[%d]data_index=%d:phy:y=%d,uv=%d.", iseChnId, i,
                             pEntry->mpOutBuf->VFrame.VFrame.mPhyAddr[0],
                             pEntry->mpOutBuf->VFrame.VFrame.mPhyAddr[1]);*/
                 }
@@ -630,7 +630,7 @@ ERRORTYPE DoVideoIseAddPort(PARAM_IN COMP_HANDLETYPE hComponent, int iseGrpId, i
             pVFrameInfo->VFrame.mOffsetRight = width;
             pVFrameInfo->VFrame.mStride[0] = width; //height*width;
             pVFrameInfo->VFrame.mStride[1] = width; //height*width/2;
-            alogd("Port[%d]data_index=%d: phy:y=%#x,uv=%#x; vir:y=%p,uv=%p,pixel format",
+            LOGD("Port[%d]data_index=%d: phy:y=%#x,uv=%#x; vir:y=%p,uv=%p,pixel format",
                 iseChnId, i,
                 pEntry->mpOutBuf->VFrame.VFrame.mPhyAddr[0],
                 pEntry->mpOutBuf->VFrame.VFrame.mPhyAddr[1],
@@ -654,12 +654,12 @@ static ERRORTYPE DoVideoIseRemovePort(PARAM_IN COMP_HANDLETYPE hComponent, int i
     int nFindFlag = 0,cnt = 0;
     ISEChnNode_t *pEntry = NULL, *pTmp = NULL;
     if(hComponent == NULL) {
-        aloge("fatal error! hComponent is NULL");
+        LOGE("fatal error! hComponent is NULL");
         return ERR_ISE_ILLEGAL_PARAM;
     }
     VIDEOISEDATATYPE *pVideoIseData = (VIDEOISEDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if(pVideoIseData == NULL) {
-        aloge("fatal error! pVideoIseData is NULL");
+        LOGE("fatal error! pVideoIseData is NULL");
         return ERR_ISE_ILLEGAL_PARAM;
     }
     // find if the same ise chn exist
@@ -673,7 +673,7 @@ static ERRORTYPE DoVideoIseRemovePort(PARAM_IN COMP_HANDLETYPE hComponent, int i
                 if(0==nFindFlag)
                     nFindFlag = 1;
                 else
-                    aloge("fatal error! why find more than one?");
+                    LOGE("fatal error! why find more than one?");
                 pthread_mutex_lock(&(pEntry->mOutYUVListLock));
                 // release resource
                 /*if (!list_empty(&pEntry->mReadyOutYUVList))
@@ -687,7 +687,7 @@ static ERRORTYPE DoVideoIseRemovePort(PARAM_IN COMP_HANDLETYPE hComponent, int i
                 ISEOutBuf_t *pEntry_1 = NULL, *pTmp_1 = NULL;
                 if (!list_empty(&pEntry->mReadyOutYUVList))
                 {
-                    aloge("fatal error! outReadyFrame must be 0,move to idle list");
+                    LOGE("fatal error! outReadyFrame must be 0,move to idle list");
                     list_for_each_entry_safe(pEntry_1, pTmp_1, &pEntry->mReadyOutYUVList, mList)
                     {
                         list_move_tail(&pEntry_1->mList, &pEntry->mIdleOutYUVList);
@@ -696,7 +696,7 @@ static ERRORTYPE DoVideoIseRemovePort(PARAM_IN COMP_HANDLETYPE hComponent, int i
                 pEntry_1 = NULL,pTmp_1 = NULL;
                 if (!list_empty(&pEntry->mUsedOutYUVList))
                 {
-                    aloge("fatal error! outUsedFrame must be 0,move to idle list");
+                    LOGE("fatal error! outUsedFrame must be 0,move to idle list");
                     list_for_each_entry_safe(pEntry_1, pTmp_1, &pEntry->mUsedOutYUVList, mList)
                     {
                         list_move_tail(&pEntry_1->mList, &pEntry->mIdleOutYUVList);
@@ -723,9 +723,9 @@ static ERRORTYPE DoVideoIseRemovePort(PARAM_IN COMP_HANDLETYPE hComponent, int i
                         }
                         cnt++;
                     }
-                    alogd("chn%d outputFrames[%d]",pEntry->mIseChn,cnt);
+                    LOGD("chn%d outputFrames[%d]",pEntry->mIseChn,cnt);
                     if(cnt != pEntry->mIseOutBufNum)
-                        aloge("fatal error! chn%d outputFrames[%d]<[%d] must return all before!",
+                        LOGE("fatal error! chn%d outputFrames[%d]<[%d] must return all before!",
                                 pEntry->mIseChn,cnt, pEntry->mIseOutBufNum);
                 }
                 pEntry->mIseGrp = -1;
@@ -741,20 +741,20 @@ static ERRORTYPE DoVideoIseRemovePort(PARAM_IN COMP_HANDLETYPE hComponent, int i
     pVideoIseData->mValidChnNodeNum--;
     pVideoIseData->mIdleChnNodeNum++;
     pthread_mutex_unlock(&pVideoIseData->mMutexChnListLock);
-    alogd("ValidChnNodeNum %d,IdleChnNodeNum %d",
+    LOGD("ValidChnNodeNum %d,IdleChnNodeNum %d",
             pVideoIseData->mValidChnNodeNum,pVideoIseData->mIdleChnNodeNum);
 //    if(iseChnId == 0)
     if(pVideoIseData->mValidChnNodeNum == 0)
     {
-        alogd("Destroy Ise handle");
+        LOGD("Destroy Ise handle");
         Hal_DestroyIseHandle(pVideoIseData, &pVideoIseData->mIseGrpAttr);
-        alogd("Hal_DestroyIseHandle exit");
+        LOGD("Hal_DestroyIseHandle exit");
     }
     if (0 == nFindFlag) {
-        aloge("fatal error! not find an exist iseChnId[%d]", iseChnId);
+        LOGE("fatal error! not find an exist iseChnId[%d]", iseChnId);
         return ERR_ISE_ILLEGAL_PARAM;
     }
-    alogd("ISE chn%d DoVideoIseRemovePort exit",iseChnId);
+    LOGD("ISE chn%d DoVideoIseRemovePort exit",iseChnId);
     return SUCCESS;
 }
 
@@ -771,7 +771,7 @@ static ERRORTYPE DoVideoIseSendBackInputFrame(VIDEOISEDATATYPE *pVideoIseData, V
     else
     {
         BufferHeader.pOutputPortPrivate = pFrameInfo;
-        // alogw("ise return one frame in tunnel mode, port %d.", pFrameInfoPort);
+        // LOGW("ise return one frame in tunnel mode, port %d.", pFrameInfoPort);
         if (ISE_PORT_INDEX_CAP0_IN == pFrameInfoPort)
         {
             MM_COMPONENTTYPE *pTunnelComp = (MM_COMPONENTTYPE *)pVideoIseData->sInPortTunnelInfo[ISE_PORT_INDEX_CAP0_IN].hTunnel;
@@ -786,7 +786,7 @@ static ERRORTYPE DoVideoIseSendBackInputFrame(VIDEOISEDATATYPE *pVideoIseData, V
 
         }
     }
-    alogv("release input FrameId[%d], port=%d.", pFrameInfo->mId, pFrameInfoPort);
+    LOGV("release input FrameId[%d], port=%d.", pFrameInfo->mId, pFrameInfoPort);
     return SUCCESS;
 }
 
@@ -1051,7 +1051,7 @@ ERRORTYPE DoVideoIseSetChnAttr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Is
                                     hresult = ISE_SetAttr_Mo(&pVideoIseData->fish_handle);
                                     if (0 != hresult)
                                     {
-                                        aloge("Set Mo attr fail");
+                                        LOGE("Set Mo attr fail");
                                         eError = ERR_ISE_ILLEGAL_PARAM;
                                     }
 
@@ -1062,7 +1062,7 @@ ERRORTYPE DoVideoIseSetChnAttr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Is
                             //                                timeuse /= 1000;
                                     /*if(timeuse > temp)
                                     {
-                                        alogw("------>Set Mo Attr Used Time:%f ms<------\n", timeuse);
+                                        LOGW("------>Set Mo Attr Used Time:%f ms<------", timeuse);
                                         temp = timeuse;
                                     }*/
                                     timeuse_setmoattr = timeuse;
@@ -1072,7 +1072,7 @@ ERRORTYPE DoVideoIseSetChnAttr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Is
                                     pVideoIseData->mWaitSetMoConfigFlag = TRUE;
                                     pthread_mutex_unlock(&pVideoIseData->mWaitSetMoConfigLock);
                                 } else {
-                                    aloge("update ptz attr too fast");
+                                    LOGE("update ptz attr too fast");
                                 }
                             }
                         }
@@ -1131,7 +1131,7 @@ ERRORTYPE DoVideoIseSetChnAttr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Is
                                     hresult = ISE_SetAttr_Mo(&pVideoIseData->fish_handle);
                                     if (0 != hresult)
                                     {
-                                        aloge("Set Mo attr fail");
+                                        LOGE("Set Mo attr fail");
                                         eError = ERR_ISE_ILLEGAL_PARAM;
                                     }
 
@@ -1142,7 +1142,7 @@ ERRORTYPE DoVideoIseSetChnAttr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Is
                             //                                timeuse /= 1000;
                                     /*if(timeuse > temp)
                                     {
-                                        alogw("------>Set Mo Attr Used Time:%f ms<------\n", timeuse);
+                                        LOGW("------>Set Mo Attr Used Time:%f ms<------", timeuse);
                                         temp = timeuse;
                                     }*/
                                     timeuse_setmoattr = timeuse;
@@ -1152,7 +1152,7 @@ ERRORTYPE DoVideoIseSetChnAttr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Is
                                     pVideoIseData->mWaitSetMoConfigFlag = TRUE;
                                     pthread_mutex_unlock(&pVideoIseData->mWaitSetMoConfigLock);
                                 } else {
-                                    aloge("update ptz attr too fast");
+                                    LOGE("update ptz attr too fast");
                                 }
                             }
                         }
@@ -1217,9 +1217,9 @@ ERRORTYPE DoVideoIseSetChnAttr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Is
                                          &pVideoIseData_ise_cfg->ise_bgfg.bgfg_intvl, sizeof(int), &pVideoIseData->ise_handle);
                                 if (0 != hresult)
                                 {
-                                    aloge("Set Sti attr bgfg_intvl fail");
+                                    LOGE("Set Sti attr bgfg_intvl fail");
                                 }
-                                alogd("set ise config bgfg_intvl = %d",pVideoIseData_ise_cfg->ise_bgfg.bgfg_intvl);
+                                LOGD("set ise config bgfg_intvl = %d",pVideoIseData_ise_cfg->ise_bgfg.bgfg_intvl);
                             }
                             if(pVideoIseData_ise_cfg->ise_bgfg.getbgd_intvl != pChnAttr_ise_cfg->ise_bgfg.getbgd_intvl) //200
                             {
@@ -1228,9 +1228,9 @@ ERRORTYPE DoVideoIseSetChnAttr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Is
                                          &pVideoIseData_ise_cfg->ise_bgfg.getbgd_intvl, sizeof(int), &pVideoIseData->ise_handle);
                                 if (0 != hresult)
                                 {
-                                    aloge("Set Sti attr getbgd_intvl fail");
+                                    LOGE("Set Sti attr getbgd_intvl fail");
                                 }
-                                alogd("set ise config getbgd_intvl = %d",pVideoIseData_ise_cfg->ise_bgfg.getbgd_intvl);
+                                LOGD("set ise config getbgd_intvl = %d",pVideoIseData_ise_cfg->ise_bgfg.getbgd_intvl);
                             }
                             if(pVideoIseData_ise_cfg->ise_bgfg.bgfg_sleep_ms != pChnAttr_ise_cfg->ise_bgfg.bgfg_sleep_ms) //200
                             {
@@ -1239,9 +1239,9 @@ ERRORTYPE DoVideoIseSetChnAttr(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Is
                                         &pVideoIseData_ise_cfg->ise_bgfg.bgfg_sleep_ms, sizeof(int), &pVideoIseData->ise_handle);
                                 if (0 != hresult)
                                 {
-                                    aloge("Set Sti attr bgfg_sleep_ms fail");
+                                    LOGE("Set Sti attr bgfg_sleep_ms fail");
                                 }
-                                alogd("set ise config bgfg_sleep_ms = %d",pVideoIseData_ise_cfg->ise_bgfg.bgfg_sleep_ms);
+                                LOGD("set ise config bgfg_sleep_ms = %d",pVideoIseData_ise_cfg->ise_bgfg.bgfg_sleep_ms);
                             }
 #endif
 //#endif
@@ -1287,12 +1287,12 @@ ERRORTYPE DoVideoIseGetData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT ISE_D
     VIDEOISEDATATYPE *pVideoIseData = (VIDEOISEDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (COMP_StateIdle != pVideoIseData->state && COMP_StateExecuting != pVideoIseData->state)
     {
-        alogw("call DoVideoIseGetData in wrong state[0x%x]", pVideoIseData->state);
+        LOGW("call DoVideoIseGetData in wrong state[0x%x]", pVideoIseData->state);
         return ERR_ISE_NOT_PERM;
     }
   	if(TRUE == pVideoIseData->mOutputPortTunnelFlag)
 	{
-		aloge("fatal error! can't call DoVideoIseGetData() in tunnel mode!");
+		LOGE("fatal error! can't call DoVideoIseGetData() in tunnel mode!");
 		return ERR_ISE_NOT_PERM;
 	}
     ISEChnNode_t *pEntry = NULL;
@@ -1378,7 +1378,7 @@ _TryToGetOutData:
                 ret = pthread_cond_wait_timeout(&pVideoIseData->mOutFrameFullCond[pData->mIseChn], &pVideoIseData->mOutDataMutex[pData->mIseChn], nMilliSec);
                 if (ETIMEDOUT == ret)
                 {
-	                aloge("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
+	                LOGE("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
 
 	                eError = ERR_ISE_BUF_EMPTY;
 	            }
@@ -1389,7 +1389,7 @@ _TryToGetOutData:
 	            }
                 else
                 {
-	                aloge("fatal error! pthread cond wait timeout ret[%d]", ret);
+	                LOGE("fatal error! pthread cond wait timeout ret[%d]", ret);
 	                eError = ERR_ISE_BUF_EMPTY;
 	            }
 			}
@@ -1406,12 +1406,12 @@ ERRORTYPE DoVideoIseReleaseData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN IS
     VIDEOISEDATATYPE *pVideoIseData = (VIDEOISEDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (COMP_StateIdle != pVideoIseData->state && COMP_StateExecuting != pVideoIseData->state)
     {
-        alogw("call getStream in wrong state[0x%x]", pVideoIseData->state);
+        LOGW("call getStream in wrong state[0x%x]", pVideoIseData->state);
         return ERR_ISE_NOT_PERM;
     }
   	if(TRUE == pVideoIseData->mOutputPortTunnelFlag)
 	{
-		aloge("fatal error! can't call DoVideoIseGetData() in tunnel mode!");
+		LOGE("fatal error! can't call DoVideoIseGetData() in tunnel mode!");
 		return ERR_ISE_NOT_PERM;
 	}
 
@@ -1452,7 +1452,7 @@ ERRORTYPE DoVideoIseReleaseData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN IS
                    }
                    if(!frame_find)
                    {
-                       aloge("fatal error! ise data[%p][%p] is not match UsedOutFrameList[%p][%p]",
+                       LOGE("fatal error! ise data[%p][%p] is not match UsedOutFrameList[%p][%p]",
                                pData->frame->VFrame.mpVirAddr[0], pData->frame->VFrame.mpVirAddr[1],
                                pISEOutBuf->VFrame.VFrame.mpVirAddr[0], pISEOutBuf->VFrame.VFrame.mpVirAddr[1]);
                        eError = ERR_ISE_ILLEGAL_PARAM;
@@ -1462,7 +1462,7 @@ ERRORTYPE DoVideoIseReleaseData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN IS
                 }
                 else
                 {
-                    aloge("want to release to Grp/Chn[%d:%d] UsedOutYUVList, why NULL?!!!", pEntry->mIseGrp, pEntry->mIseChn);
+                    LOGE("want to release to Grp/Chn[%d:%d] UsedOutYUVList, why NULL?!!!", pEntry->mIseGrp, pEntry->mIseChn);
                     ISEChnNode_t *pTmp;
                     int idle_cnt = 0;
                     list_for_each_entry(pTmp, &pEntry->mIdleOutYUVList, mList)
@@ -1479,7 +1479,7 @@ ERRORTYPE DoVideoIseReleaseData(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN IS
                     {
                         used_cnt++;
                     }
-                    alogd("in Grp/Chn[%d:%d], IdleNode:%d, ReadyNode:%d, UsedNode:%d", pEntry->mIseGrp, pEntry->mIseChn, idle_cnt, ready_cnt, used_cnt);
+                    LOGD("in Grp/Chn[%d:%d], IdleNode:%d, ReadyNode:%d, UsedNode:%d", pEntry->mIseGrp, pEntry->mIseChn, idle_cnt, ready_cnt, used_cnt);
                 }
             }
             pthread_mutex_unlock(&(pEntry->mOutYUVListLock));
@@ -1501,7 +1501,7 @@ ERRORTYPE DoVideoISESetFreq(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN int nF
         {
 //#if FISH_LIB
 #if (MPPCFG_ISE_MO == OPTION_ISE_MO_ENABLE)
-            alogd("set mo freq to [%d]MHz", nFreq);
+            LOGD("set mo freq to [%d]MHz", nFreq);
             ISE_SetFrq_Mo(nFreq, &pVideoIseData->fish_handle);
 #endif
 //#endif
@@ -1510,7 +1510,7 @@ ERRORTYPE DoVideoISESetFreq(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN int nF
         {
 //#if DFISH_LIB
 #if (MPPCFG_ISE_BI == OPTION_ISE_BI_ENABLE)
-            alogd("set bi freq to [%d]MHz", nFreq);
+            LOGD("set bi freq to [%d]MHz", nFreq);
             ISE_SetFrq_Bi(nFreq, &pVideoIseData->dfish_handle_by_hardware);
 #endif
 //#endif
@@ -1519,7 +1519,7 @@ ERRORTYPE DoVideoISESetFreq(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN int nF
         {
 //#if ISE_LIB
 #if (MPPCFG_ISE_BI == OPTION_ISE_BI_ENABLE)
-            alogd("set sti freq to [%d]MHz", nFreq);
+            LOGD("set sti freq to [%d]MHz", nFreq);
             ISE_SetFrq_Sti(nFreq, &pVideoIseData->ise_handle);
 #endif
 //#endif
@@ -1535,7 +1535,7 @@ ERRORTYPE DoVideoIseResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
     VIDEOISEDATATYPE *pVideoIseData = (VIDEOISEDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if ((pVideoIseData->state != COMP_StateIdle) && (pVideoIseData->state != COMP_StateExecuting))
     {
-        aloge("fatal error! must reset channel in stateIdle!");
+        LOGE("fatal error! must reset channel in stateIdle!");
         return ERR_ISE_NOT_PERM;
     }
     // return input frames
@@ -1547,7 +1547,7 @@ ERRORTYPE DoVideoIseResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
             VideoInYuv *pEntry, *pTmp;
             list_for_each_entry_safe(pEntry, pTmp, &pVideoIseData->mBufQ.mReadyFrameList, mList)
             {
-                // alogd("buf_unused[%d]", pVideoIseData->mBufQ.buf_unused);
+                // LOGD("buf_unused[%d]", pVideoIseData->mBufQ.buf_unused);
                 DoVideoIseSendBackInputFrame(pVideoIseData, &pEntry->mInYuv, ISE_PORT_INDEX_CAP0_IN);
                 list_move_tail(&pEntry->mList, &pVideoIseData->mBufQ.mIdleFrameList);
                 pVideoIseData->mBufQ.buf_unused++;
@@ -1565,7 +1565,7 @@ ERRORTYPE DoVideoIseResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
             VideoInYuv *pEntry, *pTmp;
             list_for_each_entry_safe(pEntry, pTmp, &pVideoIseData->mBufQ.mReadyFrameList, mList)
             {
-                // alogd("buf_unused[%d]", pVideoIseData->mBufQ.buf_unused);
+                // LOGD("buf_unused[%d]", pVideoIseData->mBufQ.buf_unused);
                 DoVideoIseSendBackInputFrame(pVideoIseData, &pEntry->mInYuv, ISE_PORT_INDEX_CAP0_IN);
                 list_move_tail(&pEntry->mList, &pVideoIseData->mBufQ.mIdleFrameList);
                 pVideoIseData->mBufQ.buf_unused++;
@@ -1577,7 +1577,7 @@ ERRORTYPE DoVideoIseResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
             VideoInYuv *pEntry, *pTmp;
             list_for_each_entry_safe(pEntry, pTmp, &pVideoIseData->mBufQ.mReadyFrameList1, mList)
             {
-                // alogd("buf_unused[%d]", pVideoIseData->mBufQ.buf_unused);
+                // LOGD("buf_unused[%d]", pVideoIseData->mBufQ.buf_unused);
                 DoVideoIseSendBackInputFrame(pVideoIseData, &pEntry->mInYuv, ISE_PORT_INDEX_CAP1_IN);
                 list_move_tail(&pEntry->mList, &pVideoIseData->mBufQ.mIdleFrameList1);
                 pVideoIseData->mBufQ.buf_unused1++;
@@ -1597,7 +1597,7 @@ ERRORTYPE VideoIseSendCommand(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
     message_t msg;
     void *pMsgData = NULL;
     int nMsgDataSize = 0;
-    alogv("VideoIseSendCommand: %d", Cmd);
+    LOGV("VideoIseSendCommand: %d", Cmd);
 
     pVideoIseData = (VIDEOISEDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     if (!pVideoIseData) {
@@ -1619,15 +1619,15 @@ ERRORTYPE VideoIseSendCommand(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
             break;
         }
 //        case COMP_CommandVendorAddChn: {
-//            alogd("call COMP CommandVendorAddChn in state[%d]", pVideoIseData->state);
+//            LOGD("call COMP CommandVendorAddChn in state[%d]", pVideoIseData->state);
 //            if (pVideoIseData->state != COMP_StateExecuting && pVideoIseData->state != COMP_StateIdle) {
-//                aloge("fatal error! why call COMP CommandVendorAddChn in invalid state[%d]", pVideoIseData->state);
+//                LOGE("fatal error! why call COMP CommandVendorAddChn in invalid state[%d]", pVideoIseData->state);
 //                eError = ERR_ISE_INCORRECT_STATE_OPERATION;
 //                goto COMP_CONF_CMD_FAIL;
 //            }
 //            eCmd = VendorAddIseChn;
 //            if (NULL == pCmdData) {
-//                alogw("ISE_CHN_ATTR_S == NULL");
+//                LOGW("ISE_CHN_ATTR_S == NULL");
 //                eError = ERR_ISE_ILLEGAL_PARAM;
 //                goto COMP_CONF_CMD_FAIL;
 //            }
@@ -1636,15 +1636,15 @@ ERRORTYPE VideoIseSendCommand(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
 //            break;
 //        }
 //        case COMP_CommandVendorRemoveChn: {
-//            // alogd("call COMP CommandVendorRemoveChn in state[%d], remove
+//            // LOGD("call COMP CommandVendorRemoveChn in state[%d], remove
 //            if (pVideoIseData->state != COMP_StateExecuting && pVideoIseData->state != COMP_StateIdle) {
-//                // aloge("fatal error! why call COMP CommandVendorRemoveChn in invalid
+//                // LOGE("fatal error! why call COMP CommandVendorRemoveChn in invalid
 //                eError = ERR_ISE_ILLEGAL_PARAM;
 //                goto COMP_CONF_CMD_FAIL;
 //            }
 //            eCmd = VendorRemoveIseChn;  // VendorRemoveOutputSinkInfo
 //            if (NULL == pCmdData) {
-//                alogw("ISE_CHN_ATTR_S == NULL");
+//                LOGW("ISE_CHN_ATTR_S == NULL");
 //                eError = ERR_ISE_ILLEGAL_PARAM;
 //                goto COMP_CONF_CMD_FAIL;
 //            }
@@ -1653,7 +1653,7 @@ ERRORTYPE VideoIseSendCommand(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
 //            break;
 //        }
         default:
-            alogw("Warning comp_command[0x%x]", Cmd);
+            LOGW("Warning comp_command[0x%x]", Cmd);
             eCmd = -1;
             break;
     }
@@ -1733,7 +1733,7 @@ ERRORTYPE VideoIseGetConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_I
             break;
         }
         default: {
-            aloge("fatal error! unknown getConfig Index[0x%x]", nIndex);
+            LOGE("fatal error! unknown getConfig Index[0x%x]", nIndex);
             eError = ERR_ISE_NOT_SUPPORT;
             break;
         }
@@ -1786,7 +1786,7 @@ ERRORTYPE VideoIseSetConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_I
             int IseChnId = ((IseChnAttr *)pIseChnAttr)->mChnId;
             eError = DoVideoIseAddPort(hComponent, IseGrpId, IseChnId, pIseChnAttr);
             if (eError != SUCCESS) {
-                aloge("fatal error! why DoVideoIseAddPort fail?,return [0x%x]", eError);
+                LOGE("fatal error! why DoVideoIseAddPort fail?,return [0x%x]", eError);
                 return ERR_ISE_ILLEGAL_PARAM;
             }
             break;
@@ -1798,7 +1798,7 @@ ERRORTYPE VideoIseSetConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_I
             eError = DoVideoIseRemovePort(hComponent, IseChnId);
             if (eError != SUCCESS)
             {
-                aloge("fatal error! why DoVideoIseRemovePort()[0x%x] fail?", eError);
+                LOGE("fatal error! why DoVideoIseRemovePort()[0x%x] fail?", eError);
                 return ERR_ISE_ILLEGAL_PARAM;
             }
             break;
@@ -1810,7 +1810,7 @@ ERRORTYPE VideoIseSetConfig(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP_I
             break;
         }
         default: {
-            aloge("(f:%s, l:%d) unknown Index[0x%x]", __FUNCTION__, __LINE__, nIndex);
+            LOGE("(f:%s, l:%d) unknown Index[0x%x]", __FUNCTION__, __LINE__, nIndex);
             // eError = OMX_ErrorUnsupportedIndex;
             break;
         }
@@ -1827,11 +1827,11 @@ ERRORTYPE VideoIseComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 	VIDEOISEDATATYPE *pVideoIseData = (VIDEOISEDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
 	if (pVideoIseData->state == COMP_StateExecuting)
 	{
-		alogw("Be careful! tunnel request may be some danger in StateExecuting");
+		LOGW("Be careful! tunnel request may be some danger in StateExecuting");
 	}
 	else if(pVideoIseData->state != COMP_StateIdle)
 	{
-		aloge("fatal error! tunnel request can't be in state[0x%x]", pVideoIseData->state);
+		LOGE("fatal error! tunnel request can't be in state[0x%x]", pVideoIseData->state);
 		eError = ERR_ISE_INCORRECT_STATE_OPERATION;
 		goto COMP_CMD_FAIL;
 	}
@@ -1861,7 +1861,7 @@ ERRORTYPE VideoIseComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 	}
 	if(FALSE == bFindFlag)
 	{
-		aloge("(f:%s, l:%d) fatal error! portIndex[%d] wrong!", __FUNCTION__, __LINE__, nPort);
+		LOGE("(f:%s, l:%d) fatal error! portIndex[%d] wrong!", __FUNCTION__, __LINE__, nPort);
 		eError = ERR_ISE_ILLEGAL_PARAM;
 		goto COMP_CMD_FAIL;
 	}
@@ -1886,7 +1886,7 @@ ERRORTYPE VideoIseComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 	}
 	if(FALSE == bFindFlag)
 	{
-		aloge("(f:%s, l:%d) fatal error! portIndex[%d] wrong!", __FUNCTION__, __LINE__, nPort);
+		LOGE("(f:%s, l:%d) fatal error! portIndex[%d] wrong!", __FUNCTION__, __LINE__, nPort);
 		eError = ERR_ISE_ILLEGAL_PARAM;
 		goto COMP_CMD_FAIL;
 	}
@@ -1903,7 +1903,7 @@ ERRORTYPE VideoIseComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 	}
 	if(FALSE == bFindFlag)
 	{
-		aloge("(f:%s, l:%d) fatal error! portIndex[%d] wrong!", __FUNCTION__, __LINE__, nPort);
+		LOGE("(f:%s, l:%d) fatal error! portIndex[%d] wrong!", __FUNCTION__, __LINE__, nPort);
 		eError = ERR_ISE_ILLEGAL_PARAM;
 		goto COMP_CMD_FAIL;
 	}
@@ -1914,7 +1914,7 @@ ERRORTYPE VideoIseComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 	pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
 	if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup)
 	{
-		alogd("(f:%s, l:%d) omx_core cancel setup tunnel on port[%d]", __FUNCTION__, __LINE__, nPort);
+		LOGD("(f:%s, l:%d) omx_core cancel setup tunnel on port[%d]", __FUNCTION__, __LINE__, nPort);
 		eError = SUCCESS;
 		if(pPortDef->eDir == COMP_DirOutput)
 		{
@@ -1930,7 +1930,7 @@ ERRORTYPE VideoIseComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 	{
         if (pVideoIseData->mOutputPortTunnelFlag
                 && pVideoIseData->mOutputPortTunnelEnable[nPort] == 1) {
-            aloge("ISE_Comp outport already bind, why bind again?!");
+            LOGE("ISE_Comp outport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -1943,7 +1943,7 @@ ERRORTYPE VideoIseComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 	{
         if (pVideoIseData->mInputPortTunnelFlag
                 && pVideoIseData->mInputPortTunnelEnable[nPort] == 1) {
-            aloge("ISE_Comp inport already bind, why bind again?!");
+            LOGE("ISE_Comp inport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -1954,7 +1954,7 @@ ERRORTYPE VideoIseComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 		((MM_COMPONENTTYPE*)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
 		if(out_port_def.eDir != COMP_DirOutput)
 		{
-			aloge("(f:%s, l:%d) fatal error! tunnel port index[%d] direction is not output!", __FUNCTION__, __LINE__, nTunneledPort);
+			LOGE("(f:%s, l:%d) fatal error! tunnel port index[%d] direction is not output!", __FUNCTION__, __LINE__, nTunneledPort);
 			eError = ERR_ISE_ILLEGAL_PARAM;
 			goto COMP_CMD_FAIL;
 		}
@@ -1963,7 +1963,7 @@ ERRORTYPE VideoIseComponentTunnelRequest(PARAM_IN COMP_HANDLETYPE hComponent, PA
 		//The component B informs component A about the final result of negotiation.
 		if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
 		{
-			alogw("(f:%s, l:%d) Low probability! use input portIndex[%d] buffer supplier[%d] as final!", __FUNCTION__, __LINE__, nPort, pPortBufSupplier->eBufferSupplier);
+			LOGW("(f:%s, l:%d) Low probability! use input portIndex[%d] buffer supplier[%d] as final!", __FUNCTION__, __LINE__, nPort, pPortBufSupplier->eBufferSupplier);
 			pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
 		}
 		COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -1988,7 +1988,7 @@ ERRORTYPE VideoIseEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
 
     if (pVideoIseData->state != COMP_StateExecuting)
     {
-        alogw("send frame when ise state[0x%x] isn not executing", pVideoIseData->state);
+        LOGW("send frame when ise state[0x%x] isn not executing", pVideoIseData->state);
         return ERR_ISE_SYS_NOTREADY;
     }
     if (TRUE == pVideoIseData->mInputPortTunnelFlag)
@@ -1997,7 +1997,7 @@ ERRORTYPE VideoIseEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
         VIDEO_FRAME_INFO_S *pIseFrame = (VIDEO_FRAME_INFO_S *)pBuffer->pOutputPortPrivate;
         if (NULL == pIseFrame)
         {
-            alogw("ise input ptr is empty.");
+            LOGW("ise input ptr is empty.");
             return -1;
         }
         if (pBuffer->nInputPortIndex == pVideoIseData->sInPortDef[ISE_PORT_INDEX_CAP0_IN].nPortIndex)
@@ -2006,16 +2006,16 @@ ERRORTYPE VideoIseEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
             pthread_mutex_lock(&pVideoIseData->mutex_fifo_ops_lock);
             if (list_empty(&pVideoIseData->mBufQ.mIdleFrameList))
             {
-                alogw("Warning! ISE Chn0 mBufQ idle frame is empty!");
+                LOGW("Warning! ISE Chn0 mBufQ idle frame is empty!");
                 if (pVideoIseData->mBufQ.buf_unused != 0)
                 {
-                    aloge("fatal error! buf_unused must be zero!");
+                    LOGE("fatal error! buf_unused must be zero!");
                 }
                 VideoInYuv *pNode = (VideoInYuv *)malloc(sizeof(VideoInYuv));
                 if (NULL == pNode)
                 {
                     pthread_mutex_unlock(&pVideoIseData->mutex_fifo_ops_lock);
-                    aloge("fatal error! malloc fail!");
+                    LOGE("fatal error! malloc fail!");
                     eError = ERR_ISE_NOMEM;
                     goto ERROR;
                 }
@@ -2036,16 +2036,16 @@ ERRORTYPE VideoIseEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
             pthread_mutex_lock(&pVideoIseData->mutex_fifo_ops_lock);
             if (list_empty(&pVideoIseData->mBufQ.mIdleFrameList1))
             {
-                alogw("Warning! ISE Chn1 mBufQ idle frame is empty!");
+                LOGW("Warning! ISE Chn1 mBufQ idle frame is empty!");
                 if (pVideoIseData->mBufQ.buf_unused1 != 0)
                 {
-                    aloge("fatal error! buf_unused must be zero!");
+                    LOGE("fatal error! buf_unused must be zero!");
                 }
                 VideoInYuv *pNode = (VideoInYuv *)malloc(sizeof(VideoInYuv));
                 if (NULL == pNode)
                 {
                     pthread_mutex_unlock(&pVideoIseData->mutex_fifo_ops_lock);
-                    aloge("fatal error! malloc fail!");
+                    LOGE("fatal error! malloc fail!");
                     eError = ERR_ISE_NOMEM;
                     goto ERROR;
                 }
@@ -2061,7 +2061,7 @@ ERRORTYPE VideoIseEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
             pthread_mutex_unlock(&pVideoIseData->mutex_fifo_ops_lock);
         } else
         {
-            aloge("fatal error! inputPortIndex[%d] match nothing!", pBuffer->nOutputPortIndex);
+            LOGE("fatal error! inputPortIndex[%d] match nothing!", pBuffer->nOutputPortIndex);
         }
     }
     else if (FALSE == pVideoIseData->mInputPortTunnelFlag)
@@ -2070,7 +2070,7 @@ ERRORTYPE VideoIseEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
         VIDEO_FRAME_INFO_S *pIseFrame = (VIDEO_FRAME_INFO_S *)pBuffer->pAppPrivate;
         if (NULL == pIseFrame)
         {
-            alogw("ise input ptr is empty.");
+            LOGW("ise input ptr is empty.");
             return -1;
         }
         VIDEO_FRAME_INFO_S *pIseFrame1 = (VIDEO_FRAME_INFO_S *)pBuffer->pPlatformPrivate;
@@ -2082,16 +2082,16 @@ ERRORTYPE VideoIseEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
         {
             if (list_empty(&pVideoIseData->mBufQ.mIdleFrameList))
             {
-                alogw("Warning! ISE Chn0 mBufQ idle frame is empty!");
+                LOGW("Warning! ISE Chn0 mBufQ idle frame is empty!");
                 if (pVideoIseData->mBufQ.buf_unused != 0)
                 {
-                    aloge("fatal error! buf_unused must be zero!");
+                    LOGE("fatal error! buf_unused must be zero!");
                 }
                 VideoInYuv *pNode = (VideoInYuv *)malloc(sizeof(VideoInYuv));
                 if (NULL == pNode)
                 {
                     pthread_mutex_unlock(&pVideoIseData->mutex_fifo_ops_lock);
-                    aloge("fatal error! malloc fail!");
+                    LOGE("fatal error! malloc fail!");
                     eError = ERR_ISE_NOMEM;
                     goto ERROR;
                 }
@@ -2111,16 +2111,16 @@ ERRORTYPE VideoIseEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
         {
             if (list_empty(&pVideoIseData->mBufQ.mIdleFrameList1))
             {
-                alogw("Warning! ISE Chn1 mBufQ idle frame is empty!");
+                LOGW("Warning! ISE Chn1 mBufQ idle frame is empty!");
                 if (pVideoIseData->mBufQ.buf_unused1 != 0)
                 {
-                    aloge("fatal error! buf_unused1 must be zero!");
+                    LOGE("fatal error! buf_unused1 must be zero!");
                 }
                 VideoInYuv *pNode = (VideoInYuv *)malloc(sizeof(VideoInYuv));
                 if (NULL == pNode)
                 {
                     pthread_mutex_unlock(&pVideoIseData->mutex_fifo_ops_lock);
-                    aloge("fatal error! malloc fail!");
+                    LOGE("fatal error! malloc fail!");
                     eError = ERR_ISE_NOMEM;
                     goto ERROR;
                 }
@@ -2136,7 +2136,7 @@ ERRORTYPE VideoIseEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN 
         }
         /*else
         {
-//            alogv("IseMose : two camera. \r\n");
+//            LOGV("IseMose : two camera. ");
         }*/
         pthread_mutex_unlock(&pVideoIseData->mutex_fifo_ops_lock);
     }
@@ -2204,7 +2204,7 @@ ERRORTYPE VideoIseFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN C
     }
     else
     {
-        aloge("fatal error! no chn, but some ise data no release.");
+        LOGE("fatal error! no chn, but some ise data no release.");
     }
     pthread_mutex_unlock(&pVideoIseData->mMutexChnListLock);
 
@@ -2218,27 +2218,27 @@ ERRORTYPE VideoIseComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     CompInternalMsgType eCmd = Stop;
     message_t msg;
 	int i;
-    alogd("VideoIse Component DeInit");
+    LOGD("VideoIse Component DeInit");
     pVideoIseData = (VIDEOISEDATATYPE *)(((MM_COMPONENTTYPE *)hComponent)->pComponentPrivate);
     int cnt = 0, cnt1=0, cnt2=0;
     struct list_head *pList;
     list_for_each(pList, &pVideoIseData->mBufQ.mIdleFrameList) { cnt++; }
     list_for_each(pList, &pVideoIseData->mBufQ.mIdleFrameList1) { cnt1++; }
-    alogd("cnt = %d,cnt1 = %d,buf_unused = %d,buf_unused1 = %d",
+    LOGD("cnt = %d,cnt1 = %d,buf_unused = %d,buf_unused1 = %d",
             cnt, cnt1,pVideoIseData->mBufQ.buf_unused,pVideoIseData->mBufQ.buf_unused1);
     if (pVideoIseData->mBufQ.buf_unused != cnt) {
-        aloge("fatal error! chn0 inputFrames[%d]<[%d] must return all before!",
+        LOGE("fatal error! chn0 inputFrames[%d]<[%d] must return all before!",
               ISE_FIFO_LEVEL - pVideoIseData->mBufQ.buf_unused, cnt);
     }
     if (pVideoIseData->mBufQ.buf_unused1 != cnt1) {
-        aloge("fatal error! chn1 inputFrames[%d]<[%d] must return all before!",
+        LOGE("fatal error! chn1 inputFrames[%d]<[%d] must return all before!",
               ISE_FIFO_LEVEL - pVideoIseData->mBufQ.buf_unused1, cnt1);
     }
     if (!list_empty(&pVideoIseData->mBufQ.mReadyFrameList)) {
-        aloge("fatal error! why chn0 readyInputFrame is not empty?");
+        LOGE("fatal error! why chn0 readyInputFrame is not empty?");
     }
     if (!list_empty(&pVideoIseData->mBufQ.mReadyFrameList1)) {
-        aloge("fatal error! why chn1 readyInputFrame1 is not empty?");
+        LOGE("fatal error! why chn1 readyInputFrame1 is not empty?");
     }
     pthread_mutex_lock(&pVideoIseData->mutex_fifo_ops_lock);
 	// chn0
@@ -2267,7 +2267,7 @@ ERRORTYPE VideoIseComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pthread_mutex_destroy(&pVideoIseData->mMutexChnListLock);
     msg.command = eCmd;
     put_message(&pVideoIseData->cmd_queue, &msg);
-    alogd("wait VideoISE component exit!...");
+    LOGD("wait VideoISE component exit!...");
     // Wait for thread to exit so we can get the status into "error"
     pthread_join(pVideoIseData->thread_id, (void *)&eError);
     message_destroy(&pVideoIseData->cmd_queue);
@@ -2283,7 +2283,7 @@ ERRORTYPE VideoIseComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         free(pVideoIseData); //fix
     }
 	ion_memClose();
-    alogd("VideoIse component exited!");
+    LOGD("VideoIse component exited!");
 
     return eError;
 }
@@ -2316,7 +2316,7 @@ ERRORTYPE VideoIseComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     for (i = 0; i < ISE_FIFO_LEVEL; i++) {
         VideoInYuv *pNode = (VideoInYuv *)malloc(sizeof(VideoInYuv));
         if (NULL == pNode) {
-            aloge("(f:%s, l:%d) fatal error! malloc fail!", __FUNCTION__, __LINE__);
+            LOGE("(f:%s, l:%d) fatal error! malloc fail!", __FUNCTION__, __LINE__);
             eError = ERR_VENC_NOMEM;
             goto EXIT;
         }
@@ -2333,7 +2333,7 @@ ERRORTYPE VideoIseComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     for (i = 0; i < ISE_FIFO_LEVEL; i++) {
         VideoInYuv *pNode = (VideoInYuv *)malloc(sizeof(VideoInYuv));
         if (NULL == pNode) {
-            aloge("(f:%s, l:%d) fatal error! malloc fail!", __FUNCTION__, __LINE__);
+            LOGE("(f:%s, l:%d) fatal error! malloc fail!", __FUNCTION__, __LINE__);
             eError = ERR_VENC_NOMEM;
             goto EXIT;
         }
@@ -2413,7 +2413,7 @@ ERRORTYPE VideoIseComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
 
     if (message_create(&pVideoIseData->cmd_queue) < 0) {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_VENC_NOMEM;
         goto EXIT;
     }
@@ -2424,7 +2424,7 @@ ERRORTYPE VideoIseComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         eError = ERR_VENC_NOMEM;
         goto EXIT;
     }
-    alogd("VideoISE component Init!");
+    LOGD("VideoISE component Init!");
 EXIT:
     return eError;
 }
@@ -2443,7 +2443,7 @@ static void *VideoIse_ComponentThread(void *pThreadData)
     int omxRet;
     int width = 0, height = 0;
     int result = 0;
-    alogv("VideoISE ComponentThread start run...");
+    LOGV("VideoISE ComponentThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"VISEComp", 0, 0, 0);
     while (1) {
 PROCESS_MESSAGE:
@@ -2451,7 +2451,7 @@ PROCESS_MESSAGE:
             cmd = cmd_msg.command;
             cmddata = (unsigned int)cmd_msg.para0;
 
-            alogv("VideoEnc ComponentThread get_message cmd:%d", cmd);
+            LOGV("VideoEnc ComponentThread get_message cmd:%d", cmd);
 
             if (cmd == SetState)
             {
@@ -2480,25 +2480,25 @@ PROCESS_MESSAGE:
                                                                         COMP_EventError,
                                                                         ERR_VENC_INCORRECT_STATE_TRANSITION, 0, NULL);
                             }
-                            alogd("OMX_StateLoaded begin");
+                            LOGD("OMX_StateLoaded begin");
                             pVideoIseData->state = COMP_StateLoaded;
                             pVideoIseData->pCallbacks->EventHandler(pVideoIseData->hSelf, pVideoIseData->pAppData,
                                                                     COMP_EventCmdComplete, COMP_CommandStateSet,
                                                                     pVideoIseData->state, NULL);
-                            alogd("OMX_StateLoaded ok");
+                            LOGD("OMX_StateLoaded ok");
                             break;
                         }
                         case COMP_StateIdle:
                         {
                             if (pVideoIseData->state == COMP_StateLoaded)
                             {
-                                alogv("video ise: loaded->idle ...");
+                                LOGV("video ise: loaded->idle ...");
                                 // init ise
                                 int ret = 0;
                                 ret = ion_memOpen();
                                 if (ret != 0)
                                 {
-                                    aloge("Open ion failed!");
+                                    LOGE("Open ion failed!");
                                     return (void *)FAILURE;
                                 }
                                 pVideoIseData->state = COMP_StateIdle;
@@ -2509,7 +2509,7 @@ PROCESS_MESSAGE:
                             }
                             else if (pVideoIseData->state == COMP_StatePause || pVideoIseData->state == COMP_StateExecuting)
                             {
-                                alogv("video encoder: pause/executing[0x%x]->idle ...", pVideoIseData->state);
+                                LOGV("video encoder: pause/executing[0x%x]->idle ...", pVideoIseData->state);
                                 pVideoIseData->state = COMP_StateIdle;
 								DoVideoIseResetChannel(pVideoIseData->hSelf);
                                 pVideoIseData->pCallbacks->EventHandler(pVideoIseData->hSelf, pVideoIseData->pAppData,
@@ -2518,7 +2518,7 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                aloge("fatal error! current state[0x%x] can't turn to idle!", pVideoIseData->state);
+                                LOGE("fatal error! current state[0x%x] can't turn to idle!", pVideoIseData->state);
                                 pVideoIseData->pCallbacks->EventHandler(pVideoIseData->hSelf, pVideoIseData->pAppData,
                                                                         COMP_EventError,
                                                                         ERR_VENC_INCORRECT_STATE_TRANSITION, 0, NULL);
@@ -2531,7 +2531,7 @@ PROCESS_MESSAGE:
                             if (pVideoIseData->state == COMP_StateIdle || pVideoIseData->state == COMP_StatePause)
                             {
                                 pVideoIseData->state = COMP_StateExecuting;
-                                alogd("COMP_StateExecuting ok");
+                                LOGD("COMP_StateExecuting ok");
                                 pVideoIseData->pCallbacks->EventHandler(pVideoIseData->hSelf, pVideoIseData->pAppData,
                                                                         COMP_EventCmdComplete, COMP_CommandStateSet,
                                                                         pVideoIseData->state, NULL);
@@ -2584,7 +2584,7 @@ PROCESS_MESSAGE:
 //                int IseChnId = ((IseChnAttr *)cmd_msg.mpData)->mChnId;
 //                eRet = DoVideoIseAddPort(pVideoIseData, IseGrpId, IseChnId, pIseChnAttr);
 //                if (eRet != SUCCESS) {
-//                    aloge("fatal error! why DoVideoIseAddPort fail?,return [0x%x]", eRet);
+//                    LOGE("fatal error! why DoVideoIseAddPort fail?,return [0x%x]", eRet);
 //                    pVideoIseData->pCallbacks->EventHandler(pVideoIseData->hSelf, pVideoIseData->pAppData,
 //                            COMP_EventError, ERR_ISE_ILLEGAL_PARAM, 0, NULL);
 //                    return (void*)ERR_ISE_ILLEGAL_PARAM;
@@ -2602,7 +2602,7 @@ PROCESS_MESSAGE:
 //                eRet = DoVideoIseRemovePort(pVideoIseData, IseChnId);
 //                if (eRet != SUCCESS)
 //                {
-//                    aloge("fatal error! why DoVideoIseRemovePort()[0x%x] fail?", eRet);
+//                    LOGE("fatal error! why DoVideoIseRemovePort()[0x%x] fail?", eRet);
 //                }
 //                free(cmd_msg.mpData);
 //                cmd_msg.mpData = NULL;
@@ -2614,7 +2614,7 @@ PROCESS_MESSAGE:
             {
                 if (0 == pVideoIseData->mNoInputFrameFlag)
                 {
-                    // alogd("BeCareful! noInputFrameFlag already 0");
+                    // LOGD("BeCareful! noInputFrameFlag already 0");
                 }
                 pVideoIseData->mNoInputFrameFlag = 0;
             }
@@ -2695,10 +2695,10 @@ PROCESS_MESSAGE:
                                 height = pVideoIseData->mIseChnAttr.mode_attr.mFish.ise_cfg.out_h[pEntry->mIseChn];
                                 result = ion_flushCache(ise_procout.out_luma_mmu_Addr[pEntry->mIseChn],width*height);
                                 if(result < 0)
-                                        aloge("ion flush cache failed!\n");
+                                        LOGE("ion flush cache failed!");
                                 result = ion_flushCache(ise_procout.out_chroma_u_mmu_Addr[pEntry->mIseChn],((width*height)>>1));
                                 if(result < 0)
-                                        aloge("ion flush cache failed!\n");
+                                        LOGE("ion flush cache failed!");
                             }
                             else
                             {
@@ -2708,17 +2708,17 @@ PROCESS_MESSAGE:
                                 {
                                     cnt++;
                                 }
-                                alogw("idle not exist! ready cnt:%d", cnt);
+                                LOGW("idle not exist! ready cnt:%d", cnt);
                                 cnt = 0;
                                 list_for_each_entry(pTmp, &pEntry->mUsedOutYUVList, mList)
                                 {
                                     cnt++;
                                 }
-                                alogw("idle not exist! used cnt:%d", cnt);*/
+                                LOGW("idle not exist! used cnt:%d", cnt);*/
 
                                 if (!list_empty(&(pEntry->mReadyOutYUVList)))
                                 {
-                                    alogw("Warning! ISE Chn%d idle outlist is empty,move ready list to idle!",pEntry->mIseChn);
+                                    LOGW("Warning! ISE Chn%d idle outlist is empty,move ready list to idle!",pEntry->mIseChn);
                                     pOutReadyBuf[pEntry->mIseChn] = list_first_entry(&(pEntry->mReadyOutYUVList), ISEOutBuf_t, mList);
                                     list_move_tail(&(pOutReadyBuf[pEntry->mIseChn]->mList), &(pEntry->mIdleOutYUVList));
                                     pOutBuf[pEntry->mIseChn] = list_first_entry(&(pEntry->mIdleOutYUVList), ISEOutBuf_t, mList);
@@ -2729,7 +2729,7 @@ PROCESS_MESSAGE:
                                 }
                                 else
                                 {
-                                    alogw("Warning! ISE Chn%d ready outlist is empty !",pEntry->mIseChn);
+                                    LOGW("Warning! ISE Chn%d ready outlist is empty !",pEntry->mIseChn);
                                     // notify user.
                                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode->mInYuv, ISE_PORT_INDEX_CAP0_IN);
                                     // return this frame to this component queue.
@@ -2773,7 +2773,7 @@ PROCESS_MESSAGE:
                         if(frame_num <= 10000 && timeuse > tmp)
                         {
                             tmp = timeuse;
-                            alogw("------>Proc Mo Used Time:%f ms<------\n", tmp);
+                            LOGW("------>Proc Mo Used Time:%f ms<------", tmp);
                         }
                     }
 #endif
@@ -2816,7 +2816,7 @@ PROCESS_MESSAGE:
                 }
                 else
                 {
-                    aloge("fatal error!,ISE Proc Mo failed!,return %#010x",ret_proc);
+                    LOGE("fatal error!,ISE Proc Mo failed!,return %#010x",ret_proc);
                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode->mInYuv, ISE_PORT_INDEX_CAP0_IN);
                     // return this frame to this component queue.
                     pthread_mutex_lock(&pVideoIseData->mutex_fifo_ops_lock);
@@ -2873,16 +2873,16 @@ PROCESS_MESSAGE:
                                 height = pVideoIseData->mIseChnAttr.mode_attr.mDFish.ise_cfg.out_h[pEntry->mIseChn];
                                 result = ion_flushCache(ise_procout.out_luma_mmu_Addr[pEntry->mIseChn],width*height);
                                 if(result < 0)
-                                        aloge("ion flush cache failed!\n");
+                                        LOGE("ion flush cache failed!");
                                 result = ion_flushCache(ise_procout.out_chroma_u_mmu_Addr[pEntry->mIseChn],((width*height)>>1));
                                 if(result < 0)
-                                        aloge("ion flush cache failed!\n");
+                                        LOGE("ion flush cache failed!");
                             }
                             else // reset this bufs
                             {
                                 if (!list_empty(&(pEntry->mReadyOutYUVList)))
                                 {
-                                    alogw("Warning! ISE Chn%d idle outlist is empty,move ready list to idle!",pEntry->mIseChn); //数据取慢了
+                                    LOGW("Warning! ISE Chn%d idle outlist is empty,move ready list to idle!",pEntry->mIseChn); //数据取慢了
                                     pOutReadyBuf[pEntry->mIseChn] = list_first_entry(&(pEntry->mReadyOutYUVList), ISEOutBuf_t, mList);
                                     list_move_tail(&(pOutReadyBuf[pEntry->mIseChn]->mList), &(pEntry->mIdleOutYUVList));
                                     pOutBuf[pEntry->mIseChn] = list_first_entry(&(pEntry->mIdleOutYUVList), ISEOutBuf_t, mList);
@@ -2893,7 +2893,7 @@ PROCESS_MESSAGE:
                                 }
                                 else
                                 {
-                                    alogw("Warning! ISE Chn%d ready outlist is empty !",pEntry->mIseChn);   //数据没有还回来
+                                    LOGW("Warning! ISE Chn%d ready outlist is empty !",pEntry->mIseChn);   //数据没有还回来
                                     // notify user.
                                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode->mInYuv, ISE_PORT_INDEX_CAP0_IN);
                                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode1->mInYuv, ISE_PORT_INDEX_CAP1_IN);
@@ -2937,7 +2937,7 @@ PROCESS_MESSAGE:
                 }
                 else
                 {
-                    aloge("fatal error!No dfish handle mode. Must select dfish handle mode.");
+                    LOGE("fatal error!No dfish handle mode. Must select dfish handle mode.");
                     ret_proc = -1;
                 }
 //#endif
@@ -2945,7 +2945,7 @@ PROCESS_MESSAGE:
 #ifdef VIDEO_TakePicture_Debug_Time
                 gettimeofday(&tpend,NULL);
                 timeuse=(tpend.tv_sec*1000+tpend.tv_usec/1000)-(tpstart.tv_sec*1000+tpstart.tv_usec/1000);
-                alogd("------>Take Picture Used Time:%ld ms<------\n", timeuse);
+                LOGD("------>Take Picture Used Time:%ld ms<------", timeuse);
 #endif
                 pEntry = NULL;
                 if (0 == ret_proc)
@@ -2980,7 +2980,7 @@ PROCESS_MESSAGE:
                 }
                 else
                 {
-                    aloge("fatal error!,ISE Proc Bi failed!,return %x",ret_proc);
+                    LOGE("fatal error!,ISE Proc Bi failed!,return %x",ret_proc);
                     // notify user.
                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode->mInYuv, ISE_PORT_INDEX_CAP0_IN);
                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode1->mInYuv, ISE_PORT_INDEX_CAP1_IN);
@@ -3040,16 +3040,16 @@ PROCESS_MESSAGE:
                                 height = pVideoIseData->mIseChnAttr.mode_attr.mIse.ise_cfg.pano_h;
                                 result = ion_flushCache(ise_procout.pano_luma_mmu_Addr,width*height);
                                 if(result < 0)
-                                        aloge("ion flush cache failed!\n");
+                                        LOGE("ion flush cache failed!");
                                 result = ion_flushCache(ise_procout.pano_chroma_mmu_Addr,((width*height)>>1));
                                 if(result < 0)
-                                        aloge("ion flush cache failed!\n");
+                                        LOGE("ion flush cache failed!");
                             }
                             else // reset this bufs
                             {
                                 if (!list_empty(&(pEntry->mReadyOutYUVList)))
                                 {
-                                    alogw("Warning! ISE Chn%d idle outlist is empty,move ready list to idle!",pEntry->mIseChn);
+                                    LOGW("Warning! ISE Chn%d idle outlist is empty,move ready list to idle!",pEntry->mIseChn);
                                     pOutReadyBuf[pEntry->mIseChn] = list_first_entry(&(pEntry->mReadyOutYUVList), ISEOutBuf_t, mList);
                                     list_move_tail(&(pOutReadyBuf[pEntry->mIseChn]->mList), &(pEntry->mIdleOutYUVList));
                                     pOutBuf[pEntry->mIseChn] = list_first_entry(&(pEntry->mIdleOutYUVList), ISEOutBuf_t, mList);
@@ -3060,7 +3060,7 @@ PROCESS_MESSAGE:
                                 }
                                 else
                                 {
-                                    alogw("Warning! ISE Chn%d ready outlist is empty !",pEntry->mIseChn);
+                                    LOGW("Warning! ISE Chn%d ready outlist is empty !",pEntry->mIseChn);
                                     // notify user.
                                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode->mInYuv, ISE_PORT_INDEX_CAP0_IN);
                                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode1->mInYuv, ISE_PORT_INDEX_CAP1_IN);
@@ -3093,14 +3093,14 @@ PROCESS_MESSAGE:
                                 height = pVideoIseData->mIseChnAttr.mode_attr.mIse.ise_proccfg.scalar_h[pEntry->mIseChn-1];
                                 result = ion_flushCache(ise_procout.scalar_luma_mmu_Addr[pEntry->mIseChn-1],width*height);
                                 if(result < 0)
-                                        aloge("ion flush cache failed!\n");
+                                        LOGE("ion flush cache failed!");
                                 result = ion_flushCache(ise_procout.scalar_chroma_mmu_Addr[pEntry->mIseChn-1],((width*height)>>1));
                                 if(result < 0)
-                                        aloge("ion flush cache failed!\n");
+                                        LOGE("ion flush cache failed!");
                             }
                             else   // reset this bufs
                             {
-                                alogw("Warning! ISE Chn%d idle outlist is empty,move ready list to idle!",pEntry->mIseChn);
+                                LOGW("Warning! ISE Chn%d idle outlist is empty,move ready list to idle!",pEntry->mIseChn);
                                 if (!list_empty(&(pEntry->mReadyOutYUVList)))
                                 {
                                     pOutReadyBuf[pEntry->mIseChn] = list_first_entry(&(pEntry->mReadyOutYUVList), ISEOutBuf_t, mList);
@@ -3113,7 +3113,7 @@ PROCESS_MESSAGE:
                                 }
                                 else
                                 {
-                                    alogw("Warning! ISE Chn%d ready outlist is empty !",pEntry->mIseChn);
+                                    LOGW("Warning! ISE Chn%d ready outlist is empty !",pEntry->mIseChn);
                                     // notify user.
                                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode->mInYuv, ISE_PORT_INDEX_CAP0_IN);
                                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode1->mInYuv, ISE_PORT_INDEX_CAP1_IN);
@@ -3173,7 +3173,7 @@ PROCESS_MESSAGE:
                 }
                 else
                 {
-                    aloge("fatal error!,ISE Proc Sti failed!,return %#010x",ret_proc);
+                    LOGE("fatal error!,ISE Proc Sti failed!,return %#010x",ret_proc);
                     // notify user.
                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode->mInYuv, ISE_PORT_INDEX_CAP0_IN);
                     DoVideoIseSendBackInputFrame(pVideoIseData, &pFrameNode1->mInYuv, ISE_PORT_INDEX_CAP1_IN);
@@ -3244,7 +3244,7 @@ PROCESS_MESSAGE:
                                 }
                                 else
                                 {
-                                    alogw("ISE OutTunnelComp EmptyThisBuffer failed!");
+                                    LOGW("ISE OutTunnelComp EmptyThisBuffer failed!");
                                 }
                             }
                         }
@@ -3256,12 +3256,12 @@ PROCESS_MESSAGE:
         }
         else
         {
-            alogv("ISE ComponentThread not OMX_StateExecuting\n");
+            LOGV("ISE ComponentThread not OMX_StateExecuting");
             TMessage_WaitQueueNotEmpty(&pVideoIseData->cmd_queue, 0);
         }
     }
 
 EXIT:
-    alogv("VideoISE ComponentThread stopped");
+    LOGV("VideoISE ComponentThread stopped");
     return (void *)SUCCESS;
 }

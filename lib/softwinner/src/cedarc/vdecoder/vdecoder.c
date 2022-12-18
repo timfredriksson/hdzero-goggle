@@ -25,7 +25,7 @@
 #include "memoryAdapter.h"
 #include "gralloc_metadata/sunxi_metadata_def.h"
 
-#include <log.h>
+#include <log/log.h>
 #include <cdc_version.h>
 #include <stdio.h>
 
@@ -79,7 +79,7 @@ void update_debug_flag()
 #if DEBUG_SAVE_BITSTREAM
     bSaveStreamFlag = 1;
 #endif
-    logd("save bitstream in data/camera ?  %s.", bSaveStreamFlag? "yes" : "no");
+    LOGD("save bitstream in data/camera ?  %s.", bSaveStreamFlag? "yes" : "no");
 }
 
 int bDynamicShowLogFlag;
@@ -166,7 +166,7 @@ int CheckSbmDataFirstLastFlag(VideoDecoder*        pDecoder,
 static void printfMetaDataInfo(struct sunxi_metadata* pSunxi_metadata)
 {
 
-    logd("metadata--hdr: d_x: %d, %d, %d, d_y: %d, %d, %d, w_x = %d, w_y = %d,\
+    LOGD("metadata--hdr: d_x: %d, %d, %d, d_y: %d, %d, %d, w_x = %d, w_y = %d,\
 maxDML = %d, minDML = %d",
          pSunxi_metadata->hdr_smetada.disp_master.display_primaries_x[0],
          pSunxi_metadata->hdr_smetada.disp_master.display_primaries_x[1],
@@ -178,32 +178,32 @@ maxDML = %d, minDML = %d",
          pSunxi_metadata->hdr_smetada.disp_master.white_point_y,
          pSunxi_metadata->hdr_smetada.disp_master.max_display_mastering_luminance,
          pSunxi_metadata->hdr_smetada.disp_master.min_display_mastering_luminance);
-    logd("metadata--hdr: maxCLL = %d, maxFALL = %d",
+    LOGD("metadata--hdr: maxCLL = %d, maxFALL = %d",
          pSunxi_metadata->hdr_smetada.maximum_content_light_level ,
          pSunxi_metadata->hdr_smetada.maximum_frame_average_light_level);
 
     char* pSignature = (char*)&pSunxi_metadata->afbc_head.signature;
-    logd("metadata-afbc: signature = %c%c%c%c, filehdrSize = %d, version = %d, bodySize = %d",
+    LOGD("metadata-afbc: signature = %c%c%c%c, filehdrSize = %d, version = %d, bodySize = %d",
         pSignature[0],pSignature[1],pSignature[2],pSignature[3],
         pSunxi_metadata->afbc_head.filehdr_size,
         pSunxi_metadata->afbc_head.version,
         pSunxi_metadata->afbc_head.body_size);
-    logd("metadata-afbc: ncomponents = %d, header_layout = %d, yuvTran = %d, blockSplit = %d",
+    LOGD("metadata-afbc: ncomponents = %d, header_layout = %d, yuvTran = %d, blockSplit = %d",
         pSunxi_metadata->afbc_head.ncomponents,
         pSunxi_metadata->afbc_head.header_layout,
         pSunxi_metadata->afbc_head.yuv_transform,
         pSunxi_metadata->afbc_head.block_split);
-    logd("metadata-afbc: inputbits: %d, %d, %d, %d",
+    LOGD("metadata-afbc: inputbits: %d, %d, %d, %d",
         pSunxi_metadata->afbc_head.inputbits[0],
         pSunxi_metadata->afbc_head.inputbits[1],
         pSunxi_metadata->afbc_head.inputbits[2],
         pSunxi_metadata->afbc_head.inputbits[3]);
-    logd("metadata-afbc: block_w = %d, block_h = %d, w = %d, h = %d",
+    LOGD("metadata-afbc: block_w = %d, block_h = %d, w = %d, h = %d",
         pSunxi_metadata->afbc_head.block_width,
         pSunxi_metadata->afbc_head.block_height,
         pSunxi_metadata->afbc_head.width,
         pSunxi_metadata->afbc_head.height);
-    logd("metadata-afbc: left_crop = %d, top_crop = %d, block_layout = %d",
+    LOGD("metadata-afbc: left_crop = %d, top_crop = %d, block_layout = %d",
         pSunxi_metadata->afbc_head.left_crop,
         pSunxi_metadata->afbc_head.top_crop,
         pSunxi_metadata->afbc_head.block_layout);
@@ -219,12 +219,12 @@ VideoDecoder* CreateVideoDecoder(void)
 
     VideoDecoderContext* p;
 
-    logd("CreateVideoDecoder ****");
+    LOGD("CreateVideoDecoder ****");
 
     p = (VideoDecoderContext*)malloc(sizeof(VideoDecoderContext));
     if(p == NULL)
     {
-        loge("memory alloc fail.");
+        LOGE("memory alloc fail.");
         return NULL;
     }
 
@@ -239,12 +239,12 @@ VideoDecoder* CreateVideoDecoder(void)
     p->nIonFd = open("/dev/ion", O_RDONLY, 0);
     if (p->nIonFd <= 0)
     {
-        loge("vdecoder open /dev/ion failed \n");
+        LOGE("vdecoder open /dev/ion failed ");
         free(p);
         return NULL;
     }
 
-    logv("create a video decoder with handle=%p", p);
+    LOGV("create a video decoder with handle=%p", p);
 
     update_debug_flag();
     if(bSaveStreamFlag)
@@ -258,7 +258,7 @@ void DestroyVideoDecoder(VideoDecoder* pDecoder)
     //int bSecureosEn = 0;
     //int bVirMallocSbm = 0;
 
-    logv("DestroyVideoDecoder, pDecoder=%p", pDecoder);
+    LOGV("DestroyVideoDecoder, pDecoder=%p", pDecoder);
 
     p = (VideoDecoderContext*)pDecoder;
 
@@ -271,7 +271,7 @@ void DestroyVideoDecoder(VideoDecoder* pDecoder)
          if(fp != NULL)
          {
              int i;
-             loge(" vdecoder saving frame time. number: %d ", p->debug.nFrameTimeNum);
+             LOGE(" vdecoder saving frame time. number: %d ", p->debug.nFrameTimeNum);
              for(i = 0; i < p->debug.nFrameTimeNum; i++)
              {
                  fprintf(fp, "%u\n", p->debug.pFrameTime[i]);
@@ -280,7 +280,7 @@ void DestroyVideoDecoder(VideoDecoder* pDecoder)
          }
          else
          {
-             loge("vdecoder.c save frame open file error ");
+             LOGE("vdecoder.c save frame open file error ");
          }
          free(p->debug.pFrameTime);
          p->debug.pFrameTime = NULL;
@@ -291,7 +291,7 @@ void DestroyVideoDecoder(VideoDecoder* pDecoder)
          if(fp != NULL)
          {
              int i;
-             loge(" vdecoder saving frame time. number: %d ", p->debug.nFrameTimeNum);
+             LOGE(" vdecoder saving frame time. number: %d ", p->debug.nFrameTimeNum);
              for(i = 0; i < p->debug.nFrameTimeNum; i++)
              {
                  fprintf(fp, "%u\n", p->debug.pDispFrameNum[i]);
@@ -300,7 +300,7 @@ void DestroyVideoDecoder(VideoDecoder* pDecoder)
          }
          else
          {
-             loge("vdecoder.c save frame open file error ");
+             LOGE("vdecoder.c save frame open file error ");
          }
          free(p->debug.pDispFrameNum);
          p->debug.pDispFrameNum = NULL;
@@ -346,7 +346,7 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
         pVconfig->nVeFreq = VE_FREQ_SETTING_VALUE;
     #endif
 
-    logd("*** pVconfig->nVeFreq = %d",pVconfig->nVeFreq);
+    LOGD("*** pVconfig->nVeFreq = %d",pVconfig->nVeFreq);
 
     pVconfig->bSetProcInfoEnable = ENABLE_SET_PROC_INFO;
     pVconfig->nSetProcInfoFreq   = SET_PROC_INFO_FREQ;
@@ -355,13 +355,13 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
     if(pVideoInfo->eCodecFormat > VIDEO_CODEC_FORMAT_MAX ||
         pVideoInfo->eCodecFormat <  VIDEO_CODEC_FORMAT_MIN)
     {
-        loge("codec format(0x%x) invalid.", pVideoInfo->eCodecFormat);
+        LOGE("codec format(0x%x) invalid.", pVideoInfo->eCodecFormat);
         return -1;
     }
 
     if(pVideoInfo->nHeight > 3840 || pVideoInfo->nWidth > 6144)//>6k
     {
-        loge("pVideoInfo->nWidth = %d, pVideoInfo->nHeight = %d unsupported!!",
+        LOGE("pVideoInfo->nWidth = %d, pVideoInfo->nHeight = %d unsupported!!",
              pVideoInfo->nWidth, pVideoInfo->nHeight);
         return VDECODE_RESULT_UNSUPPORTED;
     }
@@ -376,7 +376,7 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
 
         if(nWidth > 0 && (nWidth%pVconfig->nAlignStride) != 0)
         {
-            logw("change nAlignStride from %d to 16, as width of mjpeg decoder just support 16-align",
+            LOGW("change nAlignStride from %d to 16, as width of mjpeg decoder just support 16-align",
                   pVconfig->nAlignStride);
             pVconfig->nAlignStride = 16;
         }
@@ -394,17 +394,16 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
 
     //* print video stream information.
     {
-        logv("Video Stream Information:");
-        logv("     codec          = %s",     /
-            strCodecFormat[pVideoInfo->eCodecFormat - VIDEO_CODEC_FORMAT_MIN]);
-        logv("     width          = %d pixels", pVideoInfo->nWidth);
-        logv("     height         = %d pixels", pVideoInfo->nHeight);
-        logv("     frame rate     = %d",        pVideoInfo->nFrameRate);
-        logv("     frame duration = %d us",     pVideoInfo->nFrameDuration);
-        logv("     aspect ratio   = %d",        pVideoInfo->nAspectRatio);
-        logv("     is 3D stream   = %s",        pVideoInfo->bIs3DStream ? "yes" : "no");
-        logv("     csd data len   = %d",        pVideoInfo->nCodecSpecificDataLen);
-        logv("     bIsFrameCtsTestFlag  = %d",  pVideoInfo->bIsFrameCtsTestFlag);
+        LOGV("Video Stream Information:");
+        LOGV("     codec          = %s",        strCodecFormat[pVideoInfo->eCodecFormat - VIDEO_CODEC_FORMAT_MIN]);
+        LOGV("     width          = %d pixels", pVideoInfo->nWidth);
+        LOGV("     height         = %d pixels", pVideoInfo->nHeight);
+        LOGV("     frame rate     = %d",        pVideoInfo->nFrameRate);
+        LOGV("     frame duration = %d us",     pVideoInfo->nFrameDuration);
+        LOGV("     aspect ratio   = %d",        pVideoInfo->nAspectRatio);
+        LOGV("     is 3D stream   = %s",        pVideoInfo->bIs3DStream ? "yes" : "no");
+        LOGV("     csd data len   = %d",        pVideoInfo->nCodecSpecificDataLen);
+        LOGV("     bIsFrameCtsTestFlag  = %d",  pVideoInfo->bIsFrameCtsTestFlag);
     }
 
     //* save the video stream information.
@@ -429,7 +428,7 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
         if(pMem == NULL)
         {
             p->videoStreamInfo.nCodecSpecificDataLen = 0;
-            loge("memory alloc fail.");
+            LOGE("memory alloc fail.");
             return -1;
         }
 
@@ -440,19 +439,19 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
     if(pVconfig->nDecodeSmoothFrameBufferNum <= 0
        || pVconfig->nDecodeSmoothFrameBufferNum > 16)
     {
-        logw("warning: the nDecodeSmoothFrameBufferNum is %d",
+        LOGW("warning: the nDecodeSmoothFrameBufferNum is %d",
             pVconfig->nDecodeSmoothFrameBufferNum);
     }
     if(pVconfig->nDeInterlaceHoldingFrameBufferNum <= 0
        || pVconfig->nDeInterlaceHoldingFrameBufferNum > 16)
     {
-        logw("warning: the nDeInterlaceHoldingFrameBufferNum is %d",
+        LOGW("warning: the nDeInterlaceHoldingFrameBufferNum is %d",
             pVconfig->nDeInterlaceHoldingFrameBufferNum);
     }
     if(pVconfig->nDisplayHoldingFrameBufferNum <= 0
        || pVconfig->nDisplayHoldingFrameBufferNum > 16)
     {
-        logw("warning: the nDisplayHoldingFrameBufferNum is %d",
+        LOGW("warning: the nDisplayHoldingFrameBufferNum is %d",
             pVconfig->nDisplayHoldingFrameBufferNum);
     }
     if(pVideoInfo->nHeight >= 3840 || pVideoInfo->nWidth >= 5120)//5K
@@ -462,7 +461,7 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
         pVconfig->nVerticalScaleDownRatio = 1;
     }
 
-    //logi("=====enableAfbc = %d, ENABLE_AFBC = %d", pVconfig->bEnableAfbcFlag, ENABLE_AFBC);
+    //LOGI("=====enableAfbc = %d, ENABLE_AFBC = %d", pVconfig->bEnableAfbcFlag, ENABLE_AFBC);
     memcpy(&p->vconfig, pVconfig, sizeof(VConfig));
 
     //* create stream buffer.
@@ -475,7 +474,7 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
     p->pVideoEngine = VideoEngineCreate(&p->vconfig, &p->videoStreamInfo);
     if(p->pVideoEngine == NULL)
     {
-        loge("create video engine fail.");
+        LOGE("create video engine fail.");
         return -1;
     }
 
@@ -504,7 +503,7 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
                (pVideoInfo->nCodecSpecificDataLen >= 7))//the first byte 01, junge one sps or many sps
             {
                  mSbmConfig.nNaluLength = (pVideoInfo->pCodecSpecificData[4]&0x03) + 1;
-                 logv("calculate mSbmConfig->nNaluLength= %d\n",mSbmConfig.nNaluLength);
+                 LOGV("calculate mSbmConfig->nNaluLength= %d",mSbmConfig.nNaluLength);
 			}
 		}
     }
@@ -515,13 +514,13 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
 
     if(p->pSbm[0] == NULL)
     {
-        loge("create stream buffer fail.");
+        LOGE("create stream buffer fail.");
         return -1;
     }
 
     if(SbmInit(p->pSbm[0], &mSbmConfig) != 0)
     {
-        loge(" sbm init failed");
+        LOGE(" sbm init failed");
         //SbmDestroy(p->pSbm[0]);
         p->pSbm[0] = NULL;
         return -1;
@@ -534,12 +533,12 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
         p->pSbm[1] = GetSbmInterface(nSbmType);
         if(p->pSbm[1] == NULL)
         {
-            loge("create stream buffer fail.");
+            LOGE("create stream buffer fail.");
             return -1;
         }
         if(SbmInit(p->pSbm[1], &mSbmConfig) != 0)
         {
-            loge(" sbm init failed");
+            LOGE(" sbm init failed");
             SbmDestroy(p->pSbm[1]);
             p->pSbm[1] = NULL;
             return -1;
@@ -554,7 +553,7 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
         p->debug.pFrameTime  = calloc(1, 4*1024*1024);
         if(p->debug.pFrameTime == NULL)
         {
-             loge(" save frame time calloc error  ");
+             LOGE(" save frame time calloc error  ");
         }
     }
     if(p->debug.pDispFrameNum == NULL)
@@ -562,13 +561,13 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
         p->debug.pDispFrameNum = calloc(1, 4*1024*1024);
         if(p->debug.pDispFrameNum == NULL)
         {
-             loge(" save frame time calloc error  ");
+             LOGE(" save frame time calloc error  ");
         }
     }
 #endif //DEBUG_SAVE_FRAME_TIM
     if(bSaveStreamFlag){
-       logd("%d\n", p->videoStreamInfo.nCodecSpecificDataLen);
-       logd("pts=0\n");
+       LOGD("%d", p->videoStreamInfo.nCodecSpecificDataLen);
+       LOGD("pts=0");
        if(p->videoStreamInfo.nCodecSpecificDataLen > 0)
        {
            fwrite(p->videoStreamInfo.pCodecSpecificData, 1,
@@ -582,12 +581,12 @@ int InitializeVideoDecoder(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo, 
         FILE *fp = fopen(SPECIAL_STREAM_FILE, "ab");
         if(fp == NULL)
         {
-            loge(" make special stream open file error, initial  ");
+            LOGE(" make special stream open file error, initial  ");
         }
         else
         {
             char mask[16] = "awspcialstream";
-            logd(" make special stream save special data size: %d ", \
+            LOGD(" make special stream save special data size: %d ", \
                 pVideoInfo->nCodecSpecificDataLen);
             fwrite(mask, 14, sizeof(char), fp);
             fwrite(&pVideoInfo->eCodecFormat, 1, sizeof(int), fp);
@@ -612,7 +611,7 @@ void ResetVideoDecoder(VideoDecoder* pDecoder)
     int                  i;
     VideoDecoderContext* p;
 
-    logv("ResetVideoDecoder, pDecoder=%p", pDecoder);
+    LOGV("ResetVideoDecoder, pDecoder=%p", pDecoder);
 
     p = (VideoDecoderContext*)pDecoder;
     //Version = VeGetIcVersion();
@@ -664,7 +663,7 @@ int DecoderSetSpecialData(VideoDecoder* pDecoder, void *pArg)
         p->pVideoEngine == NULL ||
         p->pVideoEngine->pDecoderInterface == NULL)
     {
-        loge(" set decoder special data fail ");
+        LOGE(" set decoder special data fail ");
         return VDECODE_RESULT_UNSUPPORTED;
     }
 
@@ -689,7 +688,7 @@ static int decoderSendToDisplayPictureNum(VideoDecoder* pDecoder, int nStreamInd
     {
         if(p->pVideoEngine != NULL)
             pFbm = p->pFbm[nStreamIndex] = VideoEngineGetFbm(p->pVideoEngine, nStreamIndex);
-        logi("Fbm module of video stream %d not create yet, ValidPictureNum() fail.", nStreamIndex);
+        LOGI("Fbm module of video stream %d not create yet, ValidPictureNum() fail.", nStreamIndex);
         return 0;
     }
     return FbmGetDisplayBufferNum(pFbm);
@@ -739,9 +738,9 @@ static void DebugShowExtraTime(float *list, int index)
     if(1)
     {
         float *l = f;
-        logd("time [1-8]: %.3f, %.3f, %.3f, %.3f,  %.3f, %.3f, %.3f, %.3f",
+        LOGD("time [1-8]: %.3f, %.3f, %.3f, %.3f,  %.3f, %.3f, %.3f, %.3f",
                 l[0],l[1],l[2],l[3], l[4],l[5],l[6],l[7]);
-        logd("           [9-16]:  %.3f, %.3f, %.3f, %.3f,  %.3f, %.3f, %.3f, %.3f",
+        LOGD("           [9-16]:  %.3f, %.3f, %.3f, %.3f,  %.3f, %.3f, %.3f, %.3f",
                 l[8],l[9],l[10],l[11],  l[12],l[13],l[14],l[15]);
     }
 }
@@ -760,10 +759,10 @@ static void DebugShowValidPicList(int *list, int index)
     if(1)
     {
         int *l = f;
-        logd(" when decoding the last 16 frame, waiting for display number   ");
-        logd("valid frame [1-8]: %d, %d, %d, %d,  %d, %d, %d, %d",
+        LOGD(" when decoding the last 16 frame, waiting for display number   ");
+        LOGD("valid frame [1-8]: %d, %d, %d, %d,  %d, %d, %d, %d",
                 l[0],l[1],l[2],l[3], l[4],l[5],l[6],l[7]);
-        logd("           [9-16]:  %d, %d, %d, %d,  %d, %d, %d, %d",
+        LOGD("           [9-16]:  %d, %d, %d, %d,  %d, %d, %d, %d",
                 l[8],l[9],l[10],l[11],  l[12],l[13],l[14],l[15]);
     }
 }
@@ -823,7 +822,7 @@ static void DebugDecoderSpeedInfo(VideoDecoder* pDecoder)
     }
     if(fCostTime < 1.0)
     {
-        logd("warning, maybe drop frame enable, cost time: %.2f ms", fCostTime);
+        LOGD("warning, maybe drop frame enable, cost time: %.2f ms", fCostTime);
         return;
     }
     p->debug.nHardwareDuration += nCurrentFrameCostTime;
@@ -853,41 +852,41 @@ static void DebugDecoderSpeedInfo(VideoDecoder* pDecoder)
             if(HardwareCurrFps > p->debug.nMax_hardDecodeFps || p->debug.nMax_hardDecodeFps == 0)
                 p->debug.nMax_hardDecodeFps = HardwareCurrFps;
 
-            logd("hardware speed: avr = %.2f fps, max = %.2f fps, min = %.2f fps",
+            LOGD("hardware speed: avr = %.2f fps, max = %.2f fps, min = %.2f fps",
                   HardwareAvgFps, p->debug.nMax_hardDecodeFps, p->debug.nMin_hardDecodeFps);
 
-            logd("player speed: %.2ffps, \
+            LOGD("player speed: %.2ffps, \
                     average: %.2ffps;slowest frame cost time: %.2f ms; \
                     hardware speed: %.2ffps, average: %.2ffps", \
                     PlayerCurrFps, PlayerAverageFps, p->debug.nMaxCostTime,\
                     HardwareCurrFps, HardwareAvgFps);
-            logv(" 0527 vdecoder hardware speed: %.2f fps, \
+            LOGV(" 0527 vdecoder hardware speed: %.2f fps, \
                     slowest frame cost time: %.2f ms,  average speed: %.2f fps", \
                     HardwareCurrFps, p->debug.nMaxCostTime, HardwareAvgFps);
-            logv(" 0527  vdecoder   player current speed: %.2f fps; player average speed: %.2f fps",
+            LOGV(" 0527  vdecoder   player current speed: %.2f fps; player average speed: %.2f fps",
                     PlayerCurrFps, PlayerAverageFps);
         }
         if(0)
         {
             float *l = p->debug.nCostTimeList;
-            logd("cost most time frame list[1-8]: \
+            LOGD("cost most time frame list[1-8]: \
                     %.2f, %.2f, %.2f, %.2f,  %.2f, %.2f, %.2f, %.2f", \
                     l[0],l[1],l[2],l[3], l[4],l[5],l[6],l[7]);
-            logd("cost most time frame list[9-16]: \
+            LOGD("cost most time frame list[9-16]: \
                     %.2f, %.2f, %.2f, %.2f,  %.2f, %.2f, %.2f, %.2f", \
                     l[8],l[9],l[10],l[11],  l[12],l[13],l[14],l[15]);
-            logd("decoded frame number: %d,  cost time >= 34ms frame number: %d", \
+            LOGD("decoded frame number: %d,  cost time >= 34ms frame number: %d", \
                     p->debug.nFrameNum, p->debug.nThreshHoldNum);
         }
          if(0)
          {
-             logd("current frame cost time: %.3fms last 16 frame extra time:  ", fCostTime);
+             LOGD("current frame cost time: %.3fms last 16 frame extra time:  ", fCostTime);
              DebugShowExtraTime(p->debug.nExtraDecodeTimeList, p->debug.nStartIndexExtra);
-             logd("    last 16 frame decode time: , smooth time: %.3f ", p->debug.nFrameSmoothTime);
+             LOGD("    last 16 frame decode time: , smooth time: %.3f ", p->debug.nFrameSmoothTime);
              p->debug.nFrameSmoothTime = 0;
              DebugShowExtraTime(p->debug.nFrameTimeList, p->debug.nStartIndexExtra);
              DebugShowValidPicList(p->debug.nWaitingForDispPicNum, p->debug.nStartIndexExtra);
-             logd(" ");
+             LOGD(" ");
          }
         p->debug.nDuration = 0;
         p->debug.nHardwareDuration = 0;
@@ -912,7 +911,7 @@ static void checkDynamicShowLogFlag()
     {
         bDynamicShowLogFlag = 0;
     }
-    logv("*** bDynamicShowLogFlag = %d",bDynamicShowLogFlag);
+    LOGV("*** bDynamicShowLogFlag = %d",bDynamicShowLogFlag);
 }
 #endif
 
@@ -925,7 +924,7 @@ int DecodeVideoStream(VideoDecoder* pDecoder,
     int                  ret;
     VideoDecoderContext* p;
 
-    logi("DecodeVideoStream, pDecoder=%p, \
+    LOGI("DecodeVideoStream, pDecoder=%p, \
             bEndOfStream=%d, bDropBFrameIfDelay=%d, nCurrentTimeUs=%lld", \
             pDecoder, bEndOfStream, bDropBFrameIfDelay, nCurrentTimeUs);
 
@@ -968,7 +967,7 @@ int DecodeVideoStream(VideoDecoder* pDecoder,
 
     if(p->videoStreamInfo.bSecureStreamFlagLevel1)
         CdcMemShutdown(p->memops);
-    logv("decode method return %s", strDecodeResult[ret-VDECODE_RESULT_MIN]);
+    LOGV("decode method return %s", strDecodeResult[ret-VDECODE_RESULT_MIN]);
 
 #if AW_VDECODER_SPEED_INFO
     if(ret == VDECODE_RESULT_FRAME_DECODED ||
@@ -1009,7 +1008,7 @@ int GetVideoStreamInfo(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo)
 {
     VideoDecoderContext* p;
 
-    logv("GetVideoStreamInfo, pDecoder=%p, pVideoInfo=%p", pDecoder, pVideoInfo);
+    LOGV("GetVideoStreamInfo, pDecoder=%p, pVideoInfo=%p", pDecoder, pVideoInfo);
 
     p = (VideoDecoderContext*)pDecoder;
 
@@ -1024,15 +1023,14 @@ int GetVideoStreamInfo(VideoDecoder* pDecoder, VideoStreamInfo* pVideoInfo)
 
     //* print video stream information.
     {
-        logi("Video Stream Information:");
-        logi("     codec          = %s", /
-            strCodecFormat[pVideoInfo->eCodecFormat - VIDEO_CODEC_FORMAT_MIN]);
-        logi("     width          = %d pixels", pVideoInfo->nWidth);
-        logi("     height         = %d pixels", pVideoInfo->nHeight);
-        logi("     frame rate     = %d",        pVideoInfo->nFrameRate);
-        logi("     frame duration = %d us",     pVideoInfo->nFrameDuration);
-        logi("     aspect ratio   = %d",        pVideoInfo->nAspectRatio);
-        logi("     is 3D stream   = %s",        pVideoInfo->bIs3DStream ? "yes" : "no");
+        LOGI("Video Stream Information:");
+        LOGI("     codec          = %s", strCodecFormat[pVideoInfo->eCodecFormat - VIDEO_CODEC_FORMAT_MIN]);
+        LOGI("     width          = %d pixels", pVideoInfo->nWidth);
+        LOGI("     height         = %d pixels", pVideoInfo->nHeight);
+        LOGI("     frame rate     = %d",        pVideoInfo->nFrameRate);
+        LOGI("     frame duration = %d us",     pVideoInfo->nFrameDuration);
+        LOGI("     aspect ratio   = %d",        pVideoInfo->nAspectRatio);
+        LOGI("     is 3D stream   = %s",        pVideoInfo->bIs3DStream ? "yes" : "no");
     }
 
     return 0;
@@ -1053,7 +1051,7 @@ int RequestVideoStreamBuffer(VideoDecoder* pDecoder,
     SbmInterface*        pSbm;
     VideoDecoderContext* p;
 
-    logi("RequestVideoStreamBuffer, pDecoder=%p, nRequireSize=%d, nStreamBufIndex=%d",
+    LOGI("RequestVideoStreamBuffer, pDecoder=%p, nRequireSize=%d, nStreamBufIndex=%d",
             pDecoder, nRequireSize, nStreamBufIndex);
 
     p = (VideoDecoderContext*)pDecoder;
@@ -1067,7 +1065,7 @@ int RequestVideoStreamBuffer(VideoDecoder* pDecoder,
 
     if(pSbm == NULL)
     {
-        logw("pSbm of video stream %d is NULL, RequestVideoStreamBuffer fail.", nStreamBufIndex);
+        LOGW("pSbm of video stream %d is NULL, RequestVideoStreamBuffer fail.", nStreamBufIndex);
         return -1;
     }
 
@@ -1081,7 +1079,7 @@ int RequestVideoStreamBuffer(VideoDecoder* pDecoder,
     nRequireSize += p->partialStreamDataInfo[nStreamBufIndex].nLength;
     if(SbmRequestBuffer(pSbm, nRequireSize, &pMem, &nFreeSize) < 0)
     {
-        logi("request stream buffer fail,  \
+        LOGI("request stream buffer fail,  \
                 %d bytes valid data in SBM[%d], total buffer size is %d bytes.",
                 SbmStreamDataSize(pSbm),
                 nStreamBufIndex,
@@ -1093,7 +1091,7 @@ int RequestVideoStreamBuffer(VideoDecoder* pDecoder,
     //* check the free buffer is larger than the partial data we filled before.
     if(nFreeSize <= p->partialStreamDataInfo[nStreamBufIndex].nLength)
     {
-        logi("require stream buffer get %d bytes, \
+        LOGI("require stream buffer get %d bytes, \
                 but this buffer has been filled with partial \
                 frame data of %d bytes before, nStreamBufIndex=%d.",
                 nFreeSize, p->partialStreamDataInfo[nStreamBufIndex].nLength, nStreamBufIndex);
@@ -1120,7 +1118,7 @@ int RequestVideoStreamBuffer(VideoDecoder* pDecoder,
         *pBufSize     = pStreamBufEnd - pStart;
         *ppRingBuf    = SbmBufferAddress(pSbm);
         *pRingBufSize = nFreeSize - *pBufSize;
-        logi("stream buffer %d ring back.", nStreamBufIndex);
+        LOGI("stream buffer %d ring back.", nStreamBufIndex);
     }
 
     return 0;
@@ -1163,7 +1161,7 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
 #if DEBUG_MAKE_SPECIAL_STREAM
     char mask[6] = "awsp";
 #endif
-    logi("SubmitVideoStreamData, pDecoder=%p, pDataInfo=%p, nStreamBufIndex=%d",
+    LOGI("SubmitVideoStreamData, pDecoder=%p, pDataInfo=%p, nStreamBufIndex=%d",
             pDecoder, pDataInfo, nStreamBufIndex);
 
     p = (VideoDecoderContext*)pDecoder;
@@ -1174,7 +1172,7 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
 
     if(pSbm == NULL)
     {
-        logw("pSbm of video stream %d is NULL, SubmitVideoStreamData fail.", nStreamBufIndex);
+        LOGW("pSbm of video stream %d is NULL, SubmitVideoStreamData fail.", nStreamBufIndex);
         return -1;
     }
     if(p->videoStreamInfo.eCodecFormat == VIDEO_CODEC_FORMAT_MJPEG)
@@ -1190,15 +1188,15 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
     {
         if(pPartialStreamDataInfo->nLength != 0)    //* last frame is not complete yet.
         {
-            logv("stream data frame uncomplete.");
+            LOGV("stream data frame uncomplete.");
             if(bSaveStreamFlag){
-                logd("lenth=%d\n", pPartialStreamDataInfo->nLength);
-                logd("pts=%lld\n", (long long int)pPartialStreamDataInfo->nPts);
+                LOGD("lenth=%d", pPartialStreamDataInfo->nLength);
+                LOGD("pts=%lld", (long long int)pPartialStreamDataInfo->nPts);
                 char* pWriteAddr          = SbmBufferWritePointer(pSbm);
                 char* pSbmBufferStartAddr = SbmBufferAddress(pSbm);
                 int   nSbmBufferSize      = SbmBufferSize(pSbm);
                 char* pSbmBufferEndAddr   = pSbmBufferStartAddr + nSbmBufferSize - 1;
-                logv("%p, %p, %p, %d",pWriteAddr, pSbmBufferStartAddr,
+                LOGV("%p, %p, %p, %d",pWriteAddr, pSbmBufferStartAddr,
                                   pSbmBufferEndAddr, nSbmBufferSize);
                 if(pWriteAddr+pPartialStreamDataInfo->nLength <= pSbmBufferEndAddr)
                 {
@@ -1219,11 +1217,11 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
                 FILE *fp = fopen(SPECIAL_STREAM_FILE, "ab");
                 if(fp == NULL)
                 {
-                    loge(" make special stream open file error, save stream ");
+                    LOGE(" make special stream open file error, save stream ");
                 }
                 else
                 {
-                    logd(" make special stream save data size: %d ",
+                    LOGD(" make special stream save data size: %d ",
                         pPartialStreamDataInfo->nLength);
                     char* pWriteAddr          = SbmBufferWritePointer(pSbm);
                     char* pSbmBufferStartAddr = SbmBufferAddress(pSbm);
@@ -1282,7 +1280,7 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
         else
         {
             //* maybe it is a empty frame for MPEG4 decoder from AVI parser.
-            logv("empty stream data frame submitted, pData=%p, nLength=%d",
+            LOGV("empty stream data frame submitted, pData=%p, nLength=%d",
                 pPartialStreamDataInfo->pData, pPartialStreamDataInfo->nLength);
         }
 
@@ -1292,7 +1290,7 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
                 char* pSbmBufferStartAddr = SbmBufferAddress(pSbm);
                 int   nSbmBufferSize      = SbmBufferSize(pSbm);
                 char* pSbmBufferEndAddr   = pSbmBufferStartAddr + nSbmBufferSize - 1;
-                logv("%p, %p, %p, %d",pWriteAddr, pSbmBufferStartAddr,
+                LOGV("%p, %p, %p, %d",pWriteAddr, pSbmBufferStartAddr,
                                   pSbmBufferEndAddr, nSbmBufferSize);
                 if(pWriteAddr+pPartialStreamDataInfo->nLength <= pSbmBufferEndAddr)
                 {
@@ -1305,8 +1303,8 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
                         pPartialStreamDataInfo->nLength- \
                         (pSbmBufferEndAddr-pWriteAddr+1), fpStream);
                 }
-                logd("lenth=%d\n", pPartialStreamDataInfo->nLength);
-                logd("pts=%lld\n", (long long int)pPartialStreamDataInfo->nPts);
+                LOGD("lenth=%d", pPartialStreamDataInfo->nLength);
+                LOGD("pts=%lld", (long long int)pPartialStreamDataInfo->nPts);
             }
 
 #if DEBUG_MAKE_SPECIAL_STREAM
@@ -1315,11 +1313,11 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
                 FILE *fp = fopen(SPECIAL_STREAM_FILE, "ab");
                 if(fp == NULL)
                 {
-                    loge(" make special stream open file error, save stream ");
+                    LOGE(" make special stream open file error, save stream ");
                 }
                 else
                 {
-                    logd(" make special stream save data size: %d ",\
+                    LOGD(" make special stream save data size: %d ",\
                         pPartialStreamDataInfo->nLength);
                     char* pWriteAddr          = SbmBufferWritePointer(pSbm);
                     char* pSbmBufferStartAddr = SbmBufferAddress(pSbm);
@@ -1366,7 +1364,7 @@ int VideoStreamBufferSize(VideoDecoder* pDecoder, int nStreamBufIndex)
 {
     VideoDecoderContext* p = (VideoDecoderContext*)pDecoder;
 
-    logi("VideoStreamBufferSize, nStreamBufIndex=%d", nStreamBufIndex);
+    LOGI("VideoStreamBufferSize, nStreamBufIndex=%d", nStreamBufIndex);
 
     if(p->pSbm[nStreamBufIndex] == NULL)
         return 0;
@@ -1378,7 +1376,7 @@ int VideoStreamDataSize(VideoDecoder* pDecoder, int nStreamBufIndex)
 {
     VideoDecoderContext* p = (VideoDecoderContext*)pDecoder;
 
-    logi("VideoStreamDataSize, nStreamBufIndex=%d", nStreamBufIndex);
+    LOGI("VideoStreamDataSize, nStreamBufIndex=%d", nStreamBufIndex);
 
     if(p->pSbm[nStreamBufIndex] == NULL)
         return 0;
@@ -1390,7 +1388,7 @@ int VideoStreamFrameNum(VideoDecoder* pDecoder, int nStreamBufIndex)
 {
     VideoDecoderContext* p = (VideoDecoderContext*)pDecoder;
 
-    logi("VideoStreamFrameNum, nStreamBufIndex=%d", nStreamBufIndex);
+    LOGI("VideoStreamFrameNum, nStreamBufIndex=%d", nStreamBufIndex);
 
     if(p->pSbm[nStreamBufIndex] == NULL)
         return 0;
@@ -1402,7 +1400,7 @@ void* VideoStreamDataInfoPointer(VideoDecoder* pDecoder, int nStreamBufIndex)
 {
     VideoDecoderContext* p = (VideoDecoderContext*)pDecoder;
 
-    logi("VideoStreamDataSize, nStreamBufIndex=%d", nStreamBufIndex);
+    LOGI("VideoStreamDataSize, nStreamBufIndex=%d", nStreamBufIndex);
 
     if(p->pSbm[nStreamBufIndex] == NULL)
         return NULL;
@@ -1419,7 +1417,7 @@ static void savePicture(VideoDecoderContext* p, VideoPicture* pPicture)
 
         if(pPicture->pData0 == NULL)
         {
-            logw("save picture failed: pPicture->pData0 is null");
+            LOGW("save picture failed: pPicture->pData0 is null");
             return ;
         }
 
@@ -1458,7 +1456,7 @@ static void savePicture(VideoDecoderContext* p, VideoPicture* pPicture)
         fp = fopen(name, "ab");
         if(fp != NULL)
         {
-            logv("saving picture, size: %d x %d, format: %d, count: %d",
+            LOGV("saving picture, size: %d x %d, format: %d, count: %d",
                     pPicture->nWidth, pPicture->nHeight, pPicture->ePixelFormat,
                     p->nSavePicCount);
 
@@ -1474,7 +1472,7 @@ static void savePicture(VideoDecoderContext* p, VideoPicture* pPicture)
         }
         else
         {
-            loge("saving picture failed: open file error, frame number = %d", p->nSavePicCount);
+            LOGE("saving picture failed: open file error, frame number = %d", p->nSavePicCount);
         }
     }
 }
@@ -1486,7 +1484,7 @@ VideoPicture* RequestPicture(VideoDecoder* pDecoder, int nStreamIndex)
     Fbm*                 pFbm;
     VideoPicture*        pPicture;
 
-    logi("RequestPicture, nStreamIndex=%d", nStreamIndex);
+    LOGI("RequestPicture, nStreamIndex=%d", nStreamIndex);
 
     p = (VideoDecoderContext*)pDecoder;
 
@@ -1499,7 +1497,7 @@ VideoPicture* RequestPicture(VideoDecoder* pDecoder, int nStreamIndex)
 
         if(pFbm == NULL)
         {
-            logi("Fbm module of video stream %d not create yet, \
+            LOGI("Fbm module of video stream %d not create yet, \
                 RequestPicture fail.", nStreamIndex);
             return NULL;
         }
@@ -1519,14 +1517,14 @@ VideoPicture* RequestPicture(VideoDecoder* pDecoder, int nStreamIndex)
         printfMetaDataInfo((struct sunxi_metadata*)pPicture->pMetaData);
         #endif
 
-        logv("**** color_primaries = %d, matrix_coeffs = %d",
+        LOGV("**** color_primaries = %d, matrix_coeffs = %d",
              pPicture->colour_primaries,pPicture->matrix_coeffs);
         //* set stream index to the picture, it will be useful when picture returned.
         pPicture->nStreamIndex = nStreamIndex;
 
         //* update video stream information.
         UpdateVideoStreamInfo(p, pPicture);
-        logv("picture w: %d,  h: %d, addr: %x, top: %d, \
+        LOGV("picture w: %d,  h: %d, addr: %x, top: %d, \
                 bottom: %d, left: %d, right: %d, stride: %d", \
                 pPicture->nWidth, pPicture->nHeight, (size_addr)pPicture,
                 pPicture->nTopOffset, pPicture->nBottomOffset,
@@ -1547,7 +1545,7 @@ int ReturnPicture(VideoDecoder* pDecoder, VideoPicture* pPicture)
     int                  nStreamIndex;
     int                  ret;
 
-    logi("ReturnPicture, pPicture=%p", pPicture);
+    LOGI("ReturnPicture, pPicture=%p", pPicture);
 
     p = (VideoDecoderContext*)pDecoder;
 
@@ -1556,7 +1554,7 @@ int ReturnPicture(VideoDecoder* pDecoder, VideoPicture* pPicture)
     nStreamIndex = pPicture->nStreamIndex;
     if(nStreamIndex < 0 || nStreamIndex > 2)
     {
-        loge("invalid stream index(%d), pPicture->nStreamIndex must had been \
+        LOGE("invalid stream index(%d), pPicture->nStreamIndex must had been \
                 changed by someone incorrectly, ReturnPicture fail.", nStreamIndex);
         return -1;
     }
@@ -1564,14 +1562,14 @@ int ReturnPicture(VideoDecoder* pDecoder, VideoPicture* pPicture)
     pFbm = p->pFbm[nStreamIndex];
     if(pFbm == NULL)
     {
-        logw("pFbm is NULL when returning a picture, ReturnPicture fail.");
+        LOGW("pFbm is NULL when returning a picture, ReturnPicture fail.");
         return -1;
     }
 
     ret = FbmReturnPicture(pFbm, pPicture);
     if(ret != 0)
     {
-        logw("FbmReturnPicture return fail,\
+        LOGW("FbmReturnPicture return fail,\
             it means the picture being returned it not one of this FBM.");
     }
 
@@ -1584,7 +1582,7 @@ VideoPicture* NextPictureInfo(VideoDecoder* pDecoder, int nStreamIndex)
     Fbm*                 pFbm;
     VideoPicture*        pPicture;
 
-    logi("RequestPicture, nStreamIndex=%d", nStreamIndex);
+    LOGI("RequestPicture, nStreamIndex=%d", nStreamIndex);
 
     p = (VideoDecoderContext*)pDecoder;
 
@@ -1595,7 +1593,7 @@ VideoPicture* NextPictureInfo(VideoDecoder* pDecoder, int nStreamIndex)
         if(p->pVideoEngine != NULL)
             pFbm = p->pFbm[nStreamIndex] = VideoEngineGetFbm(p->pVideoEngine, nStreamIndex);
 
-        logi("Fbm module of video stream %d not create yet, NextPictureInfo() fail.", nStreamIndex);
+        LOGI("Fbm module of video stream %d not create yet, NextPictureInfo() fail.", nStreamIndex);
         return NULL;
     }
 
@@ -1619,7 +1617,7 @@ int TotalPictureBufferNum(VideoDecoder* pDecoder, int nStreamIndex)
     VideoDecoderContext* p;
     Fbm*                 pFbm;
 
-    logv("TotalPictureBufferNum, nStreamIndex=%d", nStreamIndex);
+    LOGV("TotalPictureBufferNum, nStreamIndex=%d", nStreamIndex);
 
     p    = (VideoDecoderContext*)pDecoder;
     pFbm = p->pFbm[nStreamIndex];
@@ -1629,7 +1627,7 @@ int TotalPictureBufferNum(VideoDecoder* pDecoder, int nStreamIndex)
         if(p->pVideoEngine != NULL)
             pFbm = p->pFbm[nStreamIndex] = VideoEngineGetFbm(p->pVideoEngine, nStreamIndex);
 
-        logi("Fbm module of video stream %d not create yet, \
+        LOGI("Fbm module of video stream %d not create yet, \
             TotalPictureBufferNum() fail.", nStreamIndex);
         return 0;
     }
@@ -1642,7 +1640,7 @@ int EmptyPictureBufferNum(VideoDecoder* pDecoder, int nStreamIndex)
     VideoDecoderContext* p;
     Fbm*                 pFbm;
 
-    logv("EmptyPictureBufferNum, nStreamIndex=%d", nStreamIndex);
+    LOGV("EmptyPictureBufferNum, nStreamIndex=%d", nStreamIndex);
 
     p    = (VideoDecoderContext*)pDecoder;
     pFbm = p->pFbm[nStreamIndex];
@@ -1652,7 +1650,7 @@ int EmptyPictureBufferNum(VideoDecoder* pDecoder, int nStreamIndex)
         if(p->pVideoEngine != NULL)
             pFbm = p->pFbm[nStreamIndex] = VideoEngineGetFbm(p->pVideoEngine, nStreamIndex);
 
-        logi("Fbm module of video stream %d not create yet, \
+        LOGI("Fbm module of video stream %d not create yet, \
             EmptyPictureBufferNum() fail.", nStreamIndex);
         return 0;
     }
@@ -1665,7 +1663,7 @@ int ValidPictureNum(VideoDecoder* pDecoder, int nStreamIndex)
     VideoDecoderContext* p;
     Fbm*                 pFbm;
 
-//    logv("ValidPictureNum, nStreamIndex=%d", nStreamIndex);
+//    LOGV("ValidPictureNum, nStreamIndex=%d", nStreamIndex);
 
     p    = (VideoDecoderContext*)pDecoder;
     pFbm = p->pFbm[nStreamIndex];
@@ -1675,7 +1673,7 @@ int ValidPictureNum(VideoDecoder* pDecoder, int nStreamIndex)
         if(p->pVideoEngine != NULL)
             pFbm = p->pFbm[nStreamIndex] = VideoEngineGetFbm(p->pVideoEngine, nStreamIndex);
 
-        logi("Fbm module of video stream %d not create yet, ValidPictureNum() fail.", nStreamIndex);
+        LOGI("Fbm module of video stream %d not create yet, ValidPictureNum() fail.", nStreamIndex);
         return 0;
     }
 
@@ -1697,12 +1695,12 @@ int ConfigExtraScaleInfo(VideoDecoder* pDecoder, int nWidthTh,
     DecoderInterface *pDecoderInterface;
     p = (VideoDecoderContext*)pDecoder;
 
-    logd("*************config ConfigExtraScaleInfo\n");
+    LOGD("*************config ConfigExtraScaleInfo");
 
     if(p == NULL ||p->pVideoEngine == NULL ||
             p->pVideoEngine->pDecoderInterface == NULL)
     {
-        loge(" set decoder extra scale info fail ");
+        LOGE(" set decoder extra scale info fail ");
         return VDECODE_RESULT_UNSUPPORTED;
     }
     pDecoderInterface = p->pVideoEngine->pDecoderInterface;
@@ -1721,12 +1719,12 @@ int ReopenVideoEngine(VideoDecoder* pDecoder, VConfig* pVConfig, VideoStreamInfo
     VideoDecoderContext* p;
     int                  ret = 0;
 
-    logv("ReopenVideoEngine");
+    LOGV("ReopenVideoEngine");
 
     p = (VideoDecoderContext*)pDecoder;
     if(p->pVideoEngine == NULL)
     {
-        logw("video decoder is not initialized yet, ReopenVideoEngine() fail.");
+        LOGW("video decoder is not initialized yet, ReopenVideoEngine() fail.");
         return -1;
     }
     //* create a video engine again,
@@ -1740,7 +1738,7 @@ int ReopenVideoEngine(VideoDecoder* pDecoder, VConfig* pVConfig, VideoStreamInfo
     ret = VideoEngineReopen(p->pVideoEngine,pVConfig, pStreamInfo);
     if(ret < 0)
     {
-        loge("VideoEngineReopen result is %d\n", ret);
+        LOGE("VideoEngineReopen result is %d", ret);
         return -1;
     }
 
@@ -1758,7 +1756,7 @@ int ReopenVideoEngine(VideoDecoder* pDecoder, VConfig* pVConfig, VideoStreamInfo
         p->videoStreamInfo.pCodecSpecificData = (char*)malloc(pStreamInfo->nCodecSpecificDataLen);
         if(p->videoStreamInfo.pCodecSpecificData == NULL)
         {
-            loge("malloc video codec specific data fail!");
+            LOGE("malloc video codec specific data fail!");
             return -1;
         }
         memcpy(p->videoStreamInfo.pCodecSpecificData,
@@ -1838,7 +1836,7 @@ int RotatePicture(struct ScMemOpsS* memOps,
                 pPictureMid->pData0 = malloc(nMemSizeY+nMemSizeC*2);
                 if(pPictureMid->pData0 == NULL)
                 {
-                    logd("malloc memory for pPictureMid failed\n");
+                    LOGD("malloc memory for pPictureMid failed");
                 }
                 ConvertPixelFormat(pPictureIn, pPictureMid);
                 pOrgPicture = pPictureMid;
@@ -1880,12 +1878,12 @@ VideoPicture* AllocatePictureBuffer(struct ScMemOpsS* memOps,
 
     p = (VideoPicture*)malloc(sizeof(VideoPicture));
 
-    logi("AllocatePictureBuffer, nWidth=%d, nHeight=%d, nLineStride=%d, ePixelFormat=%s",
+    LOGI("AllocatePictureBuffer, nWidth=%d, nHeight=%d, nLineStride=%d, ePixelFormat=%s",
             nWidth, nHeight, nLineStride, strPixelFormat[ePixelFormat]);
 
     if(p == NULL)
     {
-        logw("memory alloc fail, allocate %d bytes in AllocatePictureBuffer()", \
+        LOGW("memory alloc fail, allocate %d bytes in AllocatePictureBuffer()", \
                 (int)sizeof(VideoPicture));
         return NULL;
     }
@@ -1899,7 +1897,7 @@ VideoPicture* AllocatePictureBuffer(struct ScMemOpsS* memOps,
 
     if(FbmAllocatePictureBuffer(memOps, p, &nAlignValue, nWidth, nHeight) != 0)
     {
-        logw("memory alloc fail, FbmAllocatePictureBuffer() fail in AllocatePictureBuffer().");
+        LOGW("memory alloc fail, FbmAllocatePictureBuffer() fail in AllocatePictureBuffer().");
         free(p);
         p = NULL;
     }
@@ -1911,11 +1909,11 @@ int FreePictureBuffer(struct ScMemOpsS* memOps, VideoPicture* pPicture)
 {
     //VideoDecoderContext* p;
 
-    logi("FreePictureBuffer, pPicture=%p", pPicture);
+    LOGI("FreePictureBuffer, pPicture=%p", pPicture);
 
     if(pPicture == NULL)
     {
-        loge("invaid picture, FreePictureBuffer fail.");
+        LOGE("invaid picture, FreePictureBuffer fail.");
         return -1;
     }
 
@@ -1944,7 +1942,7 @@ static int DecideStreamBufferSize(VideoDecoderContext* p)
     if((p->vconfig.nVbvBufferSize>=1*1024*1024) && (p->vconfig.nVbvBufferSize<=32*1024*1024))
     {
         nBufferSize  = p->vconfig.nVbvBufferSize;
-        logd("nBufferSize=%d", nBufferSize);
+        LOGD("nBufferSize=%d", nBufferSize);
         return nBufferSize;
     }
 
@@ -1954,7 +1952,7 @@ static int DecideStreamBufferSize(VideoDecoderContext* p)
         && p->vconfig.nVbvBufferSize)
     {
         nBufferSize = p->vconfig.nVbvBufferSize;
-        logd("nBufferSize=%d", nBufferSize);
+        LOGD("nBufferSize=%d", nBufferSize);
         return nBufferSize;
     }
 
@@ -1997,7 +1995,7 @@ static int DecideStreamBufferSize(VideoDecoderContext* p)
         nBufferSize = 12*1024*1024;
 #endif
 
-    logd("nBufferSize=%d", nBufferSize);
+    LOGD("nBufferSize=%d", nBufferSize);
     return nBufferSize;
 }
 
@@ -2113,7 +2111,7 @@ VideoPicture* SetVideoFbmBufAddress(VideoDecoder* pDecoder,
         struct user_iommu_param sUserIommuBuf;
         #if 0
         int ret;
-        logd("ycy p->nIonFd:%d, pPrivate:%p\n", p->nIonFd, pVideoPicture->pPrivate);
+        LOGD("ycy p->nIonFd:%d, pPrivate:%p", p->nIonFd, pVideoPicture->pPrivate);
         ret = pVideoPicture->nBufFd = CdcIonGetFd(p->nIonFd, (uintptr_t)pVideoPicture->pPrivate);
         if(ret < 0)
             return NULL;
@@ -2223,7 +2221,7 @@ int SetDecodePerformCmd(VideoDecoder* pDecoder, enum EVDECODERSETPERFORMCMD perf
      if(p == NULL ||p->pVideoEngine == NULL ||
           p->pVideoEngine->pDecoderInterface == NULL)
      {
-            loge("SetDecodeDebugCmd fail\n");
+            LOGE("SetDecodeDebugCmd fail");
             return VDECODE_RESULT_UNSUPPORTED;
      }
     //eVersion = VeGetIcVersion();
@@ -2247,7 +2245,7 @@ int GetDecodePerformInfo(VideoDecoder* pDecoder,
      if(p == NULL ||p->pVideoEngine == NULL ||
           p->pVideoEngine->pDecoderInterface == NULL)
      {
-            loge("GetDecodePerformInfo fail\n");
+            LOGE("GetDecodePerformInfo fail");
             return VDECODE_RESULT_UNSUPPORTED;
      }
      pDecoderInterface = p->pVideoEngine->pDecoderInterface;
@@ -2277,7 +2275,7 @@ int VideoDecoderSetFreq(VideoDecoder* pDecoder, int nVeFreq)
     int ret;
     ret = CdcVeSetSpeed(p->vconfig.veOpsS, p->vconfig.pVeOpsSelf, nVeFreq);
     if(ret < 0)
-        loge("VideoDecoderSetFreq %d error, ret is %d\n", nVeFreq, ret);
+        LOGE("VideoDecoderSetFreq %d error, ret is %d", nVeFreq, ret);
 
     return ret;
 }
@@ -2310,7 +2308,7 @@ int CheckSbmDataFirstLastFlag(VideoDecoder*        pDecoder,
 
     if(pSbm == NULL)
     {
-        logw("pSbm of video stream %d is NULL, SubmitVideoStreamData fail.", nStreamBufIndex);
+        LOGW("pSbm of video stream %d is NULL, SubmitVideoStreamData fail.", nStreamBufIndex);
         return -1;
     }
 

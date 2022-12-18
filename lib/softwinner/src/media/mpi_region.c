@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-#include <plat_log.h>
+#include <log/log.h>
 #include <mpi_vi_private.h>
 #include <mpi_venc_private.h>
 #include <mpi_region.h>
@@ -15,7 +15,7 @@
 #define IF_MALLOC_FAIL(ptr) \
     if(NULL == ptr) \
     { \
-        aloge("fatal error! malloc fail! error(%s)", strerror(errno)); \
+        LOGE("fatal error! malloc fail! error(%s)", strerror(errno)); \
         return ERR_RGN_NOMEM; \
     }
 
@@ -57,7 +57,7 @@ ERRORTYPE RegionManager_Construct(void)
     ret = pthread_mutex_init(&gpRegionManager->mLock, NULL);
     if (ret != 0) 
     {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         free(gpRegionManager);
         gpRegionManager = NULL;
         return FAILURE;
@@ -72,7 +72,7 @@ ERRORTYPE RegionManager_Destruct(void)
     {
         if (!list_empty(&gpRegionManager->mRegionList)) 
         {
-            aloge("fatal error! some regions still exist when destroy RegionManager!");
+            LOGE("fatal error! some regions still exist when destroy RegionManager!");
         }
         pthread_mutex_destroy(&gpRegionManager->mLock);
         free(gpRegionManager);
@@ -159,14 +159,14 @@ static RegionInfo* RegionInfo_Construct()
     RegionInfo *pRegion = (RegionInfo*)malloc(sizeof(RegionInfo));
     if(NULL == pRegion)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pRegion, 0, sizeof(RegionInfo));
     int ret = pthread_mutex_init(&pRegion->mLock, NULL);
     if (ret != 0) 
     {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         free(pRegion);
         return NULL;
     }
@@ -181,7 +181,7 @@ static void RegionInfo_Destruct(RegionInfo *pRegion)
     list_for_each(pList, &pRegion->mAttachChnList) { cnt++; }
     if(cnt > 0)
     {
-        aloge("fatal error! region still has [%d] attach channels!", cnt);
+        LOGE("fatal error! region still has [%d] attach channels!", cnt);
     }
     if(pRegion->mBmp.mpData)
     {
@@ -210,13 +210,13 @@ ERRORTYPE RGN_DetachFromChn_l(RegionInfo *pRegion, const MPP_CHN_S *pstChn)
     }
     if(nCnt <= 0)
     {
-        aloge("fatal error! not find chn[%d][%d][%d]?", pstChn->mModId, pstChn->mDevId, pstChn->mChnId);
+        LOGE("fatal error! not find chn[%d][%d][%d]?", pstChn->mModId, pstChn->mDevId, pstChn->mChnId);
         pthread_mutex_unlock(&pRegion->mLock);
         return ERR_RGN_UNEXIST;
     }
     if(nCnt > 1)
     {
-        aloge("fatal error! more [%d]same channel?", nCnt);
+        LOGE("fatal error! more [%d]same channel?", nCnt);
     }
     if(MOD_ID_VIU == pDstChn->mChn.mModId)
     {
@@ -228,7 +228,7 @@ ERRORTYPE RGN_DetachFromChn_l(RegionInfo *pRegion, const MPP_CHN_S *pstChn)
     }
     else
     {
-        aloge("fatal error! impossible moduleType[0x%x]", pstChn->mModId);
+        LOGE("fatal error! impossible moduleType[0x%x]", pstChn->mModId);
     }
     //delete from chnList
     list_del(&pDstChn->mList);
@@ -240,17 +240,17 @@ ERRORTYPE AW_MPI_RGN_Create(RGN_HANDLE Handle, const RGN_ATTR_S *pstRegion)
 {
     if(!(Handle>=0 && Handle <RGN_HANDLE_MAX))
     {
-        aloge("fatal error! invalid RgnHandle[%d]!", Handle);
+        LOGE("fatal error! invalid RgnHandle[%d]!", Handle);
         return ERR_RGN_INVALID_CHNID;
     }
     if(NULL == pstRegion)
     {
-        aloge("fatal error! illegal RGNAttr!");
+        LOGE("fatal error! illegal RGNAttr!");
         return ERR_RGN_ILLEGAL_PARAM;
     }
     if(pstRegion->enType != OVERLAY_RGN && pstRegion->enType != COVER_RGN)
     {
-        aloge("fatal error! illegal rgnType[0x%x]!", pstRegion->enType);
+        LOGE("fatal error! illegal rgnType[0x%x]!", pstRegion->enType);
         return ERR_RGN_ILLEGAL_PARAM;
     }
     pthread_mutex_lock(&gpRegionManager->mLock);
@@ -276,7 +276,7 @@ ERRORTYPE AW_MPI_RGN_Create(RGN_HANDLE Handle, const RGN_ATTR_S *pstRegion)
             {
                 if(nOverlayPixelFmt != pEntry->mRgnAttr.unAttr.stOverlay.mPixelFmt)
                 {
-                    aloge("fatal error! new overlay pixel format[0x%x] is unmatch [0x%x], can't add!", nOverlayPixelFmt, pEntry->mRgnAttr.unAttr.stOverlay.mPixelFmt);
+                    LOGE("fatal error! new overlay pixel format[0x%x] is unmatch [0x%x], can't add!", nOverlayPixelFmt, pEntry->mRgnAttr.unAttr.stOverlay.mPixelFmt);
                     bCanAdd = FALSE;
                 }
                 break;
@@ -304,7 +304,7 @@ ERRORTYPE AW_MPI_RGN_Destroy(RGN_HANDLE Handle)
     ERRORTYPE ret;
     if(!(Handle>=0 && Handle<RGN_HANDLE_MAX))
     {
-        aloge("fatal error! invalid RGN handle[%d]!", Handle);
+        LOGE("fatal error! invalid RGN handle[%d]!", Handle);
         return ERR_RGN_INVALID_CHNID;
     }
     RegionInfo *pRegion;
@@ -322,7 +322,7 @@ ERRORTYPE AW_MPI_RGN_Destroy(RGN_HANDLE Handle)
             RGN_DetachFromChn_l(pRegion, &pEntry->mChn);
             cnt++;
         }
-        alogd("detach region from [%d] channels!", cnt);
+        LOGD("detach region from [%d] channels!", cnt);
     }
     pthread_mutex_unlock(&pRegion->mLock);
     removeRegion(pRegion);
@@ -334,12 +334,12 @@ ERRORTYPE AW_MPI_RGN_GetAttr(RGN_HANDLE Handle, RGN_ATTR_S *pstRegion)
 {
     if(!(Handle>=0 && Handle <RGN_HANDLE_MAX))
     {
-        aloge("fatal error! invalid RgnHandle[%d]!", Handle);
+        LOGE("fatal error! invalid RgnHandle[%d]!", Handle);
         return ERR_RGN_INVALID_CHNID;
     }
     if(NULL == pstRegion)
     {
-        aloge("fatal error! illegal RGNAttr!");
+        LOGE("fatal error! illegal RGNAttr!");
         return ERR_RGN_ILLEGAL_PARAM;
     }
     RegionInfo *pRegion;
@@ -360,12 +360,12 @@ ERRORTYPE AW_MPI_RGN_SetAttr(RGN_HANDLE Handle, const RGN_ATTR_S *pstRegion)
     ERRORTYPE ret = SUCCESS;
     if(!(Handle>=0 && Handle <RGN_HANDLE_MAX))
     {
-        aloge("fatal error! invalid RgnHandle[%d]!", Handle);
+        LOGE("fatal error! invalid RgnHandle[%d]!", Handle);
         return ERR_RGN_INVALID_CHNID;
     }
     if(NULL == pstRegion)
     {
-        aloge("fatal error! illegal RGNAttr!");
+        LOGE("fatal error! illegal RGNAttr!");
         return ERR_RGN_ILLEGAL_PARAM;
     }
     RegionInfo *pRegion;
@@ -378,7 +378,7 @@ ERRORTYPE AW_MPI_RGN_SetAttr(RGN_HANDLE Handle, const RGN_ATTR_S *pstRegion)
     {
         if(pRegion->mbSetBmp)
         {
-            alogw("Be careful! Bitmap will release before set attr!");
+            LOGW("Be careful! Bitmap will release before set attr!");
             if(pRegion->mBmp.mpData)
             {
                 free(pRegion->mBmp.mpData);
@@ -391,7 +391,7 @@ ERRORTYPE AW_MPI_RGN_SetAttr(RGN_HANDLE Handle, const RGN_ATTR_S *pstRegion)
     }
     else
     {
-        alogw("Be careful! region has attach to channel, can't set region attribute!");
+        LOGW("Be careful! region has attach to channel, can't set region attribute!");
         ret = ERR_RGN_BUSY;
     }
     pthread_mutex_unlock(&pRegion->mLock);
@@ -405,7 +405,7 @@ ERRORTYPE AW_MPI_RGN_SetBitMap(RGN_HANDLE Handle, const BITMAP_S *pstBitmap)
     ERRORTYPE ret = SUCCESS;
     if(!(Handle>=0 && Handle <RGN_HANDLE_MAX))
     {
-        aloge("fatal error! invalid RgnHandle[%d]!", Handle);
+        LOGE("fatal error! invalid RgnHandle[%d]!", Handle);
         return ERR_RGN_INVALID_CHNID;
     }
     RegionInfo *pRegion;
@@ -415,29 +415,29 @@ ERRORTYPE AW_MPI_RGN_SetBitMap(RGN_HANDLE Handle, const BITMAP_S *pstBitmap)
     }
     if(OVERLAY_RGN != pRegion->mRgnAttr.enType)
     {
-        aloge("fatal error! RgnType[0x%x] is not overlay!", pRegion->mRgnAttr.enType);
+        LOGE("fatal error! RgnType[0x%x] is not overlay!", pRegion->mRgnAttr.enType);
         return ERR_RGN_NOT_PERM;
     }
     if(NULL == pstBitmap)
     {
-        aloge("fatal error! bitmap can't be NULL!");
+        LOGE("fatal error! bitmap can't be NULL!");
         return ERR_RGN_ILLEGAL_PARAM;
     }
     if(pstBitmap->mPixelFormat != pRegion->mRgnAttr.unAttr.stOverlay.mPixelFmt)
     {
-        aloge("fatal error! bitmap pixFmt[0x%x] != region pixFmt[0x%x]!", pstBitmap->mPixelFormat, pRegion->mRgnAttr.unAttr.stOverlay.mPixelFmt);
+        LOGE("fatal error! bitmap pixFmt[0x%x] != region pixFmt[0x%x]!", pstBitmap->mPixelFormat, pRegion->mRgnAttr.unAttr.stOverlay.mPixelFmt);
         return ERR_RGN_ILLEGAL_PARAM;
     }
     if(pstBitmap->mWidth != pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width || pstBitmap->mHeight != pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height)
     {
-        alogw("Be careful! bitmap size[%dx%d] != region size[%dx%d], need update region size", pstBitmap->mWidth, pstBitmap->mHeight, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height);
+        LOGW("Be careful! bitmap size[%dx%d] != region size[%dx%d], need update region size", pstBitmap->mWidth, pstBitmap->mHeight, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width, pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height);
         pRegion->mRgnAttr.unAttr.stOverlay.mSize.Width = pstBitmap->mWidth;
         pRegion->mRgnAttr.unAttr.stOverlay.mSize.Height = pstBitmap->mHeight;
         //return ERR_RGN_ILLEGAL_PARAM;
     }
     if(pRegion->mbSetBmp)
     {
-        alogv("Be careful! set bmp again!");
+        LOGV("Be careful! set bmp again!");
         if(pRegion->mBmp.mpData)
         {
             free(pRegion->mBmp.mpData);
@@ -471,12 +471,12 @@ ERRORTYPE AW_MPI_RGN_SetBitMap(RGN_HANDLE Handle, const BITMAP_S *pstBitmap)
             }
             else
             {
-                aloge("fatal error! modId[0x%x] don't support attach region!", pAttachChnInfo->mChn.mModId);
+                LOGE("fatal error! modId[0x%x] don't support attach region!", pAttachChnInfo->mChn.mModId);
                 ret = ERR_RGN_ILLEGAL_PARAM;
             }
             cnt++;
         }
-        alogv("update region to [%d] channels!", cnt);
+        LOGV("update region to [%d] channels!", cnt);
     }
     pthread_mutex_unlock(&pRegion->mLock);
     
@@ -488,7 +488,7 @@ ERRORTYPE AW_MPI_RGN_AttachToChn(RGN_HANDLE Handle, const MPP_CHN_S *pstChn, con
     ERRORTYPE ret = SUCCESS;
     if(!(Handle>=0 && Handle <RGN_HANDLE_MAX))
     {
-        aloge("fatal error! invalid RgnHandle[%d]!", Handle);
+        LOGE("fatal error! invalid RgnHandle[%d]!", Handle);
         return ERR_RGN_INVALID_CHNID;
     }
     RegionInfo *pRegion;
@@ -498,7 +498,7 @@ ERRORTYPE AW_MPI_RGN_AttachToChn(RGN_HANDLE Handle, const MPP_CHN_S *pstChn, con
     }
     if(pstChnAttr->enType != pRegion->mRgnAttr.enType)
     {
-        aloge("fatal error! RGN_CHN_ATTR's RGNType[0x%x] != RGN_ATTR's RGNType[0x%x]", pstChnAttr->enType, pRegion->mRgnAttr.enType);
+        LOGE("fatal error! RGN_CHN_ATTR's RGNType[0x%x] != RGN_ATTR's RGNType[0x%x]", pstChnAttr->enType, pRegion->mRgnAttr.enType);
         return ERR_RGN_ILLEGAL_PARAM;
     }
     pthread_mutex_lock(&pRegion->mLock);
@@ -510,7 +510,7 @@ ERRORTYPE AW_MPI_RGN_AttachToChn(RGN_HANDLE Handle, const MPP_CHN_S *pstChn, con
             && pChnEntry->mChn.mDevId == pstChn->mDevId
             && pChnEntry->mChn.mChnId == pstChn->mChnId)
         {
-            alogw("Be careful! attach channel[0x%x][0x%x][0x%x] is exist, can't attach again!", pChnEntry->mChn.mModId, pChnEntry->mChn.mDevId, pChnEntry->mChn.mChnId);
+            LOGW("Be careful! attach channel[0x%x][0x%x][0x%x] is exist, can't attach again!", pChnEntry->mChn.mModId, pChnEntry->mChn.mDevId, pChnEntry->mChn.mChnId);
             bExist = TRUE;
             break;
         }
@@ -538,7 +538,7 @@ ERRORTYPE AW_MPI_RGN_AttachToChn(RGN_HANDLE Handle, const MPP_CHN_S *pstChn, con
     }
     else
     {
-        aloge("fatal error! impossible moduleType[0x%x]", pstChn->mModId);
+        LOGE("fatal error! impossible moduleType[0x%x]", pstChn->mModId);
     }
     //add to list
     if(bAddFlag)
@@ -564,7 +564,7 @@ ERRORTYPE AW_MPI_RGN_DetachFromChn(RGN_HANDLE Handle, const MPP_CHN_S *pstChn)
     ERRORTYPE ret = SUCCESS;
     if(!(Handle>=0 && Handle <RGN_HANDLE_MAX))
     {
-        aloge("fatal error! invalid RgnHandle[%d]!", Handle);
+        LOGE("fatal error! invalid RgnHandle[%d]!", Handle);
         return ERR_RGN_INVALID_CHNID;
     }
     if(NULL == pstChn)
@@ -587,7 +587,7 @@ ERRORTYPE AW_MPI_RGN_SetDisplayAttr(RGN_HANDLE Handle, const MPP_CHN_S *pstChn, 
     ERRORTYPE ret = SUCCESS;
     if(!(Handle>=0 && Handle <RGN_HANDLE_MAX))
     {
-        aloge("fatal error! invalid RgnHandle[%d]!", Handle);
+        LOGE("fatal error! invalid RgnHandle[%d]!", Handle);
         return ERR_RGN_INVALID_CHNID;
     }
     if(NULL == pstChn || NULL == pstChnAttr)
@@ -615,17 +615,17 @@ ERRORTYPE AW_MPI_RGN_SetDisplayAttr(RGN_HANDLE Handle, const MPP_CHN_S *pstChn, 
     }
     if(nCnt <= 0)
     {
-        aloge("fatal error! not find chn[%d][%d][%d]?", pstChn->mModId, pstChn->mDevId, pstChn->mChnId);
+        LOGE("fatal error! not find chn[%d][%d][%d]?", pstChn->mModId, pstChn->mDevId, pstChn->mChnId);
         pthread_mutex_unlock(&pRegion->mLock);
         return ERR_RGN_UNEXIST;
     }
     if(nCnt > 1)
     {
-        aloge("fatal error! more [%d]same channels?", nCnt);
+        LOGE("fatal error! more [%d]same channels?", nCnt);
     }
     if(pDstChn->mRgnChnAttr.enType != pstChnAttr->enType)
     {
-        aloge("fatal error! rgn type [0x%x] != [0x%x]?", pDstChn->mRgnChnAttr.enType, pstChnAttr->enType);
+        LOGE("fatal error! rgn type [0x%x] != [0x%x]?", pDstChn->mRgnChnAttr.enType, pstChnAttr->enType);
         return ERR_RGN_ILLEGAL_PARAM;
     }
     if(MOD_ID_VIU == pDstChn->mChn.mModId)
@@ -646,7 +646,7 @@ ERRORTYPE AW_MPI_RGN_SetDisplayAttr(RGN_HANDLE Handle, const MPP_CHN_S *pstChn, 
     }
     else
     {
-        aloge("fatal error! impossible moduleType[0x%x]", pstChn->mModId);
+        LOGE("fatal error! impossible moduleType[0x%x]", pstChn->mModId);
         ret = ERR_RGN_ILLEGAL_PARAM;
     }
     pthread_mutex_unlock(&pRegion->mLock);
@@ -658,7 +658,7 @@ ERRORTYPE AW_MPI_RGN_GetDisplayAttr(RGN_HANDLE Handle, const MPP_CHN_S *pstChn, 
     ERRORTYPE ret = SUCCESS;
     if(!(Handle>=0 && Handle <RGN_HANDLE_MAX))
     {
-        aloge("fatal error! invalid RgnHandle[%d]!", Handle);
+        LOGE("fatal error! invalid RgnHandle[%d]!", Handle);
         return ERR_RGN_INVALID_CHNID;
     }
     if(NULL == pstChn || NULL == pstChnAttr)
@@ -686,13 +686,13 @@ ERRORTYPE AW_MPI_RGN_GetDisplayAttr(RGN_HANDLE Handle, const MPP_CHN_S *pstChn, 
     }
     if(nCnt <= 0)
     {
-        aloge("fatal error! not find chn[%d][%d][%d]?", pstChn->mModId, pstChn->mDevId, pstChn->mChnId);
+        LOGE("fatal error! not find chn[%d][%d][%d]?", pstChn->mModId, pstChn->mDevId, pstChn->mChnId);
         pthread_mutex_unlock(&pRegion->mLock);
         return ERR_RGN_UNEXIST;
     }
     if(nCnt > 1)
     {
-        aloge("fatal error! more [%d]same channels?", nCnt);
+        LOGE("fatal error! more [%d]same channels?", nCnt);
     }
     *pstChnAttr = pDstChn->mRgnChnAttr;
     pthread_mutex_unlock(&pRegion->mLock);

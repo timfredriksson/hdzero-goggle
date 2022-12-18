@@ -18,7 +18,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "cedarx_outstream_external"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include "cedarx_stream.h"
 //#include <CDX_Recorder.h>
@@ -48,7 +48,7 @@ static void destory_outstream_handle_external(struct cdx_stream_info *stm_info)
 
 int create_outstream_handle_external(struct cdx_stream_info *stm_info, CedarXDataSourceDesc *datasource_desc)
 {
-	//alogd("url:%s fd_desc.fd:%d",datasource_desc->source_url,stm_info->fd_desc.fd);
+	//LOGD("url:%s fd_desc.fd:%d",datasource_desc->source_url,stm_info->fd_desc.fd);
 
 	CdxRecorderWriterCallbackInfo *callback= (CdxRecorderWriterCallbackInfo*)datasource_desc->source_url;
 

@@ -50,7 +50,7 @@ static ChunkT *BuildInitChunk(CdxStreamT *stream)
 
     if(!ret)
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         return NULL;
     }
 
@@ -58,7 +58,7 @@ static ChunkT *BuildInitChunk(CdxStreamT *stream)
     ret->data = malloc(SMOO_SIZE);
     if(!ret->data)
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         free(ret);
         return NULL;
     }
@@ -79,7 +79,7 @@ static AwSstrParserImplT *SstrInit(void)
     p = (AwSstrParserImplT *)malloc(sizeof(AwSstrParserImplT));
     if(!p)
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         return NULL;
     }
     memset(p, 0x00, sizeof(AwSstrParserImplT));
@@ -87,7 +87,7 @@ static AwSstrParserImplT *SstrInit(void)
     p->ismc = (AwIsmcT *)malloc(sizeof(AwIsmcT));
     if(!p->ismc)
     {
-        CDX_LOGE("malloc ismc failed.");
+        LOGE("malloc ismc failed.");
         free(p);
         return NULL;
     }
@@ -103,7 +103,7 @@ static cdx_int32 InitMediaStreams(AwSstrParserImplT *impl)
 
     if(!impl)
     {
-        CDX_LOGE("param is null.");
+        LOGE("param is null.");
         return -1;
     }
 
@@ -112,7 +112,7 @@ static cdx_int32 InitMediaStreams(AwSstrParserImplT *impl)
         impl->mediaStream[i].datasource = malloc(sizeof(CdxDataSourceT));
         if(!impl->mediaStream[i].datasource)
         {
-            CDX_LOGE("malloc failed.");
+            LOGE("malloc failed.");
             return -1;
         }
         memset(impl->mediaStream[i].datasource, 0x00, sizeof(CdxDataSourceT));
@@ -269,7 +269,7 @@ cdx_int32 SmsOpenSegment(AwSstrParserImplT *impl, SmsStreamT *sms)
     QualityLevelT *qlevel = GetQlevel(sms, sms->downloadQlvl);
     if(!qlevel)
     {
-        CDX_LOGE("can not get quality level id=%u", sms->downloadQlvl);
+        LOGE("can not get quality level id=%u", sms->downloadQlvl);
         return -1;
     }
 
@@ -277,7 +277,7 @@ cdx_int32 SmsOpenSegment(AwSstrParserImplT *impl, SmsStreamT *sms)
     chunk = ChunkGet(sms, startTime);
     if(!chunk)
     {
-        CDX_LOGE("get chunk failed.");
+        LOGE("get chunk failed.");
         return -1;
     }
 
@@ -286,10 +286,10 @@ cdx_int32 SmsOpenSegment(AwSstrParserImplT *impl, SmsStreamT *sms)
                                 qlevel->Bitrate, chunk->startTime);
     if(!url)
     {
-        CDX_LOGE("construct url failed.");
+        LOGE("construct url failed.");
         return -1;
     }
-    //CDX_LOGD("xxx url: %s", url);
+    //LOGD("xxx url: %s", url);
 
     impl->mediaStream[EsCatToIndex(impl->prefetchType)].datasource->uri = url;
 
@@ -298,7 +298,7 @@ cdx_int32 SmsOpenSegment(AwSstrParserImplT *impl, SmsStreamT *sms)
                         &impl->statusMutex, &impl->exitFlag, &stream, NULL);
     if(ret < 0)
     {
-        CDX_LOGE("open stream failed. uri:%s", url);
+        LOGE("open stream failed. uri:%s", url);
         return -1;
     }
 
@@ -309,7 +309,7 @@ cdx_int32 SmsOpenSegment(AwSstrParserImplT *impl, SmsStreamT *sms)
 
     if(ret < 0)
     {
-        CDX_LOGE("sms replace stream failed.");
+        LOGE("sms replace stream failed.");
         return -1;
     }
 
@@ -326,19 +326,19 @@ cdx_int32 SmsOpenFirstSegment(AwSstrParserImplT *impl, cdx_int32 index)
     sms = SmsGetStreamByCat(impl->ismc->selectedSt, IndexToEsCat(index));
     if(!sms)
     {
-        CDX_LOGE("no found stream. index=%d", index);
+        LOGE("no found stream. index=%d", index);
         return -1;
     }
 
     chunk = SmsArrayItemAtIndex(sms->chunks, 0);
     impl->ismc->download.lead[index] = chunk->startTime + impl->ismc->timeScale/1000;
-    //* ÏÂÔØÍêÆ¬Ê± ÐèÒª¸üÐÂdownload.lead, ×÷ÎªÏÂÒ»Æ¬µÄstart time
+    //* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¬Ê± ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½download.lead, ï¿½ï¿½Îªï¿½ï¿½Ò»Æ¬ï¿½ï¿½start time
     startTime = impl->ismc->download.lead[index];
 
     QualityLevelT *qlevel = GetQlevel(sms, sms->downloadQlvl);
     if(!qlevel)
     {
-        CDX_LOGE("can not get quality level id=%u", sms->downloadQlvl);
+        LOGE("can not get quality level id=%u", sms->downloadQlvl);
         return -1;
     }
 
@@ -351,10 +351,10 @@ cdx_int32 SmsOpenFirstSegment(AwSstrParserImplT *impl, cdx_int32 index)
                                 chunk->startTime);
     if(!url)
     {
-        CDX_LOGE("construct url failed.");
+        LOGE("construct url failed.");
         return -1;
     }
-    CDX_LOGD("xxx url: %s", url);
+    LOGD("xxx url: %s", url);
 
     impl->mediaStream[index].flag |= SEGMENT_SMS;
     if (impl->ismc->protectSystem == SSTR_PROTECT_PLAYREADY)
@@ -370,7 +370,7 @@ cdx_int32 SmsOpenFirstSegment(AwSstrParserImplT *impl, cdx_int32 index)
                            NULL);
     if(ret < 0)
     {
-        CDX_LOGE("prepare failed.");
+        LOGE("prepare failed.");
         return -1;
     }
 
@@ -388,16 +388,16 @@ static int SmsCallbackProcess(void* pUserData, int eMessageId, void* param)
         case PARSER_NOTIFY_VIDEO_STREAM_CHANGE:
         //case PARSER_NOTIFY_AUDIO_STREAM_CHANGE:
         {
-            CDX_LOGD("PARSER_NOTIFY_VIDEO_STREAM_CHANGE");
+            LOGD("PARSER_NOTIFY_VIDEO_STREAM_CHANGE");
             ret = SetMediaInfo(impl);///SmsSetMediaInfo getmediainfo
             if(ret < 0)
             {
-                CDX_LOGE("SetMediaInfo fail, ret(%d)", ret);
+                LOGE("SetMediaInfo fail, ret(%d)", ret);
             }
             break;
         }
         default:
-            logw("ignore callback message, eMessageId = 0x%x.", eMessageId);
+            LOGW("ignore callback message, eMessageId = 0x%x.", eMessageId);
             return -1;
     }
     impl->callback(impl->pUserData, eMessageId, param);
@@ -439,7 +439,7 @@ static cdx_int32 ConstructCodecSpecificDataForH264(AwSstrParserImplT *impl)
     }
     if(startCodeNum0 == 0)
     {
-        CDX_LOGE("not found startCode0");
+        LOGE("not found startCode0");
         return -1;
     }
     for(i=startCodeNum0; (i+4)<=nAnalyseSize; i++)
@@ -458,11 +458,11 @@ static cdx_int32 ConstructCodecSpecificDataForH264(AwSstrParserImplT *impl)
             break;
         }
     }
-    //CDX_LOGD("index0=%d, index1=%d", index0, index1);
+    //LOGD("index0=%d, index1=%d", index0, index1);
 
     if(startCodeNum1 == 0)
     {
-        CDX_LOGE("not found startCode1");
+        LOGE("not found startCode1");
         return -1;
     }
 
@@ -509,7 +509,7 @@ static cdx_int32 SstrSetMediaInfo(AwSstrParserImplT *impl)
 
 #if BOARD_PLAYREADY_USE_SECUREOS
         if (impl->ismc->protectSystem == SSTR_PROTECT_PLAYREADY) {
-            CDX_LOGV("sstr use secure input buffers!");
+            LOGV("sstr use secure input buffers!");
             pMediaInfo->program[0].flags |= kUseSecureInputBuffers;
         }
 #endif
@@ -525,21 +525,21 @@ static cdx_int32 SstrSetMediaInfo(AwSstrParserImplT *impl)
             case SSTR_FOURCC('W','V','C','1'):
             {
                 pMediaInfo->program[0].video[0].eCodecFormat = VIDEO_CODEC_FORMAT_WMV3;
-                CDX_LOGD("video codec:[%x] VIDEO_CODEC_FORMAT_WMV3", VIDEO_CODEC_FORMAT_WMV3);
+                LOGD("video codec:[%x] VIDEO_CODEC_FORMAT_WMV3", VIDEO_CODEC_FORMAT_WMV3);
                 break;
             }
             case SSTR_FOURCC('A','V','C','1'):
-                CDX_LOGD("AVC1");
+                LOGD("AVC1");
             case SSTR_FOURCC('H','2','6','4'):
             {
                 pMediaInfo->program[0].video[0].eCodecFormat = VIDEO_CODEC_FORMAT_H264;
                 //pMediaInfo->program[0].video[0].bIsFramePackage = 1;
-                CDX_LOGD("video codec:[%x] VIDEO_CODEC_FORMAT_H264", VIDEO_CODEC_FORMAT_H264);
+                LOGD("video codec:[%x] VIDEO_CODEC_FORMAT_H264", VIDEO_CODEC_FORMAT_H264);
                 break;
             }
             default:
             {
-                CDX_LOGW("sms not support fourcc:%d", fourCC);
+                LOGW("sms not support fourcc:%d", fourCC);
                 return -1;
             }
         }
@@ -561,10 +561,10 @@ static cdx_int32 SstrSetMediaInfo(AwSstrParserImplT *impl)
             ret = ConstructCodecSpecificDataForH264(impl);
             if(ret < 0)
             {
-                CDX_LOGE("ConstructCodecSpecificDataForH264 failed.");
+                LOGE("ConstructCodecSpecificDataForH264 failed.");
                 return -1;
             }
-            CDX_LOGD("nExtraDataLen:%d", impl->nExtraDataLen);
+            LOGD("nExtraDataLen:%d", impl->nExtraDataLen);
             pMediaInfo->program[0].video[0].nCodecSpecificDataLen = impl->nExtraDataLen;
             pMediaInfo->program[0].video[0].pCodecSpecificData = (char *)impl->pExtraData;
         }
@@ -574,9 +574,9 @@ static cdx_int32 SstrSetMediaInfo(AwSstrParserImplT *impl)
             pMediaInfo->program[0].video[0].pCodecSpecificData = (char *)impl->codecSpecDataV;
         }
 
-        CDX_LOGV("video, height=%d, width=%d, codecdatalen=%d", qlevel->MaxHeight,qlevel->MaxWidth,
+        LOGV("video, height=%d, width=%d, codecdatalen=%d", qlevel->MaxHeight,qlevel->MaxWidth,
                   pMediaInfo->program[0].video[0].nCodecSpecificDataLen);
-        CDX_LOGV("qlevel->id=%d, qlevel->CodecPrivateData=[%s]", qlevel->id,
+        LOGV("qlevel->id=%d, qlevel->CodecPrivateData=[%s]", qlevel->id,
                   qlevel->CodecPrivateData);
 
         impl->vInfo.videoNum = 1;
@@ -596,7 +596,7 @@ static cdx_int32 SstrSetMediaInfo(AwSstrParserImplT *impl)
             case SSTR_FOURCC('A','A','C','L'):
             {
                 pMediaInfo->program[0].audio[0].eCodecFormat = AUDIO_CODEC_FORMAT_MPEG_AAC_LC;
-                CDX_LOGD("audio codec:[%d] AUDIO_CODEC_FORMAT_MPEG_AAC_LC",
+                LOGD("audio codec:[%d] AUDIO_CODEC_FORMAT_MPEG_AAC_LC",
                          AUDIO_CODEC_FORMAT_MPEG_AAC_LC);
                 break;
             }
@@ -606,13 +606,13 @@ static cdx_int32 SstrSetMediaInfo(AwSstrParserImplT *impl)
             {
                 //*AUDIO_CODEC_FORMAT_WMA_STANDARD or AUDIO_CODEC_FORMAT_WMA_PRO ?
                 pMediaInfo->program[0].audio[0].eCodecFormat = AUDIO_CODEC_FORMAT_WMA_STANDARD;
-                CDX_LOGD("audio codec:[%d] AUDIO_CODEC_FORMAT_WMA_STANDARD",
+                LOGD("audio codec:[%d] AUDIO_CODEC_FORMAT_WMA_STANDARD",
                           AUDIO_CODEC_FORMAT_WMA_STANDARD);
                 break;
             }
             default:
             {
-                CDX_LOGW("sms not support fourcc:%d", fourCC);
+                LOGW("sms not support fourcc:%d", fourCC);
                 return -1;
             }
         }
@@ -638,7 +638,7 @@ static cdx_int32 SstrSetMediaInfo(AwSstrParserImplT *impl)
         {
             pMediaInfo->program[0].audio[0].nCodecSpecificDataLen = qlevel->cbSize;
             pMediaInfo->program[0].audio[0].pCodecSpecificData = (char *)impl->codecSpecDataA + 18;
-            CDX_LOGD("codec specific data size=%d", qlevel->cbSize);
+            LOGD("codec specific data size=%d", qlevel->cbSize);
         }
         else
         {
@@ -647,10 +647,10 @@ static cdx_int32 SstrSetMediaInfo(AwSstrParserImplT *impl)
             pMediaInfo->program[0].audio[0].pCodecSpecificData = (char *)impl->codecSpecDataA;
         }
 
-        CDX_LOGV("audio nChannelNum =%u, nBitsPerSample=%d, nSampleRate=%d, codecdatalen=%d",
+        LOGV("audio nChannelNum =%u, nBitsPerSample=%d, nSampleRate=%d, codecdatalen=%d",
                   qlevel->Channels, qlevel->BitsPerSample,
             qlevel->SamplingRate, pMediaInfo->program[0].audio[0].nCodecSpecificDataLen);
-        CDX_LOGV("audio codecdata[0][1]-[last]:%x %x %x", impl->codecSpecDataA[0],
+        LOGV("audio codecdata[0][1]-[last]:%x %x %x", impl->codecSpecDataA[0],
                   impl->codecSpecDataA[1],
                   impl->codecSpecDataA[strlen(qlevel->CodecPrivateData) / 2 -1]);
     }
@@ -667,14 +667,14 @@ static cdx_int32 SstrSetMediaInfo(AwSstrParserImplT *impl)
         {
             default:
             {
-                CDX_LOGW("sms not support fourcc:%d", fourCC);
+                LOGW("sms not support fourcc:%d", fourCC);
                 return -1;
             }
         }
-        CDX_LOGD("has subtitle...");
+        LOGD("has subtitle...");
     }
 
-    CDX_LOGD("SMS videoNum(%d), audioNum(%d), subtitleNum(%d)", pMediaInfo->program[0].videoNum,
+    LOGD("SMS videoNum(%d), audioNum(%d), subtitleNum(%d)", pMediaInfo->program[0].videoNum,
               pMediaInfo->program[0].audioNum,pMediaInfo->program[0].subtitleNum);
 
     if(impl->ismc->vodDuration)
@@ -684,7 +684,7 @@ static cdx_int32 SstrSetMediaInfo(AwSstrParserImplT *impl)
     }
     else
     {
-        CDX_LOGV("not vod.");
+        LOGV("not vod.");
     }
 
     return 0;
@@ -708,7 +708,7 @@ static int __AwSstrParserInit(CdxParserT *parser)
     if(!impl->ismc->smsStreams || !impl->ismc->selectedSt || !impl->ismc->download.chunks ||
        !impl->ismc->initChunks)
     {
-        CDX_LOGE("new array failed.");
+        LOGE("new array failed.");
         goto err_out;
     }
 
@@ -720,7 +720,7 @@ static int __AwSstrParserInit(CdxParserT *parser)
     ret = CdxParserControl(impl->mediaStream[0].parser, CDX_PSR_CMD_SET_CALLBACK, &cb);
     if(ret < 0)
     {
-        CDX_LOGE("CDX_PSR_CMD_SET_CB fail");
+        LOGE("CDX_PSR_CMD_SET_CB fail");
         goto err_out;
     }
 #endif
@@ -734,7 +734,7 @@ static int __AwSstrParserInit(CdxParserT *parser)
         ret = CdxStreamRead(impl->stream, impl->pIsmcBuffer+readSize, 1024);
         if(ret < 0)
         {
-            CDX_LOGE("read failed.");
+            LOGE("read failed.");
             goto err_out;
         }
         else if(ret == 0)
@@ -749,17 +749,17 @@ static int __AwSstrParserInit(CdxParserT *parser)
     impl->ismcSize = readSize;
     if(impl->ismcSize == 0)
     {
-        CDX_LOGE("manifest size is 0? check...");
+        LOGE("manifest size is 0? check...");
         goto err_out;
     }
 
     impl->ismc = ParseIsmc(impl->pIsmcBuffer, impl->ismcSize, impl->ismc, NULL, 0);
     if(!impl->ismc)
     {
-        CDX_LOGE("parse ismc file failed.");
+        LOGE("parse ismc file failed.");
         goto err_out;
     }
-    CDX_LOGD("parse ismc ok.");
+    LOGD("parse ismc ok.");
 
     if(!impl->ismc->vodDuration)
     {
@@ -796,7 +796,7 @@ static int __AwSstrParserInit(CdxParserT *parser)
             if(qlvl->Bitrate < wanted->Bitrate) //* min: <   max: >
                 wanted = qlvl;
         }
-        CDX_LOGD("wanted->id=%u", wanted->id);
+        LOGD("wanted->id=%u", wanted->id);
         sms->downloadQlvl = wanted->id;
     }
 #endif
@@ -813,11 +813,11 @@ static int __AwSstrParserInit(CdxParserT *parser)
             if(qlvl->Bitrate > wanted->Bitrate) //* min: <   max: >
                 wanted = qlvl;
         }
-        //CDX_LOGD("wanted->id=%u", wanted->id);
+        //LOGD("wanted->id=%u", wanted->id);
         sms->downloadQlvl = wanted->id;
 
         //sms->downloadQlvl = (sms->qlevelNb > 1) ? (sms->qlevelNb/2+1) : (sms->qlevelNb);
-        CDX_LOGD("first video chunk id sms->downloadQlvl=%u", sms->downloadQlvl);
+        LOGD("first video chunk id sms->downloadQlvl=%u", sms->downloadQlvl);
     }
 
 //------------------------------------------------------------------------------------------------>
@@ -825,14 +825,14 @@ static int __AwSstrParserInit(CdxParserT *parser)
     impl->ismc->bws = SmsQueueInit(2);
     if(!impl->ismc->bws)
     {
-        CDX_LOGE("band width init failed.");
+        LOGE("band width init failed.");
         goto err_out;
     }
 
     ChunkT *initChunk = BuildInitChunk(impl->stream);
     if(!initChunk)
     {
-        CDX_LOGE("build init chunk failed.");
+        LOGE("build init chunk failed.");
         goto err_out;
     }
 
@@ -862,7 +862,7 @@ static int __AwSstrParserInit(CdxParserT *parser)
         ret = SmsOpenFirstSegment(impl, 0);
         if(ret < 0)
         {
-            CDX_LOGE("open first video segment failed.");
+            LOGE("open first video segment failed.");
             goto err_out;
         }
         impl->streamPts[0] = 0;
@@ -873,7 +873,7 @@ static int __AwSstrParserInit(CdxParserT *parser)
         ret = SmsOpenFirstSegment(impl, 1);
         if(ret < 0)
         {
-            CDX_LOGE("open first audio segment failed.");
+            LOGE("open first audio segment failed.");
             goto err_out;
         }
         impl->streamPts[1] = 0;
@@ -884,7 +884,7 @@ static int __AwSstrParserInit(CdxParserT *parser)
         ret = SmsOpenFirstSegment(impl, 2);
         if(ret < 0)
         {
-            CDX_LOGE("open first subtitle segment failed.");
+            LOGE("open first subtitle segment failed.");
             goto err_out;
         }
         impl->streamPts[2] = 0;
@@ -894,7 +894,7 @@ static int __AwSstrParserInit(CdxParserT *parser)
     ret = SstrSetMediaInfo(impl);
     if(ret < 0)
     {
-        CDX_LOGE("setMediaInfo failed.");
+        LOGE("setMediaInfo failed.");
         goto err_out;
     }
     impl->mErrno = PSR_OK;
@@ -944,10 +944,10 @@ static cdx_int32 SmsSwitchBandwidth(SmsStreamT *sms, cdx_int64 bandwidth)
         qlevel = SmsArrayItemAtIndex(sms->qlevels, i);
         if(!qlevel)
         {
-            CDX_LOGE("Could no get %uth quality level", i);
+            LOGE("Could no get %uth quality level", i);
             return 0;
         }
-        //logv("id=%u, bitrate=%u", qlevel->id, qlevel->Bitrate);
+        //LOGV("id=%u, bitrate=%u", qlevel->id, qlevel->Bitrate);
         if(qlevel->Bitrate < (bandwidth - bandwidth / 3) &&
                 qlevel->Bitrate > bwCandidate )
         {
@@ -992,14 +992,14 @@ static cdx_int32 __AwSstrParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
 
     if(impl->mStatus != AW_SSTR_IDLE && impl->mStatus != AW_SSTR_PREFETCHED)
     {
-        CDX_LOGW("current status: %d can not prefetch.", impl->mStatus);
+        LOGW("current status: %d can not prefetch.", impl->mStatus);
         impl->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
 
     if(impl->mediaStream[0].eos && impl->mediaStream[1].eos && impl->mediaStream[2].eos)
     {
-        CDX_LOGD("Sms parser end.");
+        LOGD("Sms parser end.");
         impl->mErrno = PSR_EOS;
         return -1;
     }
@@ -1013,7 +1013,7 @@ static cdx_int32 __AwSstrParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     pthread_mutex_lock(&impl->statusMutex);
     if(impl->exitFlag)
     {
-        CDX_LOGD("exit prefetch.");
+        LOGD("exit prefetch.");
         pthread_mutex_unlock(&impl->statusMutex);
         return -1;
     }
@@ -1049,13 +1049,13 @@ static cdx_int32 __AwSstrParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             SmsStreamT *sms = SmsGetStreamByCat(impl->ismc->selectedSt, impl->prefetchType);
             cdx_int32 index = EsCatToIndex(impl->prefetchType);
             cdx_int64 startTime = (cdx_int64)impl->ismc->download.lead[index];
-            CDX_LOGD("index=%d, startTime=%lld", index, startTime);
+            LOGD("index=%d, startTime=%lld", index, startTime);
 
             ChunkT *chunk;
             chunk = ChunkGet(sms, startTime);
             if(!chunk)
             {
-                CDX_LOGE("get chunk failed.");
+                LOGE("get chunk failed.");
                 goto err_out;
             }
             SmsArrayAppend(impl->ismc->download.chunks, chunk);
@@ -1072,31 +1072,31 @@ NEXT_SEGMENT:
             if (CdxParserControl(impl->mediaStream[EsCatToIndex(impl->prefetchType)].parser,
                                  CDX_PSR_CMD_GET_CACHESTATE, &cacheState) < 0)
             {
-                CDX_LOGE("CDX_PSR_CMD_GET_CACHESTATE failed.");
+                LOGE("CDX_PSR_CMD_GET_CACHESTATE failed.");
             }
             cdx_uint32 newQlevelId = SmsSwitchBandwidth(sms, cacheState.nBandwidthKbps*1000);
             QualityLevelT *newQlevel = GetQlevel(sms, newQlevelId);
             if(!newQlevel)
             {
-                CDX_LOGE("Could not get quality level id %u", newQlevelId);
+                LOGE("Could not get quality level id %u", newQlevelId);
                 goto err_out;
             }
-            CDX_LOGV("newQlevelId=%u, newQlevel->Bitrate=%u, cacheState.nBandwidthKbps=%d kbps",
+            LOGV("newQlevelId=%u, newQlevel->Bitrate=%u, cacheState.nBandwidthKbps=%d kbps",
                       newQlevelId, newQlevel->Bitrate, cacheState.nBandwidthKbps);
             QualityLevelT *qlevel = GetQlevel(sms, sms->downloadQlvl);
             if(!qlevel)
             {
-                CDX_LOGE("Could not get quality level id %u", sms->downloadQlvl);
+                LOGE("Could not get quality level id %u", sms->downloadQlvl);
                 goto err_out;
             }
             if(newQlevel->Bitrate != qlevel->Bitrate)
             {
-                CDX_LOGD("Now switch bandwidth to: %u", newQlevel->Bitrate);
+                LOGD("Now switch bandwidth to: %u", newQlevel->Bitrate);
                 sms->downloadQlvl = newQlevelId;
                 ret = SstrSetMediaInfo(impl);
                 if(ret < 0)
                 {
-                    CDX_LOGE("set media info failed.");
+                    LOGE("set media info failed.");
                     goto err_out;
                 }
                 impl->infoVersionV++; //* switch bandwidth, notity
@@ -1105,7 +1105,7 @@ NEXT_SEGMENT:
                 {
                     impl->bAddExtradata = 1;
                     nExtraDataLen = impl->mediaInfo.program[0].video[0].nCodecSpecificDataLen;
-                    CDX_LOGD("nExtraDataLen=%d", nExtraDataLen);
+                    LOGD("nExtraDataLen=%d", nExtraDataLen);
                     impl->nExtraDataLen = nExtraDataLen;
                 }
 
@@ -1121,7 +1121,7 @@ NEXT_SEGMENT:
                 ret = SmsOpenSegment(impl, sms);
                 if(ret < 0)
                 {
-                    CDX_LOGE("open segment failed. eos?");
+                    LOGE("open segment failed. eos?");
                     //impl->mErrno = PSR_UNKNOWN_ERR;
                     impl->mErrno = PSR_EOS;
                     goto err_out;
@@ -1137,11 +1137,11 @@ NEXT_SEGMENT:
                     }
                     else
                     {
-                        CDX_LOGE("demux->fpVideoStream == NULL");
+                        LOGE("demux->fpVideoStream == NULL");
                     }
                 }
 #endif
-                CDX_LOGD("cur estimate bitrate: %d, new qlevel->bitrate: %u, qlevel->Bitrate: %u",
+                LOGD("cur estimate bitrate: %d, new qlevel->bitrate: %u, qlevel->Bitrate: %u",
                           cacheState.nBandwidthKbps*1000, newQlevel->Bitrate, qlevel->Bitrate);
 //                return 0;
             }
@@ -1151,7 +1151,7 @@ NEXT_SEGMENT:
             ret = SmsOpenSegment(impl, sms);
             if(ret < 0)
             {
-                CDX_LOGE("open segment failed. eos?");
+                LOGE("open segment failed. eos?");
                 //impl->mErrno = PSR_UNKNOWN_ERR;
                 impl->mErrno = PSR_EOS;
                 goto err_out;
@@ -1168,11 +1168,11 @@ NEXT_SEGMENT:
                                                               impl->prefetchType)].parser);
                 if(mErrno == PSR_EOS)
                 {
-                    CDX_LOGV("eos, download next segment.");
+                    LOGV("eos, download next segment.");
                     impl->bAddExtradata = 0;
                     goto NEXT_SEGMENT;
                 }
-                CDX_LOGE("prefetch failed, ret(%d)", ret);
+                LOGE("prefetch failed, ret(%d)", ret);
                 impl->mErrno = PSR_UNKNOWN_ERR;
                 goto err_out;
             }
@@ -1181,7 +1181,7 @@ NEXT_SEGMENT:
         else
         {
             impl->mErrno = mErrno;
-            CDX_LOGE("prefetch failed, mErrno(%d)", mErrno);
+            LOGE("prefetch failed, mErrno(%d)", mErrno);
             goto err_out;
         }
     }
@@ -1254,7 +1254,7 @@ static cdx_int32 ConstructExtraDataH264(AwSstrParserImplT *impl)
     }
     if(startCodeNum0 == 0)
     {
-        CDX_LOGE("not found startCode0");
+        LOGE("not found startCode0");
         return -1;
     }
     for(i=startCodeNum0; (i+4)<=nAnalyseSize; i++)
@@ -1273,11 +1273,11 @@ static cdx_int32 ConstructExtraDataH264(AwSstrParserImplT *impl)
             break;
         }
     }
-    //CDX_LOGD("index0=%d, index1=%d", index0, index1);
+    //LOGD("index0=%d, index1=%d", index0, index1);
 
     if(startCodeNum1 == 0)
     {
-        CDX_LOGE("not found startCode1");
+        LOGE("not found startCode1");
         return -1;
     }
 
@@ -1309,7 +1309,7 @@ static cdx_int32 __AwSstrParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
     if(impl->mStatus != AW_SSTR_PREFETCHED)
     {
-        CDX_LOGW("status(%d) is not AW_SSTR_PREFETCHED", impl->mStatus);
+        LOGW("status(%d) is not AW_SSTR_PREFETCHED", impl->mStatus);
         impl->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -1350,7 +1350,7 @@ static cdx_int32 __AwSstrParserRead(CdxParserT *parser, CdxPacketT *pkt)
             ret = ConstructExtraDataH264(impl);
             if(ret < 0)
             {
-                CDX_LOGE("ConstructExtraDataH264 failed.");
+                LOGE("ConstructExtraDataH264 failed.");
                 goto out;
             }
 
@@ -1370,7 +1370,7 @@ static cdx_int32 __AwSstrParserRead(CdxParserT *parser, CdxPacketT *pkt)
         tempBuf = malloc(pkt->length);
         if(!tempBuf)
         {
-            CDX_LOGE("malloc failed.");
+            LOGE("malloc failed.");
             impl->mStatus = AW_SSTR_IDLE;
             return -1;
         }
@@ -1388,7 +1388,7 @@ static cdx_int32 __AwSstrParserRead(CdxParserT *parser, CdxPacketT *pkt)
         ret = CdxParserRead(impl->mediaStream[EsCatToIndex(impl->prefetchType)].parser, &packet);
         if(ret < 0)
         {
-            CDX_LOGE("read failed.");
+            LOGE("read failed.");
             impl->mStatus = AW_SSTR_IDLE;
             return -1;
         }
@@ -1423,11 +1423,11 @@ static cdx_int32 __AwSstrParserRead(CdxParserT *parser, CdxPacketT *pkt)
         }
         else
         {
-            CDX_LOGE("demux->fpVideoStream == NULL");
+            LOGE("demux->fpVideoStream == NULL");
         }
     }
 #endif
-    //CDX_LOGD("sstr read,type=%d, pkt buflen=%d, pkt->duration=%lld, pkt->length=%d,
+    //LOGD("sstr read,type=%d, pkt buflen=%d, pkt->duration=%lld, pkt->length=%d,
               //pkt->pts=%lld", pkt->type, pkt->buflen, pkt->duration, pkt->length, pkt->pts);
 out:
     impl->mStatus = AW_SSTR_IDLE;
@@ -1441,7 +1441,7 @@ static cdx_int32 AwSstrParserForceStop(CdxParserT *parser)
 
     if(impl->mStatus < AW_SSTR_IDLE)
     {
-        CDX_LOGW("status(%d) < AW_SSTR_IDLE", impl->mStatus);
+        LOGW("status(%d) < AW_SSTR_IDLE", impl->mStatus);
         impl->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -1486,7 +1486,7 @@ static cdx_int32 AwSstrParserClrForceStop(CdxParserT *parser)
 
     if(impl->mStatus != AW_SSTR_IDLE)
     {
-        CDX_LOGW("status(%d) != AW_SSTR_IDLE", impl->mStatus);
+        LOGW("status(%d) != AW_SSTR_IDLE", impl->mStatus);
         impl->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -1523,7 +1523,7 @@ static cdx_int32 __AwSstrParserControl(CdxParserT *parser, cdx_int32 cmd, void *
         case CDX_PSR_CMD_SWITCH_AUDIO:
         case CDX_PSR_CMD_SWITCH_SUBTITLE:
         {
-            CDX_LOGW("sms is not support switch stream yet.");
+            LOGW("sms is not support switch stream yet.");
             break;
         }
         case CDX_PSR_CMD_SET_FORCESTOP:
@@ -1548,7 +1548,7 @@ static cdx_int32 __AwSstrParserControl(CdxParserT *parser, cdx_int32 cmd, void *
         }
         default:
         {
-            CDX_LOGW("cmd(%d) not support.", cmd);
+            LOGW("cmd(%d) not support.", cmd);
             break;
         }
     }
@@ -1564,7 +1564,7 @@ static cdx_int32 __AwSstrParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *p
 
     if(impl->mStatus < AW_SSTR_IDLE)
     {
-        CDX_LOGW("status(%d) < AW_SSTR_IDLE", impl->mStatus);
+        LOGW("status(%d) < AW_SSTR_IDLE", impl->mStatus);
         impl->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -1601,14 +1601,14 @@ cdx_int32 SstrParserSeekTo(AwSstrParserImplT *impl, cdx_int64 timeMs, cdx_int32 
     sms = SmsGetStreamByCat(impl->ismc->selectedSt, IndexToEsCat(index));
     if(!sms)
     {
-        CDX_LOGE("no found stream. index=%d", index);
+        LOGE("no found stream. index=%d", index);
         return -1;
     }
 
     chunk = ChunkGet(sms, timeMs /1000 * impl->ismc->timeScale);
     if(!chunk)
     {
-        CDX_LOGE("get chunk failed.");
+        LOGE("get chunk failed.");
         return -1;
     }
 
@@ -1617,11 +1617,11 @@ cdx_int32 SstrParserSeekTo(AwSstrParserImplT *impl, cdx_int64 timeMs, cdx_int32 
     ret = SmsOpenSegment(impl, sms);
     if(ret < 0)
     {
-        CDX_LOGE("open segment failed.");
+        LOGE("open segment failed.");
         return -1;
     }
     impl->streamPts[index] = chunk->startTime / impl->ismc->timeScale * 1000000;
-    //CDX_LOGD("want to seek to timeMs=%lld, seek to %lld ms, index=%d",
+    //LOGD("want to seek to timeMs=%lld, seek to %lld ms, index=%d",
               //timeMs, impl->streamPts[index] / 1000, index);
 
 #if 1
@@ -1630,7 +1630,7 @@ cdx_int32 SstrParserSeekTo(AwSstrParserImplT *impl, cdx_int64 timeMs, cdx_int32 
                           seekModeType);
     if(ret < 0)
     {
-        CDX_LOGE("xxx seekto failed.");
+        LOGE("xxx seekto failed.");
         return -1;
     }
 #endif
@@ -1651,24 +1651,24 @@ static cdx_int32 __AwSstrParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, Seek
     if(impl->exitFlag)
     {
         impl->mErrno = PSR_USER_CANCEL;
-        CDX_LOGW("PSR_USER_CANCEL");
+        LOGW("PSR_USER_CANCEL");
         pthread_mutex_unlock(&impl->statusMutex);
         return -1;
     }
     impl->mStatus = AW_SSTR_SEEKING;
     pthread_mutex_unlock(&impl->statusMutex);
 
-    //CDX_LOGV("xxx seekto %lld ms", timeMs);
+    //LOGV("xxx seekto %lld ms", timeMs);
     if(!impl->ismc->vodDuration || impl->ismc->bLive)
     {
-        CDX_LOGW("live stream?");
+        LOGW("live stream?");
         impl->mStatus = AW_SSTR_IDLE;
         return -1;
     }
 
     if(timeMs < 0)
     {
-        CDX_LOGE("Bad timeMs. timeMs = %lld, totalTime = %llu", timeMs, impl->ismc->vodDuration);
+        LOGE("Bad timeMs. timeMs = %lld, totalTime = %llu", timeMs, impl->ismc->vodDuration);
         impl->mErrno = PSR_INVALID_OPERATION;
         ret = -1;
         goto __exit;
@@ -1686,7 +1686,7 @@ static cdx_int32 __AwSstrParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, Seek
         ret = SstrParserSeekTo(impl, timeMs, 0, seekModeType);
         if(ret < 0)
         {
-            CDX_LOGE("video seekto timeMs(%lld) failed.", timeMs);
+            LOGE("video seekto timeMs(%lld) failed.", timeMs);
             impl->mErrno = PSR_UNKNOWN_ERR;
             ret = -1;
             goto __exit;
@@ -1697,7 +1697,7 @@ static cdx_int32 __AwSstrParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, Seek
         ret = SstrParserSeekTo(impl, timeMs, 1, seekModeType);
         if(ret < 0)
         {
-            CDX_LOGE("audio seekto timeMs(%lld) failed.", timeMs);
+            LOGE("audio seekto timeMs(%lld) failed.", timeMs);
             impl->mErrno = PSR_UNKNOWN_ERR;
             ret = -1;
             goto __exit;
@@ -1708,7 +1708,7 @@ static cdx_int32 __AwSstrParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, Seek
         ret = SstrParserSeekTo(impl, timeMs, 2, seekModeType);
         if(ret < 0)
         {
-            CDX_LOGE("subtitle seekto timeMs(%lld) failed.", timeMs);
+            LOGE("subtitle seekto timeMs(%lld) failed.", timeMs);
             impl->mErrno = PSR_UNKNOWN_ERR;
             ret = -1;
             goto __exit;
@@ -1747,14 +1747,14 @@ static CdxParserT *__AwSstrParserCreate(CdxStreamT *stream, cdx_uint32 flags)
     CDX_FORCE_CHECK(impl);
     if(NULL == impl)
     {
-        CDX_LOGE("Initiate sstr module error.");
+        LOGE("Initiate sstr module error.");
         return NULL;
     }
 
     impl->pIsmcBuffer = (cdx_char *)malloc(ISMC_BUFF_SIZE);
     if(!impl->pIsmcBuffer)
     {
-        CDX_LOGE("malloc ismcbuf failed.");
+        LOGE("malloc ismcbuf failed.");
         goto err_out;
     }
     memset(impl->pIsmcBuffer, 0x00, ISMC_BUFF_SIZE);
@@ -1766,7 +1766,7 @@ static CdxParserT *__AwSstrParserCreate(CdxStreamT *stream, cdx_uint32 flags)
     result = CdxStreamGetMetaData(stream, "uri", (void **)&ismcUrl);
     if(result < 0)
     {
-        CDX_LOGE("Get url failed.");
+        LOGE("Get url failed.");
         goto err_out;
     }
     impl->ismcUrl = strdup(ismcUrl);
@@ -1777,14 +1777,14 @@ static CdxParserT *__AwSstrParserCreate(CdxStreamT *stream, cdx_uint32 flags)
     result = InitMediaStreams(impl);
     if(result < 0)
     {
-        CDX_LOGE("init media streams failed.");
+        LOGE("init media streams failed.");
         goto err_out;
     }
 #if SAVE_VIDEO_STREAM
     impl->fpVideoStream = fopen("/data/camera/sstr_videostream.es", "wb+");
     if (!impl->fpVideoStream)
     {
-        CDX_LOGE("open video stream debug file failure errno(%d)", errno);
+        LOGE("open video stream debug file failure errno(%d)", errno);
     }
 #endif
     impl->base.ops = &sstrParserOps;
@@ -1843,13 +1843,13 @@ static cdx_uint32 __AwSstrParserProbe(CdxStreamProbeDataT *probeData)
 
     if(probeData->len < len)
     {
-        CDX_LOGE("probe data is not enough.");
+        LOGE("probe data is not enough.");
         return 0;
     }
     probe = malloc(len);
     if(probe == NULL)
     {
-        CDX_LOGE("malloc failed.");
+        LOGE("malloc failed.");
         return 0;
     }
     memcpy(probe, probeData->buf, len);
@@ -1865,7 +1865,7 @@ static cdx_uint32 __AwSstrParserProbe(CdxStreamProbeDataT *probeData)
         if (memmem(probe, len, probeNeed[i], 42))
         {
             ret =  CDX_TRUE;
-            CDX_LOGD("utf-16 encoding, probe ok.");
+            LOGD("utf-16 encoding, probe ok.");
             break;
         }
     }
@@ -1878,11 +1878,11 @@ static cdx_uint32 __AwSstrParserProbe(CdxStreamProbeDataT *probeData)
             encoding = "UTF-16BE";
         else
         {
-            CDX_LOGE("SSTR probe failed.");
+            LOGE("SSTR probe failed.");
             free(probe);
             return CDX_FALSE;
         }
-        CDX_LOGD("encoding:%s", encoding);
+        LOGD("encoding:%s", encoding);
         probe = AwFromCharset(encoding, probe, 512);
         if(probe != NULL && strstr(probe, need) != NULL)
             ret = CDX_TRUE;

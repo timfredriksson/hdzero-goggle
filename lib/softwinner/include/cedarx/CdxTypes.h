@@ -19,6 +19,17 @@
 #define NULL 0
 */
 
+#define CDX_CHECK(e)
+#define CDX_FORCE_CHECK(e) CDX_CHECK(e)
+
+#define CDX_TRESPASS()
+
+#define CDX_UNUSE(param) (void)param
+#define CEDARX_UNUSE(param) (void)param
+#define CEDARC_UNUSE(param) (void)param
+
+#define CDX_LOG_CHECK(e, fmt, arg...)                           
+
 #define CDX_SUCCESS 0
 #define CDX_FAILURE (-1)
 

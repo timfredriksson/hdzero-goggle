@@ -14,7 +14,7 @@
 #include <string.h>
 #include <CdxUrl.h>
 #include <ctype.h>
-#include <cdx_log.h>
+#include <log/log.h>
 
 #ifdef SIZE_MAX
 #undef SIZE_MAX
@@ -22,14 +22,14 @@
 #define SIZE_MAX ((size_t)-1)
 void CdxUrlPrintf(CdxUrlT* url)
 {
-    CDX_LOGD("**********print the url container.");
-    CDX_LOGD("**********ur->url=(%s)", url->url);
-    CDX_LOGD("**********ur->protocol=%s", url->protocol);
-    CDX_LOGD("**********ur->hostname=%s", url->hostname);
-    CDX_LOGD("**********ur->file=%s", url->file);
-    CDX_LOGD("**********ur->port=%u", url->port);
-    CDX_LOGD("**********ur->username=%s", url->username);
-    CDX_LOGD("**********ur->password=%s", url->password);
+    LOGD("**********print the url container.");
+    LOGD("**********ur->url=(%s)", url->url);
+    LOGD("**********ur->protocol=%s", url->protocol);
+    LOGD("**********ur->hostname=%s", url->hostname);
+    LOGD("**********ur->file=%s", url->file);
+    LOGD("**********ur->port=%u", url->port);
+    LOGD("**********ur->username=%s", url->username);
+    LOGD("**********ur->password=%s", url->password);
 }
 CdxUrlT* CdxUrlNew(char* url)
 {
@@ -48,18 +48,18 @@ CdxUrlT* CdxUrlNew(char* url)
 
     if(url == NULL)
     {
-        CDX_LOGE("url null");
+        LOGE("url null");
         return NULL;
     }
     if(strlen(url) >(SIZE_MAX/3 - 1))
     {
-        CDX_LOGE("the length of the url is too longer.");
+        LOGE("the length of the url is too longer.");
         goto err_out;
     }
     pEscName = malloc(strlen(url)*3+1);
     if(pEscName == NULL)
     {
-        CDX_LOGE("malloc memory for pEscName failed.");
+        LOGE("malloc memory for pEscName failed.");
         goto err_out;
     }
 
@@ -67,7 +67,7 @@ CdxUrlT* CdxUrlNew(char* url)
     curUrl = malloc(sizeof(CdxUrlT));
     if(curUrl == NULL)
     {
-        CDX_LOGE("malloc memory for curUrl failed.");
+        LOGE("malloc memory for curUrl failed.");
         goto err_out;
     }
 
@@ -78,7 +78,7 @@ CdxUrlT* CdxUrlNew(char* url)
     curUrl->url = strdup(pEscName);
     if(curUrl->url == NULL)
     {
-        CDX_LOGE("curUrl->url is NULL.");
+        LOGE("curUrl->url is NULL.");
         goto err_out;
     }
 
@@ -95,7 +95,7 @@ CdxUrlT* CdxUrlNew(char* url)
         }
         else
         {
-            CDX_LOGE("the url (%s) is not a URL.", pEscName);
+            LOGE("the url (%s) is not a URL.", pEscName);
             goto err_out;
         }
     }
@@ -104,7 +104,7 @@ CdxUrlT* CdxUrlNew(char* url)
     curUrl->protocol = malloc(pos1+1);
     if(curUrl->protocol == NULL)
     {
-        CDX_LOGE("curUrl->protocol is NULL.");
+        LOGE("curUrl->protocol is NULL.");
         goto err_out;
     }
 
@@ -131,7 +131,7 @@ CdxUrlT* CdxUrlNew(char* url)
         curUrl->username = malloc(len+1);
         if(curUrl->username == NULL )
         {
-            CDX_LOGE("curUrl->username  is faile.");
+            LOGE("curUrl->username  is faile.");
             goto err_out;
         }
         strncpy(curUrl->username, p1, len);
@@ -146,7 +146,7 @@ CdxUrlT* CdxUrlNew(char* url)
             curUrl->password = malloc(len2+1);
             if(curUrl->password == NULL)
             {
-                CDX_LOGE("curUrl->password is failed.");
+                LOGE("curUrl->password is failed.");
                 goto err_out;
             }
             strncpy(curUrl->password, p3+1, len2);
@@ -216,7 +216,7 @@ CdxUrlT* CdxUrlNew(char* url)
     curUrl->hostname = malloc(pos2-pos1+1);
     if(curUrl->hostname==NULL)
     {
-        CDX_LOGE("curUrl->hostname is NULL.");
+        LOGE("curUrl->hostname is NULL.");
         goto err_out;
     }
 
@@ -235,7 +235,7 @@ CdxUrlT* CdxUrlNew(char* url)
             curUrl->file = strdup(p2);
             if(curUrl->file==NULL)
             {
-                CDX_LOGE("curURL is NULL.");
+                LOGE("curURL is NULL.");
                 goto err_out;
             }
         }
@@ -247,7 +247,7 @@ CdxUrlT* CdxUrlNew(char* url)
         curUrl->file = malloc(2);
         if(curUrl->file==NULL)
         {
-            CDX_LOGE("curURL file is NULL.");
+            LOGE("curURL file is NULL.");
             goto err_out;
         }
         strcpy(curUrl->file, "/");
@@ -529,7 +529,7 @@ CdxUrlT* CdxCheck4Proxies(CdxUrlT *url)
     urlOut = CdxUrlNew(url->url);
     if(!strcasecmp(url->protocol, "http_proxy"))
     {
-        CDX_LOGI("Using HTTP proxy: http://%s:%d\n", url->hostname, url->port);
+        LOGI("Using HTTP proxy: http://%s:%d", url->hostname, url->port);
         return urlOut;
     }
     // Check if the http_proxy environment variable is set.
@@ -542,7 +542,7 @@ CdxUrlT* CdxCheck4Proxies(CdxUrlT *url)
             proxyUrl = CdxUrlNew(proxy);
             if(proxyUrl == NULL)
             {
-                CDX_LOGI("proxy_url is NULL.");
+                LOGI("proxy_url is NULL.");
                 return urlOut;
             }
 

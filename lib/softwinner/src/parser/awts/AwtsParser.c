@@ -10,7 +10,7 @@
 
 #define LOG_TAG "AwtsParser"
 #include "AwtsParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -47,7 +47,7 @@ static int AwtsSearchSyncHeader(AwtsParser *awtsParser)
     int ret = CdxStreamRead(awtsParser->file, sync, 3);
     if (ret < 3)
     {
-        CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+        LOGE("CdxStreamRead fail, ret(%d)", ret);
         if(ret < 0)
         {
             return ret;
@@ -55,7 +55,7 @@ static int AwtsSearchSyncHeader(AwtsParser *awtsParser)
         else
         {
             awtsParser->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return -1;
         }
     }
@@ -69,13 +69,13 @@ static int AwtsSearchSyncHeader(AwtsParser *awtsParser)
         ret = CdxStreamRead(awtsParser->file, &sync[sp++ & 2], 1);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             return ret;
         }
         else if(ret == 0)
         {
             awtsParser->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return -1;
         }
     }
@@ -90,7 +90,7 @@ static int AwtsNewTrack(AwtsParser *awtsParser)
     int ret = CdxStreamRead(awtsParser->file, tmp, 29);
     if (ret < 29)
     {
-        CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+        LOGE("CdxStreamRead fail, ret(%d)", ret);
         if(ret < 0)
         {
             return ret;
@@ -98,7 +98,7 @@ static int AwtsNewTrack(AwtsParser *awtsParser)
         else
         {
             awtsParser->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return -1;
         }
     }
@@ -115,7 +115,7 @@ static int AwtsNewTrack(AwtsParser *awtsParser)
             type = CDX_MEDIA_AUDIO;
             break;
         default:
-            CDX_LOGW("please check this code, when error happen");
+            LOGW("please check this code, when error happen");
             return -1;
     }
     
@@ -123,7 +123,7 @@ static int AwtsNewTrack(AwtsParser *awtsParser)
     track = awtsParser->tracks[awtsParser->trackCount] = (AwtsTrace *)malloc(sizeof(AwtsTrace));
     if(!track)
     {
-        CDX_LOGE("malloc fail.");
+        LOGE("malloc fail.");
         return -1;
     }
     memset(awtsParser->tracks[awtsParser->trackCount], 0, sizeof(AwtsTrace));
@@ -145,7 +145,7 @@ static int AwtsNewTrack(AwtsParser *awtsParser)
             track->eCodecFormat = VIDEO_CODEC_FORMAT_MPEG4;
             break;
         default:
-            CDX_LOGW("it is not suppoted, mime = %u", mime);
+            LOGW("it is not suppoted, mime = %u", mime);
             track->eCodecFormat = 0;//VIDEO_CODEC_FORMAT_UNKNOWN//AUDIO_CODEC_FORMAT_UNKNOWN
             break;
     }
@@ -172,14 +172,14 @@ static int AwtsNewTrack(AwtsParser *awtsParser)
         track->pCodecSpecificData = (char *)malloc(track->nCodecSpecificDataLen);
         if(!track->pCodecSpecificData)
         {
-            CDX_LOGE("malloc fail.");
+            LOGE("malloc fail.");
             return -1;
         }
         ret = CdxStreamRead(awtsParser->file, track->pCodecSpecificData,
                             track->nCodecSpecificDataLen);
         if (ret < track->nCodecSpecificDataLen)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 return ret;
@@ -187,7 +187,7 @@ static int AwtsNewTrack(AwtsParser *awtsParser)
             else
             {
                 awtsParser->mErrno = PSR_EOS;
-                CDX_LOGI("CdxStreamRead eos");
+                LOGI("CdxStreamRead eos");
                 return -1;
             }
         }
@@ -210,7 +210,7 @@ static int AwtsReadStreamInfo(AwtsParser *awtsParser)
     int ret = CdxStreamRead(awtsParser->file, tmp, 7);
     if (ret < 7)
     {
-        CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+        LOGE("CdxStreamRead fail, ret(%d)", ret);
         if(ret < 0)
         {
             return ret;
@@ -218,24 +218,24 @@ static int AwtsReadStreamInfo(AwtsParser *awtsParser)
         else
         {
             awtsParser->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return -1;
         }
     }
-    CDX_LOGD("Length = 0x%x %x %x %x %x %x %x",
+    LOGD("Length = 0x%x %x %x %x %x %x %x",
              tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6]);
     Length  = GetBE32Bits(data);
-    CDX_LOGD("Length = 0x%x", Length);
+    LOGD("Length = 0x%x", Length);
     Version = Get8Bits(data);
     Flags   = Get8Bits(data);
     TrackCount = Get8Bits(data);
-    CDX_LOGD("TrackCount = 0x%x", TrackCount);
+    LOGD("TrackCount = 0x%x", TrackCount);
     while(TrackCount--)
     {
         ret = AwtsNewTrack(awtsParser);
         if(ret < 0)
         {
-            CDX_LOGE("AwtsNewTrack fail.");
+            LOGE("AwtsNewTrack fail.");
             return ret;
         }
     }
@@ -246,7 +246,7 @@ static int AwtsReadHeader(AwtsParser *awtsParser)
 {
     if (AwtsSearchSyncHeader(awtsParser) < 0)
     {
-        CDX_LOGE("AwtsSearchSyncHeader fail");
+        LOGE("AwtsSearchSyncHeader fail");
         return -1;
     }
     uint8_t tmp[8];
@@ -255,7 +255,7 @@ static int AwtsReadHeader(AwtsParser *awtsParser)
     int ret = CdxStreamRead(awtsParser->file, tmp, 7);
     if (ret < 7)
     {
-        CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+        LOGE("CdxStreamRead fail, ret(%d)", ret);
         if(ret < 0)
         {
             return ret;
@@ -263,7 +263,7 @@ static int AwtsReadHeader(AwtsParser *awtsParser)
         else
         {
             awtsParser->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return -1;
         }
     }
@@ -282,7 +282,7 @@ static int AwtsReadHeader(AwtsParser *awtsParser)
         ret = CdxStreamRead(awtsParser->file, tmp, 8);
         if (ret < 8)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 return ret;
@@ -290,13 +290,13 @@ static int AwtsReadHeader(AwtsParser *awtsParser)
             else
             {
                 awtsParser->mErrno = PSR_EOS;
-                CDX_LOGI("CdxStreamRead eos");
+                LOGI("CdxStreamRead eos");
                 return -1;
             }
         }
         if (memcmp(tmp, "awts", 4))
         {
-            CDX_LOGE("it is not awts");
+            LOGE("it is not awts");
             return -1;
         }
         /*
@@ -311,7 +311,7 @@ static int AwtsReadHeader(AwtsParser *awtsParser)
             ret = CdxStreamRead(awtsParser->file, tmp, 2);
             if (ret < 2)
             {
-                CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+                LOGE("CdxStreamRead fail, ret(%d)", ret);
                 if(ret < 0)
                 {
                     return ret;
@@ -319,7 +319,7 @@ static int AwtsReadHeader(AwtsParser *awtsParser)
                 else
                 {
                     awtsParser->mErrno = PSR_EOS;
-                    CDX_LOGI("CdxStreamRead eos");
+                    LOGI("CdxStreamRead eos");
                     return -1;
                 }
             }
@@ -331,7 +331,7 @@ static int AwtsReadHeader(AwtsParser *awtsParser)
         ret = CdxStreamRead(awtsParser->file, tmp, 8);
         if (ret < 8)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 return ret;
@@ -339,7 +339,7 @@ static int AwtsReadHeader(AwtsParser *awtsParser)
             else
             {
                 awtsParser->mErrno = PSR_EOS;
-                CDX_LOGI("CdxStreamRead eos");
+                LOGI("CdxStreamRead eos");
                 return -1;
             }
         }
@@ -355,7 +355,7 @@ static cdx_int32 AwtsParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *pMedi
     AwtsParser *awtsParser = (AwtsParser*)parser;
     if(awtsParser->status < CDX_PSR_IDLE)
     {
-        CDX_LOGE("status < CDX_PSR_IDLE, BdParserGetMediaInfo invaild");
+        LOGE("status < CDX_PSR_IDLE, BdParserGetMediaInfo invaild");
         awtsParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -368,14 +368,14 @@ static cdx_int32 AwtsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     AwtsParser *awtsParser = (AwtsParser*)parser;
     if(awtsParser->status != CDX_PSR_IDLE && awtsParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGW("status != CDX_PSR_IDLE && status != CDX_PSR_PREFETCHED, \
+        LOGW("status != CDX_PSR_IDLE && status != CDX_PSR_PREFETCHED, \
                  BdParserPrefetch invaild");
         awtsParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     if(awtsParser->mErrno == PSR_EOS)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         return -1;
     }
     if(awtsParser->status == CDX_PSR_PREFETCHED)
@@ -398,7 +398,7 @@ static cdx_int32 AwtsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     {
         if(awtsParser->forceStop)
         {
-            CDX_LOGI("forceStop");
+            LOGI("forceStop");
             awtsParser->mErrno = PSR_USER_CANCEL;
             ret = -1;
             goto _exit;
@@ -406,7 +406,7 @@ static cdx_int32 AwtsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
         ret = AwtsReadHeader(awtsParser);
         if (ret < 0)
         {
-            CDX_LOGE("AwtsReadHeader fail.");
+            LOGE("AwtsReadHeader fail.");
             goto _exit;
         }
         else if(ret == 0)
@@ -418,7 +418,7 @@ static cdx_int32 AwtsParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
             ret = CdxStreamSkip(awtsParser->file, awtsParser->curPacketLength - 14);
             if(ret < 0)
             {
-                CDX_LOGE("CdxStreamSkip fail");
+                LOGE("CdxStreamSkip fail");
                 goto _exit;
             }
         }
@@ -450,7 +450,7 @@ static cdx_int32 AwtsParserRead(CdxParserT *parser, CdxPacketT *pkt)
     AwtsParser *awtsParser = (AwtsParser*)parser;
     if(awtsParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
+        LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
         awtsParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -469,7 +469,7 @@ static cdx_int32 AwtsParserRead(CdxParserT *parser, CdxPacketT *pkt)
         ret = CdxStreamRead(awtsParser->file, pkt->buf, pkt->length);
         if (ret < pkt->length)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 goto _exit;
@@ -477,7 +477,7 @@ static cdx_int32 AwtsParserRead(CdxParserT *parser, CdxPacketT *pkt)
             else
             {
                 awtsParser->mErrno = PSR_EOS;
-                CDX_LOGI("CdxStreamRead eos");
+                LOGI("CdxStreamRead eos");
                 ret = -1;
                 goto _exit;
             }
@@ -488,7 +488,7 @@ static cdx_int32 AwtsParserRead(CdxParserT *parser, CdxPacketT *pkt)
         ret = CdxStreamRead(awtsParser->file, pkt->buf, pkt->buflen);
         if (ret < pkt->buflen)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 goto _exit;
@@ -496,7 +496,7 @@ static cdx_int32 AwtsParserRead(CdxParserT *parser, CdxPacketT *pkt)
             else
             {
                 awtsParser->mErrno = PSR_EOS;
-                CDX_LOGI("CdxStreamRead eos");
+                LOGI("CdxStreamRead eos");
                 ret = -1;
                 goto _exit;
             }
@@ -504,7 +504,7 @@ static cdx_int32 AwtsParserRead(CdxParserT *parser, CdxPacketT *pkt)
         ret = CdxStreamRead(awtsParser->file, pkt->ringBuf, pkt->length - pkt->buflen);
         if (ret < pkt->length - pkt->buflen)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 goto _exit;
@@ -512,7 +512,7 @@ static cdx_int32 AwtsParserRead(CdxParserT *parser, CdxPacketT *pkt)
             else
             {
                 awtsParser->mErrno = PSR_EOS;
-                CDX_LOGI("CdxStreamRead eos");
+                LOGI("CdxStreamRead eos");
                 ret = -1;
                 goto _exit;
             }
@@ -533,7 +533,7 @@ _exit:
 
 cdx_int32 AwtsParserForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("AwtsParserForceStop start");
+    LOGI("AwtsParserForceStop start");
     AwtsParser *awtsParser = (AwtsParser*)parser;
 
     pthread_mutex_lock(&awtsParser->statusLock);
@@ -543,7 +543,7 @@ cdx_int32 AwtsParserForceStop(CdxParserT *parser)
     int ret = CdxStreamForceStop(awtsParser->file);
     if(ret < 0)
     {
-        CDX_LOGW("CdxStreamForceStop fail");
+        LOGW("CdxStreamForceStop fail");
     }
     while(awtsParser->status != CDX_PSR_IDLE && awtsParser->status != CDX_PSR_PREFETCHED)
     {
@@ -553,17 +553,17 @@ cdx_int32 AwtsParserForceStop(CdxParserT *parser)
     
     awtsParser->mErrno = PSR_USER_CANCEL;
     awtsParser->status = CDX_PSR_IDLE;
-    CDX_LOGI("AwtsParserForceStop end");
+    LOGI("AwtsParserForceStop end");
     return 0;
 }
 
 cdx_int32 AwtsParserClrForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("AwtsParserClrForceStop start");
+    LOGI("AwtsParserClrForceStop start");
     AwtsParser *awtsParser = (AwtsParser*)parser;
     if(awtsParser->status != CDX_PSR_IDLE)
     {
-        CDX_LOGW("awtsParser->status != CDX_PSR_IDLE");
+        LOGW("awtsParser->status != CDX_PSR_IDLE");
         awtsParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -572,9 +572,9 @@ cdx_int32 AwtsParserClrForceStop(CdxParserT *parser)
     int ret = CdxStreamClrForceStop(awtsParser->file);
     if(ret < 0)
     {
-        CDX_LOGW("CdxStreamClrForceStop fail");
+        LOGW("CdxStreamClrForceStop fail");
     }
-    CDX_LOGI("AwtsParserClrForceStop end");
+    LOGI("AwtsParserClrForceStop end");
     return 0;
 }
 
@@ -587,7 +587,7 @@ static int AwtsParserControl(CdxParserT *parser, int cmd, void *param)
     {
         case CDX_PSR_CMD_SWITCH_AUDIO:
         case CDX_PSR_CMD_SWITCH_SUBTITLE:
-            CDX_LOGI(" awts parser is not support switch stream yet!!!");
+            LOGI(" awts parser is not support switch stream yet!!!");
             break;
         case CDX_PSR_CMD_SET_FORCESTOP:
             return AwtsParserForceStop(parser);
@@ -607,8 +607,8 @@ cdx_int32 AwtsParserGetStatus(CdxParserT *parser)
 /*
 cdx_int32 AwtsParserSeekTo(CdxParserT *parser, cdx_int64  timeUs)
 {
-    //CDX_LOGD("AwtsParserSeekTo start, timeUs = %lld", timeUs);
-    CDX_LOGE("it is not supported");
+    //LOGD("AwtsParserSeekTo start, timeUs = %lld", timeUs);
+    LOGE("it is not supported");
     return -1;
 }*/
 static cdx_int32 AwtsParserClose(CdxParserT *parser)
@@ -617,13 +617,13 @@ static cdx_int32 AwtsParserClose(CdxParserT *parser)
     int ret = AwtsParserForceStop(parser);
     if(ret < 0)
     {
-        CDX_LOGW("AwtsParserForceStop fail");
+        LOGW("AwtsParserForceStop fail");
     }
 
     ret = CdxStreamClose(awtsParser->file);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamClose fail, ret(%d)", ret);
+        LOGE("CdxStreamClose fail, ret(%d)", ret);
     }
     int i;
     for(i = 0; i < awtsParser->trackCount; i++)
@@ -670,10 +670,10 @@ static int SetMediaInfo(AwtsParser *awtsParser)
             video->nWidth = track->nWidth;
             video->nHeight = track->nHeight;
             /*
-            //Á½Ö¡»­ÃæÖ®¼äµÄ¼ä¸ôÊ±¼ä£¬ÊÇÖ¡ÂÊµÄµ¹Êý£¬µ¥Î»Îªus
+            //ï¿½ï¿½Ö¡ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½Ä¼ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Ö¡ï¿½ÊµÄµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»Îªus
             video->nFrameDuration = os->stream->codec->nFrameDuration =
                 os->stream->codec->time_base.num * 1000000LL/ os->stream->codec->time_base.den;
-            //±íÊ¾Ã¿1000ÃëÓÐ¶àÉÙÖ¡»­Ãæ±»²¥·Å£¬ÀýÈç25000¡¢29970¡¢30000µÈ
+            //ï¿½ï¿½Ê¾Ã¿1000ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½Ö¡ï¿½ï¿½ï¿½æ±»ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½25000ï¿½ï¿½29970ï¿½ï¿½30000ï¿½ï¿½
             video->nFrameRate = 1000 * 1000000/video->nFrameDuration;
             */
             if(track->pCodecSpecificData)
@@ -710,7 +710,7 @@ static int SetMediaInfo(AwtsParser *awtsParser)
 
 int AwtsParserInit(CdxParserT *parser)
 {
-    CDX_LOGD("AwtsOpenThread start");
+    LOGD("AwtsOpenThread start");
        AwtsParser *awtsParser = (AwtsParser*)parser;
 
     int ret;
@@ -719,7 +719,7 @@ int AwtsParserInit(CdxParserT *parser)
         ret = AwtsReadHeader(awtsParser);
         if (ret < 0)
         {
-            CDX_LOGE("should not be here.");
+            LOGE("should not be here.");
             goto _exit;
         }
         else if(ret > 0)
@@ -727,7 +727,7 @@ int AwtsParserInit(CdxParserT *parser)
             ret = AwtsReadStreamInfo(awtsParser);
             if(ret < 0)
             {
-                CDX_LOGE("AwtsReadStreamInfo fail");
+                LOGE("AwtsReadStreamInfo fail");
                 goto _exit;
             }
             break;
@@ -737,7 +737,7 @@ int AwtsParserInit(CdxParserT *parser)
             ret = CdxStreamSkip(awtsParser->file, awtsParser->curPacketLength);
             if(ret < 0)
             {
-                CDX_LOGE("CdxStreamSkip fail");
+                LOGE("CdxStreamSkip fail");
                 goto _exit;
             }
         }
@@ -748,11 +748,11 @@ int AwtsParserInit(CdxParserT *parser)
     awtsParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&awtsParser->statusLock);
     pthread_cond_signal(&awtsParser->cond);
-    CDX_LOGI("AwtsOpenThread success");
+    LOGI("AwtsOpenThread success");
     return 0;
 
 _exit:
-    CDX_LOGE("AwtsOpenThread fail.");
+    LOGE("AwtsOpenThread fail.");
     awtsParser->mErrno = PSR_OPEN_FAIL;
     pthread_mutex_lock(&awtsParser->statusLock);
     awtsParser->status = CDX_PSR_IDLE;
@@ -777,7 +777,7 @@ CdxParserT *AwtsParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     AwtsParser *awtsParser = CdxMalloc(sizeof(AwtsParser));
     if(!awtsParser)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         CdxStreamClose(stream);
         return NULL;
     }
@@ -800,7 +800,7 @@ CdxParserT *AwtsParserOpen(CdxStreamT *stream, cdx_uint32 flags)
 cdx_uint32 AwtsParserProbe(CdxStreamProbeDataT *probeData)
 {
     cdx_char *data = probeData->buf;
-    cdx_uint64 sp = 0;//ÓÃuint64ÊÇÎªÁË·ÀÖ¹(*)´¦¿ÉÄÜµÄÊý¾Ý»ØÍ·
+    cdx_uint64 sp = 0;//ï¿½ï¿½uint64ï¿½ï¿½Îªï¿½Ë·ï¿½Ö¹(*)ï¿½ï¿½ï¿½ï¿½ï¿½Üµï¿½ï¿½ï¿½ï¿½Ý»ï¿½Í·
     
 _sync:
     while(sp + 2 < probeData->len)
@@ -813,7 +813,7 @@ _sync:
     }
     if(sp >= probeData->len || probeData->len - sp < 14)
     {
-        CDX_LOGE("Maybe Probe data is not enough. len(%u)", probeData->len);
+        LOGE("Maybe Probe data is not enough. len(%u)", probeData->len);
         return 0;
     }
     sp += 9;
@@ -823,12 +823,12 @@ _sync:
     {
         if (!memcmp(data + sp, "awts", 4))
         {
-            CDX_LOGD("AwtsParserProbe = 1");
+            LOGD("AwtsParserProbe = 1");
             return (probeData->len - sp)*100/probeData->len;
         }
         else
         {
-            CDX_LOGD("it is not awts.");
+            LOGD("it is not awts.");
             return 0;
         }
     }

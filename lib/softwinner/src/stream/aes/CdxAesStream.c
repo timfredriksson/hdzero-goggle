@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CdxAesStream"
 #include "CdxAesStream.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -24,13 +24,13 @@ static int  index_aes = 0x00000000;
 static FILE *file = NULL;
 static void DebugStoreFile(void *buf, int len)
 {
-    CDX_LOGD("aes stream DebugStoreFile %d",len);
+    LOGD("aes stream DebugStoreFile %d",len);
     if (file == NULL)
     {
-        CDX_LOGD("open file");
+        LOGD("open file");
         file = fopen("/data/camera/file.aes", "wb");
         if (file == NULL)
-            CDX_LOGD("open file failed");
+            LOGD("open file failed");
     }
     fseek(file, 0, SEEK_END);
     fwrite(&start_tag, 1, 4, file);
@@ -42,7 +42,7 @@ static void DebugStoreFile(void *buf, int len)
 
 static void DebugSync(void)
 {
-    CDX_LOGD("DebugSync");
+    LOGD("DebugSync");
     if (file != NULL)
     {
         fclose(file);
@@ -105,13 +105,13 @@ static cdx_int32 AesStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 size)
     }
     if(aesStream->ioState == CDX_IO_STATE_EOS)
     {
-        CDX_LOGD("aesStream eos");
+        LOGD("aesStream eos");
         return 0;
     }
     pthread_mutex_lock(&aesStream->lock);
     if(aesStream->forceStop)
     {
-        CDX_LOGD("forceStop");
+        LOGD("forceStop");
         pthread_mutex_unlock(&aesStream->lock);
         return -1;
     }
@@ -133,20 +133,20 @@ static cdx_int32 AesStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 size)
     {
         if(aesStream->forceStop)
         {
-            CDX_LOGD("aesStream->forceStop");
+            LOGD("aesStream->forceStop");
             ret = -1;
             goto _exit;
         }
         if(aesStream->downloadComplete)
         {
-            CDX_LOGD("downloadComplete");
+            LOGD("downloadComplete");
             break;
         }
         cdx_uint32 readLen = aesReadLen > aesStream->bufSize ? aesStream->bufSize : aesReadLen;
         ret = CdxStreamRead(aesStream->mediaFile, aesStream->bigBuf, readLen);
         if (ret < (int)readLen)
         {
-            CDX_LOGW("CdxStreamRead fail, readLen(%d), ret(%d)", readLen, ret);
+            LOGW("CdxStreamRead fail, readLen(%d), ret(%d)", readLen, ret);
             if(ret < 0)
             {
                 goto _exit;
@@ -174,7 +174,7 @@ static cdx_int32 AesStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 size)
         }
         else
         {
-        //´ËÊ±len2Ò»¶¨·Ç0£¬·ñÔòlen²»»áÐ¡ÓÚreadLen
+        //ï¿½ï¿½Ê±len2Ò»ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½lenï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½readLen
             int len2 = len % 16;
             int len1 = len - len2;
             if(len1)
@@ -201,7 +201,7 @@ static cdx_int32 AesStreamRead(CdxStreamT *stream, void *buf, cdx_uint32 size)
             offset += len2;
             len -= len2;
             aesReadLen -= readLen;
-            //CDX_LOGD("aesReadLen(%)", aesReadLen);
+            //LOGD("aesReadLen(%)", aesReadLen);
         }
         if(readLen >= 16)
         {
@@ -234,7 +234,7 @@ static cdx_int32 AesStreamForceStop(CdxStreamT *stream)
     int ret = CdxStreamForceStop(aesStream->mediaFile);
     if(ret < 0)
     {
-        CDX_LOGW("CdxStreamForceStop fail");
+        LOGW("CdxStreamForceStop fail");
     }
     while(aesStream->status != STREAM_IDLE)
     {
@@ -248,7 +248,7 @@ static cdx_int32 AesStreamClrForceStop(CdxStreamT *stream)
     CdxAesStream *aesStream = (CdxAesStream *)stream;
     if(aesStream->status != STREAM_IDLE)
     {
-        CDX_LOGW("aesStream->status != STREAM_IDLE");
+        LOGW("aesStream->status != STREAM_IDLE");
         aesStream->ioState = CDX_IO_STATE_INVALID;
         return -1;
     }
@@ -322,7 +322,7 @@ static cdx_int32 AesStreamSeek(CdxStreamT *stream, cdx_int64 offset, cdx_int32 w
     pthread_mutex_lock(&aesStream->lock);
     if(aesStream->forceStop)
     {
-        CDX_LOGD("forceStop");
+        LOGD("forceStop");
         pthread_mutex_unlock(&aesStream->lock);
         return -1;
     }
@@ -349,7 +349,7 @@ static cdx_int32 AesStreamSeek(CdxStreamT *stream, cdx_int64 offset, cdx_int32 w
     int ret = CdxStreamSeek(aesStream->mediaFile, offset1, STREAM_SEEK_SET);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamSeek fail");
+        LOGE("CdxStreamSeek fail");
         goto _exit;
     }
     if(offset < 16)
@@ -361,14 +361,14 @@ static cdx_int32 AesStreamSeek(CdxStreamT *stream, cdx_int64 offset, cdx_int32 w
         ret = CdxStreamRead(aesStream->mediaFile, aesStream->iv, 16);
         if (ret < 16)
         {
-            CDX_LOGW("CdxStreamRead fail, ret(%d)", ret);
+            LOGW("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 goto _exit;
             }
             else
             {
-                CDX_LOGE("should not be here, this is a bug !");/*ËµÃ÷offsetÕâ¸öÈë²ÎÓÐÎÊÌâ*/
+                LOGE("should not be here, this is a bug !");/*Ëµï¿½ï¿½offsetï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
                 aesStream->downloadComplete = 1;
                 goto _exit;
             }
@@ -379,14 +379,14 @@ static cdx_int32 AesStreamSeek(CdxStreamT *stream, cdx_int64 offset, cdx_int32 w
         ret = CdxStreamRead(aesStream->mediaFile, aesStream->bigBuf, 16);
         if (ret < 16)
         {
-            CDX_LOGW("CdxStreamRead fail, ret(%d)", ret);
+            LOGW("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 goto _exit;
             }
-            else if(ret < remainder)/*ËµÃ÷offsetÕâ¸öÈë²ÎÓÐÎÊÌâ*/
+            else if(ret < remainder)/*Ëµï¿½ï¿½offsetï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
             {
-                CDX_LOGE("should not be here, this is a bug !");
+                LOGE("should not be here, this is a bug !");
                 aesStream->downloadComplete = 1;
                 goto _exit;
             }
@@ -439,7 +439,7 @@ static inline cdx_int32 AesStreamGetMetaData(CdxStreamT *stream, const cdx_char 
 }
 static cdx_int32 AesStreamConnect(CdxStreamT *stream)
 {
-    CDX_LOGI("AesStreamConnect start");
+    LOGI("AesStreamConnect start");
     CdxAesStream *aesStream = (CdxAesStream *)stream;
     pthread_mutex_lock(&aesStream->lock);
     if(aesStream->forceStop)
@@ -452,7 +452,7 @@ static cdx_int32 AesStreamConnect(CdxStreamT *stream)
     int ret = CdxStreamConnect(aesStream->mediaFile);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamConnect fail, uri(%s)", aesStream->dataSource.uri);
+        LOGE("CdxStreamConnect fail, uri(%s)", aesStream->dataSource.uri);
         goto _exit;
     }
     CdxStreamProbeDataT *probeData = CdxStreamGetProbeData(aesStream->mediaFile);
@@ -460,7 +460,7 @@ static cdx_int32 AesStreamConnect(CdxStreamT *stream)
     aesStream->probeData.buf = CdxMalloc(probeData->len);
     if(!aesStream->probeData.buf)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         goto _exit;
     }
     aesStream->mediaFileSize = CdxStreamSize(aesStream->mediaFile);
@@ -473,7 +473,7 @@ static cdx_int32 AesStreamConnect(CdxStreamT *stream)
     aesStream->status = STREAM_IDLE;
     pthread_mutex_unlock(&aesStream->lock);
     pthread_cond_signal(&aesStream->cond);
-    CDX_LOGI("AesOpenThread succeed");
+    LOGI("AesOpenThread succeed");
     return 0;
 
 _exit:
@@ -482,7 +482,7 @@ _exit:
     aesStream->status = STREAM_IDLE;
     pthread_mutex_unlock(&aesStream->lock);
     pthread_cond_signal(&aesStream->cond);
-    CDX_LOGI("AesOpenThread fail");
+    LOGI("AesOpenThread fail");
     return -1;
 }
 
@@ -510,7 +510,7 @@ CdxStreamT *AesStreamCreate(CdxDataSourceT *dataSource)
     CdxAesStream *aesStream = CdxMalloc(sizeof(CdxAesStream));
     if(!aesStream)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         return NULL;
     }
     memset(aesStream, 0x00, sizeof(CdxAesStream));
@@ -523,10 +523,10 @@ CdxStreamT *AesStreamCreate(CdxDataSourceT *dataSource)
     aesStream->mediaUri = strdup(dataSource->uri + 6);
     if(!aesStream->mediaUri)
     {
-        CDX_LOGE("strdup failed.");
+        LOGE("strdup failed.");
         goto _error;
     }
-    CDX_LOGD("aesStream uri is %s",aesStream->mediaUri);
+    LOGD("aesStream uri is %s",aesStream->mediaUri);
 
     if (strncmp("file://",aesStream->mediaUri,7)== 0)
     {
@@ -541,7 +541,7 @@ CdxStreamT *AesStreamCreate(CdxDataSourceT *dataSource)
         if(!dataSource->extraData
             || dataSource->extraDataType != EXTRA_DATA_AES)
         {
-            CDX_LOGE("dataSource error");
+            LOGE("dataSource error");
             goto _error;
         }
 
@@ -558,14 +558,14 @@ CdxStreamT *AesStreamCreate(CdxDataSourceT *dataSource)
     aesStream->dataSource.uri = aesStream->mediaUri;
     if (AES_set_decrypt_key(aesStream->key, 128, &aesStream->aesKey) != 0)
     {
-        CDX_LOGE("AES_set_decrypt_key fail!");
+        LOGE("AES_set_decrypt_key fail!");
         goto _error;
     }
-    CDX_LOGD("dataSource.uri is %s",aesStream->dataSource.uri);
+    LOGD("dataSource.uri is %s",aesStream->dataSource.uri);
     aesStream->mediaFile = CdxStreamCreate(&aesStream->dataSource);
     if(!aesStream->mediaFile)
     {
-        CDX_LOGE("CdxStreamCreate fail. (%s)", aesStream->dataSource.uri);
+        LOGE("CdxStreamCreate fail. (%s)", aesStream->dataSource.uri);
         goto _error;
     }
 
@@ -573,7 +573,7 @@ CdxStreamT *AesStreamCreate(CdxDataSourceT *dataSource)
     aesStream->bigBuf = CdxMalloc(aesStream->bufSize);
     if(!aesStream->bigBuf)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         goto _error;
     }
 

@@ -42,7 +42,7 @@ int aw_mms_http_streaming_start(CdxDataSourceT* datasource, aw_mms_inf_t* mmsStr
     asfCtrl = (aw_mmsh_ctrl_t*)malloc(sizeof(aw_mmsh_ctrl_t));
     if(asfCtrl==NULL)
     {
-        CDX_LOGV("*******************memAlloc for asfHttpCtrl failed.\n");
+        LOGV("*******************memAlloc for asfHttpCtrl failed.");
         goto out;
     }
     asfCtrl->streamingType = ASF_TYPE_UNKNOWN;
@@ -72,25 +72,25 @@ int aw_mms_http_streaming_start(CdxDataSourceT* datasource, aw_mms_inf_t* mmsStr
                      (CdxStreamT**)&mmsStreamInf->httpCore, NULL);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamOpen fail");
+        LOGE("CdxStreamOpen fail");
         goto out;
     }
 
     num = CdxStreamRead(mmsStreamInf->httpCore, &chunk, sizeof(aw_asf_stream_chunck_t));
     if(num < (int)sizeof(aw_asf_stream_chunck_t))
     {
-        CDX_LOGE("read first chunk header error.****num = %d\n", num);
+        LOGE("read first chunk header error.****num = %d", num);
         goto out;
     }
     if( (chunk.size < 8) || (chunk.size!=chunk.sizeConfirm) )
     {
-        CDX_LOGE("error. chunk.size = %d, chunk.sizeConfirm = %d.\n",
+        LOGE("error. chunk.size = %d, chunk.sizeConfirm = %d.",
               chunk.size, chunk.sizeConfirm);
         goto out;
     }
     if(chunk.type != ASF_STREAMING_HEADER)
     {
-        CDX_LOGE("the first chunk is not the asf header object.\n");
+        LOGE("the first chunk is not the asf header object.");
         goto out;
     }
 
@@ -105,12 +105,12 @@ int aw_mms_http_streaming_start(CdxDataSourceT* datasource, aw_mms_inf_t* mmsStr
                        mmsStreamInf->firstChunkBodySize-12);
     if(num < 0)
     {
-        CDX_LOGE("****<%s, %d>******HttpCoreRead error!\n", __FILE__, __LINE__);
+        LOGE("****<%s, %d>******HttpCoreRead error!", __FILE__, __LINE__);
         goto out;
     }
     if(num < mmsStreamInf->firstChunkBodySize)
     {
-        CDX_LOGW("****<%s, %d>******the data red is not enough.\n", __FILE__, __LINE__);
+        LOGW("****<%s, %d>******the data red is not enough.", __FILE__, __LINE__);
     }
 
     //******** parse the ASF_Header_Object*****//
@@ -377,20 +377,20 @@ int aw_mms_http_streaming_read(char *buffer, int size, aw_mms_inf_t* mmsStreamIn
         {
             chunk.sizeConfirm = (buf[7]<<8) | buf[6];
         }
-        printf("sizeConfirm = 0x%02hx\n", chunk.sizeConfirm);
+        LOGI("sizeConfirm = 0x%02hx", chunk.sizeConfirm);
 
         if (AsfStreamingType(&chunk,&dropChunk))
         {
             //mmsStreamInf->networkStreamConfigClearFlag = 1;
         }
         chunkSize = chunk.sizeConfirm-8;
-        //printf("chunksize = %d\n", chunkSize);
+        //LOGI("chunksize = %d", chunkSize);
         wantSize = chunkSize;    /* no padding*/
         if(chunk.type != ASF_STREAMING_HEADER && (!dropChunk))
         {
             if(asfHttpCtrl->packetSize < chunkSize)
             {
-                printf("***********asfHttpCtrl->packetSize is smaller than \
+                LOGI("***********asfHttpCtrl->packetSize is smaller than \
                   the chunkSize, error.\n");
                 return -1;
             }
@@ -408,7 +408,7 @@ int aw_mms_http_streaming_read(char *buffer, int size, aw_mms_inf_t* mmsStreamIn
             {
                 break;
             }
-            //printf("**************remainSize=%d, wantSize=%d\n",
+            //LOGI("**************remainSize=%d, wantSize=%d",
             //(mmsStreamInf->stream_buf_size-mmsStreamInf->bufferDataSize), wantSize);
             usleep(40*1000);
         }
@@ -417,7 +417,7 @@ int aw_mms_http_streaming_read(char *buffer, int size, aw_mms_inf_t* mmsStreamIn
         {
             if(asfHttpCtrl->packetSize>=32*1024 || chunkSize>= 32*1024)
             {
-                printf("*************the asfChunkBuffer size is too small.\n");
+                LOGI("*************the asfChunkBuffer size is too small.");
                 return -1;
             }
             if(aw_asf_http_read_wrapper(mmsStreamInf->asfChunkDataBuffer, chunkSize,
@@ -505,7 +505,7 @@ int aw_asf_http_read_wrapper(void *buffer, int size, aw_mms_inf_t* mmsStreamInf)
             ret = CdxStreamRead(httpCoreStreamInfo, (char*)buffer+len, size-len);
             if(ret <= 0)
             {
-                CDX_LOGE("******************ret=%d, want=%d\n", ret, size-len);
+                LOGE("******************ret=%d, want=%d", ret, size-len);
                 return -1;
             }
             len += ret;
@@ -574,7 +574,7 @@ int aw_mms_http_streaming_seek(aw_mms_inf_t* mmsStreamInf)
     fd = Connect2Server(mmsStreamInf, url->hostname, url->port, 1);
     if(fd <= 0)
     {
-        printf("*********************connect the stream fd=%d\n", fd);
+        LOGI("*********************connect the stream fd=%d", fd);
     }
     httpHdr = MmshRequest(mmsStreamInf,(mmsStreamInf->buf_pos>>32)&0xffffffff,
                         mmsStreamInf->buf_pos&0xffffffff, 0);
@@ -583,7 +583,7 @@ int aw_mms_http_streaming_seek(aw_mms_inf_t* mmsStreamInf)
         r = send(fd, httpHdr->buffer+i, httpHdr->bufferSize-i, DEFAULT_SEND_FLAGS);
         if(r <0)
         {
-            LOGV("**************MSGTR_MPDEMUX_ASF_SocketWriteError\n");
+            LOGV("**************MSGTR_MPDEMUX_ASF_SocketWriteError");
             goto err_out;
         }
         i += r;

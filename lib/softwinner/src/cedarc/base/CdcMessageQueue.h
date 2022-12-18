@@ -53,6 +53,8 @@ int CdcMessageQueueFlush(CdcMessageQueue* mq);
 
 int CdcMessageQueueGetCount(CdcMessageQueue* mq);
 
+extern int SemTimedWait(sem_t* sem, int64_t time_ms);
+
 #ifdef __cplusplus
 }
 #endif

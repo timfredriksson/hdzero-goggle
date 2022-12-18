@@ -82,7 +82,7 @@ char *DecodeUri (char *str)
     char *pIn = str, *pOut = str;
     if (pIn == NULL)
     {
-        loge("check param.");
+        LOGE("check param.");
         return NULL;
     }
 
@@ -123,13 +123,13 @@ void RtspUrlParse (RtspUrlT *url, const char *pStr, unsigned char opt)
 
     if (pStr == NULL)
     {
-        logd("check param");
+        LOGD("check param");
         return;
     }
     char *buf = strdup(pStr);
     if (buf == NULL)
     {
-        loge("strdup failed.");
+        LOGE("strdup failed.");
         abort();
     }
     url->pBuffer = buf;
@@ -243,20 +243,20 @@ static int RtspRollOverTcp( CdxRtspStreamImplT *impl) //* todo
     /* Reopen rtsp client */
     if( ( iReturn = RtspConnect( impl ) ) != 0 )
     {
-        loge(  "Failed to connect with rtsp://%s",
+        LOGE(  "Failed to connect with rtsp://%s",
                  pSys->pPath );
         goto error;
     }
 
     if( pSys->pSdp == NULL )
     {
-        loge( "Failed to retrieve the RTSP Session Description" );
+        LOGE( "Failed to retrieve the RTSP Session Description" );
         goto error;
     }
 
     if( ( iReturn = RtspSessionsSetup( impl ) ) != 0 )
     {
-        loge(  "Nothing to play for rtsp://%s", pSys->pPath );
+        LOGE(  "Nothing to play for rtsp://%s", pSys->pPath );
         goto error;
     }
 
@@ -287,7 +287,7 @@ static void RtspStreamClose( void *p_private )
         if( pSys->track[i]->bSelected )
             nTracks++;
     }
-    logd( "RTSP track Close, %d track remaining", nTracks );
+    LOGD( "RTSP track Close, %d track remaining", nTracks );
     if( !nTracks )
         pSys->bError = 1;
 
@@ -300,7 +300,7 @@ static int ReadAsfDataToBuffer(CdxRtspStreamImplT *impl, char bMarker, void *buf
     cdx_uint8 *tempBuf = NULL;
     cdx_uint32  iBuf = 0;
 
-    logv("========== len(%u), pktSize(%u)", len, pktSize);
+    LOGV("========== len(%u), pktSize(%u)", len, pktSize);
 
     //* get rid of rtp payload format header. [C0 00 0A EA 82 00...]
     while(len >= 4)
@@ -333,7 +333,7 @@ static int ReadAsfDataToBuffer(CdxRtspStreamImplT *impl, char bMarker, void *buf
 
         if(iHdrsize > len)
         {
-            logw("Invalid header size");
+            LOGW("Invalid header size");
             break;
         }
 
@@ -354,7 +354,7 @@ static int ReadAsfDataToBuffer(CdxRtspStreamImplT *impl, char bMarker, void *buf
             tempBuf = (cdx_uint8 *)malloc(pktSize);
             if(!tempBuf)
             {
-                loge("malloc failed.");
+                LOGE("malloc failed.");
                 return -1;
             }
             iBuf = 0;
@@ -371,13 +371,13 @@ static int ReadAsfDataToBuffer(CdxRtspStreamImplT *impl, char bMarker, void *buf
             if(bMarker)
             {
                 //* complete packet
-                logv("=========== iBuf(%u), pktSize(%u)", iBuf, pktSize);
+                LOGV("=========== iBuf(%u), pktSize(%u)", iBuf, pktSize);
                 iBuf = pktSize;
                 memcpy(impl->bufWritePtr, tempBuf, iBuf);
 #if __RTSP_SAVE_BITSTREAMS
                 int n;
                 n = fwrite(impl->bufWritePtr, 1, iBuf, impl->fp_rtsp);
-                CDX_LOGD("xxx write size(%d), n=(%d), errno(%d), impl->fp_rtsp(%p)", iBuf, n,
+                LOGD("xxx write size(%d), n=(%d), errno(%d), impl->fp_rtsp(%p)", iBuf, n,
                     errno, impl->fp_rtsp);
                 fsync(fileno(impl->fp_rtsp));
 #endif
@@ -397,7 +397,7 @@ static int ReadAsfDataToBuffer(CdxRtspStreamImplT *impl, char bMarker, void *buf
         }
         else
         {
-            logd("Broken packet detected (%u vs %u or %u + %u vs %u)",
+            LOGD("Broken packet detected (%u vs %u or %u + %u vs %u)",
                 iOffset, iBuf, iOffset, iPayload, pktSize);
             iBuf = 0;
         }
@@ -412,7 +412,7 @@ static int ReadAsfDataToBuffer(CdxRtspStreamImplT *impl, char bMarker, void *buf
 #if __RTSP_SAVE_BITSTREAMS
     int n;
     n = fwrite(buf, 1, len, impl->fp_rtsp);
-    CDX_LOGD("xxx write size(%d), n=(%d), errno(%d), impl->fp_rtsp(%p)",
+    LOGD("xxx write size(%d), n=(%d), errno(%d), impl->fp_rtsp(%p)",
         len, n, errno, impl->fp_rtsp);
     fsync(fileno(impl->fp_rtsp));
 #endif
@@ -427,7 +427,7 @@ static int ReadAsfDataToBuffer(CdxRtspStreamImplT *impl, char bMarker, void *buf
     }
     pthread_mutex_unlock(&impl->bufferMutex);
 
-    logd("================ impl->validDataSize(%lld)", impl->validDataSize);
+    LOGD("================ impl->validDataSize(%lld)", impl->validDataSize);
 #endif
 
     return 0;
@@ -453,7 +453,7 @@ static int WriteToBuffer(CdxRtspStreamImplT *impl, void *buf, int len)
         if (impl->bufWritePtr == impl->bufReadPtr && impl->validDataSize > 0)
         {
             pthread_mutex_unlock(&impl->bufferMutex);
-            logd("buffer is full...");
+            LOGD("buffer is full...");
             usleep(50000);
             continue;
         }
@@ -485,7 +485,7 @@ static void RtspStreamRead( void *p_private, unsigned int i_size,
     CdxRtspStreamImplT *impl = tk->impl;
     StreamSysT         *pSys = impl->pSys;
 
-    //logd( "pts: %lld", pts.tv_sec );
+    //LOGD( "pts: %lld", pts.tv_sec );
 
     cdx_int64 iPts = (cdx_int64)pts.tv_sec * (1000000LL) + (cdx_int64)pts.tv_usec;
 
@@ -494,9 +494,9 @@ static void RtspStreamRead( void *p_private, unsigned int i_size,
 
     /* Retrieve NPT for this pts */
     tk->fNpt = tk->sub->getNormalPlayTime(pts);
-    //logd("========== iPts(%lld), tk->fNpt(%lld)", iPts, (cdx_int64)tk->fNpt);
+    //LOGD("========== iPts(%lld), tk->fNpt(%lld)", iPts, (cdx_int64)tk->fNpt);
 
-    logv( "StreamRead size=%d pts=%lld", i_size, pts.tv_sec * 1000000LL + pts.tv_usec );
+    LOGV( "StreamRead size=%d pts=%lld", i_size, pts.tv_sec * 1000000LL + pts.tv_usec );
 
     // grow buffer if it looks like buffer is too small, but don't eat
     // up all the memory on strange streams
@@ -505,12 +505,12 @@ static void RtspStreamRead( void *p_private, unsigned int i_size,
         if( tk->iBuffer < 2000000 )
         {
             void *ptmp;
-            logd( "lost %d bytes", i_truncated_bytes );
-            logd( "increasing buffer size to %d", tk->iBuffer * 2 );
+            LOGD( "lost %d bytes", i_truncated_bytes );
+            LOGD( "increasing buffer size to %d", tk->iBuffer * 2 );
             ptmp = realloc( tk->pBuffer, tk->iBuffer * 2 );
             if(ptmp == NULL)
             {
-                logw( "realloc failed" );
+                LOGW( "realloc failed" );
             }
             else
             {
@@ -542,7 +542,7 @@ static void RtspStreamRead( void *p_private, unsigned int i_size,
     else if( tk->fmt.iCodec == VIDEO_CODEC_FORMAT_H264 ) //* do it in remux parser
     {
         if( (tk->pBuffer[0] & 0x1f) >= 24 )
-            logw(  "unsupported NAL type for H264" );
+            LOGW(  "unsupported NAL type for H264" );
 
         /* Normal NAL type */
         impl->mCurptk.pktData = (cdx_uint8 *)malloc( i_size + 4 );
@@ -554,13 +554,13 @@ static void RtspStreamRead( void *p_private, unsigned int i_size,
         memcpy( &impl->mCurptk.pktData[4], tk->pBuffer, i_size );
 
         impl->mCurptk.pktHeader.length = i_size + 4;
-        logv("========== h264 i_size(%u), impl->mCurptk.pktData(%p)", i_size,
+        LOGV("========== h264 i_size(%u), impl->mCurptk.pktData(%p)", i_size,
             impl->mCurptk.pktData);
     }
 #if 1
     else if( tk->bAsf )
     {
-        logv("read rtsp data... first byte:0x%x", tk->pBuffer[0]);
+        LOGV("read rtsp data... first byte:0x%x", tk->pBuffer[0]);
         ReadAsfDataToBuffer(impl, tk->sub->rtpSource()->curPacketMarkerBit(), tk->pBuffer, i_size);
 
     }
@@ -594,7 +594,7 @@ static void RtspStreamRead( void *p_private, unsigned int i_size,
             //if( iPts != tk->iPts )
                 impl->mCurptk.pktHeader.pts = iPts;
 
-            logv("impl->mCurptk.pktHeader.pts(%lld)", impl->mCurptk.pktHeader.pts);
+            LOGV("impl->mCurptk.pktHeader.pts(%lld)", impl->mCurptk.pktHeader.pts);
         }
 #if 0
         if( tk->b_muxed )
@@ -619,7 +619,7 @@ static void RtspStreamRead( void *p_private, unsigned int i_size,
         tk->iPts = iPts;
     }
 
-    logv("========== RtspStreamRead type(%d), length(%d), pts(%lld)", impl->mCurptk.pktHeader.type,
+    LOGV("========== RtspStreamRead type(%d), length(%d), pts(%lld)", impl->mCurptk.pktHeader.type,
         impl->mCurptk.pktHeader.length, impl->mCurptk.pktHeader.pts);
 }
 
@@ -663,7 +663,7 @@ static int GetOneFrame(CdxRtspStreamImplT *impl)
         }
     }
 
-    logv("===========curTrack(%d), pSys->iTrack(%d)", impl->curTrack, pSys->iTrack);
+    LOGV("===========curTrack(%d), pSys->iTrack(%d)", impl->curTrack, pSys->iTrack);
 
     LiveTrackT *tk = pSys->track[impl->curTrack];
 
@@ -673,7 +673,7 @@ static int GetOneFrame(CdxRtspStreamImplT *impl)
         tk->waiting = 1;
         tk->sub->readSource()->getNextFrame( tk->pBuffer, tk->iBuffer,
             RtspStreamRead, tk, RtspStreamClose, tk );
-            //* ×¢²á¾ßÌå´¦Àíº¯ÊýRtspStreamRead£¬¶ÁÈ¡Êý¾Ý£¬ÒÔ±ã¸ø´¦Àíº¯Êý´¦Àí
+            //* ×¢ï¿½ï¿½ï¿½ï¿½å´¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½RtspStreamReadï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ý£ï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     }
 
     /* Create a task that will be called if we wait more than 10s
@@ -684,7 +684,7 @@ static int GetOneFrame(CdxRtspStreamImplT *impl)
 
     //* Do the read
     pSys->scheduler->doEventLoop( &pSys->eventData );
-    //* µ÷ÓÃRtspStreamRead£¬¶Áµ½Êý¾Ýºó¸Ä±äeventDataÊ¹doEventLoop·µ»Ø
+    //* ï¿½ï¿½ï¿½ï¿½RtspStreamReadï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýºï¿½Ä±ï¿½eventDataÊ¹doEventLoopï¿½ï¿½ï¿½ï¿½
 
     //* remove the task
     if (!impl->bRtsptcp && !pSys->bMulticast)
@@ -698,26 +698,26 @@ static int GetOneFrame(CdxRtspStreamImplT *impl)
     else if( !pSys->bMulticast && !pSys->bPaused &&
               pSys->bNoData && ( pSys->iNodatati > 0 ) )
     {
-        logw("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        LOGW("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
         int bRtsptcp = impl->bRtsphttp || impl->bRtsptcp;
 
         if( !bRtsptcp && pSys->rtsp && pSys->ms )
         {
-            logw( "no data received in 10s. Switching to TCP" );
+            LOGW( "no data received in 10s. Switching to TCP" );
             if( RtspRollOverTcp( impl ) )
             {
-                loge( "TCP rollover failed, aborting" );
+                LOGE( "TCP rollover failed, aborting" );
                 return -1;
             }
             return -2;
         }
-        loge( "no data received in 10s, aborting" );
+        LOGE( "no data received in 10s, aborting" );
         return -1;
     }
     else if( !pSys->bMulticast && !pSys->bPaused &&
              ( pSys->iNodatati > 34 ) )
     {
-        logw( "no data received in 10s, eos ?" );
+        LOGW( "no data received in 10s, eos ?" );
         return -1;
     }
 
@@ -788,13 +788,13 @@ __exit:
     }
     else if(impl->pSys->bOutMuxed)
     {
-        logw("impl->pSys->bOutMuxed(%d)", impl->pSys->bOutMuxed);
+        LOGW("impl->pSys->bOutMuxed(%d)", impl->pSys->bOutMuxed);
         ret = -1;
         goto __exit1;
     }
     else
     {
-        logv("impl->bPktheaderRead=%d, impl->bPktdataRead=%d, impl->mPos.type=%d, len=%d",
+        LOGV("impl->bPktheaderRead=%d, impl->bPktdataRead=%d, impl->mPos.type=%d, len=%d",
             impl->bPktheaderRead, impl->bPktdataRead, impl->mPos.type, len);
 
         if(!impl->bPktheaderRead && !impl->bPktdataRead)
@@ -808,7 +808,7 @@ __exit:
 
             if(ret < 0)
             {
-                loge("get frame failed.");
+                LOGE("get frame failed.");
                 ret = -1;
                 goto __exit1;
             }
@@ -835,7 +835,7 @@ __exit:
                 }
                 else
                 {
-                    logd("impl->bPktheaderRead==0");
+                    LOGD("impl->bPktheaderRead==0");
                 }
                 ret = 0;
                 break;
@@ -861,13 +861,13 @@ __exit:
                         }
                         else
                         {
-                            logd("impl->mPos.offset(%d), impl->mCurptk.pktHeader.length(%d)",
+                            LOGD("impl->mPos.offset(%d), impl->mCurptk.pktHeader.length(%d)",
                                 impl->mPos.offset, impl->mCurptk.pktHeader.length);
                         }
                     }
                     else
                     {
-                        logd("impl->mCurptk.pktData=NULL");
+                        LOGD("impl->mCurptk.pktData=NULL");
                         ret = -1;
                         goto __exit1;
                     }
@@ -877,7 +877,7 @@ __exit:
             }
             default:
             {
-                loge("unsupport type..");
+                LOGE("unsupport type..");
                 break;
             }
         }
@@ -1112,7 +1112,7 @@ static void CdxContinueAfterDESCRIBE(RTSPClient* client, int resultCode,
         {
             pSys->pSdp = strdup(sdpDescription);
             pSys->bError = 0;
-            //logd("----- pSys->pSdp: (\n %s)", pSys->pSdp);
+            //LOGD("----- pSys->pSdp: (\n %s)", pSys->pSdp);
         }
     }
     else
@@ -1161,7 +1161,7 @@ static int RtspConnect(CdxRtspStreamImplT *impl)
             pSys->url.iPort,
             pSys->url.pPath ? pSys->url.pPath : "") == -1)
         {
-            loge("asprintf failed.");
+            LOGE("asprintf failed.");
             return  -1;
         }
         pUser = strdup(pSys->url.pUsername ? pSys->url.pUsername : "");
@@ -1171,7 +1171,7 @@ static int RtspConnect(CdxRtspStreamImplT *impl)
     {
         if(asprintf(&pUrl, "rtsp://%s", pSys->pPath) == -1)
         {
-            loge("asprintf failed.");
+            LOGE("asprintf failed.");
             return -1;
         }
 
@@ -1192,7 +1192,7 @@ create:
 
     if(!pSys->rtsp)
     {
-        loge("RTSPClient::createNew failed (%s)", pSys->env->getResultMsg());
+        LOGE("RTSPClient::createNew failed (%s)", pSys->env->getResultMsg());
         iRet = -1;
         goto err_out;
     }
@@ -1201,8 +1201,8 @@ create:
 
 describe:
     authenticator.setUsernameAndPassword(pUser, pPwd);
-    //* ÔÚ·¢ËÍÍêsendOptionsCommandÇëÇó£¬ÊÕµ½ËüµÄÓ¦´ðºóµ÷ÓÃ»Øµ÷º¯ÊýcontinueAfterOPTIONS£¬
-    //ÔÚcontinueAfterOPTIONSº¯ÊýÖÐ·¢ËÍDescribeÇëÇó£»
+    //* ï¿½Ú·ï¿½ï¿½ï¿½ï¿½ï¿½sendOptionsCommandï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½Ã»Øµï¿½ï¿½ï¿½ï¿½ï¿½continueAfterOPTIONSï¿½ï¿½
+    //ï¿½ï¿½continueAfterOPTIONSï¿½ï¿½ï¿½ï¿½ï¿½Ð·ï¿½ï¿½ï¿½Describeï¿½ï¿½ï¿½ï¿½
     pSys->rtsp->sendOptionsCommand(&CdxContinueAfterOPTIONS, &authenticator);
 
     if(!WaitLive555Response(impl, iTimeout))
@@ -1210,7 +1210,7 @@ describe:
         int iCode = pSys->iLive555ret;
         if(iCode == 401)
         {
-            loge("authentication failed");
+            LOGE("authentication failed");
             if(pUser)
                 free(pUser);
             if(pPwd)
@@ -1219,7 +1219,7 @@ describe:
         }
         else if(iCode > 0 && iCode != 404 && !impl->bRtsphttp)
         {
-            logd("try HTTP tunneling mode. iCode(%d)", iCode);
+            LOGD("try HTTP tunneling mode. iCode(%d)", iCode);
             impl->bRtsphttp = 1;
             if(pSys->rtsp)
             {
@@ -1232,14 +1232,14 @@ describe:
         {
             if(iCode == 0)
             {
-                logd("connect timeout.");
+                LOGD("connect timeout.");
             }
             else
             {
-                loge("connect error: %d", iCode);
+                LOGE("connect error: %d", iCode);
                 if(iCode == 403)
                 {
-                    loge("RTSP connection failed, denied by the server configuration");
+                    LOGE("RTSP connection failed, denied by the server configuration");
                 }
             }
             if(pSys->rtsp)
@@ -1299,7 +1299,7 @@ static unsigned char* RtspParseH264ConfigStr( char const* configStr,
     }
     /*
     for (size_t i = 0; i < configSize; i++)
-        logw("prop-parameter-sets[i] = 0x%x", cfg[i]);
+        LOGW("prop-parameter-sets[i] = 0x%x", cfg[i]);
     */
 
     free(dup);
@@ -1342,7 +1342,7 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
     tk = (LiveTrackT *)calloc(1, sizeof( LiveTrackT ) );
     if( !tk )
     {
-        loge("malloc failed.");
+        LOGE("malloc failed.");
         return -1;
     }
     tk->impl        = impl;
@@ -1365,7 +1365,7 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
 
     if( !tk->pBuffer )
     {
-        loge("malloc failed.");
+        LOGE("malloc failed.");
         free( tk );
         return -1;
     }
@@ -1398,54 +1398,54 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
         {
             //pMediaInfo->program[0].audio[0].eCodecFormat = //* todo
             pMediaInfo->program[0].audio[impl->nAudiotrack].nBitsPerSample = 16;
-            logd("which codec type L16?");
+            LOGD("which codec type L16?");
         }
         else if( !strcmp( sub->codecName(), "L20" ) )
         {
             //pMediaInfo->program[0].audio[0].eCodecFormat = //* todo
             pMediaInfo->program[0].audio[impl->nAudiotrack].nBitsPerSample = 20;
-            logd("which codec type L20?");
+            LOGD("which codec type L20?");
         }
         else if( !strcmp( sub->codecName(), "L24" ) )
         {
             //pMediaInfo->program[0].audio[0].eCodecFormat = //* todo
             pMediaInfo->program[0].audio[impl->nAudiotrack].nBitsPerSample = 24;
-            logd("which codec type L24?");
+            LOGD("which codec type L24?");
         }
         else if( !strcmp( sub->codecName(), "L8" ) )
         {
             //pMediaInfo->program[0].audio[0].eCodecFormat = //* todo
             pMediaInfo->program[0].audio[impl->nAudiotrack].nBitsPerSample = 8;
-            logd("which codec type L8?");
+            LOGD("which codec type L8?");
         }
         else if( !strcmp( sub->codecName(), "DAT12" ) )
         {
             //pMediaInfo->program[0].audio[0].eCodecFormat = //* todo
             pMediaInfo->program[0].audio[impl->nAudiotrack].nBitsPerSample = 12;
-            logd("which codec type L12?");
+            LOGD("which codec type L12?");
         }
         else if( !strcmp( sub->codecName(), "PCMU" ) )
         {
             //pMediaInfo->program[0].audio[0].eCodecFormat = //* todo
             pMediaInfo->program[0].audio[impl->nAudiotrack].nBitsPerSample = 8;
-            logd("which codec type PCMU?");
+            LOGD("which codec type PCMU?");
         }
         else if( !strcmp( sub->codecName(), "PCMA" ) )
         {
             //pMediaInfo->program[0].audio[0].eCodecFormat = //* todo
             pMediaInfo->program[0].audio[impl->nAudiotrack].nBitsPerSample = 8;
-            logd("which codec type PCMA?");
+            LOGD("which codec type PCMA?");
         }
         else if( !strncmp( sub->codecName(), "G726", 4 ) )
         {
             //pMediaInfo->program[0].audio[0].eCodecFormat = //* todo
             pMediaInfo->program[0].audio[impl->nAudiotrack].nSampleRate = 8000;
             pMediaInfo->program[0].audio[impl->nAudiotrack].nChannelNum = 1;
-            logd("which codec type G726?");
+            LOGD("which codec type G726?");
         }
         else if( !strcmp( sub->codecName(), "AMR" ) )
         {
-            logd("xxxxxx AMR");
+            LOGD("xxxxxx AMR");
             pMediaInfo->program[0].audio[impl->nAudiotrack].eCodecFormat = AUDIO_CODEC_FORMAT_AMR;
             pMediaInfo->program[0].audio[impl->nAudiotrack].eSubCodecFormat = AMR_FORMAT_NARROWBAND;
             tk->fmt.iCodec = AUDIO_CODEC_FORMAT_AMR;
@@ -1463,7 +1463,7 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
 
             //pMediaInfo->program[0].audio[0].eCodecFormat =//*todo  CODEC_MP4A;
             //tk->fmt.iCodec = ;
-            logd("xxxx MP4A-LATM");
+            LOGD("xxxx MP4A-LATM");
             if( ( p_extra = parseStreamMuxConfigStr( sub->fmtp_config(),
                                                      i_extra ) ) )
             {
@@ -1500,7 +1500,7 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
             tk->bAsf = 1;
             if(impl->pSys->bOutAsf == 0)
                 impl->pSys->bOutAsf = 1;
-            logd("X-ASF-PF");
+            LOGD("X-ASF-PF");
         }
         else if( !strcmp( sub->codecName(), "X-QT" ) ||
                  !strcmp( sub->codecName(), "X-QUICKTIME" ) )
@@ -1523,7 +1523,7 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
             }
             else
             {
-                logw( "Missing or unsupported vorbis header." );
+                LOGW( "Missing or unsupported vorbis header." );
             }
         }
         impl->nAudiotrack++;
@@ -1536,7 +1536,7 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
         {
             //pMediaInfo->program[0].video[0].eCodecFormat = //* todo
             //fmt.b_packetized = false;// ??
-            logd("MPV... CHECK");
+            LOGD("MPV... CHECK");
         }
         else if( !strcmp( sub->codecName(), "H263" ) ||
                  !strcmp( sub->codecName(), "H263-1998" ) ||
@@ -1548,7 +1548,7 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
         else if( !strcmp( sub->codecName(), "H261" ) )
         {
             //pMediaInfo->program[0].video[0].eCodecFormat = VIDEO_CODEC_FORMAT_H263;
-            logd("H261 not support...");
+            LOGD("H261 not support...");
         }
         else if( !strcmp( sub->codecName(), "H264" ) )
         {
@@ -1581,7 +1581,7 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
             unsigned int i_extra;
             uint8_t      *p_extra;
 
-            logd("MP4V-ES");
+            LOGD("MP4V-ES");
             pMediaInfo->program[0].video[impl->nVideotrack].eCodecFormat = VIDEO_CODEC_FORMAT_XVID;
             tk->fmt.iCodec = VIDEO_CODEC_FORMAT_XVID;
 
@@ -1603,7 +1603,7 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
                  !strcmp( sub->codecName(), "X-SORENSONVIDEO" ) )
         {
            tk->bQuicktime = 1;
-           logd("========== Quicktime");
+           LOGD("========== Quicktime");
         }
         else if( !strcmp( sub->codecName(), "MP2T" ) )
         {
@@ -1618,18 +1618,18 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
             tk->bMuxed = 1;
             if(impl->pSys->bOutMuxed == 0)
                 impl->pSys->bOutMuxed = 1;
-            logw("MP2P MP1S not support");
+            LOGW("MP2P MP1S not support");
         }
         else if( !strcmp( sub->codecName(), "X-ASF-PF" ) )
         {
             tk->bAsf = 1;
             if(impl->pSys->bOutAsf == 0)
                 impl->pSys->bOutAsf = 1;
-            logd("X-ASF-PF");
+            LOGD("X-ASF-PF");
         }
         else if( !strcmp( sub->codecName(), "DV" ) )
         {
-            logw("todo dv");
+            LOGW("todo dv");
         }
         else if( !strcmp( sub->codecName(), "VP8" ) )
         {
@@ -1640,11 +1640,11 @@ static int ExtractMediaInfo(MediaSubsession *sub, CdxRtspStreamImplT *impl)
     }
     else if( !strcmp( sub->mediumName(), "text" ) )
     {
-        logd("xxx text");
+        LOGD("xxx text");
         tk->fmt.iCat = CDX_MEDIA_SUBTITLE;
         if( !strcmp( sub->codecName(), "T140" ) )
         {
-            logd("T140");
+            LOGD("T140");
         }
     }
 
@@ -1675,7 +1675,7 @@ static int RtspSessionsSetup(CdxRtspStreamImplT *impl)
     //* Create the session from the SDP
     if(!(pSys->ms = MediaSession::createNew(*pSys->env, pSys->pSdp)))
     {
-        loge("Could not create the RTSP Session: %s",
+        LOGE("Could not create the RTSP Session: %s",
             pSys->env->getResultMsg());
         return -1;
     }
@@ -1685,27 +1685,27 @@ static int RtspSessionsSetup(CdxRtspStreamImplT *impl)
     while((sub = iter->next()) != NULL)
     {
         int bInit;
-        logv("sub(%p)", sub);
+        LOGV("sub(%p)", sub);
 
         /* Value taken from mplayer */
         if( !strcmp( sub->mediumName(), "audio" ) )
         {
             iReceivebuffer = 100000;
-            logv("xxx audio.");
+            LOGV("xxx audio.");
         }
         else if( !strcmp( sub->mediumName(), "video" ) )
         {
             iReceivebuffer = 2000000;
-            logv("xxx video.");
+            LOGV("xxx video.");
         }
         else if(!strcmp(sub->mediumName(), "text"))
         {
-            logv("xxx text.");
+            LOGV("xxx text.");
         }
         else
         {
             continue;
-            logv("xxx %s.", sub->mediumName());
+            LOGV("xxx %s.", sub->mediumName());
         }
         if( iClientport != -1 ) //* todo
         {
@@ -1715,7 +1715,7 @@ static int RtspSessionsSetup(CdxRtspStreamImplT *impl)
 
         if( strcasestr( sub->codecName(), "REAL" ) )
         {
-            logd( "real codec detected, using real-RTSP instead" );
+            LOGD( "real codec detected, using real-RTSP instead" );
             pSys->bReal = 1;
             continue;
         }
@@ -1727,7 +1727,7 @@ static int RtspSessionsSetup(CdxRtspStreamImplT *impl)
 
         if( !bInit )
         {
-            logw("RTP subsession '%s/%s' failed (%s)",
+            LOGW("RTP subsession '%s/%s' failed (%s)",
                       sub->mediumName(), sub->codecName(),
                       pSys->env->getResultMsg());
         }
@@ -1744,7 +1744,7 @@ static int RtspSessionsSetup(CdxRtspStreamImplT *impl)
                 /* Increase the RTP reorder timebuffer just a bit */
                 sub->rtpSource()->setPacketReorderingThresholdTime(thresh);
             }
-            logd("RTP subsession '%s/%s'", sub->mediumName(), sub->codecName());
+            LOGD("RTP subsession '%s/%s'", sub->mediumName(), sub->codecName());
 
             /* Issue the SETUP */
             if( pSys->rtsp )
@@ -1760,7 +1760,7 @@ static int RtspSessionsSetup(CdxRtspStreamImplT *impl)
                                                        !(bRtsptcp ? 1 : 0), 0);
                     if( pSys->iLive555ret != 461 || !WaitLive555Response(impl))
                     {
-                        loge("SETUP of'%s/%s' failed %s",
+                        LOGE("SETUP of'%s/%s' failed %s",
                                  sub->mediumName(), sub->codecName(),
                                  pSys->env->getResultMsg() );
                         continue;
@@ -1794,11 +1794,11 @@ static int RtspSessionsSetup(CdxRtspStreamImplT *impl)
     }
     delete iter;
 
-    logd("pSys->iTrack=%d", pSys->iTrack);
+    LOGD("pSys->iTrack=%d", pSys->iTrack);
 
     if( pSys->iTrack <= 0 )
     {
-        loge("no track...");
+        LOGE("no track...");
         iReturn = -1;
     }
 
@@ -1809,7 +1809,7 @@ static int RtspSessionsSetup(CdxRtspStreamImplT *impl)
     impl->pSys->fNptLength = pSys->ms->playEndTime();
 
     /* duration */
-    logd("setup start: %f stop:%f", pSys->fNptStart, pSys->fNptLength);
+    LOGD("setup start: %f stop:%f", pSys->fNptStart, pSys->fNptLength);
 
     /* */
     pSys->bNoData = 1;
@@ -1826,7 +1826,7 @@ static void *CdxTimeoutProcess(void *pArg)
     while(1)
     {
         char *pszBye = NULL;
-        logv("xxx iTimeout(%d s)", pTimeout->pSys->iTimeout);
+        LOGV("xxx iTimeout(%d s)", pTimeout->pSys->iTimeout);
         struct timespec time;
         clock_gettime(CLOCK_REALTIME, &time);
         time.tv_sec += pTimeout->pSys->iTimeout * 2 / 3;
@@ -1855,7 +1855,7 @@ static int RtspPlay(CdxRtspStreamImplT *impl)
 
         if( !WaitLive555Response(impl) )
         {
-            loge( "RTSP PLAY failed %s", pSys->env->getResultMsg() );
+            LOGE( "RTSP PLAY failed %s", pSys->env->getResultMsg() );
             return -1;
         }
 
@@ -1869,7 +1869,7 @@ static int RtspPlay(CdxRtspStreamImplT *impl)
             is supported correctly */
         if( !pSys->pTimeout && ( pSys->bGetparam /*"rtsp-wmserver"*/ ) )
         {
-            logd( "We have a timeout of %d seconds",  pSys->iTimeout );
+            LOGD( "We have a timeout of %d seconds",  pSys->iTimeout );
             pSys->pTimeout = (TimeoutThreadT *)malloc( sizeof(TimeoutThreadT) );
             if( pSys->pTimeout )
             {
@@ -1879,7 +1879,7 @@ static int RtspPlay(CdxRtspStreamImplT *impl)
                 sem_init(&pSys->pTimeout->sem, 0, 0);
                 if(pthread_create(&pSys->pTimeout->handle, NULL, CdxTimeoutProcess, impl) != 0)
                 {
-                    loge("create timeout thread failed.");
+                    LOGE("create timeout thread failed.");
                     sem_destroy(&pSys->pTimeout->sem);
                     free(pSys->pTimeout);
                     pSys->pTimeout = NULL;
@@ -1888,7 +1888,7 @@ static int RtspPlay(CdxRtspStreamImplT *impl)
             }
             else
             {
-                loge( "cannot spawn liveMedia timeout thread" );
+                LOGE( "cannot spawn liveMedia timeout thread" );
             }
         }
     }
@@ -1899,7 +1899,7 @@ static int RtspPlay(CdxRtspStreamImplT *impl)
     if (pSys->ms->playEndTime() > 0)
         pSys->fNptLength = pSys->ms->playEndTime();
 
-    logd( "play start: %f stop:%f", pSys->fNptStart, pSys->fNptLength );
+    LOGD( "play start: %f stop:%f", pSys->fNptStart, pSys->fNptLength );
     return 0;
 }
 
@@ -2180,7 +2180,7 @@ static void GetPktSize (AsfHdrT *hdr,cdx_uint8 *pHeader, int iHeader )
 
     if(memcmp(guid.data, asf_header, 16))
     {
-        loge("not asf format file.");
+        LOGE("not asf format file.");
         return ;
     }
     BufferGetMemory(&buf, NULL, 30 - 16);
@@ -2199,7 +2199,7 @@ static void GetPktSize (AsfHdrT *hdr,cdx_uint8 *pHeader, int iHeader )
             hdr->dataPktCount = BufferGet64(&buf); //* data pkt count
             BufferGetMemory(&buf, NULL, 8+8+8+4); //*
             hdr->minDataPktSize = BufferGet32(&buf);
-            logd("============= minDataPktSize=%u", hdr->minDataPktSize);
+            LOGD("============= minDataPktSize=%u", hdr->minDataPktSize);
             BufferGetMemory(&buf, NULL, iSize - 24 - 16 - 8 - 8 - 8 - 8-8-8-4 - 4);
         }
         else if(!memcmp(guid.data, head1_guid, 16))
@@ -2297,7 +2297,7 @@ static int GetAsfHeaderInfo(CdxRtspStreamImplT *impl)
     /* Parse the asf header */
     if( pAsf == NULL )
     {
-        loge("not fit marker...");
+        LOGE("not fit marker...");
         return -1;
     }
 
@@ -2310,17 +2310,17 @@ static int GetAsfHeaderInfo(CdxRtspStreamImplT *impl)
 
     if( pAsf >= pEnd )
     {
-        loge("no info.");
+        LOGE("no info.");
         ret = -1;
         goto out;
     }
-    //logd("asf info: %s", pAsf);
+    //LOGD("asf info: %s", pAsf);
 
     nHeader =  pEnd - pAsf;
     pHeader = (cdx_uint8 *)malloc( pEnd - pAsf );
     if(!pHeader)
     {
-        loge("malloc failed.");
+        LOGE("malloc failed.");
         ret = -1;
         goto out;
     }
@@ -2328,12 +2328,12 @@ static int GetAsfHeaderInfo(CdxRtspStreamImplT *impl)
 
     nHeader = Base64Decode( (cdx_uint8*)pHeader, nHeader, pAsf );
 
-    //logd("nHeader(%d), Hdrbase64(%s)", nHeader, pAsf);
-    /*logd("pHeader[%x %x %x %x %x %x]", pHeader[0], pHeader[1], pHeader[2],
+    //LOGD("nHeader(%d), Hdrbase64(%s)", nHeader, pAsf);
+    /*LOGD("pHeader[%x %x %x %x %x %x]", pHeader[0], pHeader[1], pHeader[2],
         pHeader[3], pHeader[4],pHeader[5]);*/
     if( nHeader <= 0 )
     {
-        loge("nHeader <= 0.");
+        LOGE("nHeader <= 0.");
         ret = -1;
         goto out;
     }
@@ -2346,12 +2346,12 @@ static int GetAsfHeaderInfo(CdxRtspStreamImplT *impl)
     impl->bufAsfheader = (cdx_uint8 *)malloc(nHeader);
     if(!impl->bufAsfheader)
     {
-        loge("malloc failed.");
+        LOGE("malloc failed.");
         ret = -1;
         goto out;
     }
     memcpy(impl->bufAsfheader, pHeader, nHeader);
-    logd("Asf header size(%d)", nHeader);
+    LOGD("Asf header size(%d)", nHeader);
 
 out:
     if(pAsf)
@@ -2367,7 +2367,7 @@ static cdx_int32 CreateRtspStreamBuffer(CdxRtspStreamImplT *impl)
     impl->buffer = (char *)malloc(RTSP_MAX_STREAM_BUF_SIZE);
     if(!impl->buffer)
     {
-        loge("malloc failed.");
+        LOGE("malloc failed.");
         return -1;
     }
     impl->maxBufSize = RTSP_MAX_STREAM_BUF_SIZE;
@@ -2415,7 +2415,7 @@ static void *StartRtspStreamThread(void *pArg)
         ret = GetOneFrame(impl);
         if(ret < 0)
         {
-            loge("GetOneFrame failed.");
+            LOGE("GetOneFrame failed.");
             pthread_mutex_lock(&impl->lock);
             impl->ioState = CDX_IO_STATE_ERROR;
             pthread_mutex_unlock(&impl->lock);
@@ -2444,11 +2444,11 @@ static cdx_int32 __CdxRtspStreamConnect(CdxStreamT *stream)
     impl->status = RTSP_STREAM_CONNECTING;
     pthread_mutex_unlock(&impl->lock);
 
-    CDX_LOGV("begin rtsp stream connect.");
+    LOGV("begin rtsp stream connect.");
     impl->pSys = pSys = (StreamSysT *)malloc(sizeof(StreamSysT));
     if(!pSys)
     {
-        CDX_LOGE("malloc pSys failed.");
+        LOGE("malloc pSys failed.");
         return -1;
     }
     memset(impl->pSys, 0x00, sizeof(StreamSysT));
@@ -2459,7 +2459,7 @@ static cdx_int32 __CdxRtspStreamConnect(CdxStreamT *stream)
     pSys->fNptStart = 0.;
     pSys->bNoData =  1;
     GetPathFromUrl(impl->url, &pSys->pPath); //*pPath: rtsp://pPath
-    logv("=========pSys->pPath(%s)", pSys->pPath);
+    LOGV("=========pSys->pPath(%s)", pSys->pPath);
     pSys->fSeekRequest = -1; //* todo
 
     //* parse URL for rtsp://[user:[passwd]@]serverip:port/options
@@ -2467,24 +2467,24 @@ static cdx_int32 __CdxRtspStreamConnect(CdxStreamT *stream)
 
     if((pSys->scheduler = BasicTaskScheduler::createNew()) == NULL)
     {
-        loge("BasicTaskScheduler::createNew failed.");
+        LOGE("BasicTaskScheduler::createNew failed.");
         goto err_out;
     }
 
     if((pSys->env = BasicUsageEnvironment::createNew(*pSys->scheduler)) == NULL)
     {
-        loge("BasicUsageEnvironment::createNew failed.");
+        LOGE("BasicUsageEnvironment::createNew failed.");
         goto err_out;
     }
     if((iRet = RtspConnect(impl)) != 0)
     {
-        loge("failed to connect with %s", impl->url);
+        LOGE("failed to connect with %s", impl->url);
         goto err_out;
     }
 
     if(pSys->pSdp == NULL)
     {
-        loge("failed to retrieve the rtsp session description.");
+        LOGE("failed to retrieve the rtsp session description.");
         goto err_out;
     }
 
@@ -2501,31 +2501,31 @@ static cdx_int32 __CdxRtspStreamConnect(CdxStreamT *stream)
             payloadType == MP2T)
     {
         impl->bRtsptcp = 1;
-        logd("use tcp interleaved mode");
+        LOGD("use tcp interleaved mode");
     }
 
     //* 2. setup
     if((iRet = RtspSessionsSetup(impl)) != 0)
     {
-        loge("nothing to play for %s", impl->url);
+        LOGE("nothing to play for %s", impl->url);
         goto err_out;
     }
     if(pSys->bReal) //* todo
     {
-        loge("check ...");
+        LOGE("check ...");
         goto err_out;
     }
 
     //* 3. play
     if((iRet = RtspPlay(impl)) != 0)
     {
-        loge("play failed.");
+        LOGE("play failed.");
         goto err_out;
     }
 
     if(pSys->iTrack <= 0)
     {
-        loge("no valid track.");
+        LOGE("no valid track.");
         goto err_out;
     }
 
@@ -2533,13 +2533,13 @@ static cdx_int32 __CdxRtspStreamConnect(CdxStreamT *stream)
     {
         if(CreateRtspStreamBuffer(impl) < 0)
         {
-            loge("CreateRtspStreamBuffer failed.");
+            LOGE("CreateRtspStreamBuffer failed.");
             goto err_out;
         }
 
         if(GetAsfHeaderInfo(impl) < 0) //* need store to buffer
         {
-            loge("asf header invalid.");
+            LOGE("asf header invalid.");
             goto err_out;
         }
 
@@ -2556,7 +2556,7 @@ static cdx_int32 __CdxRtspStreamConnect(CdxStreamT *stream)
         iRet = pthread_create(&impl->threadId, NULL, StartRtspStreamThread, (void *)impl);
         if(iRet)
         {
-            loge("create thread failed.");
+            LOGE("create thread failed.");
             goto err_out;
         }
         #if 0
@@ -2580,7 +2580,7 @@ static cdx_int32 __CdxRtspStreamConnect(CdxStreamT *stream)
 
         if(CreateRtspStreamBuffer(impl) < 0)
         {
-            loge("CreateRtspStreamBuffer failed.");
+            LOGE("CreateRtspStreamBuffer failed.");
             goto err_out;
         }
 
@@ -2588,7 +2588,7 @@ static cdx_int32 __CdxRtspStreamConnect(CdxStreamT *stream)
         iRet = pthread_create(&impl->threadId, NULL, StartRtspStreamThread, (void *)impl);
         if(iRet)
         {
-            loge("create thread failed.");
+            LOGE("create thread failed.");
             goto err_out;
         }
 #if 0
@@ -2626,7 +2626,7 @@ static cdx_int32 __CdxRtspStreamConnect(CdxStreamT *stream)
         impl->mediaInfoContainer.extraData = &impl->mediaInfo;
     }
 
-    logd("rtsp connect ok.");
+    LOGD("rtsp connect ok.");
 
     pthread_mutex_lock(&impl->lock);
     impl->status = RTSP_STREAM_IDLE;
@@ -2708,7 +2708,7 @@ static void extraDataParse(CdxRtspStreamImplT *impl, CdxKeyedVectorT *header)
             }
         }
 
-        logd("start time %s, end time %s", str, str2);
+        LOGD("start time %s, end time %s", str, str2);
         impl->startTime = strdup(str);
         if (*str2 != '\0')
             impl->endTime = strdup(str2);
@@ -2720,24 +2720,24 @@ static CdxStreamT *__CdxRtspStreamCreate(CdxDataSourceT *source)
 {
     CdxRtspStreamImplT *impl;
 
-    CDX_LOGD("source uri:(%s)", source->uri);
+    LOGD("source uri:(%s)", source->uri);
 
     if(strncasecmp("rtsp://", source->uri, 7) != 0)
     {
-        CDX_LOGE("not rtsp source.");
+        LOGE("not rtsp source.");
         return NULL;
     }
 
     if (!dlopen("liblive555.so", RTLD_NOW))
     {
-        loge("open plugin 'liblive555' failure. dlopen err:%s.\n", dlerror());
+        LOGE("open plugin 'liblive555' failure. dlopen err:%s.", dlerror());
         return NULL;
     }
 
     impl = (CdxRtspStreamImplT *)calloc(1, sizeof(*impl));
     if (NULL == impl)
     {
-        CDX_LOGE("CreateRtspStreamImpl fail...");
+        LOGE("CreateRtspStreamImpl fail...");
         return NULL;
     }
 
@@ -2754,10 +2754,10 @@ static CdxStreamT *__CdxRtspStreamCreate(CdxDataSourceT *source)
     //sprintf(impl->location, "/data/camera/rtsp_stream_%d.es", streamIndx++);
     //impl->fp_rtsp = fopen(impl->location, "wb");
     impl->fp_rtsp = fopen("/data/camera/rtsp_stream", "wb");
-    logd("errno=%d", errno);
+    LOGD("errno=%d", errno);
 #endif
 
-    CDX_LOGD("create rtsp stream ok.");
+    LOGD("create rtsp stream ok.");
 
     return &impl->base;
 }

@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Demux_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <unistd.h>
@@ -155,7 +155,7 @@ static int map_PacketType_To_MediaType(cdx_int32 pkt_type)
     }
     else
     {
-        aloge("fatal error! Unknown packet type (%d) detected", pkt_type);
+        LOGE("fatal error! Unknown packet type (%d) detected", pkt_type);
     }
     return media_type;
 }
@@ -171,7 +171,7 @@ static void allocDmxOutputBuf(DEMUXDATATYPE *pDemuxData)
 
     if (pDemuxData->mAllocBufFlag)
     {
-        alogw("buffer has alloc, never alloc again");
+        LOGW("buffer has alloc, never alloc again");
         return;
     }
 
@@ -239,10 +239,10 @@ static void allocDmxOutputBuf(DEMUXDATATYPE *pDemuxData)
 
         if (pBufMng->mPktListNodeCnt != cnt)
         {
-            aloge("[%d]node alloc buf, but there is[%d] we marked, not compitible", pBufMng->mPktListNodeCnt, cnt);
+            LOGE("[%d]node alloc buf, but there is[%d] we marked, not compitible", pBufMng->mPktListNodeCnt, cnt);
         }
 
-        alogd("port_idx[%d] alloc_buf, cnt = %d", port_idx, pBufMng->mPktListNodeCnt);
+        LOGD("port_idx[%d] alloc_buf, cnt = %d", port_idx, pBufMng->mPktListNodeCnt);
     }
 
     pDemuxData->mAllocBufFlag = TRUE;
@@ -273,7 +273,7 @@ static ERRORTYPE Demux_CreateBufferMng(DEMUXDATATYPE *pDemuxData, int port_idx)
         DMXPKT_NODE_T* pNode = (DMXPKT_NODE_T *)malloc(sizeof(DMXPKT_NODE_T));
         if (NULL == pNode)
         {
-            aloge("fatal error! alloc pkt_node fail");
+            LOGE("fatal error! alloc pkt_node fail");
             break;
         }
         memset(pNode, 0, sizeof(DMXPKT_NODE_T));
@@ -290,7 +290,7 @@ static ERRORTYPE Demux_CreateBufferMng(DEMUXDATATYPE *pDemuxData, int port_idx)
     int err = pthread_mutex_init(&pBufferMng->mPktlistMutex, NULL);
     if (err !=0 )
     {
-        aloge("fatal error! pthread mutex init fail!");
+        LOGE("fatal error! pthread mutex init fail!");
         eError = FAILURE;
         goto err0;
     }
@@ -301,14 +301,14 @@ static ERRORTYPE Demux_CreateBufferMng(DEMUXDATATYPE *pDemuxData, int port_idx)
     err = pthread_cond_init(&pBufferMng->mWaitIdleCondition, &condAttr);
     if (err != 0)
     {
-        aloge("fatal error! init thread condition fail");
+        LOGE("fatal error! init thread condition fail");
         eError = FAILURE;
         goto err1;
     }
     err = pthread_cond_init(&pBufferMng->mWaitReadyCondition, &condAttr);
     if (err != 0)
     {
-        aloge("fatal error! init thread condition fail");
+        LOGE("fatal error! init thread condition fail");
         eError = FAILURE;
         goto err2;
     }
@@ -374,7 +374,7 @@ static ERRORTYPE Demux_ReleaseBufferMng(DEMUXDATATYPE *pDemuxData)
         pthread_mutex_lock(&pBufMng->mPktlistMutex);
         if (!list_empty(&pBufMng->readyPktList))
         {
-            aloge("fatal error! port_idx = %d, some ready list node is still in use", port_idx);
+            LOGE("fatal error! port_idx = %d, some ready list node is still in use", port_idx);
             list_for_each_entry_safe(pEntry, pTmp, &pBufMng->readyPktList, mList)
             {
                 list_del(&pEntry->mList);
@@ -388,7 +388,7 @@ static ERRORTYPE Demux_ReleaseBufferMng(DEMUXDATATYPE *pDemuxData)
         }
         if (!list_empty(&pBufMng->fillingPktList))
         {
-            aloge("fatal error! port_idx = %d, some filling list node is still in use", port_idx);
+            LOGE("fatal error! port_idx = %d, some filling list node is still in use", port_idx);
             list_for_each_entry_safe(pEntry, pTmp, &pBufMng->fillingPktList, mList)
             {
                 list_del(&pEntry->mList);
@@ -402,7 +402,7 @@ static ERRORTYPE Demux_ReleaseBufferMng(DEMUXDATATYPE *pDemuxData)
         }
         if (!list_empty(&pBufMng->usingPktList))
         {
-            aloge("fatal error! port_idx = %d, some using list node is still in use", port_idx);
+            LOGE("fatal error! port_idx = %d, some using list node is still in use", port_idx);
             list_for_each_entry_safe(pEntry, pTmp, &pBufMng->usingPktList, mList)
             {
                 list_del(&pEntry->mList);
@@ -496,15 +496,15 @@ static ERRORTYPE Demux_CheckFillingPktEmpty(DEMUXDATATYPE *pDemuxData)
         {
             if (pPortDef->eDomain == COMP_PortDomainAudio)
             {
-                aloge("fatal error! Port[%d]:Audio filling number:[%d]", port_idx, fillingCnt);
+                LOGE("fatal error! Port[%d]:Audio filling number:[%d]", port_idx, fillingCnt);
             }
             else if (pPortDef->eDomain == COMP_PortDomainVideo)
             {
-                aloge("fatal error! Port[%d]:Video filling number:[%d]", port_idx, fillingCnt);
+                LOGE("fatal error! Port[%d]:Video filling number:[%d]", port_idx, fillingCnt);
             }
             else if (pPortDef->eDomain == COMP_PortDomainSubtitle)
             {
-                aloge("fatal error! Port[%d]:Subtitle filling number:[%d]", port_idx, fillingCnt);
+                LOGE("fatal error! Port[%d]:Subtitle filling number:[%d]", port_idx, fillingCnt);
             }
         }
     }
@@ -563,7 +563,7 @@ static ERRORTYPE Demux_ReturnAllBuffer(DEMUXDATATYPE *pDemuxData)
         list_for_each(pList, &pBufMng->usingPktList) { usingCnt++; }
         pthread_mutex_unlock(&pBufMng->mPktlistMutex);
 
-        alogd(" Port[%d]: OutTunnelFlag[%d], BufSuppier[%d] 1-input 2-output pkt num:[idle-%d][filling-%d][ready-%d][using-%d]\n"
+        LOGD(" Port[%d]: OutTunnelFlag[%d], BufSuppier[%d] 1-input 2-output pkt num:[idle-%d][filling-%d][ready-%d][using-%d]"
               ,port_idx
               ,pDemuxData->mOutputPortTunnelFlag[port_idx]
               ,pBufSupplier->eBufferSupplier
@@ -597,7 +597,7 @@ static ERRORTYPE Demux_ReturnAllBuffer(DEMUXDATATYPE *pDemuxData)
 
                 omx_buffer_header.pOutputPortPrivate = (void*)&dmxOutBuf;
                 omx_buffer_header.nInputPortIndex = pTunnelInfo->nTunnelPortIndex;
-                alogv("curState[0x%x] nFilledLen[%d] nTobeFillLen[%d] pBuffer[%p] pBufferExtra[%p] media_type[%d]",
+                LOGV("curState[0x%x] nFilledLen[%d] nTobeFillLen[%d] pBuffer[%p] pBufferExtra[%p] media_type[%d]",
                       pDemuxData->state, dmxOutBuf.nFilledLen, dmxOutBuf.nTobeFillLen,
                       dmxOutBuf.pBuffer, dmxOutBuf.pBufferExtra, dmxOutBuf.media_type);
                 COMP_EmptyThisBuffer(pTunnelInfo->hTunnel,  (void*)&omx_buffer_header);
@@ -646,7 +646,7 @@ static ERRORTYPE DemuxOpenParserLib(DEMUXDATATYPE *pDemuxData)
     eError = pDemuxData->cdx_epdk_dmx->open(pDemuxData->cdx_epdk_dmx, &pDemuxData->cdx_mediainfo, &pDemuxData->datasrc_desc);
     if(eError < 0)
     {
-        aloge("mpp demuxer open error");
+        LOGE("mpp demuxer open error");
         //pDemuxData->pCallbacks->EventHandler(pDemuxData->hSelf, pDemuxData->pAppData, OMX_EventCmdComplete, OMX_CommandStateSet, OMX_StateInvalid, (OMX_PTR)&ret);
         //eError = COMP_ErrorUndefined;
     }
@@ -671,7 +671,7 @@ static ERRORTYPE CreateDemuxPorts(PARAM_IN DEMUXDATATYPE *pDemuxData, PARAM_IN C
 
     if (cdx_mediainfo->programNum <= 0 || cdx_mediainfo->programIndex < 0 || cdx_mediainfo->programIndex >= cdx_mediainfo->programNum)
     {
-        aloge("fatal error! no program[%d][%d]!", cdx_mediainfo->programNum, cdx_mediainfo->programIndex);
+        LOGE("fatal error! no program[%d][%d]!", cdx_mediainfo->programNum, cdx_mediainfo->programIndex);
         return FAILURE;
     }
     struct CdxProgramS *pProgram = &cdx_mediainfo->program[cdx_mediainfo->programIndex];
@@ -686,7 +686,7 @@ static ERRORTYPE CreateDemuxPorts(PARAM_IN DEMUXDATATYPE *pDemuxData, PARAM_IN C
     }
     else
     {
-        alogw("no audio?[%d][%d]", pProgram->audioIndex, pProgram->audioNum);
+        LOGW("no audio?[%d][%d]", pProgram->audioIndex, pProgram->audioNum);
     }
     if (audioValid && !(pDemuxData->disable_track & DEMUX_DISABLE_AUDIO_TRACK))
     {
@@ -706,13 +706,13 @@ static ERRORTYPE CreateDemuxPorts(PARAM_IN DEMUXDATATYPE *pDemuxData, PARAM_IN C
 
             if(i >= pProgram->audioNum)
             {
-                alogw("no supported audio track found!");
+                LOGW("no supported audio track found!");
                 goto _SKIP_AUDIO_PORT;
             }
 
             if (i > 0) //switch to supported track
             {
-                alogw("demuxLib will read all audio stream, so no need to set audio track index to demuxLib now.");
+                LOGW("demuxLib will read all audio stream, so no need to set audio track index to demuxLib now.");
                 pProgram->audioIndex = i;
             }
         }
@@ -750,7 +750,7 @@ _SKIP_AUDIO_PORT:
     }
     else
     {
-        alogw("no video?[%d][%d]", pProgram->videoIndex, pProgram->videoNum);
+        LOGW("no video?[%d][%d]", pProgram->videoIndex, pProgram->videoNum);
     }
 
     if (videoValid && !(pDemuxData->disable_track & DEMUX_DISABLE_VIDEO_TRACK))
@@ -797,7 +797,7 @@ _SKIP_AUDIO_PORT:
     }
     else
     {
-        alogw("no subtitle?[%d][%d]", pProgram->subtitleIndex, pProgram->subtitleNum);
+        LOGW("no subtitle?[%d][%d]", pProgram->subtitleIndex, pProgram->subtitleNum);
     }
 
     if (subtitleValid && !(pDemuxData->disable_track & DEMUX_DISABLE_SUBTITLE_TRACK))
@@ -877,7 +877,7 @@ ERRORTYPE DemuxSendCommand(
     ERRORTYPE eError = SUCCESS;
     message_t msg;
 
-    alogv("DemuxSendCommand: %d", Cmd);
+    LOGV("DemuxSendCommand: %d", Cmd);
 
     pDemuxData = (DEMUXDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(!pDemuxData)
@@ -909,7 +909,7 @@ ERRORTYPE DemuxSendCommand(
             break;
 
         default:
-            alogw("impossible comp_command[0x%x]", Cmd);
+            LOGW("impossible comp_command[0x%x]", Cmd);
             eCmd = -1;
             break;
     }
@@ -942,17 +942,17 @@ static ERRORTYPE DemuxsetDataSource(PARAM_IN COMP_HANDLETYPE hComponent)
         }
         else
         {
-            alogd("Why ChnAttr.mFd is %d!?", pChnAttr->mFd);
+            LOGD("Why ChnAttr.mFd is %d!?", pChnAttr->mFd);
         }
     }
     else if (pChnAttr->mSourceType == SOURCETYPE_FILEPATH)
     {
-        alogw("SourceType(FILEPATH) NOT support now!");
+        LOGW("SourceType(FILEPATH) NOT support now!");
         eError = FAILURE;
     }
     else
     {
-        aloge("SourceType(%d) NOT support now!", pChnAttr->mSourceType);
+        LOGE("SourceType(%d) NOT support now!", pChnAttr->mSourceType);
         eError = FAILURE;
     }
 
@@ -995,7 +995,7 @@ static ERRORTYPE DemuxPreparePorts(
     }
     else
     {
-        alogd("Demux comp already init ports! init_end[%d]", pDemuxData->demux_init_end);
+        LOGD("Demux comp already init ports! init_end[%d]", pDemuxData->demux_init_end);
     }
 
     return eError;
@@ -1010,7 +1010,7 @@ ERRORTYPE DemuxSeekToPosition(
 
     if(pDemuxData->prefetch_done == 1)
     {
-        alogd("***************seekTo[%d]ms discard data.", pSeekPara->seek_time);
+        LOGD("***************seekTo[%d]ms discard data.", pSeekPara->seek_time);
         if(CDX_OK != pDemuxData->cdx_epdk_dmx->control(pDemuxData->cdx_epdk_dmx, CDX_DMX_CMD_SKIP_CHUNK_DATA, 0, &pDemuxData->cdx_pkt))
         {
             pDemuxData->prefetch_done = 0;
@@ -1046,11 +1046,11 @@ ERRORTYPE DemuxComponentTunnelRequest(
     pthread_mutex_lock(&pDemuxData->mStateLock);
     if (pDemuxData->state == COMP_StateExecuting)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if(pDemuxData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request can't be in state[0x%x]", pDemuxData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]", pDemuxData->state);
         eError = ERR_DEMUX_NOT_PERM;
         pthread_mutex_unlock(&pDemuxData->mStateLock);
         goto COMP_CMD_FAIL;
@@ -1074,7 +1074,7 @@ ERRORTYPE DemuxComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%u] wrong!", nPort);
+        LOGE("fatal error! portIndex[%u] wrong!", nPort);
         eError = ERR_DEMUX_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1092,7 +1092,7 @@ ERRORTYPE DemuxComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%u] wrong!", nPort);
+        LOGE("fatal error! portIndex[%u] wrong!", nPort);
         eError = ERR_DEMUX_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1109,7 +1109,7 @@ ERRORTYPE DemuxComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_DEMUX_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1120,7 +1120,7 @@ ERRORTYPE DemuxComponentTunnelRequest(
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup)
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         if(pPortDef->eDir == COMP_DirOutput)
         {
@@ -1141,7 +1141,7 @@ ERRORTYPE DemuxComponentTunnelRequest(
     else
     {
         if (pDemuxData->mInputPortTunnelFlag) {
-            aloge("Dmx_Comp inport already bind, why bind again?!");
+            LOGE("Dmx_Comp inport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -1152,7 +1152,7 @@ ERRORTYPE DemuxComponentTunnelRequest(
         ((MM_COMPONENTTYPE*)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput)
         {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_DEMUX_ILLEGAL_PARAM;
             goto COMP_CMD_FAIL;
         }
@@ -1161,7 +1161,7 @@ ERRORTYPE DemuxComponentTunnelRequest(
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
         {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -1412,14 +1412,14 @@ static ERRORTYPE DemuxGetOutputBuffer(PARAM_IN COMP_HANDLETYPE hComponent,
     DEMUXDATATYPE *pDemuxData = (DEMUXDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(pDmxOutBuf == NULL)
     {
-       aloge("error input func param");
+       LOGE("error input func param");
        return ERR_DEMUX_ILLEGAL_PARAM;
     }
 
     pthread_mutex_lock(&pDemuxData->mStateLock);
     if(COMP_StateIdle != pDemuxData->state && COMP_StateExecuting != pDemuxData->state)
     {
-        alogw("call getbuf in wrong state[0x%x]", pDemuxData->state);
+        LOGW("call getbuf in wrong state[0x%x]", pDemuxData->state);
         pthread_mutex_unlock(&pDemuxData->mStateLock);
         return ERR_DEMUX_NOT_PERM;
     }
@@ -1428,7 +1428,7 @@ static ERRORTYPE DemuxGetOutputBuffer(PARAM_IN COMP_HANDLETYPE hComponent,
        && pDemuxData->mOutputPortTunnelFlag[pDemuxData->video_port_idx]
        )
     {
-        aloge("fatal error! can't call getoutbuf in tunnel mode!");
+        LOGE("fatal error! can't call getoutbuf in tunnel mode!");
         pthread_mutex_unlock(&pDemuxData->mStateLock);
         return ERR_DEMUX_NOT_PERM;
     }
@@ -1473,7 +1473,7 @@ static ERRORTYPE DemuxGetOutputBuffer(PARAM_IN COMP_HANDLETYPE hComponent,
     }
     if (port_idx == -1)
     {
-        aloge("fatal error! can't find port!");
+        LOGE("fatal error! can't find port!");
         pthread_mutex_unlock(&pDemuxData->mStateLock);
         return ERR_DEMUX_NOT_PERM;
     }
@@ -1510,7 +1510,7 @@ _TryToGetOutBuf:
             eError = pthread_cond_wait_timeout(&pBufferMng->mWaitReadyCondition, &pBufferMng->mPktlistMutex, nMilliSec);
             if(ETIMEDOUT == eError)
             {
-                alogv("wait output dmxpkt timeout[%d]ms, ret[%d]", nMilliSec, eError);
+                LOGV("wait output dmxpkt timeout[%d]ms, ret[%d]", nMilliSec, eError);
                 eError = ERR_DEMUX_NOBUF;
                 pBufferMng->mWaitReadyPktFlag = FALSE;
             }
@@ -1521,7 +1521,7 @@ _TryToGetOutBuf:
             }
             else
             {
-                aloge("fatal error! pthread cond wait timeout ret[%d]", eError);
+                LOGE("fatal error! pthread cond wait timeout ret[%d]", eError);
                 eError = ERR_DEMUX_NOBUF;
                 pBufferMng->mWaitReadyPktFlag = FALSE;
             }
@@ -1539,7 +1539,7 @@ static ERRORTYPE DemuxReleaseOutputBuffer(PARAM_IN COMP_HANDLETYPE hComponent,
     DEMUXDATATYPE *pDemuxData = (DEMUXDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if (pDmxOutBuf == NULL)
     {
-        aloge("error input func param");
+        LOGE("error input func param");
         return ERR_DEMUX_ILLEGAL_PARAM;
     }
 
@@ -1553,7 +1553,7 @@ static ERRORTYPE DemuxReleaseOutputBuffer(PARAM_IN COMP_HANDLETYPE hComponent,
         port_idx = pDemuxData->subtitle_port_idx;
     else
     {
-        aloge("fatal error! unknown media_type[%d]", pDmxOutBuf->media_type);
+        LOGE("fatal error! unknown media_type[%d]", pDmxOutBuf->media_type);
         return ERR_DEMUX_ILLEGAL_PARAM;
     }
 
@@ -1566,14 +1566,14 @@ static ERRORTYPE DemuxReleaseOutputBuffer(PARAM_IN COMP_HANDLETYPE hComponent,
 
     if (COMP_StateIdle != pDemuxData->state && COMP_StateExecuting != pDemuxData->state)
     {
-        alogw("call release buf in wrong state[0x%x]", pDemuxData->state);
+        LOGW("call release buf in wrong state[0x%x]", pDemuxData->state);
         pthread_mutex_unlock(&pDemuxData->mStateLock);
         return ERR_DEMUX_NOT_PERM;
     }
 
     if (pDemuxData->mOutputPortTunnelFlag[port_idx])
     {
-        aloge("fatal error! can't call release buf() in tunnel mode!");
+        LOGE("fatal error! can't call release buf() in tunnel mode!");
         pthread_mutex_unlock(&pDemuxData->mStateLock);
         return ERR_DEMUX_NOT_PERM;
     }
@@ -1593,7 +1593,7 @@ static ERRORTYPE DemuxReleaseOutputBuffer(PARAM_IN COMP_HANDLETYPE hComponent,
         }
         else
         {
-            aloge("fatal error! release buf[%p][%p] is not match usingPktList first entry[%p][%p]",
+            LOGE("fatal error! release buf[%p][%p] is not match usingPktList first entry[%p][%p]",
                 pPktOut->stEncodedStream.pBuffer, pPktOut->stEncodedStream.pBufferExtra,
                 pDmxOutBuf->pBuffer, pDmxOutBuf->pBufferExtra);
             eError = ERR_DEMUX_ILLEGAL_PARAM;
@@ -1601,7 +1601,7 @@ static ERRORTYPE DemuxReleaseOutputBuffer(PARAM_IN COMP_HANDLETYPE hComponent,
     }
     else
     {
-        alogw("Be careful! buf not find, maybe reset channel before call this function?");
+        LOGW("Be careful! buf not find, maybe reset channel before call this function?");
         eError = ERR_DEMUX_ILLEGAL_PARAM;
     }
     pthread_mutex_unlock(&pBufMng->mPktlistMutex);
@@ -1690,7 +1690,7 @@ ERRORTYPE DemuxGetConfig(
         }
         case COMP_IndexVendorDemuxChnPriority:
         {
-            alogw("unsupported temporary get demux chn priority!");
+            LOGW("unsupported temporary get demux chn priority!");
             eError = ERR_DEMUX_NOT_SUPPORT;
             break;
         }
@@ -1722,7 +1722,7 @@ ERRORTYPE DemuxGetConfig(
         }
         default:
         {
-            aloge("fatal error! unknown getConfig Index[0x%x]", nIndex);
+            LOGE("fatal error! unknown getConfig Index[0x%x]", nIndex);
             eError = ERR_DEMUX_ILLEGAL_PARAM;
             break;
         }
@@ -1762,13 +1762,13 @@ ERRORTYPE DemuxSetConfig(
         }
         case COMP_IndexVendorDemuxChnPriority:
         {
-            alogw("not impl SetChnPriority!");
+            LOGW("not impl SetChnPriority!");
             eError = ERR_DEMUX_NOT_SUPPORT;
             break;
         }
         //case COMP_IndexVendorDemuxResetChannel:
         //{
-        //    alogw("not impl ResetChannel!");
+        //    LOGW("not impl ResetChannel!");
         //    //eError = DemuxResetChannel(hComponent);
         //    eError = ERR_DEMUX_NOT_SUPPORT;
         //    break;
@@ -1790,7 +1790,7 @@ ERRORTYPE DemuxSetConfig(
         //}
         //case COMP_IndexVendorDemuxDisableProprityTrack:
         //{
-        //    aloge("not impl DisableProrityTrack!");
+        //    LOGE("not impl DisableProrityTrack!");
         //    eError = ERR_DEMUX_NOT_SUPPORT;
         //    break;
         //}
@@ -1811,7 +1811,7 @@ ERRORTYPE DemuxSetConfig(
         }
         default:
         {
-            aloge("unknown Index[0x%x]", nIndex);
+            LOGE("unknown Index[0x%x]", nIndex);
             eError = ERR_DEMUX_ILLEGAL_PARAM;
             break;
         }
@@ -1836,7 +1836,7 @@ ERRORTYPE DemuxComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     msg.command = eCmd;
     put_message(&pDemuxData->cmd_queue, &msg);
 
-    alogd("wait demux component exit!...");
+    LOGD("wait demux component exit!...");
     // Wait for thread to exit
     pthread_join(pDemuxData->thread_id, (void*) &eError);
 
@@ -1856,7 +1856,7 @@ ERRORTYPE DemuxComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     {
         if(0 == pDemuxData->mFd)
         {
-            alogw("Be careful! fd==0!");
+            LOGW("Be careful! fd==0!");
         }
         close(pDemuxData->mFd);
         pDemuxData->mFd = -1;
@@ -1877,7 +1877,7 @@ ERRORTYPE DemuxComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         free(pDemuxData);
     }
 
-    alogd("demux component exited!");
+    LOGD("demux component exited!");
 
     return eError;
 }
@@ -1937,7 +1937,7 @@ ERRORTYPE DemuxComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if(message_create(&pDemuxData->cmd_queue)<0)
     {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_DEMUX_NOMEM;
         goto err_out1;
     }
@@ -1954,7 +1954,7 @@ ERRORTYPE DemuxComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     fpVideoStream = fopen(fpVideoStreamPath, "wb");
     if(NULL == fpVideoStream)
     {
-        aloge("fatal error! fopen[%s] fail", fpVideoStreamPath);
+        LOGE("fatal error! fopen[%s] fail", fpVideoStreamPath);
     }
 #endif
 
@@ -1973,7 +1973,7 @@ ERRORTYPE DemuxEmptyThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COM
 {
     ERRORTYPE eError = SUCCESS;
 
-    alogd("fatal error! DemuxEmptyThisBuffer.");
+    LOGD("fatal error! DemuxEmptyThisBuffer.");
 
     return eError;
 }
@@ -1987,7 +1987,7 @@ ERRORTYPE DemuxFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
     EncodedStream stEncodedStream = *(EncodedStream*)pBuffer->pOutputPortPrivate;
     if (NULL == stEncodedStream.pBuffer)
     {
-        aloge("fatal error! call FillThisBuffer using the buffer is NULL!");
+        LOGE("fatal error! call FillThisBuffer using the buffer is NULL!");
         return ERR_DEMUX_NOBUF;
     }
 
@@ -2001,7 +2001,7 @@ ERRORTYPE DemuxFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
         port_idx = pDemuxData->subtitle_port_idx;
     else
     {
-        aloge("fatal error! unknown media_type[%d]", stEncodedStream.media_type);
+        LOGE("fatal error! unknown media_type[%d]", stEncodedStream.media_type);
         return ERR_DEMUX_ILLEGAL_PARAM;
     }
 
@@ -2015,7 +2015,7 @@ ERRORTYPE DemuxFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
     // Check state
     if (pDemuxData->state != COMP_StateExecuting)
     {
-        alogw("Be careful! Call DemuxFillThisBuffer in state[0x%x]!", pDemuxData->state);
+        LOGW("Be careful! Call DemuxFillThisBuffer in state[0x%x]!", pDemuxData->state);
         pthread_mutex_unlock(&pDemuxData->mStateLock);
         return ERR_DEMUX_NOT_PERM;
     }
@@ -2023,7 +2023,7 @@ ERRORTYPE DemuxFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
     // Ensure it is outport tunnel mode
     if (!pDemuxData->mOutputPortTunnelFlag[port_idx])
     {
-        aloge("fatal error! can't call DemuxFillThisBuffer in non-tunnel mode!");
+        LOGE("fatal error! can't call DemuxFillThisBuffer in non-tunnel mode!");
         pthread_mutex_unlock(&pDemuxData->mStateLock);
         return ERR_DEMUX_NOT_SUPPORT;
     }
@@ -2056,7 +2056,7 @@ ERRORTYPE DemuxFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
             }
             else
             {
-                aloge("fatal error! not find buf[ID=%d][%p][%p] in used list."
+                LOGE("fatal error! not find buf[ID=%d][%p][%p] in used list."
                     ,stEncodedStream.nID
                     ,stEncodedStream.pBuffer
                     ,stEncodedStream.pBufferExtra
@@ -2068,7 +2068,7 @@ ERRORTYPE DemuxFillThisBuffer(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN COMP
         }
         else
         {
-            alogw("Be careful! buf not find, maybe reset channel before call this function?");
+            LOGW("Be careful! buf not find, maybe reset channel before call this function?");
         }
         pthread_mutex_unlock(&pBufMng->mPktlistMutex);
     }
@@ -2088,7 +2088,7 @@ _TryToGetIdlePktNode:
             pPktIdleNode->stEncodedStream.pBufferExtra    = stEncodedStream.pBufferExtra;
             pPktIdleNode->stEncodedStream.nBufferExtraLen = stEncodedStream.nBufferExtraLen;
 
-            alogv("DemuxFillThisBuffer media_type[%d] pBuffer[%p] nBufferLen[%d] pBufferExtra[%p] nBufferExtraLen[%d]"
+            LOGV("DemuxFillThisBuffer media_type[%d] pBuffer[%p] nBufferLen[%d] pBufferExtra[%p] nBufferExtraLen[%d]"
                  ,stEncodedStream.media_type
                  ,pPktIdleNode->stEncodedStream.pBuffer
                  ,pPktIdleNode->stEncodedStream.nBufferLen
@@ -2131,20 +2131,20 @@ _TryToGetIdlePktNode:
             {
                 pthread_mutex_unlock(&pBufMng->mPktlistMutex);
                 pthread_mutex_unlock(&pDemuxData->mStateLock);
-                aloge("fatal error! failed to get the unknow media_type [%d]", pPktIdleNode->stEncodedStream.media_type);
+                LOGE("fatal error! failed to get the unknow media_type [%d]", pPktIdleNode->stEncodedStream.media_type);
                 return ERR_DEMUX_UNEXIST;
             }
             put_message(&pDemuxData->cmd_queue, &cmd_msg);
         }
         else
         {// no idle buffer, create a new node
-            alogw("idlePktList Empty, create new node");
+            LOGW("idlePktList Empty, create new node");
             DMXPKT_NODE_T *pNode = (DMXPKT_NODE_T *)malloc(sizeof(DMXPKT_NODE_T));
             if (NULL == pNode)
             {
                 pthread_mutex_unlock(&pBufMng->mPktlistMutex);
                 pthread_mutex_unlock(&pDemuxData->mStateLock);
-                aloge("alloc idle_pkt_node fail");
+                LOGE("alloc idle_pkt_node fail");
                 return ERR_DEMUX_NOMEM;
             }
 
@@ -2157,7 +2157,7 @@ _TryToGetIdlePktNode:
     }
     else
     {
-        aloge("fatal error! Unsupported buffer supplier type %d", pBufSupplier->eBufferSupplier);
+        LOGE("fatal error! Unsupported buffer supplier type %d", pBufSupplier->eBufferSupplier);
     }
 
     pthread_mutex_unlock(&pDemuxData->mStateLock);
@@ -2178,7 +2178,7 @@ static void* ComponentThread(void* pThreadData)
     // Get component private data
     DEMUXDATATYPE* pDemuxData = (DEMUXDATATYPE*)pThreadData;
 
-    alogd("Demux ComponentThread start run...");
+    LOGD("Demux ComponentThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"DemuxComp", 0, 0, 0);
 
     while (1)
@@ -2190,7 +2190,7 @@ PROCESS_MESSAGE:
             cmd     = cmd_msg.command;
             cmddata = cmd_msg.para0;
 
-            alogv("Demux ComponentThread get_message cmd:%d", cmd);
+            LOGV("Demux ComponentThread get_message cmd:%d", cmd);
 
             // State transition command
             if (cmd == SetState)
@@ -2236,7 +2236,7 @@ PROCESS_MESSAGE:
                             }
                             if(pDemuxData->state != COMP_StateIdle)
                             {
-                                aloge("fatal error! state[0x%x] is not idle!", pDemuxData->state);
+                                LOGE("fatal error! state[0x%x] is not idle!", pDemuxData->state);
                             }
 
                             Demux_CheckFillingPktEmpty(pDemuxData);
@@ -2277,7 +2277,7 @@ PROCESS_MESSAGE:
                                 }
                                 else
                                 {
-                                    aloge("fatal error! unknown state[0x%x]", pDemuxData->state);
+                                    LOGE("fatal error! unknown state[0x%x]", pDemuxData->state);
                                 }
                                 pDemuxData->state = COMP_StateIdle;
                                 pDemuxData->pCallbacks->EventHandler(pDemuxData->hSelf,
@@ -2336,7 +2336,7 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                aloge("fatal error! state[0x%x]->Pause!", pDemuxData->state);
+                                LOGE("fatal error! state[0x%x]->Pause!", pDemuxData->state);
                                 pDemuxData->pCallbacks->EventHandler(pDemuxData->hSelf,
                                                                      pDemuxData->pAppData,
                                                                      COMP_EventError,
@@ -2388,7 +2388,7 @@ PROCESS_MESSAGE:
         // Check EOF flag
         if (pDemuxData->dmx_eof)
         {
-            alogw("[%p]:Demux EOF found! A", pDemuxData->hSelf);
+            LOGW("[%p]:Demux EOF found! A", pDemuxData->hSelf);
             if (pDemuxData->dmx_eof_send == 0)
             {
                 pDemuxData->dmx_eof_send = 1;
@@ -2448,15 +2448,15 @@ PROCESS_MESSAGE:
                 int err = pDemuxData->cdx_epdk_dmx->control(pDemuxData->cdx_epdk_dmx, CDX_DMX_CMD_GET_STATUS, 0, NULL);
                 if (err == PSR_IO_ERR)
                 {
-                    aloge("IO ERROR");
+                    LOGE("IO ERROR");
                 }
                 else if (err == PSR_USER_CANCEL)
                 {
-                    aloge("PSR USER CANCEL, do nothing");
+                    LOGE("PSR USER CANCEL, do nothing");
                 }
                 else
                 {
-                    alogd("prefetch [%p]:Demuxer EOF found! B", pDemuxData->hSelf);
+                    LOGD("prefetch [%p]:Demuxer EOF found! B", pDemuxData->hSelf);
                     pDemuxData->dmx_eof = 1;
                     pDemuxData->dmx_eof_send = 1;
                     pDemuxData->pCallbacks->EventHandler(pDemuxData->hSelf,
@@ -2492,7 +2492,7 @@ PROCESS_MESSAGE:
             else
             {
                 tunnel_port_idx = -1;
-                //alogv("[%d] is not current video stream index, skip", pDemuxData->cdx_pkt.streamIndex);
+                //LOGV("[%d] is not current video stream index, skip", pDemuxData->cdx_pkt.streamIndex);
             }
         }
         else if (pDemuxData->cdx_pkt.type == CDX_MEDIA_AUDIO)
@@ -2511,7 +2511,7 @@ PROCESS_MESSAGE:
             else
             {
                 tunnel_port_idx = -1;
-                alogv("[%d] is not current audio stream index[%d], skip", pDemuxData->cdx_pkt.streamIndex, pDemuxData->mCurAudioStreamIndex);
+                LOGV("[%d] is not current audio stream index[%d], skip", pDemuxData->cdx_pkt.streamIndex, pDemuxData->mCurAudioStreamIndex);
             }
         }
         else if (pDemuxData->cdx_pkt.type == CDX_MEDIA_SUBTITLE)
@@ -2530,12 +2530,12 @@ PROCESS_MESSAGE:
             else
             {
                 tunnel_port_idx = -1;
-                alogv("[%d] is not current subtitle stream index[%d], skip", pDemuxData->cdx_pkt.streamIndex, pDemuxData->mCurSubtitleStreamIndex);
+                LOGV("[%d] is not current subtitle stream index[%d], skip", pDemuxData->cdx_pkt.streamIndex, pDemuxData->mCurSubtitleStreamIndex);
             }
         }
         else
         {
-            aloge("fatal error! media type from parser not valid, should not run here, abort().");
+            LOGE("fatal error! media type from parser not valid, should not run here, abort().");
             tunnel_port_idx = -1;
         }
 
@@ -2544,7 +2544,7 @@ PROCESS_MESSAGE:
         {
             if(CDX_OK!=pDemuxData->cdx_epdk_dmx->control(pDemuxData->cdx_epdk_dmx, CDX_DMX_CMD_SKIP_CHUNK_DATA, 0, &pDemuxData->cdx_pkt))
             {
-                aloge("fatal error! skip chunk data fail!");
+                LOGE("fatal error! skip chunk data fail!");
             }
             pDemuxData->prefetch_done = 0;
             goto PROCESS_MESSAGE;
@@ -2611,7 +2611,7 @@ PROCESS_MESSAGE:
                 {
                     pNode = list_first_entry(&pBufferMng->idlePktList, DMXPKT_NODE_T, mList);
                     int size = dmxOutBuf.nTobeFillLen;
-                    alogv("search and find no node that capacity is big enough, realloc size: %d", size);
+                    LOGV("search and find no node that capacity is big enough, realloc size: %d", size);
 
                     if (pNode->stEncodedStream.pBuffer != NULL)
                     {
@@ -2624,10 +2624,10 @@ PROCESS_MESSAGE:
                     if (pNode->stEncodedStream.pBuffer == NULL)
                     {
                         pNode->stEncodedStream.nBufferLen = 0;
-                        aloge("malloc %d Bytes fail, skip this pkt", size);
+                        LOGE("malloc %d Bytes fail, skip this pkt", size);
                         if (CDX_OK != pDemuxData->cdx_epdk_dmx->control(pDemuxData->cdx_epdk_dmx, CDX_DMX_CMD_SKIP_CHUNK_DATA, 0, &pDemuxData->cdx_pkt))
                         {
-                            aloge("fatal error! skip chunk data fail!");
+                            LOGE("fatal error! skip chunk data fail!");
                         }
                         pDemuxData->prefetch_done = 0;
                         pthread_mutex_unlock(&pBufferMng->mPktlistMutex);
@@ -2687,7 +2687,7 @@ _TryToFindBuffer:
                 }
                 else if (bFindFlag && !bBufferEnough)
                 {
-                    alogv("find that node buffer capacity is not big enough, request size: %d", dmxOutBuf.nTobeFillLen);
+                    LOGV("find that node buffer capacity is not big enough, request size: %d", dmxOutBuf.nTobeFillLen);
                     pNode = pEntry;
                     dmxOutBuf.nFilledLen    = -1;  // indicate buffer is not enough. requir length is nTobeFillLen
                     dmxOutBuf.pBuffer       = pNode->stEncodedStream.pBuffer;
@@ -2704,7 +2704,7 @@ _TryToFindBuffer:
                 }
                 else if (!bFindFlag)
                 {
-                    alogv("call Thread  pDemuxData->cdx_pkt.type[%d] mWaitVideoBufFlag[%d] mWaitAudioBufFlag[%d]",
+                    LOGV("call Thread  pDemuxData->cdx_pkt.type[%d] mWaitVideoBufFlag[%d] mWaitAudioBufFlag[%d]",
                         pDemuxData->cdx_pkt.type,
                         pDemuxData->mWaitVideoBufFlag,
                         pDemuxData->mWaitAudioBufFlag);
@@ -2733,14 +2733,14 @@ _TryToFindBuffer:
                     }
                     else
                     {
-                        aloge("fatal error! Unknown media_type[%d]", pDemuxData->cdx_pkt.type);
+                        LOGE("fatal error! Unknown media_type[%d]", pDemuxData->cdx_pkt.type);
                         pthread_mutex_unlock(&pBufferMng->mPktlistMutex);
                         goto PROCESS_MESSAGE;
                     }
                 }
                 else
                 {
-                   aloge("fatal error! Should not come here");
+                   LOGE("fatal error! Should not come here");
                    pthread_mutex_unlock(&pBufferMng->mPktlistMutex);
                    goto PROCESS_MESSAGE;
                 }
@@ -2763,7 +2763,7 @@ _TryToFindBuffer:
             }
             else
             {
-                aloge("fatal error: invalide BufferSupplier type %d", pBufSupplier->eBufferSupplier);
+                LOGE("fatal error: invalide BufferSupplier type %d", pBufSupplier->eBufferSupplier);
                 abort();
             }
 
@@ -2773,16 +2773,16 @@ _TryToFindBuffer:
                 int err = pDemuxData->cdx_epdk_dmx->control(pDemuxData->cdx_epdk_dmx, CDX_DMX_CMD_GET_STATUS, 0, NULL);
                 if(err == PSR_IO_ERR)
                 {
-                    aloge("IO ERROR");
+                    LOGE("IO ERROR");
                 }
                 else if (err == PSR_USER_CANCEL)
                 {
                     /* do noting */
-                    alogd("PSR USER CANCEL, do nothing");
+                    LOGD("PSR USER CANCEL, do nothing");
                 }
                 else
                 {
-                    alogd("getconfig [%p]:Demuxer EOF found! C", pDemuxData->hSelf);
+                    LOGD("getconfig [%p]:Demuxer EOF found! C", pDemuxData->hSelf);
                     pDemuxData->dmx_eof = 1;
                     pDemuxData->dmx_eof_send = 1;
                     pDemuxData->pCallbacks->EventHandler(pDemuxData->hSelf,
@@ -2845,7 +2845,7 @@ _TryToFindBuffer:
             dmxOutBuf.duration            = pDemuxData->cdx_pkt.duration;
 
             pthread_mutex_unlock(&pBufferMng->mPktlistMutex);
-			alogv("========= media_type[%d](1-video 2-audio) ID[%d] pts[%lld]", dmxOutBuf.media_type, dmxOutBuf.nID, dmxOutBuf.nTimeStamp);
+			LOGV("========= media_type[%d](1-video 2-audio) ID[%d] pts[%lld]", dmxOutBuf.media_type, dmxOutBuf.nID, dmxOutBuf.nTimeStamp);
 
             pthread_mutex_lock(&pBufferMng->mPktlistMutex);
             if (pBufSupplier->eBufferSupplier == COMP_BufferSupplyOutput)
@@ -2859,7 +2859,7 @@ _TryToFindBuffer:
             }
             else
             {
-                aloge("fatal error! Unsupported buffer suppier type %d", pBufSupplier->eBufferSupplier);
+                LOGE("fatal error! Unsupported buffer suppier type %d", pBufSupplier->eBufferSupplier);
                 abort();
             }
             pthread_mutex_unlock(&pBufferMng->mPktlistMutex);
@@ -2877,7 +2877,7 @@ _TryToFindBuffer:
             pthread_mutex_lock(&pBufferMng->mPktlistMutex);
             while (list_empty(&pBufferMng->idlePktList))
             {
-                //alogd("wait idle dmxpkt node");
+                //LOGD("wait idle dmxpkt node");
                 pBufferMng->mWaitIdlePktFlag = TRUE;
                 pthread_cond_wait(&pBufferMng->mWaitIdleCondition, &pBufferMng->mPktlistMutex);
             }
@@ -2900,7 +2900,7 @@ _TryToFindBuffer:
             {
                 pNode = list_first_entry(&pBufferMng->idlePktList,DMXPKT_NODE_T, mList);
                 int size = dmxOutBuf.nTobeFillLen;
-                alogd("search and find no node that capacity is big enough, realloc size: %d", size);
+                LOGD("search and find no node that capacity is big enough, realloc size: %d", size);
                 if (pNode->stEncodedStream.pBuffer != NULL)
                 {
                     free(pNode->stEncodedStream.pBuffer);
@@ -2912,10 +2912,10 @@ _TryToFindBuffer:
                 if (pNode->stEncodedStream.pBuffer == NULL)
                 {
                     pNode->stEncodedStream.nBufferLen = 0;
-                    aloge("malloc %d Bytes fail, skip this pkt", size);
+                    LOGE("malloc %d Bytes fail, skip this pkt", size);
                     if (CDX_OK!=pDemuxData->cdx_epdk_dmx->control(pDemuxData->cdx_epdk_dmx, CDX_DMX_CMD_SKIP_CHUNK_DATA, 0, &pDemuxData->cdx_pkt))
                     {
-                        aloge("fatal error! skip chunk data fail!");
+                        LOGE("fatal error! skip chunk data fail!");
                     }
                     pDemuxData->prefetch_done = 0;
                     pthread_mutex_unlock(&pBufferMng->mPktlistMutex);
@@ -2938,16 +2938,16 @@ _TryToFindBuffer:
                 int err = pDemuxData->cdx_epdk_dmx->control(pDemuxData->cdx_epdk_dmx, CDX_DMX_CMD_GET_STATUS, 0, NULL);
                 if (err == PSR_IO_ERR)
                 {
-                    aloge("IO ERROR");
+                    LOGE("IO ERROR");
                 }
                 else if (err == PSR_USER_CANCEL)
                 {
                    /* do noting */
-                    alogd("PSR USER CANCEL, do nothing");
+                    LOGD("PSR USER CANCEL, do nothing");
                 }
                 else
                 {
-                    alogd("getconfig [%p]:Demuxer EOF found! C", pDemuxData->hSelf);
+                    LOGD("getconfig [%p]:Demuxer EOF found! C", pDemuxData->hSelf);
                     pDemuxData->dmx_eof = 1;
                     pDemuxData->dmx_eof_send = 1;
                     pDemuxData->pCallbacks->EventHandler(pDemuxData->hSelf,
@@ -3005,7 +3005,7 @@ _TryToFindBuffer:
            && (pDemuxData->cdx_pkt.flags & LAST_PART)
            )
         {
-            alogd("seek done? start schedure to other thread for first frame");
+            LOGD("seek done? start schedure to other thread for first frame");
             pDemuxData->dmx_seek_flag = 0;
             if (get_message_count(&pDemuxData->cmd_queue) > 0)
             {
@@ -3015,7 +3015,7 @@ _TryToFindBuffer:
     }
 
 EXIT:
-    alogv("Demuxer ComponentThread stopped");
+    LOGV("Demuxer ComponentThread stopped");
     return (void*) SUCCESS;
 }
 

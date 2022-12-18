@@ -13,7 +13,7 @@
 */
 
 #include "AwRawStreamParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -129,14 +129,14 @@ static cdx_int32 AwRawStreamParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     if(rawStreamParser->status != CDX_PSR_IDLE &&
         rawStreamParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGW("status != CDX_PSR_IDLE && status != \
+        LOGW("status != CDX_PSR_IDLE && status != \
             CDX_PSR_PREFETCHED, BdParserPrefetch invaild");
         rawStreamParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     if(rawStreamParser->mErrno == PSR_EOS)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         return -1;
     }
     if(rawStreamParser->status == CDX_PSR_PREFETCHED)
@@ -186,7 +186,7 @@ static cdx_int32 AwRawStreamParserRead(CdxParserT *parser, CdxPacketT *pkt)
     RawStreamParser *rawStreamParser = (RawStreamParser*)parser;
     if(rawStreamParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
+        LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
         rawStreamParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -220,11 +220,11 @@ static cdx_int32 AwRawStreamParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
 cdx_int32 AwRawStreamParserForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("AwRawStreamParserForceStop start");
+    LOGI("AwRawStreamParserForceStop start");
     RawStreamParser *rawStreamParser = (RawStreamParser*)parser;
     if(rawStreamParser->status < CDX_PSR_IDLE)
     {
-        CDX_LOGW("rawStreamParser->status < CDX_PSR_IDLE, can not forceStop");
+        LOGW("rawStreamParser->status < CDX_PSR_IDLE, can not forceStop");
         rawStreamParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -237,24 +237,24 @@ cdx_int32 AwRawStreamParserForceStop(CdxParserT *parser)
     int ret = CdxStreamForceStop(rawStreamParser->file);
     if(ret < 0)
     {
-        CDX_LOGW("CdxStreamForceStop fail");
+        LOGW("CdxStreamForceStop fail");
     }
     while(rawStreamParser->status != CDX_PSR_IDLE && rawStreamParser->status != CDX_PSR_PREFETCHED)
     {
         usleep(10000);
     }
     rawStreamParser->status = CDX_PSR_IDLE;
-    CDX_LOGI("AwRawStreamParserForceStop end");
+    LOGI("AwRawStreamParserForceStop end");
     return 0;
 }
 
 cdx_int32 AwRawStreamParserClrForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("AwRawStreamParserClrForceStop start");
+    LOGI("AwRawStreamParserClrForceStop start");
     RawStreamParser *rawStreamParser = (RawStreamParser*)parser;
     if(rawStreamParser->status != CDX_PSR_IDLE)
     {
-        CDX_LOGW("rawStreamParser->status != CDX_PSR_IDLE");
+        LOGW("rawStreamParser->status != CDX_PSR_IDLE");
         rawStreamParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -263,9 +263,9 @@ cdx_int32 AwRawStreamParserClrForceStop(CdxParserT *parser)
     int ret = CdxStreamClrForceStop(rawStreamParser->file);
     if(ret < 0)
     {
-        CDX_LOGW("CdxStreamClrForceStop fail");
+        LOGW("CdxStreamClrForceStop fail");
     }
-    CDX_LOGI("AwRawStreamParserClrForceStop end");
+    LOGI("AwRawStreamParserClrForceStop end");
     return 0;
 }
 
@@ -279,7 +279,7 @@ static int AwRawStreamParserControl(CdxParserT *parser, int cmd, void *param)
     {
         case CDX_PSR_CMD_SWITCH_AUDIO:
         case CDX_PSR_CMD_SWITCH_SUBTITLE:
-            CDX_LOGI(" awts parser is not support switch stream yet!!!");
+            LOGI(" awts parser is not support switch stream yet!!!");
             break;
         case CDX_PSR_CMD_SET_FORCESTOP:
             return 0;
@@ -299,8 +299,8 @@ cdx_int32 AwRawStreamParserGetStatus(CdxParserT *parser)
 /*
 cdx_int32 AwRawStreamParserSeekTo(CdxParserT *parser, cdx_int64  timeUs)
 {
-    //CDX_LOGD("AwRawStreamParserSeekTo start, timeUs = %lld", timeUs);
-    CDX_LOGE("it is not supported");
+    //LOGD("AwRawStreamParserSeekTo start, timeUs = %lld", timeUs);
+    LOGE("it is not supported");
     return -1;
 }*/
 static cdx_int32 AwRawStreamParserClose(CdxParserT *parser)
@@ -324,7 +324,7 @@ static cdx_int32 AwRawStreamParserClose(CdxParserT *parser)
     ret = CdxStreamClose(rawStreamParser->file);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamClose fail, ret(%d)", ret);
+        LOGE("CdxStreamClose fail, ret(%d)", ret);
     }
 
     pthread_mutex_destroy(&rawStreamParser->statusLock);
@@ -362,7 +362,7 @@ CdxParserT *AwRawStreamParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     RawStreamParser *rawStreamParser = CdxMalloc(sizeof(RawStreamParser));
     if(!rawStreamParser)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         CdxStreamClose(stream);
         return NULL;
     }
@@ -386,7 +386,7 @@ CdxParserT *AwRawStreamParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     CdxStreamRead(rawStreamParser->file,
              rawStreamParser->pRawStreamBuf,
              AW_RAW_STREAM_PROB_SIZE*sizeof(char));
-    loge(" rawStreamParser->file: %p ", rawStreamParser->file);
+    LOGE(" rawStreamParser->file: %p ", rawStreamParser->file);
 
     ProbeVideoSpecificData(&rawStreamParser->tempVideoInfo,
                             rawStreamParser->pRawStreamBuf,
@@ -403,18 +403,18 @@ static int AwRawStreamProbeH264(cdx_char *p)
     code = p[0] & 0x80;
     if(code != 0)
     {
-        logd(" Maybe this is not h264 stream. forbidden_zero_bit != 0  ");
+        LOGD(" Maybe this is not h264 stream. forbidden_zero_bit != 0  ");
         return 0;
     }
     type = p[0] & 0x1f;
     if(type <= 13 || type == 19)
     {
-        logd(" Maybe this is h264 stream. nal unit type = %d", type);
+        LOGD(" Maybe this is h264 stream. nal unit type = %d", type);
         return 50;
     }
     else
     {
-        logd(" This is not h264 stream. nal unit type = %d", type);
+        LOGD(" This is not h264 stream. nal unit type = %d", type);
         return 0;
     }
     return 0;
@@ -427,13 +427,13 @@ static int AwRawStreamProbeH265(cdx_char *p)
     code = p[0] & 0x80;
     if(code != 0)
     {
-        logd(" Maybe this is not h265 stream. forbidden_zero_bit != 0  ");
+        LOGD(" Maybe this is not h265 stream. forbidden_zero_bit != 0  ");
         return ret;
     }
     type = (p[0] & 0x7e) >> 1;
     if(type > 63)
     {
-        logd(" Maybe this is not h265 stream. nal unit type > 63");
+        LOGD(" Maybe this is not h265 stream. nal unit type > 63");
         return ret;
     }
     switch(type)
@@ -443,7 +443,7 @@ static int AwRawStreamProbeH265(cdx_char *p)
         case 0x22: /*PPS*/
         {
             nNuhLayerId = ((p[0] & 0x1) << 5) | ((p[1] & 0xf8) >> 3);
-            logd(" Parser probe result: This is h265 raw stream:%d! ",
+            LOGD(" Parser probe result: This is h265 raw stream:%d! ",
                 nNuhLayerId);
             ret = 50;
             break;

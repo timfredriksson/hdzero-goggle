@@ -15,7 +15,7 @@
 */
 
 #include <stdlib.h>
-#include<string.h>
+#include <string.h>
 #include <pthread.h>
 #include "sbm.h"
 
@@ -58,7 +58,7 @@ int SbmFrameBufferSizeCalculate(int nConfigSbmBufferSize,int nVideoWidth)
             nBufferSize = nConfigSbmBufferSize/2;
         }
     }
-    logd("*********nBufferSize=%d\n", nBufferSize);
+    LOGD("*********nBufferSize=%d", nBufferSize);
     return nBufferSize;
 }
 
@@ -157,27 +157,27 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
 
     if(pSbmConfig == NULL)
     {
-        loge(" pSbmConfig is null");
+        LOGE(" pSbmConfig is null");
         return -1;
     }
 
     if(pSbmConfig->nSbmBufferTotalSize <= 0)
     {
-        loge(" pSbmConfig->nBufferSize(%d) is invalid",pSbmConfig->nSbmBufferTotalSize);
+        LOGE(" pSbmConfig->nBufferSize(%d) is invalid",pSbmConfig->nSbmBufferTotalSize);
         return -1;
     }
 
     memcpy(&pSbm->mConfig, pSbmConfig, sizeof(SbmConfig));
 
 
-    logd("************pSbm->sbmInterface.bUseNewVeMemoryProgram=%d\n", pSbm->sbmInterface.bUseNewVeMemoryProgram);
+    LOGD("************pSbm->sbmInterface.bUseNewVeMemoryProgram=%d", pSbm->sbmInterface.bUseNewVeMemoryProgram);
 
     if(pSbm->sbmInterface.bUseNewVeMemoryProgram == 1)
     {
         pSbmBuf = (char*)malloc(pSbm->mConfig.nSbmBufferTotalSize);//*
         if(pSbmBuf == NULL)
         {
-            loge(" palloc for sbmBuf failed, size = %d MB",
+            LOGE(" palloc for sbmBuf failed, size = %d MB",
                     pSbm->mConfig.nSbmBufferTotalSize/1024/1024);
             goto ERROR;
         }
@@ -185,13 +185,13 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
           (SbmFrameBufferNode*)malloc(MAX_FRAME_BUFFER_NUM*sizeof(SbmFrameBufferNode));
         if(pSbm->pSbmFrameBuffer == NULL)
         {
-            loge("malloc memory for pSbm->pSbmFrameBuffer failed\n");
+            LOGE("malloc memory for pSbm->pSbmFrameBuffer failed");
             goto ERROR;
         }
         ret = pthread_mutex_init(&pSbm->pSbmFrameBufferMutex, NULL);
         if(ret != 0)
         {
-            loge("pthread_mutex_init failed.");
+            LOGE("pthread_mutex_init failed.");
             goto ERROR;
         }
 
@@ -205,7 +205,7 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
             //pSbmFrameBuffer->pFramePic.pNaluInfoList = (NaluInfo*)malloc(DEFAULT_NALU_NUM*sizeof(NaluInfo));
             //if(pSbmFrameBuffer->pFramePic.pNaluInfoList == NULL)
             //{
-            //    loge("malloc for naluInfo failed");
+            //    LOGE("malloc for naluInfo failed");
             //    goto ERROR;
             //}
 
@@ -213,7 +213,7 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
             (SbmFrameBufferManager*)malloc(sizeof(SbmFrameBufferManager));
             if(pSbmFrameBuffer->pSbmBufferManager  == NULL)
             {
-                loge("ammloc memory for pSbmFrameBuffer->pSbmBufferManager failed\n");
+                LOGE("ammloc memory for pSbmFrameBuffer->pSbmBufferManager failed");
                 goto ERROR;
             }
 
@@ -223,7 +223,7 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
                                       pSbm->mConfig.veOpsS, pSbm->mConfig.pVeOpsSelf);//
             if(pSbmFrameBuffer->pSbmBufferManager->pFrameBuffer == NULL)
             {
-                loge("malloc buffer for pSbm->H264FrameBufferManager.pFrameBuffer failed\n");
+                LOGE("malloc buffer for pSbm->H264FrameBufferManager.pFrameBuffer failed");
                 goto ERROR;;
             }
             phyAddr = (size_addr)(CdcMemGetPhysicAddress(pSbm->mConfig.memops,
@@ -250,7 +250,7 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
                                       pSbm->mConfig.veOpsS, pSbm->mConfig.pVeOpsSelf);//*
         if(pSbmBuf == NULL)
         {
-            loge(" palloc for sbmBuf failed, size = %d MB",
+            LOGE(" palloc for sbmBuf failed, size = %d MB",
                     pSbm->mConfig.nSbmBufferTotalSize/1024/1024);
             goto ERROR;
         }
@@ -271,7 +271,7 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
                                                  * sizeof(VideoStreamDataInfo));
     if(pSbm->frameFifo.pFrames == NULL)
     {
-        loge("sbm->frameFifo.pFrames == NULL.");
+        LOGE("sbm->frameFifo.pFrames == NULL.");
         goto ERROR;
     }
     memset(pSbm->frameFifo.pFrames, 0,  SBM_FRAME_FIFO_SIZE * sizeof(VideoStreamDataInfo));
@@ -283,7 +283,7 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
     ret = pthread_mutex_init(&pSbm->mutex, NULL);
     if(ret != 0)
     {
-        loge("pthread_mutex_init failed.");
+        LOGE("pthread_mutex_init failed.");
         goto ERROR;
     }
     pSbm->pStreamBuffer      = pSbmBuf;
@@ -302,7 +302,7 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
     pSbm->mFramePicFifo.pFramePics = (FramePicInfo*)malloc(MAX_FRAME_PIC_NUM*sizeof(FramePicInfo));
     if(pSbm->mFramePicFifo.pFramePics == NULL)
     {
-        loge("malloc for framePic failed");
+        LOGE("malloc for framePic failed");
         goto ERROR;
     }
     memset(pSbm->mFramePicFifo.pFramePics, 0, MAX_FRAME_PIC_NUM*sizeof(FramePicInfo));
@@ -314,7 +314,7 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
             = (NaluInfo*)malloc(DEFAULT_NALU_NUM*sizeof(NaluInfo));
         if(pSbm->mFramePicFifo.pFramePics[i].pNaluInfoList == NULL)
         {
-            loge("malloc for naluInfo failed");
+            LOGE("malloc for naluInfo failed");
             goto ERROR;
         }
         memset(pSbm->mFramePicFifo.pFramePics[i].pNaluInfoList, 0, \
@@ -327,7 +327,7 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
         pSbm->pTmpBuffer = (char*)malloc(TMP_BUFFER_SIZE);
         if(pSbm->pTmpBuffer == NULL)
         {
-            loge("malloc for pTmpBuffer failed");
+            LOGE("malloc for pTmpBuffer failed");
             goto ERROR;
         }
         pSbm->nTmpBufferSize = TMP_BUFFER_SIZE;
@@ -353,7 +353,7 @@ int SbmFrameInit(SbmInterface* pSelf, SbmConfig* pSbmConfig)
     int err = pthread_create(&pSbm->mThreadId, NULL, ProcessThread, pSbm);
     if(err || pSbm->mThreadId == 0)
     {
-        loge("create sbm pthread failed");
+        LOGE("create sbm pthread failed");
         goto ERROR;
     }
 
@@ -454,7 +454,7 @@ static void SbmFrameDestroy(SbmInterface* pSelf)
 {
     int i = 0;
     SbmFrame* pSbm = (SbmFrame*)pSelf;
-    logv(" sbm destroy");
+    LOGV(" sbm destroy");
     if(pSbm != NULL)
     {
             //* send stop cmd to thread here
@@ -464,11 +464,11 @@ static void SbmFrameDestroy(SbmInterface* pSelf)
             memset(&msg, 0, sizeof(CdcMessage));
             msg.messageId = SBM_THREAD_CMD_QUIT;
             CdcMessageQueuePostMessage(pSbm->mq,&msg);
-            logv("*** post quit message");
+            LOGV("*** post quit message");
 
             int error;
             pthread_join(pSbm->mThreadId, (void**)&error);
-            logv("*** pthread_join finish");
+            LOGV("*** pthread_join finish");
 
             pthread_mutex_destroy(&pSbm->mutex);
             if(pSbm->sbmInterface.bUseNewVeMemoryProgram == 1)
@@ -545,7 +545,7 @@ static void SbmFrameDestroy(SbmInterface* pSelf)
 
         free(pSbm);
     }
-    logv(" sbm destroy finish");
+    LOGV(" sbm destroy finish");
 
     return;
 }
@@ -570,7 +570,7 @@ static void SbmFrameReset(SbmInterface* pSelf)
     SbmFrame* pSbm = (SbmFrame*)pSelf;
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return;
     }
 
@@ -580,14 +580,14 @@ static void SbmFrameReset(SbmInterface* pSelf)
     mMsg.params[0] = (uintptr_t)(&pSbm->resetSem);
     CdcMessageQueuePostMessage(pSbm->mq, &mMsg);
 
-    logd("** wait for reset sem");
+    LOGD("** wait for reset sem");
     SemTimedWait(&pSbm->resetSem, -1);
-    logd("** wait for reset sem ok");
+    LOGD("** wait for reset sem ok");
 
     memset(&mMsg, 0, sizeof(CdcMessage));
     mMsg.messageId = SBM_THREAD_CMD_READ;
     CdcMessageQueuePostMessage(pSbm->mq, &mMsg);
-    logd("SbmFrameReset finish");
+    LOGD("SbmFrameReset finish");
     return;
 }
 
@@ -610,7 +610,7 @@ static void *SbmFrameGetBufferAddress(SbmInterface* pSelf)
     SbmFrame *pSbm = (SbmFrame*)pSelf;
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return NULL;
     }
 
@@ -637,7 +637,7 @@ static int SbmFrameGetBufferSize(SbmInterface* pSelf)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return 0;
     }
 
@@ -664,7 +664,7 @@ static int SbmFrameGetStreamFrameNum(SbmInterface* pSelf)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return 0;
     }
 
@@ -691,7 +691,7 @@ static int SbmFrameGetStreamDataSize(SbmInterface* pSelf)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return 0;
     }
 
@@ -704,7 +704,7 @@ static char* SbmFrameGetBufferWritePointer(SbmInterface* pSelf)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return 0;
     }
 
@@ -718,7 +718,7 @@ static void* SbmFrameGetBufferDataInfo(SbmInterface* pSelf)
 
     if(pSbm == NULL )
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return NULL;
     }
 
@@ -729,14 +729,14 @@ static void* SbmFrameGetBufferDataInfo(SbmInterface* pSelf)
 
     if(pSbm->mFramePicFifo.nUnReadFramePicNum == 0)
     {
-        logv("nUnReadFrameNum == 0.");
+        LOGV("nUnReadFrameNum == 0.");
         unlock(pSbm);
         return NULL;
     }
     pFramePic = &pSbm->mFramePicFifo.pFramePics[pSbm->mFramePicFifo.nFPReadPos];
     if(pFramePic == NULL)
     {
-        loge("request failed.");
+        LOGE("request failed.");
         unlock(pSbm);
         return NULL;
     }
@@ -770,7 +770,7 @@ static int SbmFrameRequestBuffer(SbmInterface* pSelf, int nRequireSize,
 
     if(pSbm == NULL || ppBuf == NULL || pBufSize == NULL)
     {
-        loge("input error.");
+        LOGE("input error.");
         return -1;
     }
 
@@ -779,7 +779,7 @@ static int SbmFrameRequestBuffer(SbmInterface* pSelf, int nRequireSize,
 
     if(pSbm->frameFifo.nValidFrameNum >= pSbm->frameFifo.nMaxFrameNum)
     {
-        logd("nValidFrameNum >= nMaxFrameNum.");
+        LOGD("nValidFrameNum >= nMaxFrameNum.");
         unlock(pSbm);
         return -1;
     }
@@ -801,7 +801,7 @@ static int SbmFrameRequestBuffer(SbmInterface* pSelf, int nRequireSize,
     }
     else
     {
-        loge("no free buffer.");
+        LOGE("no free buffer.");
         unlock(pSbm);
         return -1;
     }
@@ -833,7 +833,7 @@ static int SbmFrameAddStream(SbmInterface* pSelf, VideoStreamDataInfo *pDataInfo
 
     if(pSbm == NULL || pDataInfo == NULL)
     {
-        loge("input error.");
+        LOGE("input error.");
         return -1;
     }
 
@@ -842,20 +842,20 @@ static int SbmFrameAddStream(SbmInterface* pSelf, VideoStreamDataInfo *pDataInfo
 
     if(pDataInfo->pData == 0)
     {
-        loge("data buffer is NULL.\n");
+        LOGE("data buffer is NULL.");
         unlock(pSbm);
         return -1;
     }
     if(pSbm->frameFifo.nValidFrameNum >= pSbm->frameFifo.nMaxFrameNum)
     {
-        loge("nValidFrameNum > nMaxFrameNum.");
+        LOGE("nValidFrameNum > nMaxFrameNum.");
         unlock(pSbm);
         return -1;
     }
 
     if(pDataInfo->nLength + pSbm->nValidDataSize > pSbm->nStreamBufferSize)
     {
-        loge("no free buffer.");
+        LOGE("no free buffer.");
         unlock(pSbm);
         return -1;
     }
@@ -904,7 +904,7 @@ static VideoStreamDataInfo* SbmFrameRequestFramePic(SbmInterface* pSelf) //* req
 
     if(pSbm == NULL )
     {
-        loge("the_222,pSbm == NULL.");
+        LOGE("the_222,pSbm == NULL.");
         return NULL;
     }
 
@@ -913,7 +913,7 @@ static VideoStreamDataInfo* SbmFrameRequestFramePic(SbmInterface* pSelf) //* req
 
     if(pSbm->mFramePicFifo.nUnReadFramePicNum == 0)
     {
-        logv("nUnReadFramePicNum == 0.");
+        LOGV("nUnReadFramePicNum == 0.");
         unlock(pSbm);
         return NULL;
     }
@@ -921,7 +921,7 @@ static VideoStreamDataInfo* SbmFrameRequestFramePic(SbmInterface* pSelf) //* req
     pFramePic = &pSbm->mFramePicFifo.pFramePics[pSbm->mFramePicFifo.nFPReadPos];
     if(pFramePic == NULL)
     {
-        loge("request framePic failed");
+        LOGE("request framePic failed");
         unlock(pSbm);
         return NULL;
     }
@@ -932,7 +932,7 @@ static VideoStreamDataInfo* SbmFrameRequestFramePic(SbmInterface* pSelf) //* req
     {
         pSbm->mFramePicFifo.nFPReadPos = 0;
     }
-    logv("sbm request stream, pos = %d, pFrame = %p, pts = %lld",
+    LOGV("sbm request stream, pos = %d, pFrame = %p, pts = %lld",
           pSbm->mFramePicFifo.nFPReadPos,pFramePic, pFramePic->nPts);
     unlock(pSbm);
     return (VideoStreamDataInfo*)pFramePic;
@@ -948,7 +948,7 @@ static int SbmFrameReturnFramePic(SbmInterface* pSelf,
 
     if(pSbm == NULL || pFramePic == NULL)
     {
-        loge("input error.");
+        LOGE("input error.");
         return -1;
     }
 
@@ -957,7 +957,7 @@ static int SbmFrameReturnFramePic(SbmInterface* pSelf,
 
     if(pSbm->mFramePicFifo.nValidFramePicNum == 0)
     {
-        loge("nValidFrameNum == 0.");
+        LOGE("nValidFrameNum == 0.");
         unlock(pSbm);
         return -1;
     }
@@ -971,7 +971,7 @@ static int SbmFrameReturnFramePic(SbmInterface* pSelf,
 
     if(pFramePic != &pSbm->mFramePicFifo.pFramePics[nReadPos])
     {
-        loge("wrong frame pic sequence.");
+        LOGE("wrong frame pic sequence.");
         abort();
     }
 
@@ -992,7 +992,7 @@ static int SbmFrameFlushFramePic(SbmInterface* pSelf,
 
     if(pSbm == NULL || pFramePic == NULL)
     {
-        loge("input error");
+        LOGE("input error");
         return -1;
     }
 
@@ -1001,16 +1001,16 @@ static int SbmFrameFlushFramePic(SbmInterface* pSelf,
 
     if(pSbm->mFramePicFifo.nValidFramePicNum == 0)
     {
-        logw("nValidFrameNum == 0.");
+        LOGW("nValidFrameNum == 0.");
         unlock(pSbm);
         return -1;
     }
     nFlushPos = pSbm->mFramePicFifo.nFPFlushPos;
-    logv("the_333,sbm flush stream , pos = %d, pFrame = %p, %p",nFlushPos,
+    LOGV("the_333,sbm flush stream , pos = %d, pFrame = %p, %p",nFlushPos,
           pFramePic, &pSbm->mFramePicFifo.pFramePics[nFlushPos]);
     if(pFramePic != &pSbm->mFramePicFifo.pFramePics[nFlushPos])
     {
-        loge("not current nFlushPos.");
+        LOGE("not current nFlushPos.");
         abort();
     }
 
@@ -1039,7 +1039,7 @@ static int SbmFrameSetEos(SbmInterface* pSelf, int nEosFlag)
     SbmFrame* pSbm = (SbmFrame*)pSelf;
     if(pSbm == NULL)
     {
-        logw("set eos failed");
+        LOGW("set eos failed");
         return -1;
     }
     pSbm->nEosFlag = nEosFlag;
@@ -1067,7 +1067,7 @@ VideoStreamDataInfo *requestStream(SbmFrame *pSbm)
 
     if(pSbm == NULL )
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return NULL;
     }
 
@@ -1078,7 +1078,7 @@ VideoStreamDataInfo *requestStream(SbmFrame *pSbm)
 
     if(pSbm->frameFifo.nUnReadFrameNum == 0)
     {
-        logv("nUnReadFrameNum == 0.");
+        LOGV("nUnReadFrameNum == 0.");
         unlock(pSbm);
         return NULL;
     }
@@ -1087,7 +1087,7 @@ VideoStreamDataInfo *requestStream(SbmFrame *pSbm)
 
     if(pDataInfo == NULL)
     {
-        loge("request failed.");
+        LOGE("request failed.");
         unlock(pSbm);
         return NULL;
     }
@@ -1100,8 +1100,8 @@ VideoStreamDataInfo *requestStream(SbmFrame *pSbm)
     }
     unlock(pSbm);
 /*
-    logv("*** reqeust stream, pDataInfo = %p, pos = %d",pDataInfo, pSbm->frameFifo.nReadPos - 1);
-    logv("*** reqeust stream, data: %x %x %x %x %x %x %x %x ",
+    LOGV("*** reqeust stream, pDataInfo = %p, pos = %d",pDataInfo, pSbm->frameFifo.nReadPos - 1);
+    LOGV("*** reqeust stream, data: %x %x %x %x %x %x %x %x ",
          pDataInfo->pData[0], pDataInfo->pData[1],pDataInfo->pData[2],pDataInfo->pData[3],
          pDataInfo->pData[4],pDataInfo->pData[5],pDataInfo->pData[6],pDataInfo->pData[7]);
 */
@@ -1131,7 +1131,7 @@ int returnStream(SbmFrame* pSbm , VideoStreamDataInfo *pDataInfo)
 
     if(pSbm == NULL || pDataInfo == NULL)
     {
-        loge("input error.");
+        LOGE("input error.");
         return -1;
     }
 
@@ -1142,7 +1142,7 @@ int returnStream(SbmFrame* pSbm , VideoStreamDataInfo *pDataInfo)
 
     if(pSbm->frameFifo.nValidFrameNum == 0)
     {
-        loge("nValidFrameNum == 0.");
+        LOGE("nValidFrameNum == 0.");
         unlock(pSbm);
         return -1;
     }
@@ -1155,7 +1155,7 @@ int returnStream(SbmFrame* pSbm , VideoStreamDataInfo *pDataInfo)
     pSbm->frameFifo.nUnReadFrameNum++;
     if(pDataInfo != &pSbm->frameFifo.pFrames[nReadPos])
     {
-        loge("wrong frame sequence.");
+        LOGE("wrong frame sequence.");
         abort();
     }
 
@@ -1189,7 +1189,7 @@ int flushStream(SbmFrame *pSbm, VideoStreamDataInfo *pDataInfo, int bFlush)
 
     if(pSbm == NULL)
     {
-        loge("pSbm == NULL.");
+        LOGE("pSbm == NULL.");
         return -1;
     }
 
@@ -1200,7 +1200,7 @@ int flushStream(SbmFrame *pSbm, VideoStreamDataInfo *pDataInfo, int bFlush)
 
     if(pSbm->frameFifo.nValidFrameNum == 0)
     {
-        loge("no valid frame., flush pos = %d, pDataInfo = %p",
+        LOGE("no valid frame., flush pos = %d, pDataInfo = %p",
              pSbm->frameFifo.nFlushPos, pDataInfo);
         unlock(pSbm);
         return -1;
@@ -1208,11 +1208,11 @@ int flushStream(SbmFrame *pSbm, VideoStreamDataInfo *pDataInfo, int bFlush)
 
     nFlushPos = pSbm->frameFifo.nFlushPos;
 
-    logv("flush stream, pDataInfo = %p, pos = %d, %p",pDataInfo, nFlushPos, \
+    LOGV("flush stream, pDataInfo = %p, pos = %d, %p",pDataInfo, nFlushPos, \
             &pSbm->frameFifo.pFrames[nFlushPos]);
     if(pDataInfo != &pSbm->frameFifo.pFrames[nFlushPos])
     {
-        loge("not current nFlushPos.");
+        LOGE("not current nFlushPos.");
         unlock(pSbm);
         abort();
         return -1;
@@ -1240,7 +1240,7 @@ FramePicInfo* requestEmptyFramePic(SbmFrame* pSbm)
 
     if(pSbm == NULL)
     {
-        logd("pSbm == NULL.");
+        LOGD("pSbm == NULL.");
         return NULL;
     }
 
@@ -1249,7 +1249,7 @@ FramePicInfo* requestEmptyFramePic(SbmFrame* pSbm)
 
     if(pSbm->mFramePicFifo.nValidFramePicNum >= pSbm->mFramePicFifo.nMaxFramePicNum)
     {
-        logv("no emptye framePic");
+        LOGV("no emptye framePic");
         unlock(pSbm);
         return NULL;
     }
@@ -1258,7 +1258,7 @@ FramePicInfo* requestEmptyFramePic(SbmFrame* pSbm)
     pFramePic = &pSbm->mFramePicFifo.pFramePics[nWritePos];
 
     unlock(pSbm);
-    logv("request empty frame pic, pos = %d, pFramePic = %p",nWritePos, pFramePic);
+    LOGV("request empty frame pic, pos = %d, pFramePic = %p",nWritePos, pFramePic);
     return pFramePic;
 }
 
@@ -1268,7 +1268,7 @@ int addFramePic(SbmFrame* pSbm, FramePicInfo* pFramePic) //* addFramePic
 
     if(pSbm == NULL || pFramePic == NULL)
     {
-        loge("the_444,error input");
+        LOGE("the_444,error input");
         return -1;
     }
 
@@ -1277,7 +1277,7 @@ int addFramePic(SbmFrame* pSbm, FramePicInfo* pFramePic) //* addFramePic
 
     if(pSbm->mFramePicFifo.nValidFramePicNum >= pSbm->mFramePicFifo.nMaxFramePicNum)
     {
-        loge("the_444,nValidFrameNum >= nMaxFrameNum.");
+        LOGE("the_444,nValidFrameNum >= nMaxFrameNum.");
         unlock(pSbm);
         return -1;
     }
@@ -1285,7 +1285,7 @@ int addFramePic(SbmFrame* pSbm, FramePicInfo* pFramePic) //* addFramePic
     nWritePos = pSbm->mFramePicFifo.nFPWritePos;
     if(pFramePic != &pSbm->mFramePicFifo.pFramePics[nWritePos])
     {
-        loge("the_444, frame pic is not match: %p, %p, %d",
+        LOGE("the_444, frame pic is not match: %p, %p, %d",
               pFramePic, &pSbm->mFramePicFifo.pFramePics[nWritePos], nWritePos);
         abort();
     }
@@ -1339,23 +1339,23 @@ int SbmFrameReturnFramePicNew(SbmInterface* pSelf,
 
     if(pSbm->pSbmFrameBufferLastNode == NULL)
     {
-        loge("*********error:pSbm->pSbmFrameBufferLastNode=NULL\n");
+        LOGE("*********error:pSbm->pSbmFrameBufferLastNode=NULL");
         return -1;
     }
 
     if(pSbm->pSbmFrameBufferLastNode->pFramePic != (FramePicInfo*)pDataInfo)
     {
-        loge("*********error:     \
+        LOGE("*********error:     \
           pSbm->pSbmFrameBufferLastNode->pFramePic != (FramePicInfo*)pDataInfo)\n");
         return -1;
     }
 
     if(pthread_mutex_lock(&pSbm->pSbmFrameBufferMutex)< 0)
     {
-        loge("flush stream failed\n");
+        LOGE("flush stream failed");
         return -1;
     }
-    logd("************SbmFrameReturnFramePicNew\n");
+    LOGD("************SbmFrameReturnFramePicNew");
     FIFOEnqueueToHead((FiFoQueueInst**)&pSbm->pSbmFrameBufferValidQueue,
       (FiFoQueueInst*)pSbm->pSbmFrameBufferLastNode);
     pthread_mutex_unlock(&pSbm->pSbmFrameBufferMutex);
@@ -1411,11 +1411,11 @@ void CopySbmFrameData(SbmFrame* pSbm)
         return;
     if(pSbm->mFramePicFifo.nUnReadFramePicNum == 0)
     {
-        logv("nUnReadFramePicNum == 0.");
+        LOGV("nUnReadFramePicNum == 0.");
 
         if(pSbm->nEosFlag ==1)
         {
-            //loge("*************xyliu: reach the file end\n");
+            //LOGE("*************xyliu: reach the file end");
         }
         unlock(pSbm);
         return;
@@ -1452,7 +1452,7 @@ void CopySbmFrameData(SbmFrame* pSbm)
         pPStreamManager = pSbmFrameBufferNode->pSbmBufferManager;
         if(pFramePic->nlength > (int)pPStreamManager->nFrameBufferSize)
         {
-            loge("*********pFramePic->nlength=%d\n", pFramePic->nlength);
+            LOGE("*********pFramePic->nlength=%d", pFramePic->nlength);
             CdcMemPfree(pSbm->mConfig.memops, pPStreamManager->pFrameBuffer,
                 pSbm->mConfig.veOpsS, pSbm->mConfig.pVeOpsSelf);
             pPStreamManager->nFrameBufferSize = (pFramePic->nlength+1023) &~1023;
@@ -1530,7 +1530,7 @@ void CopySbmFrameData(SbmFrame* pSbm)
 
         if(pthread_mutex_lock(&pSbm->pSbmFrameBufferMutex)< 0)
         {
-            loge("************error: wait the lock failed\n");
+            LOGE("************error: wait the lock failed");
             abort();
             return;
         }
@@ -1581,7 +1581,7 @@ static void* ProcessThread(void* pThreadData)
             }
             else if(msg.messageId == SBM_THREAD_CMD_RESET)
             {
-                logd("*** post reset sem");
+                LOGD("*** post reset sem");
                 if(pDetectInfo->pCurStream)
                 {
                     flushStream(pSbm, pDetectInfo->pCurStream, 0);
@@ -1646,19 +1646,19 @@ static void* ProcessThread(void* pThreadData)
     }
 
 EXIT:
-    logd(" exit sbm thread ");
+    LOGD(" exit sbm thread ");
     return NULL;
 
 }
 
 SbmInterface* GetSbmInterfaceFrame(int nType)
 {
-    logd("******* sbm-type: Frame*******");
+    LOGD("******* sbm-type: Frame*******");
     SbmFrame* pSbmFrame = NULL;
     pSbmFrame = (SbmFrame*)malloc(sizeof(SbmFrame));
     if(pSbmFrame == NULL)
     {
-        loge("malloc for sbm frame struct failed");
+        LOGE("malloc for sbm frame struct failed");
         return NULL;
     }
 
@@ -1695,7 +1695,7 @@ SbmInterface* GetSbmInterfaceFrame(int nType)
 
 SbmInterface* GetSbmInterface(int nType)
 {
-    logd("*********GetSbmInterface, nType=%d\n", nType);
+    LOGD("*********GetSbmInterface, nType=%d", nType);
     switch(nType)
     {
         case SBM_TYPE_STREAM:
@@ -1709,7 +1709,7 @@ SbmInterface* GetSbmInterface(int nType)
         }
         default:
         {
-            loge("not support the sbm interface type = %d",nType);
+            LOGE("not support the sbm interface type = %d",nType);
             return NULL;
         }
     }

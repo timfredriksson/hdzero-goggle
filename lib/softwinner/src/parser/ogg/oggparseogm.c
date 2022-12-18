@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "ParseOgm"
 #include "CdxOggParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 
 static AVCodecTag ff_codec_bmp_tags[] = {
@@ -268,7 +268,7 @@ ogm_header(CdxOggParser *ogg, int idx)
             tag_os = GetLE32Bits(p);//TODO
             st->codec->codec_id = cdx_codec_get_id(ff_codec_bmp_tags, tag_os);
             st->codec->codec_tag = tag_os;
-            CDX_LOGD("codec_tag = 0x%x, codec_id = %d", tag_os, st->codec->codec_id);
+            LOGD("codec_tag = 0x%x, codec_id = %d", tag_os, st->codec->codec_id);
             ogg->hasVideo =1;
         } else if (*p == 't') {
             st->codec->codec_id = CDX_CODEC_ID_TEXT;//TODO

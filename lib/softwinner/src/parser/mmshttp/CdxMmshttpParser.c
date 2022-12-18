@@ -115,7 +115,7 @@ cdx_int32 __CdxMmshttpParserForceStop(CdxParserT *parser)
     impl = (struct CdxMmshttpParser*)parser;
     if(!impl)
     {
-        CDX_LOGE("mms file parser has not been initiated!");
+        LOGE("mms file parser has not been initiated!");
         return -1;
     }
     impl->exitFlag = 1;
@@ -124,14 +124,14 @@ cdx_int32 __CdxMmshttpParserForceStop(CdxParserT *parser)
     ret = CdxParserForceStop(impl->parserinfoNext);
     if(ret < 0)
     {
-        CDX_LOGE("mms parser force stop error!");
+        LOGE("mms parser force stop error!");
         pthread_mutex_unlock(&impl->mutex);
         return -1;
     }
     ret = CdxStreamForceStop(impl->stream);
     if(ret < 0)
     {
-        CDX_LOGE("mms parser force stop error!");
+        LOGE("mms parser force stop error!");
         pthread_mutex_unlock(&impl->mutex);
         return -1;
     }
@@ -154,7 +154,7 @@ cdx_int32 __CdxMmshttpParserClrForceStop(CdxParserT *parser)
     impl = (struct CdxMmshttpParser*)parser;
     if(!impl)
     {
-        CDX_LOGE("mms file parser has not been initiated!");
+        LOGE("mms file parser has not been initiated!");
         return -1;
     }
     impl->exitFlag = 0;
@@ -163,13 +163,13 @@ cdx_int32 __CdxMmshttpParserClrForceStop(CdxParserT *parser)
     ret = CdxParserClrForceStop(impl->parserinfoNext);
     if(ret < 0)
     {
-        CDX_LOGE("mms parser force stop error!");
+        LOGE("mms parser force stop error!");
         return -1;
     }
     ret = CdxStreamClrForceStop(impl->stream);
     if(ret < 0)
     {
-        CDX_LOGE("mms parser force stop error!");
+        LOGE("mms parser force stop error!");
         return -1;
     }
     pthread_mutex_unlock(&impl->mutex);
@@ -248,7 +248,7 @@ static int __CdxMmshttpParserInit(CdxParserT *parser)
         impl->mErrno = PSR_OPEN_FAIL;
         return -1;
     }
-    CDX_LOGD("--- size = %lld, readSize = %d", impl->size, readSize);
+    LOGD("--- size = %lld, readSize = %d", impl->size, readSize);
 
     char* p;
     char* p1;
@@ -258,7 +258,7 @@ static int __CdxMmshttpParserInit(CdxParserT *parser)
     p = strstr(impl->buffer, "Ref1=");
     if(!p)
     {
-        CDX_LOGE("cannot find Ref");
+        LOGE("cannot find Ref");
         impl->mErrno = PSR_OPEN_FAIL;
         return -1;
     }
@@ -267,14 +267,14 @@ static int __CdxMmshttpParserInit(CdxParserT *parser)
     p1 = strstr(p, ctrl); // the Ref1 url is end of  '0x0d0a'
     if(!p1)
     {
-        CDX_LOGE("cannot find 0x0D0A");
+        LOGE("cannot find 0x0D0A");
         impl->mErrno = PSR_OPEN_FAIL;
         return -1;
     }
     int url_len = p1-p;
     if(url_len > 1024)
     {
-        CDX_LOGE("the url length<%d> is large than 1024, we need malloc a big array!", url_len);
+        LOGE("the url length<%d> is large than 1024, we need malloc a big array!", url_len);
         impl->mErrno = PSR_OPEN_FAIL;
         return -1;
     }
@@ -283,7 +283,7 @@ static int __CdxMmshttpParserInit(CdxParserT *parser)
     url_ref1[url_len] = '\0';
 
     strcat(url_mms, url_ref1);
-    CDX_LOGD("---- mms url: <%s>", url_mms);
+    LOGD("---- mms url: <%s>", url_mms);
 
     impl->datasource->uri = malloc(sizeof(url_mms));
     memcpy(impl->datasource->uri, url_mms, 1024);
@@ -292,7 +292,7 @@ static int __CdxMmshttpParserInit(CdxParserT *parser)
                                     &impl->parserinfoNext, &impl->streamNext, NULL, NULL);
     if(ret < 0)
     {
-        CDX_LOGE("parser prepare failed");
+        LOGE("parser prepare failed");
         return -1;
     }
 
@@ -338,7 +338,7 @@ static CdxParserT *__CdxMmshttpParserOpen(CdxStreamT *stream, cdx_uint32 flag)
     //ret = pthread_create(&impl->thread, NULL, openThread, (void*)impl) ;
     //if(ret != 0)
     //{
-    //    CDX_LOGE("cannot create probedata thread");
+    //    LOGE("cannot create probedata thread");
     //    impl->thread = (pthread_t)0;
     //    goto error;
     //}
@@ -368,7 +368,7 @@ static cdx_uint32 __CdxMmshttpParserProbe(CdxStreamProbeDataT *probeData)
     {
         return 0;
     }
-    CDX_LOGD(" --- mmshttp parser");
+    LOGD(" --- mmshttp parser");
     return 100;
 }
 

@@ -1,6 +1,6 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "dup2SeldomUsedFd"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <pthread.h>
 #include <unistd.h>
@@ -17,17 +17,17 @@ static pthread_mutex_t gFdLock;
 //static void dup2SeldomUsedFdInit(void) __attribute__((constructor));
 __attribute__((constructor)) static void dup2SeldomUsedFdInit(void)
 {
-    alogv("gFdLock init");
+    LOGV("gFdLock init");
     int err = pthread_mutex_init(&gFdLock, NULL);
     if(err!=0)
     {
-        aloge("fatal error! pthread mutex init fail!");
+        LOGE("fatal error! pthread mutex init fail!");
     }
 }
 
 __attribute__((destructor)) static void dup2SeldomUsedFdExit(void)
 {
-    alogv("gFdLock destroy");
+    LOGV("gFdLock destroy");
     pthread_mutex_destroy(&gFdLock);
 }
 
@@ -52,7 +52,7 @@ int dup2SeldomUsedFd(int nSrcFd)
         nDstFd = nCurUsedFd + 1;
         if(nDstFd >= FD_MAX)
         {
-            alogd("fdNum will return head.");
+            LOGD("fdNum will return head.");
             nDstFd = FD_MIN;
         }
     }
@@ -61,7 +61,7 @@ int dup2SeldomUsedFd(int nSrcFd)
     {
         if(fd_is_valid(nDstFd))
         {
-            alogd("dstFd[%d] is valid? change next", nDstFd);
+            LOGD("dstFd[%d] is valid? change next", nDstFd);
             nDstFd++;
             if(nDstFd >= FD_MAX)
             {
@@ -73,11 +73,11 @@ int dup2SeldomUsedFd(int nSrcFd)
             bSelect = 1;
             if(nSrcFd == nDstFd)
             {
-                aloge("fatal error! why dstFd[%d] == srcFd[%d]?", nDstFd, nSrcFd);
+                LOGE("fatal error! why dstFd[%d] == srcFd[%d]?", nDstFd, nSrcFd);
             }
             else
             {
-                alogv("select dstFd[%d] to dup2", nDstFd);
+                LOGV("select dstFd[%d] to dup2", nDstFd);
             }
             break;
         }
@@ -88,19 +88,19 @@ int dup2SeldomUsedFd(int nSrcFd)
         int dup2Ret = dup2(nSrcFd, nDstFd);
         if(dup2Ret == nDstFd)
         {
-            alogv("dup2 srcFd[%d]->dstFd[%d] success", nSrcFd, nDstFd);
+            LOGV("dup2 srcFd[%d]->dstFd[%d] success", nSrcFd, nDstFd);
             nCurUsedFd = nDstFd;
             ret = SUCCESS;
         }
         else
         {
-            aloge("fatal error! dup2 srcFd[%d]->dstFd[%d] fail[%d]!", nSrcFd, nDstFd, dup2Ret);
+            LOGE("fatal error! dup2 srcFd[%d]->dstFd[%d] fail[%d]!", nSrcFd, nDstFd, dup2Ret);
             ret = ERR_COMMON_UNEXIST;
         }
     }
     else
     {
-        aloge("fatal error! all fds [%d, %d) are used?", FD_MIN, FD_MAX);
+        LOGE("fatal error! all fds [%d, %d) are used?", FD_MIN, FD_MAX);
         ret = ERR_COMMON_SYS_NOTREADY;
     }
     
@@ -121,7 +121,7 @@ int dup2SeldomUsedFd(int nSrcFd)
     }
     else
     {
-        aloge("fatal error! dup fd[%d] fail!", nSrcFd);
+        LOGE("fatal error! dup fd[%d] fail!", nSrcFd);
         ret = ERR_COMMON_UNEXIST;
     }
     if(SUCCESS == ret)

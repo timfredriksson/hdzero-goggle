@@ -11,7 +11,7 @@
 #ifndef CDX_MESSAGE_H
 #define CDX_MESSAGE_H
 #include <CdxTypes.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMeta.h>
 
 typedef struct CdxMessageS CdxMessageT;
@@ -44,8 +44,8 @@ static inline cdx_int32 CdxDeliverPostUs(CdxDeliverT *deliver, CdxMessageT *msg,
 }
 
 /**
- *Ä¿Ç°msgµÄ³¡¾°¶¼ÊÇ´®ÐÐµÄ£¬ºóÐøÓÐ´®ÐÐµÄÐèÒªÔÙ
- *¿¼ÂÇ¼ÓËø
+ *Ä¿Ç°msgï¿½Ä³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ï¿½ÐµÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Ðµï¿½ï¿½ï¿½Òªï¿½ï¿½
+ *ï¿½ï¿½ï¿½Ç¼ï¿½ï¿½ï¿½
  */
 
 /* sizeof(name) < 32 */

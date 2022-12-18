@@ -16,7 +16,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CedarXMetaData"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -106,7 +106,7 @@ bool MetaData::findInt32(uint32_t key, int32_t *value)
 
     if(!(size==sizeof(*value)))
     {
-        aloge("fatal error, INT32 size is not match");
+        LOGE("fatal error, INT32 size is not match");
     }
 
     *value = *(int32_t *)data;
@@ -126,7 +126,7 @@ bool MetaData::findInt64(uint32_t key, int64_t *value)
 
     if(!(size==sizeof(*value)))
     {
-        aloge("fatal error, INT64 size is not match");
+        LOGE("fatal error, INT64 size is not match");
     }
 
     *value = *(int64_t *)data;
@@ -146,7 +146,7 @@ bool MetaData::findFloat(uint32_t key, float *value)
 
     if(!(size==sizeof(*value)))
     {
-        aloge("fatal error, FLOAT size is not match");
+        LOGE("fatal error, FLOAT size is not match");
     }
 
     *value = *(float *)data;
@@ -166,7 +166,7 @@ bool MetaData::findPointer(uint32_t key, void **value)
 
     if(!(size==sizeof(*value)))
     {
-        aloge("fatal error, POINTER size is not match");
+        LOGE("fatal error, POINTER size is not match");
     }
 
     *value = *(void **)data;

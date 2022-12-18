@@ -14,7 +14,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "dvdTitleIfo"
-#include <cdx_log.h>
+#include <log/log.h>
 
 
 #include <CdxParser.h>
@@ -187,7 +187,7 @@ cdx_int16 ParsePgciTable(  CdxMpgParserT *MpgParser, struct PGCIT *pgciTab,
     //type=0 : language; type = 1: title
     if(dvdIfo->pgciPtrNum[pgcType] >  PGCIPTR_NS)
     {
-        CDX_LOGW("the pgc nChunkNum is too large.\n");
+        LOGW("the pgc nChunkNum is too large.");
         return -1;
     }
 
@@ -847,7 +847,7 @@ cdx_int16 DvdParseTitleInfo(CdxMpgParserT *MpgParser, cdx_char *pUrl)
     strBuffer[12] = '\0';
     nSize = fread(mMpgParserCxt->mDataChunkT.pStartAddr, 1, MAX_CHUNK_BUF_SIZE, pStreamT);
     if(nSize > MAX_CHUNK_BUF_SIZE)
-       CDX_LOGW("The length of the info is oo larger.\n");
+       LOGW("The length of the info is oo larger.");
     mMpgParserCxt->mDataChunkT.pReadPtr = mMpgParserCxt->mDataChunkT.pStartAddr;
     memcpy(strBuffer,mMpgParserCxt->mDataChunkT.pReadPtr, 12);
 

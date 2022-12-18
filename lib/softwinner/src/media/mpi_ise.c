@@ -15,7 +15,7 @@
  */
 
 #define LOG_TAG "mpi_ise"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 // ref platform headers
 #include <errno.h>
@@ -77,7 +77,7 @@ static ISE_CHN_GROUP_S *ISE_CHN_GROUP_S_Construct()
 {
     ISE_CHN_GROUP_S *pGroup = (ISE_CHN_GROUP_S *)malloc(sizeof(ISE_CHN_GROUP_S));
     if (NULL == pGroup) {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pGroup, 0, sizeof(ISE_CHN_GROUP_S));
@@ -90,7 +90,7 @@ static ISE_CHN_GROUP_S *ISE_CHN_GROUP_S_Construct()
 static void ISE_CHN_GROUP_S_Destruct(ISE_CHN_GROUP_S *pGroup)
 {
     if (pGroup->mComp) {
-        aloge("fatal error! iseGroup component need free before!");
+        LOGE("fatal error! iseGroup component need free before!");
         COMP_FreeHandle(pGroup->mComp);
         pGroup->mComp = NULL;
     }
@@ -105,18 +105,18 @@ ERRORTYPE ISE_Construct(void)
     ERRORTYPE eError = SUCCESS;
     int ret;
     if (gIseGrpMgr) {
-        alogw("mpi_ise module already create!");
+        LOGW("mpi_ise module already create!");
         return SUCCESS;
     }
     gIseGrpMgr = malloc(sizeof(IseChnGroupManager));
     if (NULL == gIseGrpMgr) {
-        aloge("fatal error! malloc fail!");
+        LOGE("fatal error! malloc fail!");
         return ERR_ISE_NULL_PTR;
     }
     INIT_LIST_HEAD(&gIseGrpMgr->mIseGrpList);
     ret = pthread_mutex_init(&gIseGrpMgr->mIseGrpListLock, NULL);
     if (ret != 0) {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         eError = ERR_ISE_NOMEM;
         goto _err0;
     }
@@ -131,13 +131,13 @@ _err0:
 ERRORTYPE ISE_Destruct(void)
 {
     if (NULL == gIseGrpMgr) {
-        alogw("mpi_ise module already NULL!");
+        LOGW("mpi_ise module already NULL!");
         return SUCCESS;
     }
     pthread_mutex_lock(&gIseGrpMgr->mIseGrpListLock);
     if (!list_empty(&gIseGrpMgr->mIseGrpList)) {
         pthread_mutex_unlock(&gIseGrpMgr->mIseGrpListLock);
-        aloge("fatal error! ise channel group is not empty!");
+        LOGE("fatal error! ise channel group is not empty!");
         return ERR_ISE_BUSY;
     }
     pthread_mutex_unlock(&gIseGrpMgr->mIseGrpListLock);
@@ -191,48 +191,48 @@ static ERRORTYPE VideoIseEventHandler(PARAM_IN COMP_HANDLETYPE hComponent, PARAM
     ERRORTYPE ret;
     MPP_CHN_S iseGroupInfo;
     ret = ((MM_COMPONENTTYPE *)hComponent)->GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &iseGroupInfo);
-    alogv("iseGroup comp event, iseGroupId[%d][%d][%d]", iseGroupInfo.mModId, iseGroupInfo.mDevId, iseGroupInfo.mChnId);
+    LOGV("iseGroup comp event, iseGroupId[%d][%d][%d]", iseGroupInfo.mModId, iseGroupInfo.mDevId, iseGroupInfo.mChnId);
     ISE_CHN_GROUP_S *pGrp = (ISE_CHN_GROUP_S *)pAppData;
 
     switch (eEvent) {
         case COMP_EventCmdComplete: {
             if (COMP_CommandStateSet == nData1) {
-//                alogv("iseGroup EventCmdComplete, current StateSet[%d]", nData2);
+//                LOGV("iseGroup EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pGrp->mSemCompCmd);
                 break;
             } else if (COMP_CommandVendorAddChn == nData1) {
-                alogv("iseGroup EventCmdComplete, add chn done! result[0x%x]", nData2);
+                LOGV("iseGroup EventCmdComplete, add chn done! result[0x%x]", nData2);
                 cdx_sem_up(&pGrp->mSemAddChn);
                 break;
             } else if (COMP_CommandVendorRemoveChn == nData1) {
-                alogv("iseGroup EventCmdComplete, remove chn done! result[0x%x]", nData2);
+                LOGV("iseGroup EventCmdComplete, remove chn done! result[0x%x]", nData2);
                 cdx_sem_up(&pGrp->mSemRemoveChn);
                 break;
             } else {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
         case COMP_EventError: {
             if (ERR_ISE_SAMESTATE == nData1) {
-                alogv("set same state to iseGroup!");
+                LOGV("set same state to iseGroup!");
                 cdx_sem_up(&pGrp->mSemCompCmd);
                 break;
             } else if (ERR_ISE_INVALIDSTATE == nData1) {
-                aloge("why iseGroup state turn to invalid?");
+                LOGE("why iseGroup state turn to invalid?");
                 break;
             } else if (ERR_ISE_INCORRECT_STATE_TRANSITION == nData1) {
-                aloge("fatal error! iseGroup state transition incorrect.");
+                LOGE("fatal error! iseGroup state transition incorrect.");
                 break;
             }
             else if (ERR_ISE_ILLEGAL_PARAM == nData1) {
-                aloge("fatal error! invalid parameter.");
+                LOGE("fatal error! invalid parameter.");
                 return ERR_ISE_ILLEGAL_PARAM;
                 break;
             }
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
     return SUCCESS;
@@ -269,11 +269,11 @@ COMP_CALLBACKTYPE VideoIseCallback = {
 ERRORTYPE AW_MPI_ISE_CreateGroup(ISE_GRP IseGrp, ISE_GROUP_ATTR_S *pGrpAttr)
 {
     if (!((IseGrp >= 0) && (IseGrp < ISE_MAX_GRP_NUM))) {
-        aloge("fatal error! invalid IseGrp[%d]!", IseGrp);
+        LOGE("fatal error! invalid IseGrp[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     if (NULL == pGrpAttr) {
-        aloge("fatal error! illagal IseAttr!");
+        LOGE("fatal error! illagal IseAttr!");
         return ERR_ISE_ILLEGAL_PARAM;
     }
     if (SUCCESS == ISE_searchExistGroup(IseGrp, NULL)) {
@@ -303,7 +303,7 @@ ERRORTYPE AW_MPI_ISE_DestroyGroup(ISE_GRP IseGrp)
 {
     ERRORTYPE ret;
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid IseGrp[%d]!", IseGrp);
+        LOGE("fatal error! invalid IseGrp[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -318,15 +318,15 @@ ERRORTYPE AW_MPI_ISE_DestroyGroup(ISE_GRP IseGrp)
                 eRet = pGrp->mComp->SendCommand(pGrp->mComp, COMP_CommandStateSet, COMP_StateLoaded, NULL);
                 cdx_sem_down(&pGrp->mSemCompCmd);
                 if (eRet != SUCCESS) {
-                    aloge("fatal error! why transmit state to loaded fail?");
+                    LOGE("fatal error! why transmit state to loaded fail?");
                 }
             } else if (nCompState == COMP_StateLoaded) {
                 eRet = SUCCESS;
             } else if (nCompState == COMP_StateInvalid) {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             } else {
-                aloge("fatal error! invalid VeChn[%d] state[0x%x]!", IseGrp, nCompState);
+                LOGE("fatal error! invalid VeChn[%d] state[0x%x]!", IseGrp, nCompState);
                 eRet = ERR_ISE_INCORRECT_STATE_OPERATION;
             }
 
@@ -338,11 +338,11 @@ ERRORTYPE AW_MPI_ISE_DestroyGroup(ISE_GRP IseGrp)
             }
             ret = eRet;
         } else {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_ISE_BUSY;
         }
     } else {
-        aloge("fatal error! no iseGroup component!");
+        LOGE("fatal error! no iseGroup component!");
         list_del(&pGrp->mList);
         ISE_CHN_GROUP_S_Destruct(pGrp);
         ret = SUCCESS;
@@ -353,7 +353,7 @@ ERRORTYPE AW_MPI_ISE_DestroyGroup(ISE_GRP IseGrp)
 ERRORTYPE AW_MPI_ISE_GetGrpAttr(ISE_GRP IseGrp, ISE_GROUP_ATTR_S *pGrpAttr)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid iseGroup[%d]!", IseGrp);
+        LOGE("fatal error! invalid iseGroup[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -364,7 +364,7 @@ ERRORTYPE AW_MPI_ISE_GetGrpAttr(ISE_GRP IseGrp, ISE_GROUP_ATTR_S *pGrpAttr)
     COMP_STATETYPE nState;
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ISE_NOT_PERM;
     }
     ret = pGrp->mComp->GetConfig(pGrp->mComp, COMP_IndexVendorIseGroupAttr, (void *)pGrpAttr);
@@ -374,7 +374,7 @@ ERRORTYPE AW_MPI_ISE_GetGrpAttr(ISE_GRP IseGrp, ISE_GROUP_ATTR_S *pGrpAttr)
 ERRORTYPE AW_MPI_ISE_SetGrpAttr(ISE_GRP IseGrp, ISE_GROUP_ATTR_S *pGrpAttr)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid iseGroup[%d]!", IseGrp);
+        LOGE("fatal error! invalid iseGroup[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -385,7 +385,7 @@ ERRORTYPE AW_MPI_ISE_SetGrpAttr(ISE_GRP IseGrp, ISE_GROUP_ATTR_S *pGrpAttr)
     COMP_STATETYPE nState;
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ISE_NOT_PERM;
     }
     ret = pGrp->mComp->SetConfig(pGrp->mComp, COMP_IndexVendorIseGroupAttr, (void *)pGrpAttr);
@@ -395,12 +395,12 @@ ERRORTYPE AW_MPI_ISE_SetGrpAttr(ISE_GRP IseGrp, ISE_GROUP_ATTR_S *pGrpAttr)
 ERRORTYPE AW_MPI_ISE_CreatePort(ISE_GRP IseGrp, ISE_CHN IsePort, ISE_CHN_ATTR_S *pChnAttr)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid iseGroup[%d]!", IseGrp);
+        LOGE("fatal error! invalid iseGroup[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
 
     if (!(IsePort >= 0 && IsePort < ISE_MAX_CHN_NUM)) {
-        aloge("fatal error! invalid IsePort[%d]!", IsePort);
+        LOGE("fatal error! invalid IsePort[%d]!", IsePort);
         return ERR_ISE_INVALID_CHNID;
     }
 
@@ -412,7 +412,7 @@ ERRORTYPE AW_MPI_ISE_CreatePort(ISE_GRP IseGrp, ISE_CHN IsePort, ISE_CHN_ATTR_S 
     COMP_STATETYPE nState;
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ISE_NOT_PERM;
     }
     IseChnAttr chnAttr;
@@ -429,10 +429,10 @@ ERRORTYPE AW_MPI_ISE_CreatePort(ISE_GRP IseGrp, ISE_CHN IsePort, ISE_CHN_ATTR_S 
         ret = pGrp->mComp->SetConfig(pGrp->mComp, COMP_IndexVendorIseAddChn, &chnAttr);
         return ret;
     } else if (SUCCESS == ret) {
-        alogd("iseChn[%d] of group[%d] is exist!", IsePort, IseGrp);
+        LOGD("iseChn[%d] of group[%d] is exist!", IsePort, IseGrp);
         return ERR_ISE_EXIST;
     } else {
-        aloge("fatal error! add chn[%d] of group[%d] fail[0x%x]!", IsePort, IseGrp, ret);
+        LOGE("fatal error! add chn[%d] of group[%d] fail[0x%x]!", IsePort, IseGrp, ret);
         return ret;
     }
     return 0;
@@ -441,11 +441,11 @@ ERRORTYPE AW_MPI_ISE_CreatePort(ISE_GRP IseGrp, ISE_CHN IsePort, ISE_CHN_ATTR_S 
 ERRORTYPE AW_MPI_ISE_DestroyPort(ISE_GRP IseGrp, ISE_CHN IsePort)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid iseGroup[%d]!", IseGrp);
+        LOGE("fatal error! invalid iseGroup[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     if (!(IsePort >= 0 && IsePort < ISE_MAX_CHN_NUM)) {
-        aloge("fatal error! invalid IsePort[%d]!", IsePort);
+        LOGE("fatal error! invalid IsePort[%d]!", IsePort);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -456,7 +456,7 @@ ERRORTYPE AW_MPI_ISE_DestroyPort(ISE_GRP IseGrp, ISE_CHN IsePort)
     COMP_STATETYPE nState;
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ISE_NOT_PERM;
     }
     IseChnAttr chnAttr;
@@ -471,10 +471,10 @@ ERRORTYPE AW_MPI_ISE_DestroyPort(ISE_GRP IseGrp, ISE_CHN IsePort)
         ret = pGrp->mComp->SetConfig(pGrp->mComp, COMP_IndexVendorIseRemoveChn, &chnAttr);
         return ret;
     } else if (ERR_ISE_UNEXIST == ret) {
-        alogd("iseChn[%d] of group[%d] is unexist!", IsePort, IseGrp);
+        LOGD("iseChn[%d] of group[%d] is unexist!", IsePort, IseGrp);
         return ERR_ISE_UNEXIST;
     } else {
-        aloge("fatal error! remove chn[%d] of group[%d] fail[0x%x]!", IsePort, IseGrp, ret);
+        LOGE("fatal error! remove chn[%d] of group[%d] fail[0x%x]!", IsePort, IseGrp, ret);
         return ret;
     }
     return 0;
@@ -483,11 +483,11 @@ ERRORTYPE AW_MPI_ISE_DestroyPort(ISE_GRP IseGrp, ISE_CHN IsePort)
 ERRORTYPE AW_MPI_ISE_GetPortAttr(ISE_GRP IseGrp, ISE_CHN IsePort, ISE_CHN_ATTR_S *pChnAttr)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid iseGroup[%d]!", IseGrp);
+        LOGE("fatal error! invalid iseGroup[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     if (!(IsePort >= 0 && IsePort < ISE_MAX_CHN_NUM)) {
-        aloge("fatal error! invalid IsePort[%d]!", IsePort);
+        LOGE("fatal error! invalid IsePort[%d]!", IsePort);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -498,7 +498,7 @@ ERRORTYPE AW_MPI_ISE_GetPortAttr(ISE_GRP IseGrp, ISE_CHN IsePort, ISE_CHN_ATTR_S
     COMP_STATETYPE nState;
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ISE_NOT_PERM;
     }
     IseChnAttr chnAttr;
@@ -513,11 +513,11 @@ ERRORTYPE AW_MPI_ISE_GetPortAttr(ISE_GRP IseGrp, ISE_CHN IsePort, ISE_CHN_ATTR_S
 ERRORTYPE AW_MPI_ISE_SetPortAttr(ISE_GRP IseGrp, ISE_CHN IsePort, ISE_CHN_ATTR_S *pChnAttr)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid iseGroup[%d]!", IseGrp);
+        LOGE("fatal error! invalid iseGroup[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     if (!(IsePort >= 0 && IsePort < ISE_MAX_CHN_NUM)) {
-        aloge("fatal error! invalid IsePort[%d]!", IsePort);
+        LOGE("fatal error! invalid IsePort[%d]!", IsePort);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -528,7 +528,7 @@ ERRORTYPE AW_MPI_ISE_SetPortAttr(ISE_GRP IseGrp, ISE_CHN IsePort, ISE_CHN_ATTR_S
     COMP_STATETYPE nState;
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ISE_NOT_PERM;
     }
     IseChnAttr chnAttr;
@@ -543,7 +543,7 @@ ERRORTYPE AW_MPI_ISE_SetPortAttr(ISE_GRP IseGrp, ISE_CHN IsePort, ISE_CHN_ATTR_S
 ERRORTYPE AW_MPI_ISE_Start(ISE_GRP IseGrp)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid iseGroup[%d]!", IseGrp);
+        LOGE("fatal error! invalid iseGroup[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -559,7 +559,7 @@ ERRORTYPE AW_MPI_ISE_Start(ISE_GRP IseGrp)
         cdx_sem_down(&pGrp->mSemCompCmd);
         ret = SUCCESS;
     } else {
-        alogd("iseGroup comp state[0x%x], do nothing!", nCompState);
+        LOGD("iseGroup comp state[0x%x], do nothing!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -568,7 +568,7 @@ ERRORTYPE AW_MPI_ISE_Start(ISE_GRP IseGrp)
 ERRORTYPE AW_MPI_ISE_Stop(ISE_GRP IseGrp)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid iseGroup[%d]!", IseGrp);
+        LOGE("fatal error! invalid iseGroup[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -584,10 +584,10 @@ ERRORTYPE AW_MPI_ISE_Stop(ISE_GRP IseGrp)
         cdx_sem_down(&pGrp->mSemCompCmd);
         eError = eRet;
     } else if (COMP_StateIdle == nCompState) {
-        alogv("iseGroup comp state[0x%x], do nothing!", nCompState);
+        LOGV("iseGroup comp state[0x%x], do nothing!", nCompState);
         eError = SUCCESS;
     } else {
-        aloge("fatal error! check iseGroup state[0x%x]!", nCompState);
+        LOGE("fatal error! check iseGroup state[0x%x]!", nCompState);
         eError = SUCCESS;
     }
     return eError;
@@ -596,11 +596,11 @@ ERRORTYPE AW_MPI_ISE_Stop(ISE_GRP IseGrp)
 ERRORTYPE AW_MPI_ISE_GetData(ISE_GRP IseGrp, ISE_CHN IsePort, VIDEO_FRAME_INFO_S *pstIseData, AW_S32 s32MilliSec)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid IseGrp[%d]!", IseGrp);
+        LOGE("fatal error! invalid IseGrp[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     if (!(IsePort >= 0 && IsePort < ISE_MAX_CHN_NUM)) {
-        aloge("fatal error! invalid IsePort[%d]!", IsePort);
+        LOGE("fatal error! invalid IsePort[%d]!", IsePort);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -611,7 +611,7 @@ ERRORTYPE AW_MPI_ISE_GetData(ISE_GRP IseGrp, ISE_CHN IsePort, VIDEO_FRAME_INFO_S
     COMP_STATETYPE nState;
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ISE_NOT_PERM;
     }
     ISE_DATA_S iseData;
@@ -626,11 +626,11 @@ ERRORTYPE AW_MPI_ISE_GetData(ISE_GRP IseGrp, ISE_CHN IsePort, VIDEO_FRAME_INFO_S
 ERRORTYPE AW_MPI_ISE_ReleaseData(ISE_GRP IseGrp, ISE_CHN IsePort, VIDEO_FRAME_INFO_S *pstIseData)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid IseGrp[%d]!", IseGrp);
+        LOGE("fatal error! invalid IseGrp[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     if (!(IsePort >= 0 && IsePort < ISE_MAX_CHN_NUM)) {
-        aloge("fatal error! invalid IsePort[%d]!", IsePort);
+        LOGE("fatal error! invalid IsePort[%d]!", IsePort);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -641,7 +641,7 @@ ERRORTYPE AW_MPI_ISE_ReleaseData(ISE_GRP IseGrp, ISE_CHN IsePort, VIDEO_FRAME_IN
     COMP_STATETYPE nState;
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ISE_NOT_PERM;
     }
     ISE_DATA_S iseData;
@@ -656,7 +656,7 @@ ERRORTYPE AW_MPI_ISE_SendPic(ISE_GRP IseGrp, VIDEO_FRAME_INFO_S *pstUserFrame0, 
                              AW_S32 s32MilliSec)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid VeChn[%d]!", IseGrp);
+        LOGE("fatal error! invalid VeChn[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -667,7 +667,7 @@ ERRORTYPE AW_MPI_ISE_SendPic(ISE_GRP IseGrp, VIDEO_FRAME_INFO_S *pstUserFrame0, 
     COMP_STATETYPE nState;
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if (COMP_StateExecuting != nState && COMP_StateIdle != nState) {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ISE_NOT_PERM;
     }
     COMP_BUFFERHEADERTYPE bufferHeader;
@@ -681,7 +681,7 @@ ERRORTYPE AW_MPI_ISE_SendPic(ISE_GRP IseGrp, VIDEO_FRAME_INFO_S *pstUserFrame0, 
 ERRORTYPE AW_MPI_ISE_RegisterCallback(ISE_GRP IseGrp, MPPCallbackInfo *pCallback)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid IseGrp[%d]!", IseGrp);
+        LOGE("fatal error! invalid IseGrp[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -696,7 +696,7 @@ ERRORTYPE AW_MPI_ISE_RegisterCallback(ISE_GRP IseGrp, MPPCallbackInfo *pCallback
 ERRORTYPE AW_MPI_ISE_SetISEFreq(ISE_GRP IseGrp, int nFreq)
 {
     if (!(IseGrp >= 0 && IseGrp < ISE_MAX_GRP_NUM)) {
-        aloge("fatal error! invalid IseGrp[%d]!", IseGrp);
+        LOGE("fatal error! invalid IseGrp[%d]!", IseGrp);
         return ERR_ISE_INVALID_CHNID;
     }
     ISE_CHN_GROUP_S *pGrp;
@@ -706,7 +706,7 @@ ERRORTYPE AW_MPI_ISE_SetISEFreq(ISE_GRP IseGrp, int nFreq)
     int ISEFreq = nFreq;
     if(ISEFreq < 432 || ISEFreq > 696 || ISEFreq % 12 != 0)
     {
-        aloge("fatal error! invalid frequency %dM",ISEFreq);
+        LOGE("fatal error! invalid frequency %dM",ISEFreq);
         return ERR_ISE_ILLEGAL_PARAM;
     }
     ERRORTYPE ret;
@@ -714,7 +714,7 @@ ERRORTYPE AW_MPI_ISE_SetISEFreq(ISE_GRP IseGrp, int nFreq)
     ret = pGrp->mComp->GetState(pGrp->mComp, &nState);
     if(COMP_StateExecuting != nState && COMP_StateIdle != nState)
     {
-        aloge("wrong state[0x%x], return!", nState);
+        LOGE("wrong state[0x%x], return!", nState);
         return ERR_ISE_NOT_PERM;
     }
     ret = pGrp->mComp->SetConfig(pGrp->mComp, COMP_IndexVendorIseFreq, (void*)&ISEFreq);

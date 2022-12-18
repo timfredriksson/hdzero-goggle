@@ -1,6 +1,6 @@
 
 
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <unistd.h>
@@ -43,7 +43,7 @@ static void* TextComponentThread(void* pThreadData)
     message_t cmd_msg;
 
     int ret = 0;
-    aloge("TextEncoder TextEncComponentThread start run...");
+    LOGE("TextEncoder TextEncComponentThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"TextEncComp", 0, 0, 0);
 
     while(1)
@@ -265,7 +265,7 @@ TryGetTextEncBuf:
                 pthread_mutex_lock(&pTextEncData->mOutFrameListMutex);
                 if(list_empty(&pTextEncData->mIdleOutFrameList))
                 {
-                    alogw("Low probability! AEnc_Comp IdleOutFrameList is empty, malloc more!");
+                    LOGW("Low probability! AEnc_Comp IdleOutFrameList is empty, malloc more!");
                     ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
                     if(pNode)
                     {
@@ -275,7 +275,7 @@ TryGetTextEncBuf:
                     }
                     else
                     {
-                        aloge("Fatal error! malloc fail!");
+                        LOGE("Fatal error! malloc fail!");
                         pthread_mutex_unlock(&pTextEncData->mOutFrameListMutex);
                         if(TMessage_WaitQueueNotEmpty(&pTextEncData->cmd_queue, 200) > 0)
                         {
@@ -303,7 +303,7 @@ TryGetTextEncBuf:
                 pEntry->stEncodedStream.nBufferExtraLen = 0;
                 if (ret != 0)
                 {
-                    alogw("(f:%s, l:%d) getTextEncBuf fail.", __FUNCTION__, __LINE__);
+                    LOGW("(f:%s, l:%d) getTextEncBuf fail.", __FUNCTION__, __LINE__);
                     pthread_mutex_unlock(&pTextEncData->mOutFrameListMutex);
                     continue;
                 }
@@ -325,7 +325,7 @@ TryGetTextEncBuf:
                     { 
                         ret = pTextEncData->htext_enc->GetValidEncPktCnt(pTextEncData->htext_enc);
                         if (ret != 0) {
-                            alogw("(f:%s, l:%d) Low probability! why not pick enced_pkt(cnt: %d) in time?!", __FUNCTION__, __LINE__, ret);
+                            LOGW("(f:%s, l:%d) Low probability! why not pick enced_pkt(cnt: %d) in time?!", __FUNCTION__, __LINE__, ret);
                             goto TryGetTextEncBuf;
                         }
                     }
@@ -339,7 +339,7 @@ TryGetTextEncBuf:
 
                         if(0 != ret)    
                         {
-                            aloge("fatal error,releas text enc frm fail");
+                            LOGE("fatal error,releas text enc frm fail");
                         }
                         pthread_mutex_lock(&pTextEncData->mOutFrameListMutex);
                         list_move_tail(&pEntry->mList, &pTextEncData->mIdleOutFrameList);
@@ -362,7 +362,7 @@ TryGetTextEncBuf:
                 int cnt = pTextEncData->htext_enc->GetValidInputPktCnt(pTextEncData->htext_enc);
                 if (0 < cnt)
                 {
-                    alogw("(f:%s, l:%d) Low probability! TextEnc Component has input, cnt: [%ld]", __FUNCTION__, __LINE__, cnt);
+                    LOGW("(f:%s, l:%d) Low probability! TextEnc Component has input, cnt: [%ld]", __FUNCTION__, __LINE__, cnt);
                     pthread_mutex_unlock(&pTextEncData->mInputTextMutex);
                 }
                 else
@@ -374,12 +374,12 @@ TryGetTextEncBuf:
             }
             else if(ERR_TEXT_ENC_OUTFRM_UNDERFLOW == ret)
             { 
-                alogw("TextEncComp_no out frm");
+                LOGW("TextEncComp_no out frm");
                 pthread_mutex_lock(&pTextEncData->mOutFrameListMutex); 
                 int emptyFrameCnt = pTextEncData->htext_enc->GetEmptyOutFrameCnt(pTextEncData->htext_enc); 
                 if(0 < emptyFrameCnt)
                 {
-                    alogw("(f:%s, l:%d) Low probability! TextEnc Component has empty frames[%ld]", __FUNCTION__, __LINE__, emptyFrameCnt);
+                    LOGW("(f:%s, l:%d) Low probability! TextEnc Component has empty frames[%ld]", __FUNCTION__, __LINE__, emptyFrameCnt);
                     pthread_mutex_unlock(&pTextEncData->mOutFrameListMutex);
                 }
                 else
@@ -393,13 +393,13 @@ TryGetTextEncBuf:
         }
         else
         { 
-            aloge("TextEnc_Comp not ind StateExecuting");
+            LOGE("TextEnc_Comp not ind StateExecuting");
             TMessage_WaitQueueNotEmpty(&pTextEncData->cmd_queue, 0);
         }
     }
 
 EXIT:    
-    alogv("TextEncoder ComponentThread stopped");
+    LOGV("TextEncoder ComponentThread stopped");
     return (void*) SUCCESS; 
 }
 
@@ -432,7 +432,7 @@ static ERRORTYPE TextEncSendCommand( PARAM_IN COMP_HANDLETYPE hComponent,
     ERRORTYPE eError = SUCCESS;
     message_t msg;
 
-    alogv("TextEncSendCommand: %d", Cmd);
+    LOGV("TextEncSendCommand: %d", Cmd);
 
     pTextEncData = (TEXTENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(!pTextEncData)
@@ -457,7 +457,7 @@ static ERRORTYPE TextEncSendCommand( PARAM_IN COMP_HANDLETYPE hComponent,
             break;
 
         default:
-            alogw("impossible comp_command[0x%x]", Cmd);
+            LOGW("impossible comp_command[0x%x]", Cmd);
             eCmd = -1;
             break;
     }
@@ -522,12 +522,12 @@ static ERRORTYPE TextEncReleaseStream( PARAM_IN COMP_HANDLETYPE hComponent,
     TEXTENCDATATYPE *pTextEncData = (TEXTENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(COMP_StateIdle != pTextEncData->state && COMP_StateExecuting != pTextEncData->state)
     {
-        alogw("call getStream in wrong state[0x%x]", pTextEncData->state);
+        LOGW("call getStream in wrong state[0x%x]", pTextEncData->state);
         return ERR_TENC_NOT_PERM;
     }
     if(pTextEncData->mOutputPortTunnelFlag)
     {
-        aloge("fatal error! can't call getStream() in tunnel mode!");
+        LOGE("fatal error! can't call getStream() in tunnel mode!");
         return ERR_TENC_NOT_PERM;
     }
     pthread_mutex_lock(&pTextEncData->mOutFrameListMutex);
@@ -548,14 +548,14 @@ static ERRORTYPE TextEncReleaseStream( PARAM_IN COMP_HANDLETYPE hComponent,
         }
         else
         {
-            aloge("fatal error! aenc stream[%p][%u] is not match UsedOutFrameList first entry[%p][%d]",
+            LOGE("fatal error! aenc stream[%p][%u] is not match UsedOutFrameList first entry[%p][%d]",
                 pStream->pStream, pStream->mLen, pEntry->stEncodedStream.pBuffer, pEntry->stEncodedStream.nBufferLen);
             eError = ERR_TENC_ILLEGAL_PARAM;
         }
     }
     else
     {
-        alogw("Be careful! aenc stream[%p][%u] is not find, maybe reset channel before call this function?", pStream->pStream, pStream->mLen);
+        LOGW("Be careful! aenc stream[%p][%u] is not find, maybe reset channel before call this function?", pStream->pStream, pStream->mLen);
         eError = ERR_TENC_ILLEGAL_PARAM;                // samuel
     }
     pthread_mutex_unlock(&pTextEncData->mOutFrameListMutex);
@@ -576,7 +576,7 @@ static ERRORTYPE TextEncReleaseStream( PARAM_IN COMP_HANDLETYPE hComponent,
 
     if(pTextEncData->state != COMP_StateIdle)
     {
-        aloge("fatal error! must reset channel in stateIdle!");
+        LOGE("fatal error! must reset channel in stateIdle!");
         return ERR_TENC_NOT_PERM;
     }
 
@@ -625,11 +625,11 @@ static ERRORTYPE TextEncReleaseStream( PARAM_IN COMP_HANDLETYPE hComponent,
         pthread_mutex_lock(&pTextEncData->mOutFrameListMutex);
         if(!list_empty(&pTextEncData->mUsedOutFrameList))
         {
-            aloge("fatal error! aenc is in tunnel mode!");
+            LOGE("fatal error! aenc is in tunnel mode!");
         }
         if(!list_empty(&pTextEncData->mReadyOutFrameList))
         {
-            aloge("fatal error! aenc is in tunnel mode!");
+            LOGE("fatal error! aenc is in tunnel mode!");
         }
         pthread_mutex_unlock(&pTextEncData->mOutFrameListMutex);
     }
@@ -643,7 +643,7 @@ static ERRORTYPE TextEncReleaseStream( PARAM_IN COMP_HANDLETYPE hComponent,
     }
     if(cnt != pTextEncData->mFrameNodeNum)
     {
-        alogw("Be careful! aenc output frames count not match [%d]!=[%d]", cnt, pTextEncData->mFrameNodeNum);
+        LOGW("Be careful! aenc output frames count not match [%d]!=[%d]", cnt, pTextEncData->mFrameNodeNum);
     }
     pthread_mutex_unlock(&pTextEncData->mOutFrameListMutex);
     return SUCCESS;
@@ -666,7 +666,7 @@ int TextEncLibInit(TEXTENCDATATYPE *pTextEncData)
     tenc_handle = TextEncInit(&pTextEncData->text_info);
     if (tenc_handle == NULL) {
         ret = -1;
-        aloge("TextEncInit failed");
+        LOGE("TextEncInit failed");
     }
     pTextEncData->htext_enc = tenc_handle;
 
@@ -731,7 +731,7 @@ static ERRORTYPE TextEncSetConfig( PARAM_IN COMP_HANDLETYPE hComponent,
         }
         default:
         {
-            aloge("unknown Index[0x%x]", nIndex);
+            LOGE("unknown Index[0x%x]", nIndex);
             eError = ERR_TENC_ILLEGAL_PARAM;
             break;
         }
@@ -857,12 +857,12 @@ static ERRORTYPE TextEncGetStream( PARAM_IN COMP_HANDLETYPE hComponent,
     TEXTENCDATATYPE *pTextEncData = (TEXTENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(COMP_StateIdle != pTextEncData->state && COMP_StateExecuting != pTextEncData->state)
     {
-        alogw("call getStream in wrong state[0x%x]", pTextEncData->state);
+        LOGW("call getStream in wrong state[0x%x]", pTextEncData->state);
         return ERR_TENC_NOT_PERM;
     }
     if(pTextEncData->mOutputPortTunnelFlag)
     {
-        aloge("fatal error! can't call getStream() in tunnel mode!");
+        LOGE("fatal error! can't call getStream() in tunnel mode!");
         return ERR_TENC_NOT_PERM;
     }
     pthread_mutex_lock(&pTextEncData->mOutFrameListMutex);
@@ -898,7 +898,7 @@ _TryToGetOutFrame:
             ret = pthread_cond_wait_timeout(&pTextEncData->mOutFrameCondition, &pTextEncData->mOutFrameListMutex, nMilliSec);
             if(ETIMEDOUT == ret)
             {
-                alogv("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
+                LOGV("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
                 eError = ERR_TENC_BUF_EMPTY;
                 pTextEncData->mWaitOutFrameFlag = FALSE;
             }
@@ -909,7 +909,7 @@ _TryToGetOutFrame:
             }
             else
             {
-                aloge("fatal error! pthread cond wait timeout ret[%d]", ret);
+                LOGE("fatal error! pthread cond wait timeout ret[%d]", ret);
                 eError = ERR_TENC_BUF_EMPTY;
                 pTextEncData->mWaitOutFrameFlag = FALSE;
             }
@@ -964,7 +964,7 @@ static ERRORTYPE TextEncGetConfig( PARAM_IN COMP_HANDLETYPE hComponent,
         }
         default:
         {
-            aloge("fatal error! unknown getConfig Index[0x%x]", nIndex);
+            LOGE("fatal error! unknown getConfig Index[0x%x]", nIndex);
             eError = ERR_TENC_NOT_SUPPORT;
             break;
         }
@@ -993,11 +993,11 @@ static ERRORTYPE TextEncComponentTunnelRequest( PARAM_IN  COMP_HANDLETYPE hCompo
     TEXTENCDATATYPE *pTextEncData = (TEXTENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if (pTextEncData->state == COMP_StateExecuting)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if(pTextEncData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request can't be in state[0x%x]", pTextEncData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]", pTextEncData->state);
         eError = ERR_TENC_INCORRECT_STATE_OPERATION;
         goto COMP_CMD_FAIL;
     }
@@ -1023,7 +1023,7 @@ static ERRORTYPE TextEncComponentTunnelRequest( PARAM_IN  COMP_HANDLETYPE hCompo
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_TENC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1044,7 +1044,7 @@ static ERRORTYPE TextEncComponentTunnelRequest( PARAM_IN  COMP_HANDLETYPE hCompo
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_TENC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1061,7 +1061,7 @@ static ERRORTYPE TextEncComponentTunnelRequest( PARAM_IN  COMP_HANDLETYPE hCompo
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_TENC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1072,7 +1072,7 @@ static ERRORTYPE TextEncComponentTunnelRequest( PARAM_IN  COMP_HANDLETYPE hCompo
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup)
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         if(pPortDef->eDir == COMP_DirOutput)
         {
@@ -1087,7 +1087,7 @@ static ERRORTYPE TextEncComponentTunnelRequest( PARAM_IN  COMP_HANDLETYPE hCompo
     if(pPortDef->eDir == COMP_DirOutput)
     {
         if (pTextEncData->mOutputPortTunnelFlag) {
-            aloge("AEnc_Comp outport already bind, why bind again?!");
+            LOGE("AEnc_Comp outport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -1099,7 +1099,7 @@ static ERRORTYPE TextEncComponentTunnelRequest( PARAM_IN  COMP_HANDLETYPE hCompo
     else
     {
         if (pTextEncData->mInputPortTunnelFlag) {
-            aloge("AEnc_Comp inport already bind, why bind again?!");
+            LOGE("AEnc_Comp inport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -1110,7 +1110,7 @@ static ERRORTYPE TextEncComponentTunnelRequest( PARAM_IN  COMP_HANDLETYPE hCompo
         ((MM_COMPONENTTYPE*)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput)
         {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_TENC_ILLEGAL_PARAM;
             goto COMP_CMD_FAIL;
         }
@@ -1119,7 +1119,7 @@ static ERRORTYPE TextEncComponentTunnelRequest( PARAM_IN  COMP_HANDLETYPE hCompo
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
         {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -1142,7 +1142,7 @@ static ERRORTYPE TextEncEmptyThisBuffer( PARAM_IN  COMP_HANDLETYPE hComponent,
 
     if (pTextEncData->state != COMP_StateExecuting)
     {
-        alogw("send frame when aenc state[0x%x] isn't executing", pTextEncData->state);
+        LOGW("send frame when aenc state[0x%x] isn't executing", pTextEncData->state);
         //eError = COMP_ErrorInvalidState;
         //goto ERROR;
     }
@@ -1171,7 +1171,7 @@ static ERRORTYPE TextEncEmptyThisBuffer( PARAM_IN  COMP_HANDLETYPE hComponent,
     }
     else
     {
-        aloge("fatal error! RecRender should not call this function!");
+        LOGE("fatal error! RecRender should not call this function!");
         eError = FAILURE;
     } 
 
@@ -1207,7 +1207,7 @@ static ERRORTYPE TextEncFillThisBuffer( PARAM_IN  COMP_HANDLETYPE hComponent,
         if (!bFind)
         {
             pthread_mutex_unlock(&pTextEncData->mOutFrameListMutex);
-            aloge("fatal error! try to release one output buffer that never be used! ID = %d", pOutFrame->nID);
+            LOGE("fatal error! try to release one output buffer that never be used! ID = %d", pOutFrame->nID);
             return ERR_TENC_ILLEGAL_PARAM;
         }
 
@@ -1216,7 +1216,7 @@ static ERRORTYPE TextEncFillThisBuffer( PARAM_IN  COMP_HANDLETYPE hComponent,
                 pEntry->stEncodedStream.nTimeStamp, pEntry->stEncodedStream.nID); 
         if (ret != 0)
         {
-            aloge("textenc_to_releas_frm_fail");
+            LOGE("textenc_to_releas_frm_fail");
             eError = FAILURE;
         }
 
@@ -1246,7 +1246,7 @@ static ERRORTYPE TextEncFillThisBuffer( PARAM_IN  COMP_HANDLETYPE hComponent,
     }
     else
     {
-        aloge("fatal error! outPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pTextEncData->sOutPortDef.nPortIndex);
+        LOGE("fatal error! outPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pTextEncData->sOutPortDef.nPortIndex);
         eError = FAILURE;
     }
 
@@ -1290,7 +1290,7 @@ ERRORTYPE TextEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
         if(NULL == pNode)
         {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             break;
         }
         memset(pNode, 0, sizeof(ENCODER_NODE_T));
@@ -1300,14 +1300,14 @@ ERRORTYPE TextEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pTextEncData->mInputTextMutex, NULL);
     if(err != 0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_TENC_NOMEM;
         goto EXIT;
     }
     err = pthread_mutex_init(&pTextEncData->mOutFrameListMutex, NULL);
     if(err != 0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_TENC_NOMEM;
         goto EXIT;
     }
@@ -1318,7 +1318,7 @@ ERRORTYPE TextEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_cond_init(&pTextEncData->mOutFrameFullCondition, &condAttr);
     if(err != 0)
     {
-        aloge("pthread cond init fail!");
+        LOGE("pthread cond init fail!");
         eError = ERR_TENC_NOMEM;
         goto EXIT;
     }
@@ -1367,7 +1367,7 @@ ERRORTYPE TextEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if (message_create(&pTextEncData->cmd_queue)<0)
     {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_TENC_NOMEM;
         goto EXIT;
     }
@@ -1393,12 +1393,12 @@ ERRORTYPE TextEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     message_t msg; 
     memset(&msg,0,sizeof(msg));
     
-    alogv("TextEnc Component DeInit");
+    LOGV("TextEnc Component DeInit");
     pTextEncData = (TEXTENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
 
     msg.command = eCmd;
     put_message(&pTextEncData->cmd_queue, &msg);
-    alogv("wait TextEnc component exit!...");
+    LOGV("wait TextEnc component exit!...");
     pthread_join(pTextEncData->thread_id, (void*) &eError);
 
     if(NULL != pTextEncData->htext_enc)
@@ -1412,11 +1412,11 @@ ERRORTYPE TextEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pthread_mutex_lock(&pTextEncData->mOutFrameListMutex);
     if(!list_empty(&pTextEncData->mUsedOutFrameList))
     {
-        aloge("fatal error! outUsedFrame must be 0!");
+        LOGE("fatal error! outUsedFrame must be 0!");
     }
     if(!list_empty(&pTextEncData->mReadyOutFrameList))
     {
-        aloge("fatal error! outReadyFrame must be 0!");
+        LOGE("fatal error! outReadyFrame must be 0!");
     }
     int nodeNum = 0;
     if(!list_empty(&pTextEncData->mIdleOutFrameList))
@@ -1431,7 +1431,7 @@ ERRORTYPE TextEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if(nodeNum != pTextEncData->mFrameNodeNum)
     {
-        aloge("Fatal error! TextEnc frame_node number is not match: [%d][%d]", nodeNum, pTextEncData->mFrameNodeNum);
+        LOGE("Fatal error! TextEnc frame_node number is not match: [%d][%d]", nodeNum, pTextEncData->mFrameNodeNum);
     }
     pthread_mutex_unlock(&pTextEncData->mOutFrameListMutex);
 
@@ -1449,7 +1449,7 @@ ERRORTYPE TextEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         free(pTextEncData);
     }
 
-    alogd("TextEnc component exited!");
+    LOGD("TextEnc component exited!");
 
     return eError;
 }

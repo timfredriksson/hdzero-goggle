@@ -19,7 +19,7 @@
 #ifndef AVUTIL_DYNARRAY_H
 #define AVUTIL_DYNARRAY_H
 
-//#include "log.h"
+//#include <log/log.h>
 #include "mem.h"
 
 /**

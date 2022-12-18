@@ -18,7 +18,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Clock_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -144,7 +144,7 @@ ERRORTYPE ClockGetCurrentWallTime(
     CLOCKDATATYPE *pClockData = (CLOCKDATATYPE*) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     ERRORTYPE eError = SUCCESS;
     pClockData->avs_counter->get_time(pClockData->avs_counter, &pTimeStamp->nTimestamp);
-    //alogv("COMP_IndexConfigTimeCurrentWallTime =%x wallbase:%d\n", (int) timestamp->nTimestamp, (int)pClockData->WallTimeBase);
+    //LOGV("COMP_IndexConfigTimeCurrentWallTime =%x wallbase:%d", (int) timestamp->nTimestamp, (int)pClockData->WallTimeBase);
     return eError;
 }
 
@@ -156,16 +156,16 @@ ERRORTYPE ClockGetCurrentMediaTime(
     ERRORTYPE eError = SUCCESS;
     if(pClockData->sClockState.nWaitMask)
     {
-        //alogd("waitMask[0x%x] is still not null, no valid media time now.", pClockData->sClockState.nWaitMask);
+        //LOGD("waitMask[0x%x] is still not null, no valid media time now.", pClockData->sClockState.nWaitMask);
         pTimeStamp->nTimestamp = -1;
     }
     else
     {
         pClockData->avs_counter->get_time(pClockData->avs_counter, &pTimeStamp->nTimestamp);
-        //alogv("timestamp->nTimestamp 0.........%lld",timestamp->nTimestamp / 1000);
+        //LOGV("timestamp->nTimestamp 0.........%lld",timestamp->nTimestamp / 1000);
         pTimeStamp->nTimestamp -= pClockData->WallTimeBase;
         pTimeStamp->nTimestamp += pClockData->MediaTimeBase;
-        //alogv("timestamp->nTimestamp 1.........%lld",timestamp->nTimestamp / 1000);
+        //LOGV("timestamp->nTimestamp 1.........%lld",timestamp->nTimestamp / 1000);
     }
     return eError;
 }
@@ -245,7 +245,7 @@ ERRORTYPE ClockSeek(PARAM_IN COMP_HANDLETYPE hComponent)
             pClockData->port_start_pts[i] = MAX_64BIT;
         }
     }
-    alogv("waitmask....%x", pClockData->sClockState.nWaitMask);
+    LOGV("waitmask....%x", pClockData->sClockState.nWaitMask);
     return eError;
 }
 
@@ -253,7 +253,7 @@ ERRORTYPE ClockSwitchAudio(PARAM_IN COMP_HANDLETYPE hComponent)
 {
     CLOCKDATATYPE *pClockData = (CLOCKDATATYPE*) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     ERRORTYPE eError = SUCCESS;
-    alogd("need start to play again after switch audio!");
+    LOGD("need start to play again after switch audio!");
     pClockData->sClockState.nWaitMask = pClockData->ports_connect_info;
     pClockData->sClockState.eState = COMP_TIME_ClockStateWaitingForStartTime;
     pClockData->sMinStartTime.nTimestamp = MAX_64BIT;
@@ -262,7 +262,7 @@ ERRORTYPE ClockSwitchAudio(PARAM_IN COMP_HANDLETYPE hComponent)
     {
         pClockData->port_start_pts[i] = MAX_64BIT;
     }
-    alogv("waitmask....%x", pClockData->sClockState.nWaitMask);
+    LOGV("waitmask....%x", pClockData->sClockState.nWaitMask);
     return eError;
 }
 
@@ -289,13 +289,13 @@ ERRORTYPE ClockAdjustClock(
         tmpRatio = tmpRatio >  3 ? 3 : tmpRatio;
         tmpRatio = tmpRatio < -3 ? -3 : tmpRatio;
         adjust_ratio = tmpRatio + pClockData->nDstRatio;
-        alogd("----adjust ratio:%d, precise_adjust_ratio:%d, ref:%lld media:%lld diff:%lld diff-percent:%lld ----",
+        LOGD("----adjust ratio:%d, precise_adjust_ratio:%d, ref:%lld media:%lld diff:%lld diff-percent:%lld ----",
                 adjust_ratio, precise_adjust_ratio, pTimeStamp->nTimestamp, mediatime, mediaTimediff,
                 mediaTimediff / (AVS_ADJUST_PERIOD/100));
     }
     else
     {
-        alogv("---- ref0:%lld media:%lld diff:%d diff-percent:%d ----", pTimeStamp->nTimestamp, mediatime, mediaTimediff,mediaTimediff / (AVS_ADJUST_PERIOD/100));
+        LOGV("---- ref0:%lld media:%lld diff:%d diff-percent:%d ----", pTimeStamp->nTimestamp, mediatime, mediaTimediff,mediaTimediff / (AVS_ADJUST_PERIOD/100));
     }
     pClockData->avs_counter->adjust(pClockData->avs_counter, adjust_ratio);
     return eError;
@@ -309,10 +309,10 @@ ERRORTYPE ClockSetVps(
     ERRORTYPE eError = SUCCESS;
     if(pClockData->nDstRatio == adjust_ratio)
     {
-        alogv("clock component:same vps value[%d], return", adjust_ratio);
+        LOGV("clock component:same vps value[%d], return", adjust_ratio);
         return eError;
     }
-    alogd("ClockComponent will set new vpsspeed[%d], old is [%d]", adjust_ratio, pClockData->nDstRatio);
+    LOGD("ClockComponent will set new vpsspeed[%d], old is [%d]", adjust_ratio, pClockData->nDstRatio);
     pClockData->nDstRatio = adjust_ratio;
     pClockData->avs_counter->adjust(pClockData->avs_counter, pClockData->nDstRatio);
     return eError;
@@ -327,7 +327,7 @@ ERRORTYPE ClockSetClockState(
     switch (pClockState->eState)
     {
     case COMP_TIME_ClockStateRunning:
-        //alogv( "in  %s ...set to COMP_TIME_ClockStateRunning\n", __func__);
+        //LOGV( "in  %s ...set to COMP_TIME_ClockStateRunning", __func__);
         memcpy(&pClockData->sClockState, pClockState, sizeof(COMP_TIME_CONFIG_CLOCKSTATETYPE));
         break;
 
@@ -343,18 +343,18 @@ ERRORTYPE ClockSetClockState(
             break;
         }
 
-        //alogv("...set to COMP_TIME_ClockStateWaitingForStartTime  mask sent=%d", (int) clockstate->nWaitMask);
+        //LOGV("...set to COMP_TIME_ClockStateWaitingForStartTime  mask sent=%d", (int) clockstate->nWaitMask);
         pClockData->ports_connect_info = pClockState->nWaitMask;
         memcpy(&pClockData->sClockState, pClockState, sizeof(COMP_TIME_CONFIG_CLOCKSTATETYPE));
         break;
 
     case COMP_TIME_ClockStateStopped:
-        //alogv(" in  %s ...set to COMP_TIME_ClockStateStopped\n", __func__);
+        //LOGV(" in  %s ...set to COMP_TIME_ClockStateStopped", __func__);
         memcpy(&pClockData->sClockState, pClockState, sizeof(COMP_TIME_CONFIG_CLOCKSTATETYPE));
         break;
 
     default:
-        aloge("fatal error! unknown clock state[0x%x]", pClockState->eState);
+        LOGE("fatal error! unknown clock state[0x%x]", pClockState->eState);
         break;
     }
 
@@ -379,7 +379,7 @@ ERRORTYPE ClockSetClientStartTime(
     }
     if(PortSuffix >= pClockData->sPortParam.nPorts)
     {
-        aloge("fatal error! not find PortIndex[%d]!", pRefTimeStamp->nPortIndex);
+        LOGE("fatal error! not find PortIndex[%d]!", pRefTimeStamp->nPortIndex);
         return ERR_CLOCK_ILLEGAL_PARAM;
     }
     COMP_PARAM_PORTDEFINITIONTYPE *pPort = &pClockData->sOutPortDef[PortSuffix];
@@ -388,11 +388,11 @@ ERRORTYPE ClockSetClientStartTime(
     /* update the nWaitMask to clear the flag for the client which has sent its start time */
     if (pClockData->sClockState.nWaitMask)
     {
-        alogv( "$$$$$$$$ refTime set is = [%lld]ms nWaitMask1: 0x%x", pRefTimeStamp->nTimestamp/1000, pClockData->sClockState.nWaitMask);
+        LOGV( "$$$$$$$$ refTime set is = [%lld]ms nWaitMask1: 0x%x", pRefTimeStamp->nTimestamp/1000, pClockData->sClockState.nWaitMask);
         nMask = ~(0x1 << pRefTimeStamp->nPortIndex);
         pClockData->sClockState.nWaitMask = pClockData->sClockState.nWaitMask & nMask;
 
-        alogv( "PortIndex: %d nWaitMask2: 0x%x", pRefTimeStamp->nPortIndex, pClockData->sClockState.nWaitMask);
+        LOGV( "PortIndex: %d nWaitMask2: 0x%x", pRefTimeStamp->nPortIndex, pClockData->sClockState.nWaitMask);
         pClockData->port_start_pts[PortSuffix] = pRefTimeStamp->nTimestamp;
     }
 
@@ -428,7 +428,7 @@ ERRORTYPE ClockSetClientStartTime(
             }
         }
 
-        alogd("notifyStartToRun, Mediatimebase=[%lld]ms walltimebase=[%lld]ms", pClockData->MediaTimeBase/1000, pClockData->WallTimeBase/1000);
+        LOGD("notifyStartToRun, Mediatimebase=[%lld]ms walltimebase=[%lld]ms", pClockData->MediaTimeBase/1000, pClockData->WallTimeBase/1000);
     }
     pthread_mutex_unlock(&pClockData->clock_state);
     return eError;
@@ -451,7 +451,7 @@ ERRORTYPE ClockSetClientForceStartTime(
     }
     if(PortSuffix >= pClockData->sPortParam.nPorts)
     {
-        aloge("fatal error! not find PortIndex[%d]!", pRefTimeStamp->nPortIndex);
+        LOGE("fatal error! not find PortIndex[%d]!", pRefTimeStamp->nPortIndex);
         return ERR_CLOCK_ILLEGAL_PARAM;
     }
     COMP_PARAM_PORTDEFINITIONTYPE *pPort = &pClockData->sOutPortDef[PortSuffix];
@@ -486,7 +486,7 @@ ERRORTYPE ClockSetClientForceStartTime(
             }
         }
 
-        alogd("forceStart Mediatimebase=%lld walltimebase=%lld", pClockData->MediaTimeBase/1000, pClockData->WallTimeBase/1000);
+        LOGD("forceStart Mediatimebase=%lld walltimebase=%lld", pClockData->MediaTimeBase/1000, pClockData->WallTimeBase/1000);
     }
     pthread_mutex_unlock(&pClockData->clock_state);
     return eError;
@@ -778,11 +778,11 @@ ERRORTYPE ClockComponentTunnelRequest(
     CLOCKDATATYPE *pClockData = (CLOCKDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if (pClockData->state == COMP_StateExecuting)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if(pClockData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request can't be in state[0x%x]", pClockData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]", pClockData->state);
         eError = ERR_CLOCK_INCORRECT_STATE_OPERATION;
         goto OMX_CMD_FAIL;
     }
@@ -803,7 +803,7 @@ ERRORTYPE ClockComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_CLOCK_ILLEGAL_PARAM;
         goto OMX_CMD_FAIL;
     }
@@ -820,7 +820,7 @@ ERRORTYPE ClockComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_CLOCK_ILLEGAL_PARAM;
         goto OMX_CMD_FAIL;
     }
@@ -837,7 +837,7 @@ ERRORTYPE ClockComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_CLOCK_ILLEGAL_PARAM;
         goto OMX_CMD_FAIL;
     }
@@ -848,7 +848,7 @@ ERRORTYPE ClockComponentTunnelRequest(
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup)
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         goto OMX_CMD_FAIL;
     }
@@ -866,7 +866,7 @@ ERRORTYPE ClockComponentTunnelRequest(
         COMP_GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput)
         {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_CLOCK_ILLEGAL_PARAM;
             goto OMX_CMD_FAIL;
         }
@@ -875,7 +875,7 @@ ERRORTYPE ClockComponentTunnelRequest(
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
         {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -902,12 +902,12 @@ ERRORTYPE ClockComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     put_message(&pClockData->cmd_queue, &msg);
     cdx_sem_up(&pClockData->cdx_sem_wait_message);
 
-    alogv("wait clock component exit!...");
+    LOGV("wait clock component exit!...");
 
     // Wait for thread to exit so we can get the status into "error"
     pthread_join(pClockData->thread_id, (void*) &eError);
 
-    alogv("clock component exited 0!");
+    LOGV("clock component exited 0!");
 
     message_destroy(&pClockData->cmd_queue);
     cdx_sem_deinit(&pClockData->cdx_sem_wait_message);
@@ -923,7 +923,7 @@ ERRORTYPE ClockComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         free(pClockData);
     }
 
-    alogv("clock component exited 1!");
+    LOGV("clock component exited 1!");
 
     return eError;
 }
@@ -1017,7 +1017,7 @@ ERRORTYPE ClockComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     cdx_sem_init(&pClockData->cdx_sem_wait_message,0);
     if(message_create(&pClockData->cmd_queue)<0)
     {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_CLOCK_SYS_NOTREADY;
         goto EXIT;
     }
@@ -1052,7 +1052,7 @@ static void* Clock_ComponentThread(void* pThreadData)
     CLOCKDATATYPE *pClockData = (CLOCKDATATYPE*) pThreadData;
     message_t cmd_msg;
 
-    alogv("clock ComponentThread start run...");
+    LOGV("clock ComponentThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"CDX_Clock", 0, 0, 0);
 
 
@@ -1063,7 +1063,7 @@ static void* Clock_ComponentThread(void* pThreadData)
             cmd = cmd_msg.command;
             cmddata = (unsigned int)cmd_msg.para0;
 
-            alogv("Clock ComponentThread get_message cmd:%d",cmd);
+            LOGV("Clock ComponentThread get_message cmd:%d",cmd);
 
             // State transition command
             if (cmd == SetState)
@@ -1087,7 +1087,7 @@ static void* Clock_ComponentThread(void* pThreadData)
                     case COMP_StateLoaded:
                         if (pClockData->state != COMP_StateIdle)
                         {
-                            aloge("fatal error! ClockComp incorrect state transition [0x%x]->Loaded!", pClockData->state);
+                            LOGE("fatal error! ClockComp incorrect state transition [0x%x]->Loaded!", pClockData->state);
                             pClockData->pCallbacks->EventHandler(
                                     pClockData->hSelf, 
                                     pClockData->pAppData,
@@ -1106,7 +1106,7 @@ static void* Clock_ComponentThread(void* pThreadData)
                             pClockData->pCallbacks->EventHandler(pClockData->hSelf, pClockData->pAppData, COMP_EventError, ERR_CLOCK_INCORRECT_STATE_OPERATION, 0, NULL);
                         else
                         {
-                            alogd("ClockComp state[0x%x]->Idle!", pClockData->state);
+                            LOGD("ClockComp state[0x%x]->Idle!", pClockData->state);
                             pClockData->state = COMP_StateIdle;
                             pClockData->pCallbacks->EventHandler(pClockData->hSelf, pClockData->pAppData, COMP_EventCmdComplete, COMP_CommandStateSet, pClockData->state, NULL);
                         }
@@ -1163,7 +1163,7 @@ static void* Clock_ComponentThread(void* pThreadData)
         cdx_sem_down(&pClockData->cdx_sem_wait_message);
     }
 EXIT:
-    alogv("clock ComponentThread stopped");
+    LOGV("clock ComponentThread stopped");
     return (void*) SUCCESS;
 }
 

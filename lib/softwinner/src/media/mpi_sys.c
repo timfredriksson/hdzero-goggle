@@ -11,7 +11,7 @@
   History       :
 ******************************************************************************/
 #define LOG_TAG "mpi_sys"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <string.h>
@@ -199,7 +199,7 @@ static void SYS_GetComp(MPP_CHN_S *pChn, MM_COMPONENTTYPE **pComp)
 #endif
         default:
         {
-            aloge("fatal error! Undefine source mod id %d!", pChn->mModId);
+            LOGE("fatal error! Undefine source mod id %d!", pChn->mModId);
             break;
         }
     }
@@ -288,13 +288,13 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             SYS_GetComp(pSrcChn, &pSrcComp);
             if (pSrcComp == NULL)
             {
-                aloge("fatal error! source demux component not found!");
+                LOGE("fatal error! source demux component not found!");
                 return;
             }
             COMP_PORT_PARAM_TYPE ports_para;
             if(SUCCESS != pSrcComp->GetConfig(pSrcComp, COMP_IndexVendorGetPortParam, &ports_para))
             {
-                aloge("fatal error! demux component get port param fail!");
+                LOGE("fatal error! demux component get port param fail!");
                 return;
             }
             int bFindFlag = 0;
@@ -354,7 +354,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             }
             if (0 == bFindFlag)
             {
-                aloge("fatal error! demux component not find match port for dst component mod[0x%x]!", pDestChn->mModId);
+                LOGE("fatal error! demux component not find match port for dst component mod[0x%x]!", pDestChn->mModId);
             }
             break;
         }
@@ -388,7 +388,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             }
             else
             {
-                aloge("fatal error! clock component not find match port for dst component mod[0x%x]!", pDestChn->mModId);
+                LOGE("fatal error! clock component not find match port for dst component mod[0x%x]!", pDestChn->mModId);
             }
             break;
         }
@@ -417,7 +417,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             }
             else
             {
-                aloge("fatal error! clock component not find match port for dst component mod[0x%x]!", pDestChn->mModId);
+                LOGE("fatal error! clock component not find match port for dst component mod[0x%x]!", pDestChn->mModId);
             }
             break;
         }
@@ -463,7 +463,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
         }
         default:
         {
-            aloge("fatal error! srcModId[0x%x] not support!", pSrcChn->mModId);
+            LOGE("fatal error! srcModId[0x%x] not support!", pSrcChn->mModId);
             break;
         }
     }
@@ -479,13 +479,13 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
                 SYS_GetComp(pDestChn, &pDstComp);
                 if (pDstComp == NULL)
                 {
-                    aloge("fatal error! Dst demux component not found!");
+                    LOGE("fatal error! Dst demux component not found!");
                     return;
                 }
                 COMP_PORT_PARAM_TYPE ports_para;
                 if(SUCCESS != pDstComp->GetConfig(pDstComp, COMP_IndexVendorGetPortParam, &ports_para))
                 {
-                    aloge("fatal error! demux component get port param fail!");
+                    LOGE("fatal error! demux component get port param fail!");
                     return;
                 }
                 int bFindFlag = 0;
@@ -518,13 +518,13 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
                 }
                 if(0 == bFindFlag)
                 {
-                    aloge("fatal error! demux component not find match port for dst component mod[0x%x]!", pDestChn->mModId);
+                    LOGE("fatal error! demux component not find match port for dst component mod[0x%x]!", pDestChn->mModId);
                 }
                 break;
             }
             else
             {
-                aloge("fatal error! demux find not match port for sourceMod[0x%x]!", pSrcChn->mModId);
+                LOGE("fatal error! demux find not match port for sourceMod[0x%x]!", pSrcChn->mModId);
             }
             break;
         }
@@ -565,7 +565,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             }
             else
             {
-                aloge("fatal error! adec not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
+                LOGE("fatal error! adec not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
             }
             break;
         }
@@ -585,7 +585,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             //}
             else
             {
-                aloge("fatal error! vo not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
+                LOGE("fatal error! vo not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
             }
             break;
         }
@@ -617,7 +617,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             }
             else
             {
-                aloge("fatal error! srcModId[0x%x] cannot match MuxMod!", pSrcChn->mModId);
+                LOGE("fatal error! srcModId[0x%x] cannot match MuxMod!", pSrcChn->mModId);
             }
             break;
         }
@@ -633,7 +633,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             }
             else
             {
-                aloge("fatal error! ai not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
+                LOGE("fatal error! ai not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
             }
             break;
         }
@@ -656,7 +656,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             }
             else
             {
-                aloge("fatal error! ao not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
+                LOGE("fatal error! ao not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
             }
             break;
         }
@@ -672,7 +672,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             }
             else
             {
-                aloge("fatal error! adec not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
+                LOGE("fatal error! adec not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
             }
             break;
         }
@@ -685,7 +685,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
                 SYS_GetComp(pDestChn, &pDstComp);
                 if (pDstComp == NULL)
                 {
-                    aloge("fatal error! Dst ise component not found!");
+                    LOGE("fatal error! Dst ise component not found!");
                     return;
                 }
                 for (i = ISE_PORT_INDEX_CAP0_IN; i <= ISE_PORT_INDEX_CAP1_IN; i++)
@@ -694,7 +694,7 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
                     TunnelInfo.nPortIndex = i; // ISE_PORT_INDEX_CAP0_IN;
                     if(SUCCESS != pDstComp->GetConfig(pDstComp, COMP_IndexVendorTunnelInfo, &TunnelInfo))
                     {
-                        aloge("fatal error! ise component get port param fail!");
+                        LOGE("fatal error! ise component get port param fail!");
                         return;
                     }
                     if (NULL == TunnelInfo.hTunnel)
@@ -706,12 +706,12 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
                 }
                 if (0 == find)
                 {
-                    alogw("Already ise bind mode.");
+                    LOGW("Already ise bind mode.");
                 }
             }
 			else
             {
-               aloge("fatal error! vda not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
+               LOGE("fatal error! vda not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
             }
             break;
         }
@@ -724,13 +724,13 @@ static void SYS_DecideBindPortIndex(MPP_CHN_S *pSrcChn, MPP_CHN_S *pDestChn, uns
             }
 			else
             {
-               aloge("fatal error! eis not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
+               LOGE("fatal error! eis not find match port for sourceMod[0x%x]!", pSrcChn->mModId);
             }
             break;
         }
         default:
         {
-            aloge("fatal error! dstModId[0x%x] not support!", pDestChn->mModId);
+            LOGE("fatal error! dstModId[0x%x] not support!", pDestChn->mModId);
             break;
         }
     }
@@ -744,12 +744,12 @@ ERRORTYPE AW_MPI_SYS_SetConf(const MPP_SYS_CONF_S* pSysConf)
 {
     if (pSysConf == NULL)
     {
-        alogw("AW_MPI_SYS SetConf illegal param");
+        LOGW("AW_MPI_SYS SetConf illegal param");
         return ERR_SYS_ILLEGAL_PARAM;
     }
     if (gSysManager.mState == MPI_SYS_STATE_STARTED)
     {
-        alogw("AW_MPI_SYS SetConf state[0x%x] is invalid", gSysManager.mState);
+        LOGW("AW_MPI_SYS SetConf state[0x%x] is invalid", gSysManager.mState);
         return ERR_SYS_NOT_PERM;
     }
 
@@ -758,7 +758,7 @@ ERRORTYPE AW_MPI_SYS_SetConf(const MPP_SYS_CONF_S* pSysConf)
     {
         strcpy(gSysManager.mConfig.mkfcTmpDir, KFCTMPDIR);
     }
-    alogd("kfctmpdir is [%s]", gSysManager.mConfig.mkfcTmpDir);
+    LOGD("kfctmpdir is [%s]", gSysManager.mConfig.mkfcTmpDir);
     gSysManager.mState = MPI_SYS_STATE_CONFIGURED;
     return SUCCESS;
 }
@@ -792,25 +792,25 @@ ERRORTYPE AW_MPI_SYS_Init_S1(void)
 #if (MPPCFG_VI == OPTION_VI_ENABLE)
     ret = AW_MPI_VI_Init();
     if (0 != ret) {
-        aloge("AW_MPI_VI_Init failed");
+        LOGE("AW_MPI_VI_Init failed");
         return FAILURE;
     }
-    alogd("ISP init");
+    LOGD("ISP init");
     AW_MPI_ISP_Init();
-    alogd("ISP init done");
+    LOGD("ISP init done");
 #endif
 #ifdef USE_LIBCEDARC_MEM_ALLOC
     gSysManager.mMemOps = MemAdapterGetOpsS();
     if (CdcMemOpen(gSysManager.mMemOps) < 0) {
-        aloge("MemAdapterOpen failed!");
+        LOGE("MemAdapterOpen failed!");
         return FAILURE;
     }
-    alogv("MemAdapterOpen ok");
+    LOGV("MemAdapterOpen ok");
 #else
     ret = ion_memOpen();
     if (ret != 0)
     {
-        aloge("Open ion failed!");
+        LOGE("Open ion failed!");
         return FAILURE;
     }
 #endif
@@ -818,14 +818,14 @@ ERRORTYPE AW_MPI_SYS_Init_S1(void)
     eError = VO_Construct();
     if (eError != SUCCESS)
     {
-        aloge("VO Construct error!");
+        LOGE("VO Construct error!");
         goto ERR_EXIT0;
     }
 #endif
     eError = RegionManager_Construct();
     if (eError != SUCCESS)
     {
-        aloge("RGN Construct error!");
+        LOGE("RGN Construct error!");
         goto ERR_EXIT0;
     }
 
@@ -856,7 +856,7 @@ ERRORTYPE AW_MPI_SYS_Init_S2(void)
     eError = DEMUX_Construct();
     if (eError != SUCCESS)
     {
-        aloge("DEMUX Construct error!");
+        LOGE("DEMUX Construct error!");
         goto ERR_EXIT0;
     }
 #endif
@@ -864,71 +864,71 @@ ERRORTYPE AW_MPI_SYS_Init_S2(void)
     eError = VDEC_Construct();
     if (eError != SUCCESS)
     {
-        aloge("VDEC Construct error!");
+        LOGE("VDEC Construct error!");
         goto ERR_EXIT0;
     }
 #endif
     eError = ADEC_Construct();
     if (eError != SUCCESS)
     {
-        aloge("ADEC Construct error!");
+        LOGE("ADEC Construct error!");
         goto ERR_EXIT0;
     }
 #if (MPPCFG_TEXTENC == OPTION_TEXTENC_ENABLE)
     eError = TENC_Construct();
     if (eError != SUCCESS) {
-        aloge("AW_MPI_TENC_Construct error!");
+        LOGE("AW_MPI_TENC_Construct error!");
         goto ERR_EXIT0;
     }
 #endif
     eError = AENC_Construct();
     if (eError != SUCCESS) {
-        aloge("AW_MPI_AENC_Construct error!");
+        LOGE("AW_MPI_AENC_Construct error!");
         goto ERR_EXIT0;
     }
     eError = audioHw_Construct();
     if (eError != SUCCESS) {
-        aloge("audioHw_Construct error!");
+        LOGE("audioHw_Construct error!");
         goto ERR_EXIT0;
     }
     eError = CLOCK_Construct();
     if (eError != SUCCESS)
     {
-        aloge("CLOCK Construct error!");
+        LOGE("CLOCK Construct error!");
         goto ERR_EXIT0;
     }
 #if (MPPCFG_VENC == OPTION_VENC_ENABLE)
     eError = VENC_Construct();
     if (eError != SUCCESS) {
-        aloge("VENC Construct error!");
+        LOGE("VENC Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #if (MPPCFG_MUXER == OPTION_MUXER_ENABLE)
     eError = MUX_Construct();
     if (eError != SUCCESS) {
-        aloge("MUX Construct error!");
+        LOGE("MUX Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #if (MPPCFG_ISE == OPTION_ISE_ENABLE)
     eError = ISE_Construct();
     if (eError != SUCCESS) {
-        aloge("ISE Construct error!");
+        LOGE("ISE Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #if (MPPCFG_EIS == OPTION_EIS_ENABLE)
     eError = EIS_Construct();
     if (eError != SUCCESS) {
-        aloge("EIS Construct error!");
+        LOGE("EIS Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #ifdef MPPCFG_UVC
     eError = UVC_Construct();
     if (eError != SUCCESS) {
-        aloge("UVC Construct error!");
+        LOGE("UVC Construct error!");
         goto ERR_EXIT0;
     }
 #endif
@@ -961,7 +961,7 @@ ERRORTYPE AW_MPI_SYS_Init_S3(void)
 #if (MPPCFG_VI == OPTION_VI_ENABLE)
     ret = AW_MPI_VI_Init();
     if (0 != ret) {
-        aloge("AW_MPI_VI_Init failed");
+        LOGE("AW_MPI_VI_Init failed");
         return FAILURE;
     }
     AW_MPI_ISP_Init();
@@ -970,16 +970,16 @@ ERRORTYPE AW_MPI_SYS_Init_S3(void)
 
     gSysManager.mMemOps = MemAdapterGetOpsS();
     if (CdcMemOpen(gSysManager.mMemOps) < 0) {
-        aloge("MemAdapterOpen failed!");
+        LOGE("MemAdapterOpen failed!");
         return FAILURE;
     }
-    alogv("MemAdapterOpen ok");
+    LOGV("MemAdapterOpen ok");
 #else
     ret = ion_memOpen();
 
     if (ret != 0)
     {
-        aloge("Open ion failed!");
+        LOGE("Open ion failed!");
         return FAILURE;
     }
 #endif
@@ -988,7 +988,7 @@ ERRORTYPE AW_MPI_SYS_Init_S3(void)
     eError = DEMUX_Construct();
     if (eError != SUCCESS)
     {
-        aloge("DEMUX Construct error!");
+        LOGE("DEMUX Construct error!");
         goto ERR_EXIT0;
     }
 #endif
@@ -996,7 +996,7 @@ ERRORTYPE AW_MPI_SYS_Init_S3(void)
     eError = VDEC_Construct();
     if (eError != SUCCESS)
     {
-        aloge("VDEC Construct error!");
+        LOGE("VDEC Construct error!");
         goto ERR_EXIT0;
     }
 #endif
@@ -1004,64 +1004,64 @@ ERRORTYPE AW_MPI_SYS_Init_S3(void)
     eError = VO_Construct();
     if (eError != SUCCESS)
     {
-        aloge("VO Construct error!");
+        LOGE("VO Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #if (MPPCFG_TEXTENC == OPTION_TEXTENC_ENABLE)
     eError = TENC_Construct();
     if (eError != SUCCESS) {
-        aloge("AW_MPI_TENC_Construct error!");
+        LOGE("AW_MPI_TENC_Construct error!");
         goto ERR_EXIT0;
     }
 #endif
     eError = ADEC_Construct();
     if (eError != SUCCESS)
     {
-        aloge("ADEC Construct error!");
+        LOGE("ADEC Construct error!");
         goto ERR_EXIT0;
     }
     eError = AENC_Construct();
     if (eError != SUCCESS) {
-        aloge("AW_MPI_AENC_Construct error!");
+        LOGE("AW_MPI_AENC_Construct error!");
         goto ERR_EXIT0;
     }
     //eError = audioHw_Construct();
     //if (eError != SUCCESS) {
-        //aloge("audioHw_Construct error!");
+        //LOGE("audioHw_Construct error!");
         //goto ERR_EXIT0;
     //}
     eError = CLOCK_Construct();
     if (eError != SUCCESS)
     {
-        aloge("CLOCK Construct error!");
+        LOGE("CLOCK Construct error!");
         goto ERR_EXIT0;
     }
 #if (MPPCFG_VENC == OPTION_VENC_ENABLE)
     eError = VENC_Construct();
     if (eError != SUCCESS) {
-        aloge("VENC Construct error!");
+        LOGE("VENC Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #if (MPPCFG_MUXER == OPTION_MUXER_ENABLE)
     eError = MUX_Construct();
     if (eError != SUCCESS) {
-        aloge("MUX Construct error!");
+        LOGE("MUX Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #if (MPPCFG_ISE == OPTION_ISE_ENABLE)
     eError = ISE_Construct();
     if (eError != SUCCESS) {
-        aloge("ISE Construct error!");
+        LOGE("ISE Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #if (MPPCFG_EIS == OPTION_EIS_ENABLE)
 		eError = EIS_Construct();
 		if (eError != SUCCESS) {
-			aloge("EIS Construct error!");
+			LOGE("EIS Construct error!");
 			goto ERR_EXIT0;
 		}
 #endif
@@ -1069,13 +1069,13 @@ ERRORTYPE AW_MPI_SYS_Init_S3(void)
     eError = RegionManager_Construct();
     if (eError != SUCCESS) 
     {
-        aloge("RGN Construct error!");
+        LOGE("RGN Construct error!");
         goto ERR_EXIT0;
     }
 #ifdef MPPCFG_UVC
     eError = UVC_Construct();
     if (eError != SUCCESS) {
-        aloge("UVC Construct error!");
+        LOGE("UVC Construct error!");
         goto ERR_EXIT0;
     }
 #endif
@@ -1106,25 +1106,25 @@ ERRORTYPE AW_MPI_SYS_Init(void)
 #if (MPPCFG_VI == OPTION_VI_ENABLE)
     ret = AW_MPI_VI_Init();
     if (0 != ret) {
-        aloge("AW_MPI_VI_Init failed");
+        LOGE("AW_MPI_VI_Init failed");
         return FAILURE;
     }
-    alogd("ISP init");
+    LOGD("ISP init");
     AW_MPI_ISP_Init();
-    alogd("ISP init done");
+    LOGD("ISP init done");
 #endif
 #ifdef USE_LIBCEDARC_MEM_ALLOC
     gSysManager.mMemOps = MemAdapterGetOpsS();
     if (CdcMemOpen(gSysManager.mMemOps) < 0) {
-        aloge("MemAdapterOpen failed!");
+        LOGE("MemAdapterOpen failed!");
         return FAILURE;
     }
-    alogv("MemAdapterOpen ok");
+    LOGV("MemAdapterOpen ok");
 #else
     ret = ion_memOpen();
     if (ret != 0)
     {
-        aloge("Open ion failed!");
+        LOGE("Open ion failed!");
         return FAILURE;
     }
 #endif
@@ -1133,7 +1133,7 @@ ERRORTYPE AW_MPI_SYS_Init(void)
     eError = DEMUX_Construct();
     if (eError != SUCCESS)
     {
-        aloge("DEMUX Construct error!");
+        LOGE("DEMUX Construct error!");
         goto ERR_EXIT0;
     }
 #endif
@@ -1141,7 +1141,7 @@ ERRORTYPE AW_MPI_SYS_Init(void)
     eError = VDEC_Construct();
     if (eError != SUCCESS)
     {
-        aloge("VDEC Construct error!");
+        LOGE("VDEC Construct error!");
         goto ERR_EXIT0;
     }
 #endif
@@ -1149,64 +1149,64 @@ ERRORTYPE AW_MPI_SYS_Init(void)
     eError = VO_Construct();
     if (eError != SUCCESS)
     {
-        aloge("VO Construct error!");
+        LOGE("VO Construct error!");
         goto ERR_EXIT0;
     }
 #endif
     eError = ADEC_Construct();
     if (eError != SUCCESS)
     {
-        aloge("ADEC Construct error!");
+        LOGE("ADEC Construct error!");
         goto ERR_EXIT0;
     }
 #if (MPPCFG_TEXTENC == OPTION_TEXTENC_ENABLE)
     eError = TENC_Construct();
     if (eError != SUCCESS) {
-        aloge("AW_MPI_TENC_Construct error!");
+        LOGE("AW_MPI_TENC_Construct error!");
         goto ERR_EXIT0;
     }
 #endif
     eError = AENC_Construct();
     if (eError != SUCCESS) {
-        aloge("AW_MPI_AENC_Construct error!");
+        LOGE("AW_MPI_AENC_Construct error!");
         goto ERR_EXIT0;
     }
     eError = audioHw_Construct();
     if (eError != SUCCESS) {
-        aloge("audioHw_Construct error!");
+        LOGE("audioHw_Construct error!");
         goto ERR_EXIT0;
     }
     eError = CLOCK_Construct();
     if (eError != SUCCESS)
     {
-        aloge("CLOCK Construct error!");
+        LOGE("CLOCK Construct error!");
         goto ERR_EXIT0;
     }
 #if (MPPCFG_VENC == OPTION_VENC_ENABLE)
     eError = VENC_Construct();
     if (eError != SUCCESS) {
-        aloge("VENC Construct error!");
+        LOGE("VENC Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #if (MPPCFG_MUXER == OPTION_MUXER_ENABLE)
     eError = MUX_Construct();
     if (eError != SUCCESS) {
-        aloge("MUX Construct error!");
+        LOGE("MUX Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #if (MPPCFG_ISE == OPTION_ISE_ENABLE)
     eError = ISE_Construct();
     if (eError != SUCCESS) {
-        aloge("ISE Construct error!");
+        LOGE("ISE Construct error!");
         goto ERR_EXIT0;
     }
 #endif
 #if (MPPCFG_EIS == OPTION_EIS_ENABLE)
     eError = EIS_Construct();
     if (eError != SUCCESS) {
-        aloge("EIS Construct error!");
+        LOGE("EIS Construct error!");
         goto ERR_EXIT0;
     }
 #endif
@@ -1214,14 +1214,14 @@ ERRORTYPE AW_MPI_SYS_Init(void)
     eError = RegionManager_Construct();
     if (eError != SUCCESS)
     {
-        aloge("RGN Construct error!");
+        LOGE("RGN Construct error!");
         goto ERR_EXIT0;
     }
 
 #ifdef MPPCFG_UVC
     eError = UVC_Construct();
     if (eError != SUCCESS) {
-        aloge("UVC Construct error!");
+        LOGE("UVC Construct error!");
         goto ERR_EXIT0;
     }
 #endif
@@ -1249,78 +1249,78 @@ ERRORTYPE AW_MPI_SYS_Exit(void)
 
     ret = AENC_Destruct();
     if (ret != SUCCESS) {
-        aloge("AENC_Destroy error!");
+        LOGE("AENC_Destroy error!");
     }
 
     ret = ADEC_Destruct();
     if (ret != SUCCESS) {
-        aloge("AW_MPI_AENC_PRIV_Destroy error!");
+        LOGE("AW_MPI_AENC_PRIV_Destroy error!");
     }
 
     ret = audioHw_Destruct();
     if (ret != SUCCESS) {
-        aloge("audioHw_Destruct error!");
+        LOGE("audioHw_Destruct error!");
     }
 #if (MPPCFG_TEXTENC == OPTION_TEXTENC_ENABLE)
     ret = TENC_Destruct();
     if (ret != SUCCESS)
     {
-        aloge("TENC_Destroy error!");
+        LOGE("TENC_Destroy error!");
     }
 #endif
 #if (MPPCFG_MUXER == OPTION_MUXER_ENABLE)
     ret = MUX_Destruct();
     if (ret != SUCCESS) {
-        aloge("MUX_Destroy error!");
+        LOGE("MUX_Destroy error!");
     }
 #endif
 #if (MPPCFG_DEMUXER == OPTION_DEMUXER_ENABLE)
     ret = DEMUX_Destruct();
     if (ret != SUCCESS) {
-        aloge("DEMUX_Destroy error!");
+        LOGE("DEMUX_Destroy error!");
     }
 #endif
 #if (MPPCFG_VENC == OPTION_VENC_ENABLE)
     ret = VENC_Destruct();
     if (ret != SUCCESS) {
-        aloge("AW_MPI_VENC_PRIV_Destroy error!");
+        LOGE("AW_MPI_VENC_PRIV_Destroy error!");
     }
 #endif
 #if (MPPCFG_VDEC == OPTION_VDEC_ENABLE)
     ret = VDEC_Destruct();
     if (ret != SUCCESS) {
-        aloge("AW_MPI_VDEC_PRIV_Destroy error!");
+        LOGE("AW_MPI_VDEC_PRIV_Destroy error!");
     }
 #endif
 #if (MPPCFG_EIS == OPTION_EIS_ENABLE)
     ret = EIS_Destruct();
     if (ret != SUCCESS) {
-        aloge("AW_MPI_EIS_Destroy error!");
+        LOGE("AW_MPI_EIS_Destroy error!");
     }
 #endif
 #if (MPPCFG_ISE == OPTION_ISE_ENABLE)
     ret = ISE_Destruct();
     if (ret != SUCCESS) {
-        aloge("AW_MPI_ISE_Destroy error!");
+        LOGE("AW_MPI_ISE_Destroy error!");
     }
 #endif
 #ifdef MPPCFG_UVC
     ret = UVC_Destruct();
     if (ret != SUCCESS) {
-        aloge("AW_MPI_UVC_Destroy error!");
+        LOGE("AW_MPI_UVC_Destroy error!");
     }
 #endif
 #if (MPPCFG_VO == OPTION_VO_ENABLE)
     ret = VO_Destruct();
     if (ret != SUCCESS)
     {
-        aloge("AW MPI VO Destruct error!");
+        LOGE("AW MPI VO Destruct error!");
     }
 #endif
     ret = RegionManager_Destruct();
     if (ret != SUCCESS)
     {
-        aloge("AW MPI RGN Destruct error!");
+        LOGE("AW MPI RGN Destruct error!");
     }
 
     // todo
@@ -1350,20 +1350,20 @@ ERRORTYPE AW_MPI_SYS_Bind(MPP_CHN_S* pSrcChn, MPP_CHN_S* pDestChn)
 
     SYS_GetComp(pSrcChn, &pSrcComp);
     if (pSrcComp == NULL) {
-        aloge("fatal error! Bind error! source component not found!");
+        LOGE("fatal error! Bind error! source component not found!");
         return FAILURE;
     }
 
     SYS_GetComp(pDestChn, &pDstComp);
     if (pDstComp == NULL) {
-        aloge("Bind error! dest component not found!");
+        LOGE("Bind error! dest component not found!");
         return FAILURE;
     }
 
     eError = SYS_QueryBindRelation(pSrcChn, pDestChn);
     if (eError == FAILURE)
     {
-        aloge("Bind type error! SrcMod[0x%x], DestChn[0x%x]", pSrcChn->mModId, pDestChn->mModId);
+        LOGE("Bind type error! SrcMod[0x%x], DestChn[0x%x]", pSrcChn->mModId, pDestChn->mModId);
         return FAILURE;
     }
 
@@ -1371,7 +1371,7 @@ ERRORTYPE AW_MPI_SYS_Bind(MPP_CHN_S* pSrcChn, MPP_CHN_S* pDestChn)
     eError = COMP_SetupTunnel(pSrcComp, srcPortIdx, pDstComp, dstPortIdx);
     if (eError != SUCCESS)
     {
-        aloge("COMP_SetupTunnel error! SrcChn[0x%x][%d][%d], DstChn[0x%x][%d][%d]",
+        LOGE("COMP_SetupTunnel error! SrcChn[0x%x][%d][%d], DstChn[0x%x][%d][%d]",
             pSrcChn->mModId, pSrcChn->mDevId, pSrcChn->mChnId, pDestChn->mModId, pDestChn->mDevId, pDestChn->mChnId);
         return eError;
     }
@@ -1391,20 +1391,20 @@ ERRORTYPE  AW_MPI_SYS_BindExt(MPP_CHN_S* pSrcChn, MPP_CHN_S* pDestChn, MppBindCo
 
     SYS_GetComp(pSrcChn, &pSrcComp);
     if (pSrcComp == NULL) {
-        aloge("fatal error! Bind error! source component not found!");
+        LOGE("fatal error! Bind error! source component not found!");
         return FAILURE;
     }
 
     SYS_GetComp(pDestChn, &pDstComp);
     if (pDstComp == NULL) {
-        aloge("Bind error! dest component not found!");
+        LOGE("Bind error! dest component not found!");
         return FAILURE;
     }
 
     eError = SYS_QueryBindRelation(pSrcChn, pDestChn);
     if (eError == FAILURE)
     {
-        aloge("Bind type error! SrcMod[0x%x], DestChn[0x%x]", pSrcChn->mModId, pDestChn->mModId);
+        LOGE("Bind type error! SrcMod[0x%x], DestChn[0x%x]", pSrcChn->mModId, pDestChn->mModId);
         return FAILURE;
     }
 
@@ -1412,7 +1412,7 @@ ERRORTYPE  AW_MPI_SYS_BindExt(MPP_CHN_S* pSrcChn, MPP_CHN_S* pDestChn, MppBindCo
     eError = COMP_SetupTunnel(pSrcComp, srcPortIdx, pDstComp, dstPortIdx);
     if (eError != SUCCESS)
     {
-        aloge("COMP_SetupTunnel error! SrcChn[0x%x][%d][%d], DstChn[0x%x][%d][%d]",
+        LOGE("COMP_SetupTunnel error! SrcChn[0x%x][%d][%d], DstChn[0x%x][%d][%d]",
             pSrcChn->mModId, pSrcChn->mDevId, pSrcChn->mChnId, pDestChn->mModId, pDestChn->mDevId, pDestChn->mChnId);
         return eError;
     }
@@ -1433,7 +1433,7 @@ ERRORTYPE  AW_MPI_SYS_UnBind(MPP_CHN_S* pSrcChn, MPP_CHN_S* pDestChn)
 
     SYS_GetComp(pSrcChn, &pSrcComp);
     if (pSrcComp == NULL) {
-        aloge("UnBind error! source component not found!");
+        LOGE("UnBind error! source component not found!");
         return FAILURE;
     }
     COMP_STATETYPE srcState;
@@ -1441,7 +1441,7 @@ ERRORTYPE  AW_MPI_SYS_UnBind(MPP_CHN_S* pSrcChn, MPP_CHN_S* pDestChn)
 
     SYS_GetComp(pDestChn, &pDstComp);
     if (pDstComp == NULL) {
-        aloge("UnBind error! dest component not found!");
+        LOGE("UnBind error! dest component not found!");
         return FAILURE;
     }
     COMP_STATETYPE dstState;
@@ -1453,7 +1453,7 @@ ERRORTYPE  AW_MPI_SYS_UnBind(MPP_CHN_S* pSrcChn, MPP_CHN_S* pDestChn)
     //SYS_DecideBindPortIndex(pSrcChn, pDestChn, &srcPortIdx, &dstPortIdx);
     //eError = COMP_ResetTunnel(pSrcComp, srcPortIdx, pDstComp, dstPortIdx);
     //if (eError != SUCCESS) {
-    //    aloge("COMP_SetupTunnel error!");
+    //    LOGE("COMP_SetupTunnel error!");
     //    return eError;
     //}
 
@@ -1471,7 +1471,7 @@ ERRORTYPE  AW_MPI_SYS_GetBindbyDest(MPP_CHN_S* pDestChn, MPP_CHN_S* pSrcChn)
 
     SYS_GetComp(pDestChn, &pDstComp);
     if (pDstComp == NULL) {
-        aloge("GetBindbyDest error! dest component not found!");
+        LOGE("GetBindbyDest error! dest component not found!");
         return FAILURE;
     }
     //get input port tunnel info of DestChn
@@ -1480,19 +1480,19 @@ ERRORTYPE  AW_MPI_SYS_GetBindbyDest(MPP_CHN_S* pDestChn, MPP_CHN_S* pSrcChn)
     pDstComp->GetConfig(pDstComp, COMP_IndexParamPortDefinition, &portDef);
     if(portDef.eDir != COMP_DirInput)
     {
-        aloge("fatal error! portIndex[%d] of ModId[0x%x] is not inputPort?", portDef.nPortIndex, pDestChn->mModId);
+        LOGE("fatal error! portIndex[%d] of ModId[0x%x] is not inputPort?", portDef.nPortIndex, pDestChn->mModId);
     }
     COMP_INTERNAL_TUNNELINFOTYPE tunnel;
     tunnel.nPortIndex = portDef.nPortIndex;
     eError = pDstComp->GetConfig(pDstComp, COMP_IndexVendorTunnelInfo, &tunnel);
     if (eError != SUCCESS) {
-        aloge("get tunnel info error!");
+        LOGE("get tunnel info error!");
         return eError;
     }
     pSrcComp = (MM_COMPONENTTYPE*)tunnel.hTunnel;
     eError = pSrcComp->GetConfig(pSrcComp, COMP_IndexVendorMPPChannelInfo, pSrcChn);
     if (eError != SUCCESS) {
-        aloge("get mpp channel info error!");
+        LOGE("get mpp channel info error!");
         return eError;
     }
 
@@ -1524,7 +1524,7 @@ ERRORTYPE AW_MPI_SYS_GetCurPts(uint64_t* pu64CurPts)
 ERRORTYPE AW_MPI_SYS_InitPtsBase(uint64_t u64PtsBase)
 {
     if (CDX_SetTimeUs(u64PtsBase) != 0) {
-        aloge("CDX_SetTimeUs error(%s)!", strerror(errno));
+        LOGE("CDX_SetTimeUs error(%s)!", strerror(errno));
         return ERR_SYS_NOT_PERM;
     }
 
@@ -1534,7 +1534,7 @@ ERRORTYPE AW_MPI_SYS_InitPtsBase(uint64_t u64PtsBase)
 ERRORTYPE AW_MPI_SYS_SyncPts(uint64_t u64PtsBase)
 {
     if (CDX_SetTimeUs(u64PtsBase) != 0) {
-        aloge("SyncPts error(%s)!", strerror(errno));
+        LOGE("SyncPts error(%s)!", strerror(errno));
         return ERR_SYS_NOT_PERM;
     }
 
@@ -1553,7 +1553,7 @@ ERRORTYPE AW_MPI_SYS_MmzAlloc_Cached(unsigned int* pPhyAddr, void** ppVirtAddr, 
     *ppVirtAddr = ion_allocMem(uLen);
 #endif
     if (*ppVirtAddr == NULL) {
-        aloge("MemAdapterPalloc error!");
+        LOGE("MemAdapterPalloc error!");
         return ERR_SYS_NOMEM;
     }
 
@@ -1674,11 +1674,11 @@ ERRORTYPE AW_MPI_SYS_HANDLE_Select(handle_set *pRdFds, int nMilliSecs)
 
     retval = select(FD_SETSIZE, pRdFds, NULL, NULL, pTmOut);
     if (retval == -1) {
-        aloge("HANDLE_Select error! retVal:%d", retval);
+        LOGE("HANDLE_Select error! retVal:%d", retval);
     } else if (retval == 0) {
-        alogw("mpi select timeout(%d ms)", nMilliSecs);
+        LOGW("mpi select timeout(%d ms)", nMilliSecs);
     } else {
-        //alogd("some handle can be read");
+        //LOGD("some handle can be read");
     }
 
     return retval;

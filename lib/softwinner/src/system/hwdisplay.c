@@ -16,7 +16,7 @@
 */
 #include "hwdisplay.h"
 
-#include <log/log_wrapper.h>
+#include <log/log.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <linux/fb.h>
@@ -566,13 +566,13 @@ static int hwd_set_fb_rotate(int rot)
 
     fbfd = open("/dev/fb0", O_RDWR);
     if (fbfd < 0) {
-        printf("Open fb0 fail!\n");
+        LOGI("Open fb0 fail!");
         goto OUT;
     }
 
     ret = ioctl(fbfd, FBIOGET_VSCREENINFO, &vinfo);
     if (ret) {
-        printf("Get vinfo fail!\n");
+        LOGI("Get vinfo fail!");
         goto CLOSE;
     }
 
@@ -581,7 +581,7 @@ static int hwd_set_fb_rotate(int rot)
 
     ret = ioctl(fbfd, FBIOPUT_VSCREENINFO, &vinfo);
     if (ret) {
-        printf("set vinfo fail!\n");
+        LOGI("set vinfo fail!");
         goto CLOSE;
     }
 
@@ -769,8 +769,8 @@ int hwd_layer_render(unsigned int hlay, libhwclayerpara_t *picture)
 #if 0
     if ((config.enable == 0) && g_disp_mgr.layer[HD2CHN(hlay)][HD2LYL(hlay)].open_flag) {
         memcpy(&config, &g_disp_mgr.layer[HD2CHN(hlay)][HD2LYL(hlay)].config, sizeof(disp_layer_config));
-        LOGW("detect one open failed layer, now open it again.\r\n");
-        LOGW("chn %d, lay %d, enable %d, zorder %d, alpha %d, x %d, y %d, w %d, h %d\r\n",
+        LOGW("detect one open failed layer, now open it again.");
+        LOGW("chn %d, lay %d, enable %d, zorder %d, alpha %d, x %d, y %d, w %d, h %d",
             config.channel, config.layer_id, config.enable, config.info.zorder, config.info.alpha_value,
             config.info.screen_win.x, config.info.screen_win.y,
             config.info.screen_win.width, config.info.screen_win.height);
@@ -1282,7 +1282,7 @@ int hwd_get_hdmi_hw_mode(disp_tv_mode *disp_mode)
     }
     fgets(state, sizeof(state), fd);
     if (!strncmp(state, "HDMI=0", 6)) {
-        LOGE("no hdmi device detected!!\n");
+        LOGE("no hdmi device detected!!");
         ret = -1;
         goto no_hdmi_dev;
     }
@@ -1291,7 +1291,7 @@ int hwd_get_hdmi_hw_mode(disp_tv_mode *disp_mode)
         args[1] = (unsigned long)disp_type_table[i];
         ret = ioctl(g_disp_mgr.disp_fd, DISP_HDMI_SUPPORT_MODE, args);
         if (ret == 1) {
-            LOGD("find hdmi hardware supported type[%d]\n", disp_type_table[i]);
+            LOGD("find hdmi hardware supported type[%d]", disp_type_table[i]);
             *disp_mode = disp_type_table[i];
             find_mode = 1;
             break;

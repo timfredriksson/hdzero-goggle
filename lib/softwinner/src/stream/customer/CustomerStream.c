@@ -8,7 +8,7 @@
 *
 */
 #define LOG_TAG "CustomerStream"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxStream.h>
 
 CdxStreamT *CustomerStreamOpen(CdxDataSourceT *dataSource)
@@ -18,7 +18,7 @@ CdxStreamT *CustomerStreamOpen(CdxDataSourceT *dataSource)
     ret = sscanf(dataSource->uri, "customer://%p", &handle);
     if (ret != 1)
     {
-        CDX_LOGE("sscanf failure...(%s)", dataSource->uri);
+        LOGE("sscanf failure...(%s)", dataSource->uri);
         return NULL;
     }
     return (CdxStreamT *)handle;

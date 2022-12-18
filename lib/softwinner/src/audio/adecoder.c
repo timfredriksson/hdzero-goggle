@@ -1,7 +1,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
-#include "alib_log.h"
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -255,13 +255,13 @@ static int ADCedarInit(AudioDecoderContext *pAudioDecoder,AudioStreamInfo *pAudi
     pAudioDecoder->pAudioDecodeLib= pAudioDecoder->CreateAudioDecodeLib();
     if(!pAudioDecoder->pAudioDecodeLib)
     {
-        alib_loge("audio decode CreateAudioDecoder fail!");
+        LOGE("audio decode CreateAudioDecoder fail!");
         return -1;
     }
 
     if(pAudioDecoder->InitializeAudioDecodeLib(pAudioDecoder->pAudioDecodeLib,pAudioStreamInfo,pBsInFor)!=0)
     {
-        alib_loge("audio decode InitializeAudioDecoder fail!");
+        LOGE("audio decode InitializeAudioDecoder fail!");
         return -1;
     }
     return 0;
@@ -473,7 +473,7 @@ int PlybkRequestPcmBuffer(AudioDecoder* pDecoder, unsigned char **pOutReadPtr, i
         }
         else
         {
-            alib_loge("fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!\n", 
+            LOGE("fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!", 
                 pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx, pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx, pAudioDecoder->ADCedarCtxA.frmFifo.wtIdx);
             cdx_mutex_unlock(&pAudioDecoder->mutex_audiodec_thread);
             return -1;
@@ -487,7 +487,7 @@ int PlybkRequestPcmBuffer(AudioDecoder* pDecoder, unsigned char **pOutReadPtr, i
         }
         else
         {
-            alib_loge("fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!\n",  
+            LOGE("fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!",  
                 pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx, pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx, pAudioDecoder->ADCedarCtxA.frmFifo.wtIdx);
             cdx_mutex_unlock(&pAudioDecoder->mutex_audiodec_thread);
             return -1;
@@ -495,10 +495,10 @@ int PlybkRequestPcmBuffer(AudioDecoder* pDecoder, unsigned char **pOutReadPtr, i
     }
     else
     {
-        alib_logw("Be careful, very rare! frmFifo is full!\n");
+        LOGW("Be careful, very rare! frmFifo is full!");
         if((unsigned int)pAudioDecoder->ADCedarCtxA.frmFifo.ValidchunkCnt!=pAudioDecoder->ADCedarCtxA.frmFifo.maxchunkNum)
         {
-            alib_loge("fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!\n",  
+            LOGE("fatal error! read_id[%d], prefechId[%d], writeId[%d], check code!",  
                 pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx, pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx, pAudioDecoder->ADCedarCtxA.frmFifo.wtIdx);
             cdx_mutex_unlock(&pAudioDecoder->mutex_audiodec_thread);
             return -1;
@@ -508,7 +508,7 @@ int PlybkRequestPcmBuffer(AudioDecoder* pDecoder, unsigned char **pOutReadPtr, i
 	{
         //there is another possibility: outFrameList is full, but not prefetch, then prefetchIdx==wtIdx don't means all frames are requested,
         //but that case is very rare. So don't worry about it. 
-        alib_logv("prefechId[%d]==writeId[%d], readId[%d], all outAudioFrames are requested\n", 
+        LOGV("prefechId[%d]==writeId[%d], readId[%d], all outAudioFrames are requested", 
 		    pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx, pAudioDecoder->ADCedarCtxA.frmFifo.wtIdx, pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx);
         cdx_mutex_unlock(&pAudioDecoder->mutex_audiodec_thread);
         return -1;
@@ -517,9 +517,9 @@ int PlybkRequestPcmBuffer(AudioDecoder* pDecoder, unsigned char **pOutReadPtr, i
     *psize = pAudioDecoder->ADCedarCtxA.frmFifo.inFrames[pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx].len;
     if((char*)*pOutReadPtr + *psize > pAudioDecoder->ADCedarCtxA.pAOutPcmEndPtr)
     {
-        alib_loge("fatal error! dataindex[%d] address [%p] + [%d] > pcmEndPtr[%p], check code!", pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx, *pOutReadPtr, *psize, pAudioDecoder->ADCedarCtxA.pAOutPcmEndPtr);
+        LOGE("fatal error! dataindex[%d] address [%p] + [%d] > pcmEndPtr[%p], check code!", pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx, *pOutReadPtr, *psize, pAudioDecoder->ADCedarCtxA.pAOutPcmEndPtr);
     }
-    alib_logv("validFrameCnt: %d, read_id: %d, prefetch_id: %d, write_id: %d\n", 
+    LOGV("validFrameCnt: %d, read_id: %d, prefetch_id: %d, write_id: %d", 
 		pAudioDecoder->ADCedarCtxA.frmFifo.ValidchunkCnt, pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx, pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx, pAudioDecoder->ADCedarCtxA.frmFifo.wtIdx);
     pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx++;
     pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx %= AUDIO_BITSTREAM_BUFFER_MAX_FRAME_NUM;
@@ -533,7 +533,7 @@ int PlybkRequestPcmBuffer(AudioDecoder* pDecoder, unsigned char **pOutReadPtr, i
         if( (pAudioDecoder->common.nPrivFlag & CDX_COMP_PRIV_FLAGS_STREAMEOF)
         && pAudioDecoder->ADCedarCtxA.nAOutBufferValidSize > 0 )
         {
-             alib_logd("Ohhhhh~~~~   end of stream...");
+             LOGD("Ohhhhh~~~~   end of stream...");
              *psize = pAudioDecoder->ADCedarCtxA.nAOutBufferValidSize;
         }
         else
@@ -566,7 +566,7 @@ int PlybkUpdatePcmBuffer(AudioDecoder* pDecoder, int nPcmOutSize)
     cdx_mutex_lock(&pAudioDecoder->mutex_audiodec_thread);
     if(pAudioDecoder->ADCedarCtxA.frmFifo.inFrames[pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx].len != (alib_uint32)nPcmOutSize)
     {
-        alib_loge("fatal error, check code!buf[%p]size[%d->%d]pts[%lld]", 
+        LOGE("fatal error, check code!buf[%p]size[%d->%d]pts[%lld]", 
             pAudioDecoder->ADCedarCtxA.frmFifo.inFrames[pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx].startAddr,
             nPcmOutSize, pAudioDecoder->ADCedarCtxA.frmFifo.inFrames[pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx].len,
             pAudioDecoder->ADCedarCtxA.frmFifo.inFrames[pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx].pts);
@@ -657,7 +657,7 @@ void AudioDecoderSeek(AudioDecoder* pDecoder, int64_t nSeekTime)
         if(pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx != pAudioDecoder->ADCedarCtxA.frmFifo.wtIdx
             || pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx != pAudioDecoder->ADCedarCtxA.frmFifo.wtIdx)
         {
-            alib_loge("fatal error! OutputPcmBuf prefetchIdx[%d]!=wtIdx[%d], rdIdx[%d]!", 
+            LOGE("fatal error! OutputPcmBuf prefetchIdx[%d]!=wtIdx[%d], rdIdx[%d]!", 
                 pAudioDecoder->ADCedarCtxA.frmFifo.prefetchIdx, pAudioDecoder->ADCedarCtxA.frmFifo.wtIdx, pAudioDecoder->ADCedarCtxA.frmFifo.rdIdx);
         }
         FlushPcmBuffer(pAudioDecoder);
@@ -675,13 +675,13 @@ int InitializeAudioDecoder(AudioDecoder*    pDecoder,
     pAudioDecoder->nCodeType = pAudioStreamInfo->eCodecFormat;
     if(AdCedarInitFunction(pAudioDecoder) == 0)
     {
-        alib_loge("Get audio hanlde apis fail!");
+        LOGE("Get audio hanlde apis fail!");
         goto EXIT;
     }
-    alib_logd("AudioDec_Installaudiolib ok");
+    LOGD("AudioDec_Installaudiolib ok");
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    alib_logd("audio decoder init start ...");
+    LOGD("audio decoder init start ...");
 
     //ret = pAudioDecData->cedar_init(pAudioDecData);
     ret = ADCedarInit(pAudioDecoder,pAudioStreamInfo,pBsInFor);
@@ -689,7 +689,7 @@ int InitializeAudioDecoder(AudioDecoder*    pDecoder,
     {
         goto EXIT;
     }
-    alib_logd("AUDIO DECODE INIT OK...%d",ret);
+    LOGD("AUDIO DECODE INIT OK...%d",ret);
 
     pAudioDecoder->ADCedarCtxA.nMaxFrameSizeArox = MAX_AUDIO_FRAME_SIZE;
     pAudioDecoder->ADCedarCtxA.nTotalFrameBufferSize = AUDIO_PCM_BUFFER_SIZE;
@@ -698,10 +698,10 @@ int InitializeAudioDecoder(AudioDecoder*    pDecoder,
     {
         int ape_file_num = 0;
         AudioInternalCtl(AUDIO_INTERNAL_CMD_GET_APE_FILE_VERSION, (void*)pAudioStreamInfo->pCodecSpecificData, (void*)(&ape_file_num));
-        alib_logd("ape file version : %d", ape_file_num);
+        LOGD("ape file version : %d", ape_file_num);
         if(ape_file_num < 3930)
         {
-            alib_logd("For lower verion ape files, there is possibility counter huge frame size... so malloc huge buffer");
+            LOGD("For lower verion ape files, there is possibility counter huge frame size... so malloc huge buffer");
             pAudioDecoder->ADCedarCtxA.nMaxFrameSizeArox     = UNIT_K(288);
             pAudioDecoder->ADCedarCtxA.nTotalFrameBufferSize = UNIT_K(1536);
         }
@@ -764,7 +764,7 @@ int DecodeAudioStream(AudioDecoder*    pDecoder,
     ret = pAudioDecoder->DecodeAudioFrame(pAudioDecoder->pAudioDecodeLib, ppBuf, pBufSize);
     if(ret != 0)
     {
-        alib_logw("audiodec ret need aware of: %d",ret);
+        LOGW("audiodec ret need aware of: %d",ret);
         return ret;
     }
     else
@@ -837,7 +837,7 @@ int DecodeAudioStream(AudioDecoder*    pDecoder,
         }
         else
         {
-            alib_loge("Resample overflow!");
+            LOGE("Resample overflow!");
         }
     }
 #endif
@@ -927,7 +927,7 @@ int DecodeAudioStream(AudioDecoder*    pDecoder,
         || pAudioStreamInfo->nSampleRate != OutSampleRate)
         {
             pAudioDecoder->common.nGetAudioInfoFlag = 1;
-            alib_logw("get audio decoder change ch or fs!");
+            LOGW("get audio decoder change ch or fs!");
         }
 
         if (pAudioDecoder->common.nGetAudioInfoFlag)
@@ -940,10 +940,10 @@ int DecodeAudioStream(AudioDecoder*    pDecoder,
             if (!pAudioDecoder->pBsInFor->out_channels || !pAudioDecoder->pBsInFor->out_samplerate)
             {
                 pAudioDecoder->common.nGetAudioInfoFlag = 1;
-                alib_logw("get audio decoder info fail!");
+                LOGW("get audio decoder info fail!");
                 return -1;
             }
-            alib_logv("============ ad_cedar info [channel:%d samplerate:%d] =============",
+            LOGV("============ ad_cedar info [channel:%d samplerate:%d] =============",
             BsInForChan, BsInForSamplerate);
             pAudioDecoder->raw_data.nNeedDirect = 0;
         }
@@ -993,7 +993,7 @@ int DestroyAudioDecoder(AudioDecoder* pDecoder)
     }
     if(pAudioDecoder->AMX.RESI != NULL)
     {
-        alib_logd("destroy_ResampleInfo!!");
+        LOGD("destroy_ResampleInfo!!");
         Destroy_ResampleInfo(pAudioDecoder->AMX.RESI);
         pAudioDecoder->AMX.RESI = NULL;
     }
@@ -1021,7 +1021,7 @@ AudioDecoder* CreateAudioDecoder(void)
     AudioDecoderContext *pAudioDecoder = malloc(sizeof(AudioDecoderContext));
     if(!pAudioDecoder)
     {
-        alib_loge("malloc pAudioDecoder fail!");
+        LOGE("malloc pAudioDecoder fail!");
         return 0;
     }
     memset(pAudioDecoder,0,sizeof(AudioDecoderContext));
@@ -1031,7 +1031,7 @@ AudioDecoder* CreateAudioDecoder(void)
     pAudioDecoder->ADCedarCtx.pTempResampleBuffer = malloc(TEMP_RESAMPLE_BUFFER_SIZE);
     if(!pAudioDecoder->ADCedarCtx.pTempResampleBuffer)
     {
-        alib_loge("malloc pTempResampleBuffer fail!");
+        LOGE("malloc pTempResampleBuffer fail!");
         free(pAudioDecoder);
         return 0;
     }
@@ -1039,12 +1039,12 @@ AudioDecoder* CreateAudioDecoder(void)
     pAudioDecoder->AMX.RESI = Init_ResampleInfo();
     if(pAudioDecoder->AMX.RESI == NULL)
     {
-        alib_loge("Init_ResampleInfo fail!!");
+        LOGE("Init_ResampleInfo fail!!");
         free(pAudioDecoder);
         return 0;
     }
 #endif
-    alib_logd("Create Decoder!!=====");
+    LOGD("Create Decoder!!=====");
     return (AudioDecoder*)pAudioDecoder;
 }
 

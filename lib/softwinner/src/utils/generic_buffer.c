@@ -42,6 +42,8 @@
 #include <cdx_list.h>
 #include <utils/ring_buffer.h>
 
+#include <log/log.h>
+
 #include "iio_utils.h"
 #include "generic_buffer.h"
 
@@ -140,10 +142,10 @@ void print2byte(float *output, uint16_t input, struct iio_channel_info *info)
     if (info->is_signed) {
         int16_t val = (int16_t)(input << (16 - info->bits_used)) >>
                   (16 - info->bits_used);
-        // printf("%05f ", ((float)val + info->offset) * info->scale);
+        // LOGI("%05f ", ((float)val + info->offset) * info->scale);
         *output = ((float)val + info->offset) * info->scale;
     } else {
-        // printf("%05f ", ((float)input + info->offset) * info->scale);
+        // LOGI("%05f ", ((float)input + info->offset) * info->scale);
         *output = ((float)input + info->offset) * info->scale;
     }
 }
@@ -165,10 +167,10 @@ void print4byte(float *output, uint32_t input, struct iio_channel_info *info)
     if (info->is_signed) {
         int32_t val = (int32_t)(input << (32 - info->bits_used)) >>
                   (32 - info->bits_used);
-        printf("%05f ", ((float)val + info->offset) * info->scale);
+        LOGI("%05f ", ((float)val + info->offset) * info->scale);
         *output = ((float)val + info->offset) * info->scale;
     } else {
-        printf("%05f ", ((float)input + info->offset) * info->scale);
+        LOGI("%05f ", ((float)input + info->offset) * info->scale);
         *output = ((float)input + info->offset) * info->scale;
     }
 }
@@ -192,17 +194,17 @@ void print8byte(uint64_t *pts, uint64_t input, struct iio_channel_info *info)
                   (64 - info->bits_used);
         /* special case for timestamp */
         if (info->scale == 1.0f && info->offset == 0.0f) {
-            // printf("%" PRId64 " ", val);
+            // LOGI("%" PRId64 " ", val);
             *pts = val;
         } else {
-            printf(" %05f ",((float)val + info->offset) * info->scale);
+            LOGI(" %05f ",((float)val + info->offset) * info->scale);
             *pts = (uint64_t)(((float)val + info->offset) * info->scale);
         }
     } else {
-        printf(" %05f ", ((float)input + info->offset) * info->scale);
+        LOGI(" %05f ", ((float)input + info->offset) * info->scale);
         *pts = (uint64_t)(((float)input + info->offset) * info->scale);
     }
-    // printf("-> pts=%lld. ", *pts);
+    // LOGI("-> pts=%lld. ", *pts);
 }
 
 void _DyroDebugDumpAllChannelInfos(struct gyro_device_attr *gyro_attr)
@@ -210,18 +212,18 @@ void _DyroDebugDumpAllChannelInfos(struct gyro_device_attr *gyro_attr)
     int i = 0;
 
     for (i = 0; i < gyro_attr->arry_elems; i++) {
-        printf("Channel [%d]:\r\n", i);
-        printf("\tName\t%s\r\n", gyro_attr->iio_chn[i].name);
-        printf("\tGName\t%s\r\n", gyro_attr->iio_chn[i].generic_name);
-        printf("\tScale\t%f\r\n", gyro_attr->iio_chn[i].scale);
-        printf("\toffset\t%f\r\n", gyro_attr->iio_chn[i].offset);
-        printf("\tindex\t%u\r\n", gyro_attr->iio_chn[i].index);
-        printf("\tbytes\t%u\r\n", gyro_attr->iio_chn[i].bytes);
-        printf("\tbitused\t%u\r\n", gyro_attr->iio_chn[i].bits_used);
-        printf("\tshift\t%u\r\n", gyro_attr->iio_chn[i].shift);
-        printf("\tbe\t%u\r\n", gyro_attr->iio_chn[i].be);
-        printf("\tis_sign\t%u\r\n", gyro_attr->iio_chn[i].is_signed);
-        printf("\tlocation\t%u\r\n\n", gyro_attr->iio_chn[i].location);
+        LOGI("Channel [%d]:", i);
+        LOGI("\tName\t%s", gyro_attr->iio_chn[i].name);
+        LOGI("\tGName\t%s", gyro_attr->iio_chn[i].generic_name);
+        LOGI("\tScale\t%f", gyro_attr->iio_chn[i].scale);
+        LOGI("\toffset\t%f", gyro_attr->iio_chn[i].offset);
+        LOGI("\tindex\t%u", gyro_attr->iio_chn[i].index);
+        LOGI("\tbytes\t%u", gyro_attr->iio_chn[i].bytes);
+        LOGI("\tbitused\t%u", gyro_attr->iio_chn[i].bits_used);
+        LOGI("\tshift\t%u", gyro_attr->iio_chn[i].shift);
+        LOGI("\tbe\t%u", gyro_attr->iio_chn[i].be);
+        LOGI("\tis_sign\t%u", gyro_attr->iio_chn[i].is_signed);
+        LOGI("\tlocation\t%u\r", gyro_attr->iio_chn[i].location);
     }
 }
 
@@ -238,24 +240,24 @@ int open_mpu6500(struct gyro_device_attr *gyro_attr)
         if (init_seq[i].is_int) {
             ret = write_sysfs_int(init_seq[i].file_name, init_seq[i].dir_base_name, init_seq[i].init_val.val);
             if (ret < 0) {
-                printf("Write %s/%s %d failed, do it again.\r\n",
+                LOGI("Write %s/%s %d failed, do it again.",
                     init_seq[i].dir_base_name, init_seq[i].file_name, init_seq[i].init_val.val);
                 ret = write_sysfs_int(init_seq[i].file_name, init_seq[i].dir_base_name, init_seq[i].init_val.val);
                 if (ret < 0) {
-                    printf("Write %s/%s %d failed again, give it up.\r\n",
+                    LOGI("Write %s/%s %d failed again, give it up.",
                         init_seq[i].dir_base_name, init_seq[i].file_name, init_seq[i].init_val.val);
                     goto e_write;
                 }
             }
-//            printf("Write %d to %s/%s.\r\n", init_seq[i].init_val.val, init_seq[i].dir_base_name, init_seq[i].file_name);
+//            LOGI("Write %d to %s/%s.", init_seq[i].init_val.val, init_seq[i].dir_base_name, init_seq[i].file_name);
         } else {
             write_sysfs_string(init_seq[i].file_name, init_seq[i].dir_base_name, init_seq[i].init_val.string);
             if (ret < 0) {
-                printf("Write %s/%s %s failed, do it again.\r\n",
+                LOGI("Write %s/%s %s failed, do it again.",
                     init_seq[i].dir_base_name, init_seq[i].file_name, init_seq[i].init_val.string);
                 ret = write_sysfs_string(init_seq[i].file_name, init_seq[i].dir_base_name, init_seq[i].init_val.string);
                 if (ret < 0) {
-                    printf("Write %s/%s %s failed again, give it up.\r\n",
+                    LOGI("Write %s/%s %s failed again, give it up.",
                         init_seq[i].dir_base_name, init_seq[i].file_name, init_seq[i].init_val.string);
                     goto e_write;
                 }
@@ -265,22 +267,22 @@ int open_mpu6500(struct gyro_device_attr *gyro_attr)
 
     ret = build_channel_array(gyro_attr->dev_dir_path, &gyro_attr->iio_chn, &gyro_attr->arry_elems);
     if (ret || !gyro_attr->arry_elems) {
-        printf("Problem reading scan element information %s, ret %d\n", gyro_attr->dev_dir_path, ret);
+        LOGI("Problem reading scan element information %s, ret %d", gyro_attr->dev_dir_path, ret);
         goto e_build;
     }
 
     ret = snprintf(node_tmp, sizeof(node_tmp), "%s/buffer/", gyro_attr->dev_dir_path);
     node_tmp[ret] = '\0';
 
-    printf("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDebug %s, kfifo %lu.\r\n", node_tmp, gyro_attr->kfifo_len);
+    LOGI("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDebug %s, kfifo %lu.", node_tmp, gyro_attr->kfifo_len);
 
     ret = write_sysfs_int("length", node_tmp, gyro_attr->kfifo_len);
     if (ret < 0) {
-        printf("Write %s/%s %d failed, do it again.\r\n",
+        LOGI("Write %s/%s %d failed, do it again.",
             init_seq[i].dir_base_name, init_seq[i].file_name, init_seq[i].init_val.val);
         ret = write_sysfs_int(init_seq[i].file_name, init_seq[i].dir_base_name, init_seq[i].init_val.val);
         if (ret < 0) {
-            printf("Write %s/%s %d failed again, give it up.\r\n",
+            LOGI("Write %s/%s %d failed again, give it up.",
                 init_seq[i].dir_base_name, init_seq[i].file_name, init_seq[i].init_val.val);
             goto e_writelen;
         }
@@ -291,32 +293,32 @@ int open_mpu6500(struct gyro_device_attr *gyro_attr)
     node_tmp[ret] = '\0';
     ret = write_sysfs_int("enable", node_tmp, 1); // Enable gyro device
     if (ret < 0) {
-        printf("Write %s 1 failed, do it again.\r\n", node_tmp);
+        LOGI("Write %s 1 failed, do it again.", node_tmp);
         ret = write_sysfs_int("enable", node_tmp, 1); // Enable gyro device
         if (ret < 0) {
-            printf("Write %s 1 failed again, give it up.\r\n", node_tmp);
+            LOGI("Write %s 1 failed again, give it up.", node_tmp);
             goto e_enable;
         }
     }
     usleep(20*1000); /* wait some time */
 
     gyro_attr->pkt_size = size_from_channelarray(gyro_attr->iio_chn, gyro_attr->arry_elems);
-    // printf("scan_zise = %d.\r\n", scan_size);
+    // LOGI("scan_zise = %d.", scan_size);
     gyro_attr->usr_cache = malloc(gyro_attr->pkt_size * gyro_attr->kfifo_len);
     if (!gyro_attr->usr_cache) {
-        printf("Alloc memorys for user cache gyro buffer failed. errno %d\r\n", errno);
+        LOGI("Alloc memorys for user cache gyro buffer failed. errno %d", errno);
         ret = -errno;
         goto e_alloc;
     }
 
-    printf("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDebug gyro pkt size is %d.\r\n", gyro_attr->pkt_size);
+    LOGI("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDebug gyro pkt size is %d.", gyro_attr->pkt_size);
 
 //    _DyroDebugDumpAllChannelInfos(gyro_attr);
 
     /* Attempt to open non blocking the access dev */
     gyro_attr->gyro_fd = open(gyro_attr->dev_name, O_RDONLY | O_NONBLOCK);
     if (gyro_attr->gyro_fd < 0) {
-        printf("Open %s failed. errno %d.\r\n", gyro_attr->dev_name, errno);
+        LOGI("Open %s failed. errno %d.", gyro_attr->dev_name, errno);
         ret = -errno;
         goto e_opendev;
     }
@@ -351,7 +353,7 @@ int read_mpu6500(struct gyro_device_attr *gyro_attr, int buf_num)
 
     ret = read(gyro_attr->gyro_fd, gyro_attr->usr_cache, read_total);
     if (ret < 0) {
-        printf("Read %s failed, ret %d.\r\n", gyro_attr->dev_name, ret);
+        LOGI("Read %s failed, ret %d.", gyro_attr->dev_name, ret);
     } else {
         ret = ret / gyro_attr->pkt_size;
     }
@@ -368,48 +370,48 @@ int close_mpu6500(struct gyro_device_attr *gyro_attr)
 
     /* if gyro_fd == 0, means it is empty, not [stdin] fd. */
     if (!gyro_attr->gyro_fd || !gyro_attr->iio_chn) {
-        printf("There has no device was opened.\r\n");
+        LOGI("There has no device was opened.");
         ret = -1;
         goto e_nodev;
     }
 
-    printf("=================================================== echo 0 > enable.\r\n");
+    LOGI("=================================================== echo 0 > enable.");
     ret = snprintf(node_tmp, sizeof(node_tmp), "%s/buffer/", gyro_attr->dev_dir_path);
     node_tmp[ret] = '\0';
     ret = write_sysfs_int("enable", node_tmp, 0); // Disable gyro device
     if (ret < 0) {
-        printf("Write %s 0 failed, do it again.\r\n", node_tmp);
+        LOGI("Write %s 0 failed, do it again.", node_tmp);
         ret = write_sysfs_int("enable", node_tmp, 0); // Disable gyro device
         if (ret < 0) {
-            printf("Write %s 0 failed again, give it up.\r\n", node_tmp);
+            LOGI("Write %s 0 failed again, give it up.", node_tmp);
             goto e_disable;
         }
     }
 
-//    printf("=================================================== echo 0 > scans.\r\n");
+//    LOGI("=================================================== echo 0 > scans.");
     /* write deinitialize values */
     for (i = 0; init_seq[i].dir_base_name != NULL; i++) {
         if (init_seq[i].is_int) {
             ret = write_sysfs_int(init_seq[i].file_name, init_seq[i].dir_base_name, init_seq[i].init_val.val);
             if (ret < 0) {
-                printf("Write %s/%s %d failed, do it again.\r\n",
+                LOGI("Write %s/%s %d failed, do it again.",
                     init_seq[i].dir_base_name, init_seq[i].file_name, init_seq[i].init_val.val);
                 ret = write_sysfs_int(init_seq[i].file_name, init_seq[i].dir_base_name, init_seq[i].init_val.val);
                 if (ret < 0) {
-                    printf("Write %s/%s %d failed again, give it up.\r\n",
+                    LOGI("Write %s/%s %d failed again, give it up.",
                         init_seq[i].dir_base_name, init_seq[i].file_name, init_seq[i].init_val.val);
                     goto e_write;
                 }
             }
-//            printf("Write %d to %s/%s.\r\n", init_seq[i].init_val.val, init_seq[i].dir_base_name, init_seq[i].file_name);
+//            LOGI("Write %d to %s/%s.", init_seq[i].init_val.val, init_seq[i].dir_base_name, init_seq[i].file_name);
         } else {
             write_sysfs_string(init_seq[i].file_name, init_seq[i].dir_base_name, init_seq[i].init_val.string);
             if (ret < 0) {
-                printf("Write %s/%s %s failed, do it again.\r\n",
+                LOGI("Write %s/%s %s failed, do it again.",
                     init_seq[i].dir_base_name, init_seq[i].file_name, init_seq[i].init_val.string);
                 ret = write_sysfs_string(init_seq[i].file_name, init_seq[i].dir_base_name, init_seq[i].init_val.string);
                 if (ret < 0) {
-                    printf("Write %s/%s %s failed again, give it up.\r\n",
+                    LOGI("Write %s/%s %s failed again, give it up.",
                         init_seq[i].dir_base_name, init_seq[i].file_name, init_seq[i].init_val.string);
                     goto e_write;
                 }
@@ -417,11 +419,11 @@ int close_mpu6500(struct gyro_device_attr *gyro_attr)
         }
     }
 
-//    printf("=================================================== close devices.\r\n");
+//    LOGI("=================================================== close devices.");
     /* No matter we close it success or not, just free every resource. */
     ret = close(gyro_attr->gyro_fd);
     if (ret < 0) {
-        printf("Failed to close %s %d. errno %d.\r\n", gyro_attr->dev_name, gyro_attr->gyro_fd, errno);
+        LOGI("Failed to close %s %d. errno %d.", gyro_attr->dev_name, gyro_attr->gyro_fd, errno);
         ret = -errno;
     }
 
@@ -481,7 +483,7 @@ static int __gyro_read_parse_mpu6500(struct gyro_device_attr* gyro_attr, int pkt
     /* we got <ret> packets */
     ret = read_mpu6500(gyro_attr, pkt_num);
     if (ret <= 0) {
-        printf("Read mpu6500 failed. return(%d).", ret);
+        LOGI("Read mpu6500 failed. return(%d).", ret);
         return 0;
     }
 
@@ -494,7 +496,7 @@ static int __gyro_read_parse_mpu6500(struct gyro_device_attr* gyro_attr, int pkt
             float_tmp = &gyro_pkt.accel_x;
 
         for (k = 0; k < gyro_attr->arry_elems; k++) {
-            // printf("channels[%d].bytes=%d.\r\n", k, channels[k].bytes);
+            // LOGI("channels[%d].bytes=%d.", k, channels[k].bytes);
             switch (gyro_attr->iio_chn[k].bytes) {
                 case 2: /*mpu6500 : x,y,z,time*/
                     print2byte(float_tmp++,
@@ -530,7 +532,7 @@ static int __gyro_read_parse_mpu6500(struct gyro_device_attr* gyro_attr, int pkt
                     if (ring_buffer_full(gelem_cur->rb_hd)) {
                         static unsigned int full_cnt = 0;
                         if (0 == (full_cnt % g_gyro_chn_mgr.gyro_attr.sample_freq))
-                            printf("Ring buffer[%d] full, drop the oldest one gyro data.\r\n", gelem_cur->idx);
+                            LOGI("Ring buffer[%d] full, drop the oldest one gyro data.", gelem_cur->idx);
                         full_cnt++;
                         ring_buffer_out(gelem_cur->rb_hd, NULL, 1);
                     }
@@ -567,7 +569,7 @@ static int __gyro_read_parse_mpu6500(struct gyro_device_attr* gyro_attr, int pkt
                         if (ring_buffer_full(gelem_cur->rb_hd)) {
                             static unsigned int full_cnt = 0;
                             if (0 == (full_cnt % g_gyro_chn_mgr.gyro_attr.sample_freq))
-                                printf("Ring buffer[%d] full, drop the oldest one gyro data.\r\n", gelem_cur->idx);
+                                LOGI("Ring buffer[%d] full, drop the oldest one gyro data.", gelem_cur->idx);
                             full_cnt++;
                             ring_buffer_out(gelem_cur->rb_hd, NULL, 1);
                         }
@@ -595,10 +597,10 @@ static void *__gyro_product_buffers(void *args)
 #endif
     prctl(PR_SET_NAME, "__gyro_product_buffers", 0, 0, 0);
 
-    printf("Run gyro data product thread.\r\n");
+    LOGI("Run gyro data product thread.");
 
     /* If we has no one user, then exit this thread. */
-    printf("Open gyro fd[%d].\r\n", g_gyro_chn_mgr.gyro_attr.gyro_fd);
+    LOGI("Open gyro fd[%d].", g_gyro_chn_mgr.gyro_attr.gyro_fd);
     while (g_gyro_chn_mgr.open_cnt) {
         if (g_gyro_chn_mgr.bhalt) {
             usleep(5*1000);
@@ -617,11 +619,11 @@ static void *__gyro_product_buffers(void *args)
 
         ret = select(g_gyro_chn_mgr.gyro_attr.gyro_fd + 1, &stRdFdSet, NULL, NULL, &stTimeLimit);
         if (ret < 0) {
-            printf("Select wait for gyro datas failed, return %d.\r\n", -errno);
+            LOGI("Select wait for gyro datas failed, return %d.", -errno);
             usleep(10000);
             continue;
         } else if (0 == ret) {
-            printf("Select wait for gyro datas timeout.\r\n");
+            LOGI("Select wait for gyro datas timeout.");
             continue;
         }
 
@@ -630,7 +632,7 @@ static void *__gyro_product_buffers(void *args)
         pthread_mutex_unlock(&g_gyro_chn_mgr.lock);
     }
 
-    printf("Gyro device data product thread exit.\r\n");
+    LOGI("Gyro device data product thread exit.");
     return NULL;
 }
 
@@ -650,7 +652,7 @@ static int __internal_open_mpu6500(struct gyro_instance *gins, struct gyro_devic
     /* First of all, create the ring buffer instance to store gyro datas. */
     gelem->rb_hd = ring_buffer_create(sizeof(struct gyro_pkt), gyro_attr->rb_len, RB_FL_NONE);
     if (NULL == gelem->rb_hd) {
-        printf("Create ring buffer for gyro data cache failed.\r\n");
+        LOGI("Create ring buffer for gyro data cache failed.");
         ret = -1;
         goto ECrtRB;
     }
@@ -686,7 +688,7 @@ static int __internal_open_mpu6500(struct gyro_instance *gins, struct gyro_devic
         pthread_mutex_lock(&g_gyro_chn_mgr.lock);
         ret = __device_close_mpu6500(&g_gyro_chn_mgr.gyro_attr);
         if (0 != ret) {
-            printf("Close mpu6500 failed, just use the last configuration. errno(%d).\r\n", -errno);
+            LOGI("Close mpu6500 failed, just use the last configuration. errno(%d).", -errno);
             g_gyro_chn_mgr.bhalt = 0;
             goto ECloseDev;
         }
@@ -719,7 +721,7 @@ static int __internal_open_mpu6500(struct gyro_instance *gins, struct gyro_devic
 
     ret = __device_open_mpu6500(&g_gyro_chn_mgr.gyro_attr);
     if (0 != ret) {
-        printf("Create ring buffer for gyro data cache failed.\r\n");
+        LOGI("Create ring buffer for gyro data cache failed.");
         ret = -1;
         goto EOpenDev;
     }
@@ -734,7 +736,7 @@ static int __internal_open_mpu6500(struct gyro_instance *gins, struct gyro_devic
         }
         ret = pthread_create(&g_gyro_chn_mgr.gyro_pid, NULL, __gyro_product_buffers, &g_gyro_chn_mgr);
         if (ret < 0) {
-            printf("Create gyro data product thread failed. return (%d).\r\n", ret);
+            LOGI("Create gyro data product thread failed. return (%d).", ret);
             goto ECrtTrd;
         }
     }
@@ -855,7 +857,7 @@ struct gyro_instance *create_gyro_inst(void)
 {
     struct gyro_elem *gelem = malloc(sizeof(struct gyro_elem));
     if (NULL == gelem) {
-        printf("No memory for struct gyro_elem. errno(%d)\r\n", -errno);
+        LOGI("No memory for struct gyro_elem. errno(%d)", -errno);
         return NULL;
     }
 
@@ -894,7 +896,7 @@ void destory_gyro_inst(struct gyro_instance *gyro_ins)
     /* If the list is empty, then you must use a invalid gyro_ins */
     pthread_mutex_lock(&g_gyro_chn_mgr.lock);
     if (list_empty(&g_gyro_chn_mgr.mlist)) {
-        printf("The gyro_ins list is empty, check your parameter.\r\n");
+        LOGI("The gyro_ins list is empty, check your parameter.");
         goto exit;
     }
 
@@ -904,7 +906,7 @@ void destory_gyro_inst(struct gyro_instance *gyro_ins)
     {
         if (gelem_tmp->idx == gelem_cur->idx) {
             if (gelem_cur->bopen) {
-                printf("The gryo instrance you want to destroy is opened, please close it first.\r\n");
+                LOGI("The gryo instrance you want to destroy is opened, please close it first.");
                 goto exit;
             }
             list_del(&gelem_cur->mlist);
@@ -950,19 +952,19 @@ int main(int argc, char *argv[])
         struct gyro_pkt gyro_pkt;
         if (gyro_ins->read(gyro_ins, &gyro_pkt, 1) > 0) {
             if (0 != time_cache && gyro_pkt.time_stamp - time_cache > 3000)
-                printf("[0]%llu[%llu][%llu] %f\r\n", gyro_pkt.time_stamp, time_cache,
+                LOGI("[0]%llu[%llu][%llu] %f", gyro_pkt.time_stamp, time_cache,
                     gyro_pkt.time_stamp - time_cache, gyro_pkt.angle_x);
 
             time_cache = gyro_pkt.time_stamp;
         }
         if (gyro_ins1->read(gyro_ins1, &gyro_pkt, 1) > 0)
-            printf("[1]%llu %f\r\n", gyro_pkt.time_stamp, gyro_pkt.angle_x);
+            LOGI("[1]%llu %f", gyro_pkt.time_stamp, gyro_pkt.angle_x);
         if (gyro_ins2->read(gyro_ins2, &gyro_pkt, 1) > 0)
-            printf("[2]%llu %f\r\n", gyro_pkt.time_stamp, gyro_pkt.angle_x);
+            LOGI("[2]%llu %f", gyro_pkt.time_stamp, gyro_pkt.angle_x);
 
         read_cnt++;
         usleep(500);
-//        printf("---%d\r\n", read_cnt);
+//        LOGI("---%d", read_cnt);
 
         if (read_cnt >= atoi(argv[1]))
             break;

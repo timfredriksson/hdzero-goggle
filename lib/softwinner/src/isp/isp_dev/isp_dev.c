@@ -30,6 +30,7 @@
 #include <fcntl.h>
 
 #include <plat_systrace.h>
+#include <log/log.h>
 
 #include "isp_dev.h"
 #include "isp_ini_parse.h"
@@ -357,7 +358,7 @@ struct hw_isp_media_dev *isp_md_open(const char *devname)
 	if (isp_md == NULL)
 		return NULL;
 	if((access(devname, F_OK) != 0)) {
-		printf("warning: mknod media device %s c 253 0\n", devname);
+		LOGI("warning: mknod media device %s c 253 0\n", devname);
 		system("mknod /dev/media0 c 253 0");
 	}
 

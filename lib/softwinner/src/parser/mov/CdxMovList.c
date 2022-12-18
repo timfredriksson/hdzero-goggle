@@ -116,7 +116,7 @@ int aw_list_add(AW_List* ptr, void* item)
     ItemSlot *entry;
     if(!ptr)
     {
-        printf(" parameter error. \n");
+        LOGI(" parameter error. ");
         return -1;
     }
     entry = (ItemSlot*)malloc(sizeof(ItemSlot));

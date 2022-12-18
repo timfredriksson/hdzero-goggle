@@ -294,7 +294,7 @@ static kerrno __IteratorGetID(void* hself, StringCtn *id)
                 id->setTo8(id, "TCO", strlen("TCO"));
                 break;
             default:
-                CDX_LOGE("should not be here.");
+                LOGE("should not be here.");
                 break;
         }
     }
@@ -330,7 +330,7 @@ static kerrno __IteratorFindFrame(void* hself)
             it->mFrameSize += 6;
 
             if (it->mOffset + it->mFrameSize > it->mParent->mSize) {
-                CDX_LOGV("partial frame at offset %zu (size = %zu, bytes-remaining = %zu)",
+                LOGV("partial frame at offset %zu (size = %zu, bytes-remaining = %zu)",
                         it->mOffset, it->mFrameSize, it->mParent->mSize - it->mOffset - (size_t)6);
                 return KERR_OUT_OF_RANGE;
             }
@@ -373,7 +373,7 @@ static kerrno __IteratorFindFrame(void* hself)
             it->mFrameSize = 10 + baseSize;
 
             if (it->mOffset + it->mFrameSize > it->mParent->mSize) {
-                CDX_LOGV("partial frame at offset %zu (size = %zu, bytes-remaining = %zu)",
+                LOGV("partial frame at offset %zu (size = %zu, bytes-remaining = %zu)",
                         it->mOffset, it->mFrameSize, it->mParent->mSize - it->mOffset - (size_t)10);
                 return KERR_OUT_OF_RANGE;
             }
@@ -386,7 +386,7 @@ static kerrno __IteratorFindFrame(void* hself)
                 // Per-frame unsynchronization and data-length indicator
                 // have already been taken care of.
 
-                CDX_LOGV("Skipping unsupported frame \
+                LOGV("Skipping unsupported frame \
                             (compression, encryption or per-frame unsynchronization flagged");
 
                 it->mOffset += it->mFrameSize;
@@ -411,7 +411,7 @@ static kerrno __IteratorFindFrame(void* hself)
             id = GenerateStringContainer();
             if(!id)
             {
-                CDX_LOGE("No mem for StringContainer while Iterator finding frame!");
+                LOGE("No mem for StringContainer while Iterator finding frame!");
                 return KERR_NO_MEM;
             }
             if (it->mOffset >= it->mParent->mSize) {
@@ -486,13 +486,13 @@ Iterator* GenerateIterator(ID3* parent, const char *id)
     Iterator* it   = NULL;
     if(!parent)
     {
-        CDX_LOGE("Iterator's constructor need id3 parer!");
+        LOGE("Iterator's constructor need id3 parer!");
         return NULL;
     }
     it = (Iterator*)malloc(sizeof(Iterator));
     if(!it)
     {
-        CDX_LOGE("No mem for Iterator!");
+        LOGE("No mem for Iterator!");
         return NULL;
     }
     memset(it, 0x00, sizeof(Iterator));
@@ -516,7 +516,7 @@ Iterator* GenerateIterator(ID3* parent, const char *id)
         it->mID = (char *)malloc(strlen(id)+1);
         if(!it->mID)
         {
-            CDX_LOGE("No mem for Iterator->mID");
+            LOGE("No mem for Iterator->mID");
             free(it);
             it = NULL;
             return NULL;
@@ -526,7 +526,7 @@ Iterator* GenerateIterator(ID3* parent, const char *id)
     }
 
     it->findFrame(it);
-    CDX_LOGV("Generating Iterator finish...");
+    LOGV("Generating Iterator finish...");
     return it;
 }
 
@@ -538,7 +538,7 @@ kbool EraseIterator(void* arg)
     memcpy(&it, arg, sizeof(it));
     if(!it)
     {
-        CDX_LOGW("Iterator has already been free");
+        LOGW("Iterator has already been free");
         return kfalse;
     }
 
@@ -551,7 +551,7 @@ kbool EraseIterator(void* arg)
     memset(it, 0x00, sizeof(Iterator));
     free(it);
     memcpy(arg, &null_ptr, sizeof(arg));
-    CDX_LOGV("Free Iterator finish...");
+    LOGV("Free Iterator finish...");
     return ktrue;
 }
 //
@@ -766,7 +766,7 @@ static kbool __id3ParseV2(void *hself) {
     }
 
     if (size > kMaxMetadataSize) {
-        CDX_LOGE("skipping huge ID3 metadata of size %zu", size);
+        LOGE("skipping huge ID3 metadata of size %zu", size);
         return kfalse;
     }
 
@@ -798,7 +798,7 @@ static kbool __id3ParseV2(void *hself) {
             success = id3->doRemoveUnsynchronizationV2_4(id3, ktrue /* iTunesHack */);
 
             if (success) {
-                CDX_LOGV("Had to apply the iTunes hack to parse this ID3 tag");
+                LOGV("Had to apply the iTunes hack to parse this ID3 tag");
             }
         }
 
@@ -811,7 +811,7 @@ static kbool __id3ParseV2(void *hself) {
             return kfalse;
         }
     } else if (header.flags & 0x80) {
-        CDX_LOGV("removing unsynchronization");
+        LOGV("removing unsynchronization");
 
         id3->doRemoveUnsynchronization(id3);
     }
@@ -855,7 +855,7 @@ static kbool __id3ParseV2(void *hself) {
             }
 
             if (extendedFlags & 0x8000) {
-                CDX_LOGV("have crc");
+                LOGV("have crc");
             }
         }
     } else if (header.version_major == 4 && (header.flags & 0x40)) {
@@ -1017,7 +1017,7 @@ ID3* GenerateId3(CdxStreamT* in, cdx_uint8* init_buf, size_t buf_sz,
     id3 = (ID3*)malloc(sizeof(ID3));
     if(!id3)
     {
-        CDX_LOGE("No mem for ID3!");
+        LOGE("No mem for ID3!");
         return NULL;
     }
     memset(id3, 0x00, sizeof(ID3));
@@ -1047,7 +1047,7 @@ ID3* GenerateId3(CdxStreamT* in, cdx_uint8* init_buf, size_t buf_sz,
     {
         id3->mIsValid = id3->doParseV1(id3);
     }
-    CDX_LOGD("Generating id3 base finish...");
+    LOGD("Generating id3 base finish...");
     return id3;
 }
 
@@ -1059,7 +1059,7 @@ kbool EraseId3(void* arg)
     memcpy(&id3, arg, sizeof(id3));
     if(!id3)
     {
-        CDX_LOGW("id3 has already been free");
+        LOGW("id3 has already been free");
         return kfalse;
     }
 
@@ -1077,7 +1077,7 @@ kbool EraseId3(void* arg)
 
     free(id3);
     memcpy(arg, &null_ptr, sizeof(arg));
-    CDX_LOGD("Free id3 base finish...");
+    LOGD("Free id3 base finish...");
     return ktrue;
 }
 

@@ -20,7 +20,7 @@
 #ifndef CDX_STREAM_H
 #define CDX_STREAM_H
 #include <CdxTypes.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxBinary.h>
 #include <CdxAtomic.h>
 #include <CdxKeyedVector.h>
@@ -310,7 +310,7 @@ struct CdxStreamOpsS
 
     cdx_int32 (*control)(CdxStreamT * /*stream*/, cdx_int32 /*cmd*/, void * /*param*/);
 
-    /*以上接口必须实现*/
+    /*锟斤拷锟较接口憋拷锟斤拷实锟斤拷*/
 
     cdx_int32 (*write)(CdxStreamT *, void * /*buf*/, cdx_uint32 /*len*/);
 
@@ -518,7 +518,7 @@ static inline cdx_int32 CdxStreamSkip(CdxStreamT *stream, cdx_uint32 len)
         cdx_char dummyBuf[4096];
         if (len > 4096 * 10)
         {
-            CDX_LOGE("too large(%u) to dummy for a unseekable stream", len);
+            LOGE("too large(%u) to dummy for a unseekable stream", len);
             return -1;
         }
 

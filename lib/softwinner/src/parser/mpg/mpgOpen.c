@@ -14,7 +14,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mpgOpen"
-#include <cdx_log.h>
+#include <log/log.h>
 
 #include "CdxMpgParser.h"
 #include "CdxMpgParserImpl.h"
@@ -161,13 +161,13 @@ cdx_uint32 CheckStreamMap(CdxMpgParserT *MpgParser, cdx_uint8 *buf, cdx_uint32 o
                 break;
             case CDX_STREAM_TYPE_AUDIO_MPEG1:
             case CDX_STREAM_TYPE_AUDIO_MPEG2:
-                CDX_LOGV("need process audio info.\n");
+                LOGV("need process audio info.");
                 break;
             case CDX_STREAM_TYPE_AUDIO_AAC:
-                CDX_LOGV("need process audio info.\n");
+                LOGV("need process audio info.");
                 break;
             case CDX_STREAM_TYPE_CDX_AUDIO_AC3:
-                CDX_LOGV("need process audio info.\n");
+                LOGV("need process audio info.");
                 break;
             default: break;
         }
@@ -278,7 +278,7 @@ cdx_uint8 CheckVideoIdNo1172(CdxMpgParserT *MpgParser, cdx_uint8 *buf,
 
     if(nLen != 0)
     {
-        CDX_LOGW("pes header error\n");
+        LOGW("pes header error");
     }
     while(pes_len&&((buf+off+3)<(mMpgParserCxt->mDataChunkT.pStartAddr+MAX_CHUNK_BUF_SIZE)))
     {
@@ -311,7 +311,7 @@ cdx_uint8 CheckVideoIdNo1172(CdxMpgParserT *MpgParser, cdx_uint8 *buf,
         else if(buf[off]==0x00 && buf[off+1]==0x00 && buf[off+2]==0x01 && buf[off+3]==0x42)
         {
             //* detect h265
-            CDX_LOGD("***maybe h265***");
+            LOGD("***maybe h265***");
             MpgParser->mVideoFormatT.eCodecFormat = VIDEO_CODEC_FORMAT_H265;
             nRet = 1;
             break;

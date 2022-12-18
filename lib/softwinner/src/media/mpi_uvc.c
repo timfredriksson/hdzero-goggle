@@ -12,7 +12,7 @@
 ******************************************************************************/
 #define LOG_NDEBUG 0
 #define LOG_TAG "mpi_uvcin"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <stdlib.h>
@@ -47,7 +47,7 @@ ERRORTYPE AW_MPI_UVC_CreateDevice(UVC_DEV UvcDev)
 
     if(!UvcDev)
     {
-        aloge("fatal error! the UvcDev is null");
+        LOGE("fatal error! the UvcDev is null");
         return ERR_UVC_NULL_PTR;
     }
     bResult = uvcInput_Open_Video(UvcDev);
@@ -61,7 +61,7 @@ ERRORTYPE AW_MPI_UVC_DestroyDevice(UVC_DEV UvcDev)
 
     if(!UvcDev)
     {
-        aloge("fatal error! the UvcDev is null");
+        LOGE("fatal error! the UvcDev is null");
         return ERR_UVC_NULL_PTR;
     }
 
@@ -76,7 +76,7 @@ ERRORTYPE AW_MPI_UVC_SetDeviceAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
 
     if(!UvcDev || !pAttr)
     {
-        aloge("fatal error! the input param is null");
+        LOGE("fatal error! the input param is null");
         return ERR_UVC_NULL_PTR;
     }
     
@@ -90,7 +90,7 @@ ERRORTYPE AW_MPI_UVC_GetDeviceAttr(UVC_DEV UvcDev, UVC_ATTR_S *pAttr)
     ERRORTYPE bResult = FAILURE;
     if(!UvcDev || !pAttr)
     {
-        aloge("fatal error! the input param is null");
+        LOGE("fatal error! the input param is null");
         return ERR_UVC_NULL_PTR;
     }
 
@@ -104,7 +104,7 @@ ERRORTYPE AW_MPI_UVC_EnableDevice(UVC_DEV UvcDev)
     ERRORTYPE bResult = FAILURE;
     if(!UvcDev)
     {
-        aloge("fatal error! the UvcDev is null");
+        LOGE("fatal error! the UvcDev is null");
         return ERR_UVC_NULL_PTR;
     }
     
@@ -118,7 +118,7 @@ ERRORTYPE AW_MPI_UVC_DisableDevice(UVC_DEV UvcDev)
     ERRORTYPE bResult = FAILURE;  
     if(!UvcDev)
     {
-        aloge("fatal error! the UvcDev is null");
+        LOGE("fatal error! the UvcDev is null");
         return ERR_UVC_NULL_PTR;
     }
     
@@ -140,7 +140,7 @@ static ERRORTYPE UvcEventHandler(
     ret = ((MM_COMPONENTTYPE*)hComponent)->GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &UvcChnInfo);
     //if(ret == SUCCESS)
     //{
-        //alogv("video encoder event, MppChannel[%d][%d][%d]", UvcChnInfo.mModId, UvcChnInfo.mDevId, UvcChnInfo.mChnId);
+        //LOGV("video encoder event, MppChannel[%d][%d][%d]", UvcChnInfo.mModId, UvcChnInfo.mDevId, UvcChnInfo.mChnId);
     //}
 	UVC_CHN_MAP_S *pChn = (UVC_CHN_MAP_S*)pAppData;
 
@@ -150,13 +150,13 @@ static ERRORTYPE UvcEventHandler(
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("uvc input EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("uvc input EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else
             {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
@@ -164,28 +164,28 @@ static ERRORTYPE UvcEventHandler(
         {
             if(ERR_UVC_SAMESTATE == nData1)
             {
-                alogv("set same state to uvc!");
+                LOGV("set same state to uvc!");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(ERR_UVC_INVALIDSTATE == nData1)
             {
-                aloge("why uvc state turn to invalid?");
+                LOGE("why uvc state turn to invalid?");
                 break;
             }
             else if(ERR_UVC_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("fatal error! uvc state transition incorrect.");
+                LOGE("fatal error! uvc state transition incorrect.");
                 break;
             }
         }
         case COMP_EventRecVbvFull:
         {
-            alogw("need handle vbvFull!");
+            LOGW("need handle vbvFull!");
             break;
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
 	return SUCCESS;
@@ -205,12 +205,12 @@ ERRORTYPE AW_MPI_UVC_CreateVirChn(UVC_DEV UvcDev, UVC_CHN UvcChn)
 
     if(!UvcDev)
     {
-        aloge("fatal error! the UvcDev is null");
+        LOGE("fatal error! the UvcDev is null");
         return ERR_UVC_NULL_PTR;
     }
     if(UvcChn < 0 || UvcChn >= UVC_MAX_CHN_NUM)
     {
-        aloge("fatal error! invalid UvcChn[%d] channel", UvcChn);
+        LOGE("fatal error! invalid UvcChn[%d] channel", UvcChn);
         return ERR_UVC_ILLEGAL_PARAM;
     }
     
@@ -227,7 +227,7 @@ ERRORTYPE AW_MPI_UVC_CreateVirChn(UVC_DEV UvcDev, UVC_CHN UvcChn)
         bResult = COMP_GetHandle((COMP_HANDLETYPE *)&pNode->mUvcComp, CDX_ComponentNameUVCInput, (void *)pNode , &UvcCallback);
         if(bResult != SUCCESS)
         {
-            aloge("fatal error! get comp handle fail!");
+            LOGE("fatal error! get comp handle fail!");
             return bResult;
         }
         MPP_CHN_S ChannelInfo;
@@ -250,12 +250,12 @@ ERRORTYPE AW_MPI_UVC_DestroyVirChn(UVC_DEV UvcDev, UVC_CHN UvcChn)
 
     if(!UvcDev)
     {
-        aloge("fatal error! the UvcDev is null");
+        LOGE("fatal error! the UvcDev is null");
         return ERR_UVC_NULL_PTR;
     }
     if(UvcChn < 0 || UvcChn >= UVC_MAX_CHN_NUM)
     {
-        aloge("fatal error! invalid UvcChn[%d] channel", UvcChn);
+        LOGE("fatal error! invalid UvcChn[%d] channel", UvcChn);
         return ERR_UVC_ILLEGAL_PARAM;
     }
     
@@ -280,12 +280,12 @@ ERRORTYPE AW_MPI_UVC_DestroyVirChn(UVC_DEV UvcDev, UVC_CHN UvcChn)
             }
             else if(COMP_StateInvalid == nCompState)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 bResult = SUCCESS;
             }
             else
             {
-                aloge("fatal error! invalid VeChn[%d] state[0x%x]!", UvcChn, nCompState);
+                LOGE("fatal error! invalid VeChn[%d] state[0x%x]!", UvcChn, nCompState);
             }
 
             if(SUCCESS == bResult)
@@ -298,18 +298,18 @@ ERRORTYPE AW_MPI_UVC_DestroyVirChn(UVC_DEV UvcDev, UVC_CHN UvcChn)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             bResult = ERR_UVC_BUSY;
         }     
     }
     else
     {
-        aloge("fatal error! no Venc component!");
+        LOGE("fatal error! no Venc component!");
         list_del(&pChn->mList);
         uvcInput_CHN_MAP_S_Destruct(pChn);
     }
 
-    alogd("uvc component exited!");
+    LOGD("uvc component exited!");
     return bResult;
 }
 
@@ -319,12 +319,12 @@ ERRORTYPE AW_MPI_UVC_StartRecvPic(UVC_DEV UvcDev, UVC_CHN UvcChn)
 
     if(!UvcDev)
     {
-        aloge("fatal error! the UvcDev is null");
+        LOGE("fatal error! the UvcDev is null");
         return ERR_UVC_NULL_PTR;
     }
     if(UvcChn < 0 || UvcChn >= UVC_MAX_CHN_NUM)
     {
-        aloge("fatal error! invalid UvcChn[%d] channel", UvcChn);
+        LOGE("fatal error! invalid UvcChn[%d] channel", UvcChn);
         return ERR_UVC_ILLEGAL_PARAM;
     }
     
@@ -344,14 +344,14 @@ ERRORTYPE AW_MPI_UVC_StartRecvPic(UVC_DEV UvcDev, UVC_CHN UvcChn)
         }
         else
         {
-            alogd("the %sUVC Channel[%d] UvcChannelState[0x%x], do nothing!", UvcDev, UvcChn, nCompState);
+            LOGD("the %sUVC Channel[%d] UvcChannelState[0x%x], do nothing!", UvcDev, UvcChn, nCompState);
             bResult = SUCCESS;
         }
         
     }
     else
     {
-        aloge("fatal error! GetState fail!");
+        LOGE("fatal error! GetState fail!");
         bResult = ERR_UVC_BUSY;
     }
 
@@ -364,12 +364,12 @@ ERRORTYPE AW_MPI_UVC_StopRecvPic(UVC_DEV UvcDev, UVC_CHN UvcChn)
 
    if(!UvcDev)
     {
-        aloge("fatal error! the UvcDev is null");
+        LOGE("fatal error! the UvcDev is null");
         return ERR_UVC_NULL_PTR;
     }
     if(UvcChn < 0 || UvcChn >= UVC_MAX_CHN_NUM)
     {
-        aloge("fatal error! invalid UvcChn[%d] channel", UvcChn);
+        LOGE("fatal error! invalid UvcChn[%d] channel", UvcChn);
         return ERR_UVC_ILLEGAL_PARAM;
     }
     
@@ -389,18 +389,18 @@ ERRORTYPE AW_MPI_UVC_StopRecvPic(UVC_DEV UvcDev, UVC_CHN UvcChn)
         }
         else if(COMP_StateIdle == nCompState)
         {
-            alogv("UvcChannelState[0x%x], do nothing!", nCompState);
+            LOGV("UvcChannelState[0x%x], do nothing!", nCompState);
             bResult = SUCCESS;
         }
         else 
         {
-             aloge("fatal error! check UvcChannelState[0x%x]!", nCompState);
+             LOGE("fatal error! check UvcChannelState[0x%x]!", nCompState);
              bResult = SUCCESS;
         }        
     }
     else
     {
-        aloge("fatal error! GetState fail!");
+        LOGE("fatal error! GetState fail!");
         bResult = ERR_UVC_BUSY;
     }
     return bResult;    
@@ -412,17 +412,17 @@ ERRORTYPE AW_MPI_UVC_GetFrame(UVC_DEV UvcDev, UVC_CHN UvcChn, VIDEO_FRAME_INFO_S
 
     if(!UvcDev)
     {
-        aloge("fatal error! the UvcDev is null");
+        LOGE("fatal error! the UvcDev is null");
         return ERR_UVC_NULL_PTR;
     }
     if(UvcChn < 0 || UvcChn >= UVC_MAX_CHN_NUM)
     {
-        aloge("fatal error! invalid UvcChn[%d] channel", UvcChn);
+        LOGE("fatal error! invalid UvcChn[%d] channel", UvcChn);
         return ERR_UVC_ILLEGAL_PARAM;
     }
     if(!pstFrameInfo)
     {
-        aloge("fatal error! the input pointer is null!");        
+        LOGE("fatal error! the input pointer is null!");        
         return ERR_UVC_ILLEGAL_PARAM;
     }
     
@@ -436,7 +436,7 @@ ERRORTYPE AW_MPI_UVC_GetFrame(UVC_DEV UvcDev, UVC_CHN UvcChn, VIDEO_FRAME_INFO_S
     {
         if(COMP_StateExecuting != nCompState && COMP_StateIdle != nCompState)
         {
-            aloge("the %s UVC Channel[%d] wrong state[0x%x], return!", UvcDev, UvcChn, nCompState);
+            LOGE("the %s UVC Channel[%d] wrong state[0x%x], return!", UvcDev, UvcChn, nCompState);
             return ERR_UVC_NOT_PERM;
         }
         UvcStream stUvcStream;
@@ -447,7 +447,7 @@ ERRORTYPE AW_MPI_UVC_GetFrame(UVC_DEV UvcDev, UVC_CHN UvcChn, VIDEO_FRAME_INFO_S
     }
     else
     {
-        aloge("fatal error! the %s UVC Channel[%d] GetState fail!", UvcDev, UvcChn);
+        LOGE("fatal error! the %s UVC Channel[%d] GetState fail!", UvcDev, UvcChn);
         bResult = ERR_UVC_BUSY; 
     }
     return bResult;
@@ -459,17 +459,17 @@ ERRORTYPE AW_MPI_UVC_ReleaseFrame(UVC_DEV UvcDev, UVC_CHN UvcChn, VIDEO_FRAME_IN
 
     if(!UvcDev)
     {
-        aloge("fatal error! the UvcDev is null");
+        LOGE("fatal error! the UvcDev is null");
         return ERR_UVC_NULL_PTR;
     }
     if(UvcChn < 0 || UvcChn >= UVC_MAX_CHN_NUM)
     {
-        aloge("fatal error! invalid UvcChn[%d] channel", UvcChn);
+        LOGE("fatal error! invalid UvcChn[%d] channel", UvcChn);
         return ERR_UVC_ILLEGAL_PARAM;
     }
     if(!pstFrameInfo)
     {
-        aloge("fatal error! the input pointer is null!");        
+        LOGE("fatal error! the input pointer is null!");        
         return ERR_UVC_ILLEGAL_PARAM;
     }
     
@@ -483,7 +483,7 @@ ERRORTYPE AW_MPI_UVC_ReleaseFrame(UVC_DEV UvcDev, UVC_CHN UvcChn, VIDEO_FRAME_IN
     {
         if(COMP_StateExecuting != nCompState && COMP_StateIdle != nCompState)
         {
-            aloge("the %s UVC Channel[%d] wrong state[0x%x], return!",UvcDev, UvcChn, nCompState);
+            LOGE("the %s UVC Channel[%d] wrong state[0x%x], return!",UvcDev, UvcChn, nCompState);
             return ERR_UVC_NOT_PERM;
         }
         UvcStream stUvcStream;
@@ -493,7 +493,7 @@ ERRORTYPE AW_MPI_UVC_ReleaseFrame(UVC_DEV UvcDev, UVC_CHN UvcChn, VIDEO_FRAME_IN
     }
     else
     {
-        aloge("fatal error! the %s UVC Channel[%d] GetState fail!", UvcDev, UvcChn);
+        LOGE("fatal error! the %s UVC Channel[%d] GetState fail!", UvcDev, UvcChn);
         bResult = ERR_UVC_BUSY;      
     }
 

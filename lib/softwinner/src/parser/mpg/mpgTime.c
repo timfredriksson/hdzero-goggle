@@ -14,7 +14,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mpgTime"
-#include <cdx_log.h>
+#include <log/log.h>
 
 
 #include "CdxMpgParser.h"
@@ -1095,7 +1095,7 @@ __cal_new_fp_pos:
    {
       mMpgParserCxt->bHasNvpackFlag = CDX_FALSE;
       mMpgParserCxt->nFileTimeLength = 0;
-      CDX_LOGW("there is noly one nv pack.\n");
+      LOGW("there is noly one nv pack.");
       return 0;
    }
    else

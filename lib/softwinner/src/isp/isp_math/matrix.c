@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
+
+#include <log/log.h>
+
 #include "matrix.h"
 
 #define EPSILON 0.000001
@@ -14,7 +17,7 @@ bool isEqual(double a, double b)
 int check_input(double* x, double*y, char* c) {
         int out=0;
         if (x==y) {
-                printf("Error in %s: input equals output \n", c);
+                LOGI("Error in %s: input equals output \n", c);
                 out=1;
         }
         return out;
@@ -151,7 +154,7 @@ void read_matrix(Matrix *a)
 
 	for(i = 0; i < lines; i++) {
 		for(j = 0; j < columns; j++) {
-			printf("introduceti elementul a[%d][%d]: ", i, j);
+			LOGI("introduceti elementul a[%d][%d]: ", i, j);
 			scanf("%lf", &a->value[i][j]);
 		}
 	}
@@ -172,9 +175,9 @@ int print_matrix(Matrix *a, int lines, int columns)
 
 	for(i = 0; i < lines; i++) {
 		for(j = 0; j < columns; j++) {
-			printf("%lf ", a->value[i][j]);
+			LOGI("%lf ", a->value[i][j]);
 		}
-		printf("\n");
+		LOGI("\n");
 	}
 
 	return NO_ERROR;

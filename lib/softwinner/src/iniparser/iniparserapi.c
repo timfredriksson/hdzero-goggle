@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <cdx_log.h>
+#include <log/log.h>
 
 #include "iniparser.h"
 #include "iniparserapi.h"
@@ -21,7 +21,7 @@ static dictionary* g_ini = NULL;
 
 int  IniParserInit()
 {
-    logd("IniParserInit");
+    LOGD("IniParserInit");
     char ini_name[265] = "/etc/cedarx.conf";
     char vendor_init_name[] =
             "/vendor/etc/cedarx.conf";
@@ -32,17 +32,15 @@ int  IniParserInit()
         g_ini = iniparser_load(vendor_init_name);
         if(g_ini == NULL)
         {
-            logd("cannot parse file: %s\n", ini_name);
+            LOGD("cannot parse file: %s", ini_name);
             return -1 ;
         }
     }
 
     if(g_ini)
     {
-        logd("load conf file %s ok!\n", ini_name);
+        LOGD("load conf file %s ok!", ini_name);
     }
-
-    log_set_level(GetConfigParamterInt("log_level", (int)LOG_LEVEL_WARNING));
 
     return 0;
 }

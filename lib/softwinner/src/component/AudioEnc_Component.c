@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "AudioEnc_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <unistd.h>
@@ -114,7 +114,7 @@ static int AudioEncLibInit(AUDIOENCDATATYPE *pAudioEncData)
 //            break;
         default:
             format_ptr = support_format[8];
-            aloge("AEncLib type(%d) NOT support! Check whether set AEncChnAttr!", pAttr->Type);
+            LOGE("AEncLib type(%d) NOT support! Check whether set AEncChnAttr!", pAttr->Type);
             eError = FAILURE;
             assert(0);
             return eError;
@@ -126,7 +126,7 @@ static int AudioEncLibInit(AUDIOENCDATATYPE *pAudioEncData)
     {
         if ((pAttr->channels!=1) || (pAttr->sampleRate!=8000))
         {
-            aloge("wrong aenc attr(type:%s, chnCnt:%d, smpRate:%d), voice(adpcm/g711/g726) only support mono and 8000!",
+            LOGE("wrong aenc attr(type:%s, chnCnt:%d, smpRate:%d), voice(adpcm/g711/g726) only support mono and 8000!",
                 format_ptr, pAttr->channels, pAttr->sampleRate);
             assert(0);
         }
@@ -134,7 +134,7 @@ static int AudioEncLibInit(AUDIOENCDATATYPE *pAudioEncData)
 #if 0
     pAudioEncData->pCedarA = AudioEncInit(&pAudioEncData->mAudioInfo, pAudioEncData->mAudioEncodeType);
     if (pAudioEncData->pCedarA == NULL) {
-        aloge("Fatal error! AudioEncInit fail!");
+        LOGE("Fatal error! AudioEncInit fail!");
         assert(0);
         eError = FAILURE;
     }
@@ -143,7 +143,7 @@ static int AudioEncLibInit(AUDIOENCDATATYPE *pAudioEncData)
     pAudioEncData->pCedarA = CreateAudioEncoder();
     if(NULL == pAudioEncData->pCedarA)
     {
-        aloge("fatal error! create audio encoder fail!");
+        LOGE("fatal error! create audio encoder fail!");
         assert(0);
         eError = FAILURE;
         goto _exit0;
@@ -151,7 +151,7 @@ static int AudioEncLibInit(AUDIOENCDATATYPE *pAudioEncData)
     aencRet = InitializeAudioEncoder(pAudioEncData->pCedarA, &pAudioEncData->mAudioInfo);
     if(aencRet != ERR_AUDIO_ENC_NONE)
     {
-        aloge("fatal error! initialize audio encoder fail!");
+        LOGE("fatal error! initialize audio encoder fail!");
         DestroyAudioEncoder(pAudioEncData->pCedarA);
         eError = FAILURE;
         goto _exit0;
@@ -342,7 +342,7 @@ ERRORTYPE AudioEncGetChnState(
     }
     else
     {
-        aloge("AudioEncoder has NOT init!");
+        LOGE("AudioEncoder has NOT init!");
         eError = ERR_AENC_SYS_NOTREADY;
     }
     return eError;
@@ -358,7 +358,7 @@ ERRORTYPE AudioEncSetChnAttr(
     {
         //when AEncLib is exist, only can change dynamic attribute.
         //now support none.
-        aloge("Can NOT set AudioEncLib attr when it exist!");
+        LOGE("Can NOT set AudioEncLib attr when it exist!");
         eError = ERR_AENC_NOT_SUPPORT;
     }
     else
@@ -376,7 +376,7 @@ ERRORTYPE AudioEncResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if(pAudioEncData->state != COMP_StateIdle)
     {
-        aloge("fatal error! must reset channel in stateIdle!");
+        LOGE("fatal error! must reset channel in stateIdle!");
         return ERR_AENC_NOT_PERM;
     }
 
@@ -427,11 +427,11 @@ ERRORTYPE AudioEncResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
         pthread_mutex_lock(&pAudioEncData->mOutFrameListMutex);
         if(!list_empty(&pAudioEncData->mUsedOutFrameList))
         {
-            aloge("fatal error! aenc is in tunnel mode!");
+            LOGE("fatal error! aenc is in tunnel mode!");
         }
         if(!list_empty(&pAudioEncData->mReadyOutFrameList))
         {
-            aloge("fatal error! aenc is in tunnel mode!");
+            LOGE("fatal error! aenc is in tunnel mode!");
         }
         pthread_mutex_unlock(&pAudioEncData->mOutFrameListMutex);
     }
@@ -445,7 +445,7 @@ ERRORTYPE AudioEncResetChannel(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if(cnt != pAudioEncData->mFrameNodeNum)
     {
-        alogw("Be careful! aenc output frames count not match [%d]!=[%d]", cnt, pAudioEncData->mFrameNodeNum);
+        LOGW("Be careful! aenc output frames count not match [%d]!=[%d]", cnt, pAudioEncData->mFrameNodeNum);
     }
     pthread_mutex_unlock(&pAudioEncData->mOutFrameListMutex);
     return SUCCESS;
@@ -471,12 +471,12 @@ static ERRORTYPE AudioEncGetStream(
     AUDIOENCDATATYPE *pAudioEncData = (AUDIOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(COMP_StateIdle != pAudioEncData->state && COMP_StateExecuting != pAudioEncData->state)
     {
-        alogw("call getStream in wrong state[0x%x]", pAudioEncData->state);
+        LOGW("call getStream in wrong state[0x%x]", pAudioEncData->state);
         return ERR_AENC_NOT_PERM;
     }
     if(pAudioEncData->mOutputPortTunnelFlag)
     {
-        aloge("fatal error! can't call getStream() in tunnel mode!");
+        LOGE("fatal error! can't call getStream() in tunnel mode!");
         return ERR_AENC_NOT_PERM;
     }
     pthread_mutex_lock(&pAudioEncData->mOutFrameListMutex);
@@ -512,7 +512,7 @@ _TryToGetOutFrame:
             ret = pthread_cond_wait_timeout(&pAudioEncData->mOutFrameCondition, &pAudioEncData->mOutFrameListMutex, nMilliSec);
             if(ETIMEDOUT == ret)
             {
-                alogv("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
+                LOGV("wait output frame timeout[%d]ms, ret[%d]", nMilliSec, ret);
                 eError = ERR_AENC_BUF_EMPTY;
                 pAudioEncData->mWaitOutFrameFlag = FALSE;
             }
@@ -523,7 +523,7 @@ _TryToGetOutFrame:
             }
             else
             {
-                aloge("fatal error! pthread cond wait timeout ret[%d]", ret);
+                LOGE("fatal error! pthread cond wait timeout ret[%d]", ret);
                 eError = ERR_AENC_BUF_EMPTY;
                 pAudioEncData->mWaitOutFrameFlag = FALSE;
             }
@@ -541,12 +541,12 @@ static ERRORTYPE AudioEncReleaseStream(
     AUDIOENCDATATYPE *pAudioEncData = (AUDIOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(COMP_StateIdle != pAudioEncData->state && COMP_StateExecuting != pAudioEncData->state)
     {
-        alogw("call getStream in wrong state[0x%x]", pAudioEncData->state);
+        LOGW("call getStream in wrong state[0x%x]", pAudioEncData->state);
         return ERR_AENC_NOT_PERM;
     }
     if(pAudioEncData->mOutputPortTunnelFlag)
     {
-        aloge("fatal error! can't call getStream() in tunnel mode!");
+        LOGE("fatal error! can't call getStream() in tunnel mode!");
         return ERR_AENC_NOT_PERM;
     }
     pthread_mutex_lock(&pAudioEncData->mOutFrameListMutex);
@@ -569,14 +569,14 @@ static ERRORTYPE AudioEncReleaseStream(
         }
         else
         {
-            aloge("fatal error! aenc stream[%p][%u] is not match UsedOutFrameList first entry[%p][%d]",
+            LOGE("fatal error! aenc stream[%p][%u] is not match UsedOutFrameList first entry[%p][%d]",
                 pStream->pStream, pStream->mLen, pEntry->stEncodedStream.pBuffer, pEntry->stEncodedStream.nBufferLen);
             eError = ERR_AENC_ILLEGAL_PARAM;
         }
     }
     else
     {
-        alogw("Be careful! aenc stream[%p][%u] is not find, maybe reset channel before call this function?", pStream->pStream, pStream->mLen);
+        LOGW("Be careful! aenc stream[%p][%u] is not find, maybe reset channel before call this function?", pStream->pStream, pStream->mLen);
         eError = ERR_AENC_ILLEGAL_PARAM;
     }
     pthread_mutex_unlock(&pAudioEncData->mOutFrameListMutex);
@@ -604,7 +604,7 @@ ERRORTYPE AudioEncSendCommand(
     ERRORTYPE eError = SUCCESS;
     message_t msg;
 
-    alogv("AudioEncSendCommand: %d", Cmd);
+    LOGV("AudioEncSendCommand: %d", Cmd);
 
     pAudioEncData = (AUDIOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if(!pAudioEncData)
@@ -629,7 +629,7 @@ ERRORTYPE AudioEncSendCommand(
             break;
 
         default:
-            alogw("impossible comp_command[0x%x]", Cmd);
+            LOGW("impossible comp_command[0x%x]", Cmd);
             eCmd = -1;
             break;
     }
@@ -729,7 +729,7 @@ ERRORTYPE AudioEncGetConfig(
         }
         case COMP_IndexVendorAencChnPriority:
         {
-            alogw("unsupported temporary get aenc chn priority!");
+            LOGW("unsupported temporary get aenc chn priority!");
             eError = ERR_AENC_NOT_SUPPORT;
             break;
         }
@@ -746,7 +746,7 @@ ERRORTYPE AudioEncGetConfig(
         }
         default:
         {
-            aloge("fatal error! unknown getConfig Index[0x%x]", nIndex);
+            LOGE("fatal error! unknown getConfig Index[0x%x]", nIndex);
             eError = ERR_AENC_NOT_SUPPORT;
             break;
         }
@@ -785,7 +785,7 @@ ERRORTYPE AudioEncSetConfig(
         }
         case COMP_IndexVendorAencChnPriority:
         {
-            alogw("unsupported temporary set aenc chn priority!");
+            LOGW("unsupported temporary set aenc chn priority!");
             eError = ERR_AENC_NOT_SUPPORT;
             break;
         }
@@ -801,7 +801,7 @@ ERRORTYPE AudioEncSetConfig(
         }
         default:
         {
-            aloge("unknown Index[0x%x]", nIndex);
+            LOGE("unknown Index[0x%x]", nIndex);
             eError = ERR_AENC_ILLEGAL_PARAM;
             break;
         }
@@ -821,11 +821,11 @@ ERRORTYPE AudioEncComponentTunnelRequest(
     AUDIOENCDATATYPE *pAudioEncData = (AUDIOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if (pAudioEncData->state == COMP_StateExecuting)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if(pAudioEncData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request can't be in state[0x%x]", pAudioEncData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]", pAudioEncData->state);
         eError = ERR_AENC_INCORRECT_STATE_OPERATION;
         goto COMP_CMD_FAIL;
     }
@@ -851,7 +851,7 @@ ERRORTYPE AudioEncComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AENC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -872,7 +872,7 @@ ERRORTYPE AudioEncComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AENC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -889,7 +889,7 @@ ERRORTYPE AudioEncComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_AENC_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -899,7 +899,7 @@ ERRORTYPE AudioEncComponentTunnelRequest(
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup)
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         if(pPortDef->eDir == COMP_DirOutput)
         {
@@ -914,7 +914,7 @@ ERRORTYPE AudioEncComponentTunnelRequest(
     if(pPortDef->eDir == COMP_DirOutput)
     {
         if (pAudioEncData->mOutputPortTunnelFlag) {
-            aloge("AEnc_Comp outport already bind, why bind again?!");
+            LOGE("AEnc_Comp outport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -925,7 +925,7 @@ ERRORTYPE AudioEncComponentTunnelRequest(
     else
     {
         if (pAudioEncData->mInputPortTunnelFlag) {
-            aloge("AEnc_Comp inport already bind, why bind again?!");
+            LOGE("AEnc_Comp inport already bind, why bind again?!");
             eError = FAILURE;
             goto COMP_CMD_FAIL;
         }
@@ -936,7 +936,7 @@ ERRORTYPE AudioEncComponentTunnelRequest(
         ((MM_COMPONENTTYPE*)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput)
         {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_AENC_ILLEGAL_PARAM;
             goto COMP_CMD_FAIL;
         }
@@ -945,7 +945,7 @@ ERRORTYPE AudioEncComponentTunnelRequest(
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
         {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -969,7 +969,7 @@ ERRORTYPE AudioEncEmptyThisBuffer(
 
     if (pAudioEncData->state != COMP_StateExecuting)
     {
-        alogw("send frame when aenc state[0x%x] isn't executing", pAudioEncData->state);
+        LOGW("send frame when aenc state[0x%x] isn't executing", pAudioEncData->state);
         //eError = COMP_ErrorInvalidState;
         //goto ERROR;
     }
@@ -980,7 +980,7 @@ ERRORTYPE AudioEncEmptyThisBuffer(
         AUDIO_FRAME_S *pFrm = (AUDIO_FRAME_S *)pBuffer->pOutputPortPrivate;
         void *pAudioBuf = pFrm->mpAddr;
         unsigned int bufSize = pFrm->mLen;
-        alogv("pAudioBuf: %p, bufSize: %u", pAudioBuf, bufSize);
+        LOGV("pAudioBuf: %p, bufSize: %u", pAudioBuf, bufSize);
 
 #ifdef AENC_SAVE_AUDIO_PCM
         fwrite(pAudioBuf, 1, bufSize, pAudioEncData->pcm_fp);
@@ -999,7 +999,7 @@ ERRORTYPE AudioEncEmptyThisBuffer(
         {
             pAudioEncData->mSendPcmFailCnt++;
             pAudioEncData->mFailPcmLen += bufSize;
-            alogv("RequestWriteBuf failed! chn_id:%d, buf: %p, size/total: %d/%lld, fail_cnt:%lld",
+            LOGV("RequestWriteBuf failed! chn_id:%d, buf: %p, size/total: %d/%lld, fail_cnt:%lld",
                 pAudioEncData->mMppChnInfo.mChnId, pAudioBuf, bufSize, pAudioEncData->mFailPcmLen, pAudioEncData->mSendPcmFailCnt);
             eError = FAILURE;
             goto ERROR;
@@ -1007,7 +1007,7 @@ ERRORTYPE AudioEncEmptyThisBuffer(
     }
     else
     {
-        aloge("fatal error! RecRender should not call this function!");
+        LOGE("fatal error! RecRender should not call this function!");
         eError = FAILURE;
     }
 
@@ -1051,7 +1051,7 @@ ERRORTYPE AudioEncFillThisBuffer(
         if (!bFind)
         {
             pthread_mutex_unlock(&pAudioEncData->mOutFrameListMutex);
-            aloge("fatal error! try to release one output buffer that never be used! ID = %d", pOutFrame->nID);
+            LOGE("fatal error! try to release one output buffer that never be used! ID = %d", pOutFrame->nID);
             return ERR_AENC_ILLEGAL_PARAM;
         }
 
@@ -1093,7 +1093,7 @@ ERRORTYPE AudioEncFillThisBuffer(
     }
     else
     {
-        aloge("fatal error! outPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pAudioEncData->sOutPortDef.nPortIndex);
+        LOGE("fatal error! outPortIndex[%d]!=[%d]", pBuffer->nOutputPortIndex, pAudioEncData->sOutPortDef.nPortIndex);
         eError = FAILURE;
     }
 
@@ -1107,7 +1107,7 @@ ERRORTYPE AudioEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     ERRORTYPE eError = SUCCESS;
     CompInternalMsgType eCmd = Stop;
     message_t msg;
-    alogv("AudioEnc Component DeInit");
+    LOGV("AudioEnc Component DeInit");
     pAudioEncData = (AUDIOENCDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
 
     if(pAudioEncData->mFailPcmLen > 0)
@@ -1116,13 +1116,13 @@ ERRORTYPE AudioEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         int chn_cnt = pAudioEncData->mEncChnAttr.AeAttr.channels;
         int sample_rate = pAudioEncData->mEncChnAttr.AeAttr.sampleRate;
         int lostDuration = (int)(pAudioEncData->mFailPcmLen*1000/(chn_cnt*sample_rate*sample_chn_size));
-        alogw("Be careful! aenc_chn_id:%d, discard total bytes: %lld, fail_cnt:%lld, chncnt[%d], samplerate[%d], lost duration:[%d]ms",
+        LOGW("Be careful! aenc_chn_id:%d, discard total bytes: %lld, fail_cnt:%lld, chncnt[%d], samplerate[%d], lost duration:[%d]ms",
                 pAudioEncData->mMppChnInfo.mChnId, pAudioEncData->mFailPcmLen, pAudioEncData->mSendPcmFailCnt, chn_cnt, sample_rate, lostDuration);
     }
 
     msg.command = eCmd;
     put_message(&pAudioEncData->cmd_queue, &msg);
-    alogv("wait AudioEnc component exit!...");
+    LOGV("wait AudioEnc component exit!...");
     pthread_join(pAudioEncData->thread_id, (void*) &eError);
 
     if(pAudioEncData->pCedarA)
@@ -1131,11 +1131,11 @@ ERRORTYPE AudioEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         pAudioEncData->pCedarA = NULL;
 #ifdef AENC_SAVE_AUDIO_BS
         fclose(pAudioEncData->bs_fp);
-        alogd("AEnc_Comp bs_file size: %d", pAudioEncData->bs_sz);
+        LOGD("AEnc_Comp bs_file size: %d", pAudioEncData->bs_sz);
 #endif
 #ifdef AENC_SAVE_AUDIO_PCM
         fclose(pAudioEncData->pcm_fp);
-        alogd("AEnc_Comp pcm_file size: %d", pAudioEncData->pcm_sz);
+        LOGD("AEnc_Comp pcm_file size: %d", pAudioEncData->pcm_sz);
 #endif
     }
     message_destroy(&pAudioEncData->cmd_queue);
@@ -1143,11 +1143,11 @@ ERRORTYPE AudioEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     pthread_mutex_lock(&pAudioEncData->mOutFrameListMutex);
     if(!list_empty(&pAudioEncData->mUsedOutFrameList))
     {
-        aloge("fatal error! outUsedFrame must be 0!");
+        LOGE("fatal error! outUsedFrame must be 0!");
     }
     if(!list_empty(&pAudioEncData->mReadyOutFrameList))
     {
-        aloge("fatal error! outReadyFrame must be 0!");
+        LOGE("fatal error! outReadyFrame must be 0!");
     }
     int nodeNum = 0;
     if(!list_empty(&pAudioEncData->mIdleOutFrameList))
@@ -1162,7 +1162,7 @@ ERRORTYPE AudioEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if(nodeNum != pAudioEncData->mFrameNodeNum)
     {
-        aloge("Fatal error! AudioEnc frame_node number is not match: [%d][%d]", nodeNum, pAudioEncData->mFrameNodeNum);
+        LOGE("Fatal error! AudioEnc frame_node number is not match: [%d][%d]", nodeNum, pAudioEncData->mFrameNodeNum);
     }
     pthread_mutex_unlock(&pAudioEncData->mOutFrameListMutex);
 
@@ -1180,7 +1180,7 @@ ERRORTYPE AudioEncComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         free(pAudioEncData);
     }
 
-    alogd("AudioEnc component exited!");
+    LOGD("AudioEnc component exited!");
 
     return eError;
 }
@@ -1221,7 +1221,7 @@ ERRORTYPE AudioEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
         if(NULL == pNode)
         {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             break;
         }
         memset(pNode, 0, sizeof(ENCODER_NODE_T));
@@ -1231,14 +1231,14 @@ ERRORTYPE AudioEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pAudioEncData->mInputPcmMutex, NULL);
     if(err != 0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_AENC_NOMEM;
         goto EXIT;
     }
     err = pthread_mutex_init(&pAudioEncData->mOutFrameListMutex, NULL);
     if(err != 0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_AENC_NOMEM;
         goto EXIT;
     }
@@ -1249,7 +1249,7 @@ ERRORTYPE AudioEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_cond_init(&pAudioEncData->mOutFrameFullCondition, &condAttr);
     if(err != 0)
     {
-        aloge("pthread cond init fail!");
+        LOGE("pthread cond init fail!");
         eError = ERR_AENC_NOMEM;
         goto EXIT;
     }
@@ -1300,7 +1300,7 @@ ERRORTYPE AudioEncComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if (message_create(&pAudioEncData->cmd_queue)<0)
     {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_AENC_NOMEM;
         goto EXIT;
     }
@@ -1330,7 +1330,7 @@ static void* ComponentThread(void* pThreadData)
     message_t cmd_msg;
     //int64_t tm1, tm2, tm3, itl;
 
-    alogv("AudioEncoder ComponentThread start run...");
+    LOGV("AudioEncoder ComponentThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"AEncComp", 0, 0, 0);
 
     while (1)
@@ -1341,7 +1341,7 @@ PROCESS_MESSAGE:
             cmd = cmd_msg.command;
             cmddata = cmd_msg.para0;
 
-            alogv("AudioEnc ComponentThread get_message cmd:%d", cmd);
+            LOGV("AudioEnc ComponentThread get_message cmd:%d", cmd);
 
             // State transition command
             if (cmd == SetState)
@@ -1390,7 +1390,7 @@ PROCESS_MESSAGE:
                                         0,
                                         NULL);
                             }
-                            alogv("AEnc_Comp StateLoaded begin");
+                            LOGV("AEnc_Comp StateLoaded begin");
                             AudioEncResetChannel(pAudioEncData->hSelf);
 
                             pthread_mutex_lock(&pAudioEncData->mOutFrameListMutex);
@@ -1407,7 +1407,7 @@ PROCESS_MESSAGE:
                                 }
                                 if(cnt < pAudioEncData->mFrameNodeNum)
                                 {
-                                    alogd("Wait AEnc idleOutFrameList full");
+                                    LOGD("Wait AEnc idleOutFrameList full");
                                     pthread_cond_wait(&pAudioEncData->mOutFrameFullCondition, &pAudioEncData->mOutFrameListMutex);
                                 }
                                 else
@@ -1417,7 +1417,7 @@ PROCESS_MESSAGE:
                             }
                             pAudioEncData->mWaitOutFrameFullFlag = FALSE;
                             pthread_mutex_unlock(&pAudioEncData->mOutFrameListMutex);
-                            alogv("Wait AEnc idleOutFrameList full done");
+                            LOGV("Wait AEnc idleOutFrameList full done");
                             pAudioEncData->state = COMP_StateLoaded;
                             pAudioEncData->pCallbacks->EventHandler(
                                     pAudioEncData->hSelf, pAudioEncData->pAppData,
@@ -1425,14 +1425,14 @@ PROCESS_MESSAGE:
                                     COMP_CommandStateSet,
                                     pAudioEncData->state,
                                     NULL);
-                            alogd("AEnc_Comp StateLoaded ok");
+                            LOGD("AEnc_Comp StateLoaded ok");
                             break;
                         }
                         case COMP_StateIdle:
                         {
                             if(pAudioEncData->state == COMP_StateLoaded)
                             {
-                                alogv("AEnc_Comp: loaded->idle ...");
+                                LOGV("AEnc_Comp: loaded->idle ...");
                                 AudioEncLibInit(pAudioEncData);
                                 pAudioEncData->state = COMP_StateIdle;
                                 pAudioEncData->pCallbacks->EventHandler(
@@ -1445,7 +1445,7 @@ PROCESS_MESSAGE:
                             }
                             else if(pAudioEncData->state == COMP_StatePause || pAudioEncData->state == COMP_StateExecuting)
                             {
-                                alogv("AEnc_Comp: pause/executing[0x%x]->idle ...", pAudioEncData->state);
+                                LOGV("AEnc_Comp: pause/executing[0x%x]->idle ...", pAudioEncData->state);
                                 pAudioEncData->state = COMP_StateIdle;
                                 pAudioEncData->pCallbacks->EventHandler(
                                         pAudioEncData->hSelf,
@@ -1457,7 +1457,7 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                aloge("Fatal error! current state[0x%x] can't turn to idle!", pAudioEncData->state);
+                                LOGE("Fatal error! current state[0x%x] can't turn to idle!", pAudioEncData->state);
                                 pAudioEncData->pCallbacks->EventHandler(
                                         pAudioEncData->hSelf,
                                         pAudioEncData->pAppData,
@@ -1554,7 +1554,7 @@ TryGetAudioEncBuf:
                 pthread_mutex_lock(&pAudioEncData->mOutFrameListMutex);
                 if(list_empty(&pAudioEncData->mIdleOutFrameList))
                 {
-                    alogw("Low probability! AEnc_Comp IdleOutFrameList is empty, malloc more!");
+                    LOGW("Low probability! AEnc_Comp IdleOutFrameList is empty, malloc more!");
                     ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
                     if(pNode)
                     {
@@ -1564,7 +1564,7 @@ TryGetAudioEncBuf:
                     }
                     else
                     {
-                        aloge("Fatal error! malloc fail!");
+                        LOGE("Fatal error! malloc fail!");
                         pthread_mutex_unlock(&pAudioEncData->mOutFrameListMutex);
                         if(TMessage_WaitQueueNotEmpty(&pAudioEncData->cmd_queue, 200) > 0)
                         {
@@ -1591,14 +1591,14 @@ TryGetAudioEncBuf:
                 pEntry->stEncodedStream.nBufferExtraLen = 0;
                 if (getRet != 0)
                 {
-                    alogv("getAudioEncBuf fail.");
+                    LOGV("getAudioEncBuf fail.");
                     pthread_mutex_unlock(&pAudioEncData->mOutFrameListMutex);
                     continue;
                 }
 
                 if (NULL == pEntry->stEncodedStream.pBuffer || 0 == pEntry->stEncodedStream.nBufferLen)
                 {
-                    aloge("Fatal error! Audio EncBuf[%p] size[%d], check AEncLib!", pEntry->stEncodedStream.pBuffer, pEntry->stEncodedStream.nBufferLen);
+                    LOGE("Fatal error! Audio EncBuf[%p] size[%d], check AEncLib!", pEntry->stEncodedStream.pBuffer, pEntry->stEncodedStream.nBufferLen);
                 }
                 if (pAudioEncData->mSendPcmFailCnt)
                 {
@@ -1630,7 +1630,7 @@ TryGetAudioEncBuf:
                     }
                     else
                     {
-                        alogw("Be careful! AEnc_Comp output frame fail[0x%x], release it!", omxRet);
+                        LOGW("Be careful! AEnc_Comp output frame fail[0x%x], release it!", omxRet);
                         releaseRet = ReturnAudioFrameBuffer
                             (pAudioEncData->pCedarA
                             ,pEntry->stEncodedStream.pBuffer
@@ -1640,7 +1640,7 @@ TryGetAudioEncBuf:
                             );
                         if (releaseRet != SUCCESS)
                         {
-                            aloge("Fatal error! releaseAudioEncBuf fail!");
+                            LOGE("Fatal error! releaseAudioEncBuf fail!");
                         }
                         pthread_mutex_lock(&pAudioEncData->mOutFrameListMutex);
                         list_move_tail(&pEntry->mList, &pAudioEncData->mIdleOutFrameList);
@@ -1661,7 +1661,7 @@ TryGetAudioEncBuf:
             }
             else if (ret == ERR_AUDIO_ENC_PCMUNDERFLOW)
             {
-                alogv("AEnc_Comp pcm_buf underflow in AEncLib!");
+                LOGV("AEnc_Comp pcm_buf underflow in AEncLib!");
                 //pthread_mutex_lock(&pAudioEncData->mInputPcmMutex);
                 BOOL nDataAvailFlag;
                 int dataSize = AudioEncoder_GetValidPcmDataSize(pAudioEncData->pCedarA);
@@ -1677,7 +1677,7 @@ TryGetAudioEncBuf:
                 // nLeftSampleNum may bigger than 1024 when adpcm
                 if(nDataAvailFlag /*&& (pAudioEncData->mAudioInfo.nType!=AUDIO_ENCODER_ADPCM_TYPE)*/)
                 {
-                    alogw("Low probability! AudioEncoder left pcmDataSize[%d],[%d]samples", dataSize, nLeftSampleNum);
+                    LOGW("Low probability! AudioEncoder left pcmDataSize[%d],[%d]samples", dataSize, nLeftSampleNum);
                     //pthread_mutex_unlock(&pAudioEncData->mInputPcmMutex);
                 }
                 else
@@ -1689,12 +1689,12 @@ TryGetAudioEncBuf:
             }
             else if(ret == ERR_AUDIO_ENC_OUTFRAME_UNDERFLOW)
             {
-                alogv("AEnc_Comp bs_buf overflow in AEncLib! User should return bs to AEnc more quickly!");
+                LOGV("AEnc_Comp bs_buf overflow in AEncLib! User should return bs to AEnc more quickly!");
                 //pthread_mutex_lock(&pAudioEncData->mOutFrameListMutex);
                 int emptyFrameNum = AudioEncoder_GetEmptyFrameNum(pAudioEncData->pCedarA);
                 if(emptyFrameNum > 1)
                 {
-                    alogw("Low probability! AEncLib has empty frames[%d]", emptyFrameNum);
+                    LOGW("Low probability! AEncLib has empty frames[%d]", emptyFrameNum);
                     //pthread_mutex_unlock(&pAudioEncData->mOutFrameListMutex);
                 }
                 else
@@ -1706,17 +1706,17 @@ TryGetAudioEncBuf:
             }
             else
             {
-                aloge("Unexpected ret[%d], sleep[%d]ms", ret, WAIT_PCMBUF_READY/1000);
+                LOGE("Unexpected ret[%d], sleep[%d]ms", ret, WAIT_PCMBUF_READY/1000);
                 usleep(WAIT_PCMBUF_READY);
             }
         }
         else
         {
-            alogv("AEnc_Comp not StateExecuting");
+            LOGV("AEnc_Comp not StateExecuting");
             TMessage_WaitQueueNotEmpty(&pAudioEncData->cmd_queue, 0);
         }
     }
 EXIT:
-    alogd("AEnc channel ComponentThread stopped!");
+    LOGD("AEnc channel ComponentThread stopped!");
     return (void*) SUCCESS;
 }

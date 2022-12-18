@@ -13,7 +13,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "SystemBase"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include "plat_type.h"
@@ -54,14 +54,14 @@ int pthread_cond_wait_timeout(pthread_cond_t* const condition, pthread_mutex_t* 
     ret = pthread_cond_timedwait(condition, mutex, &ts);
     if(ETIMEDOUT == ret)
     {
-        //alogd("pthread cond timeout np timeout[%d]", ret);
+        //LOGD("pthread cond timeout np timeout[%d]", ret);
     }
     else if(0 == ret)
     {
     }
     else
     {
-        //aloge("fatal error! pthread cond timedwait[%d]", ret);
+        //LOGE("fatal error! pthread cond timedwait[%d]", ret);
     }
     return ret;
 }
@@ -104,17 +104,17 @@ void dumpCallStack(const char* pTag)
     size_t i = 0;
 
     size = backtrace(buffer, 30);
-    alogd("tag[%s]: Obtained %zd stack frames.nm", pTag, size);
+    LOGD("tag[%s]: Obtained %zd stack frames.nm", pTag, size);
     strings = backtrace_symbols(buffer, size);
     if (strings == NULL)
     {
-        alogd("backtrace_symbols.");
+        LOGD("backtrace_symbols.");
         //exit(EXIT_FAILURE);
     }
 
     for (i = 0; i < size; i++)
     {
-        alogd("%s", strings[i]);
+        LOGD("%s", strings[i]);
     }
     free(strings);
     strings = NULL;

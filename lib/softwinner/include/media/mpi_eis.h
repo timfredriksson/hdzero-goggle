@@ -27,7 +27,7 @@ extern "C" {
 
 #define MPI_EIS_CHECK_CHN_VALID(Chn) \
 if (Chn < 0 || Chn >= MAX_EIS_CHN_NUM){\
-    aloge("fatal error! invalid EISChn[%d]!", Chn);\
+    LOGE("fatal error! invalid EISChn[%d]!", Chn);\
     return ERR_EIS_INVALID_CHNID;\
 }
 

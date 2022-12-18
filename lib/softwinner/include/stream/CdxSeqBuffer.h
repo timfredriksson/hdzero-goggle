@@ -51,7 +51,7 @@ static inline cdx_err SeqBufferInsert(CdxListT *seqBufList, struct SeqBufferS *s
 
     if (posSeqBuf->seqNum == seqBuf->seqNum)
     {
-        CDX_LOGW("Discarding duplicate buffer (%u, %u)",
+        LOGW("Discarding duplicate buffer (%u, %u)",
                            posSeqBuf->seqNum, seqBuf->seqNum);
         return CDX_FAILURE;
     }

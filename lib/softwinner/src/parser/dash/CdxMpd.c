@@ -11,7 +11,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "CdxMpd.c"       //* prefix of the printed messages.
-#include <cdx_log.h>
+#include <log/log.h>
 #include "CdxMpd.h"
 
 // !!!!!!!!!
@@ -178,7 +178,7 @@ static int64_t MpdParseDate(char *attr)
         }
 
         if (!ok) {
-            CDX_LOGD("[MPD] Failed to parse MPD date %s - format not supported\n", attr);
+            LOGD("[MPD] Failed to parse MPD date %s - format not supported", attr);
             return 0;
         }
 
@@ -203,7 +203,7 @@ static int64_t MpdParseDate(char *attr)
         return res + ms;
     */
     CDX_UNUSE(attr);
-    CDX_LOGI("the function MpdParseDate() is not complete.\n");
+    LOGI("the function MpdParseDate() is not complete.");
     return 0;
 }
 
@@ -255,10 +255,10 @@ static awSegmentTimeline* SegmentTimelineTraverse(xmlNodePtr node, awMpd* mpd)
     node = node->children;
     while(node != NULL)
     {
-        CDX_LOGD("node->name = %s.\n", node->name);
+        LOGD("node->name = %s.", node->name);
         if(!strcmp((const char*)node->name, "S"))
         {
-            CDX_LOGD("Timeline: S.\n");
+            LOGD("Timeline: S.");
             awSegmentTimelineEntry* segment;
             segment = (awSegmentTimelineEntry*)malloc(sizeof(awSegmentTimelineEntry));
             if (!segment)  return NULL;
@@ -281,7 +281,7 @@ static awSegmentTimeline* SegmentTimelineTraverse(xmlNodePtr node, awMpd* mpd)
                     segment->r = MpdParseInt((char*)atrrPtr->children->content);
                 }
 
-                //CDX_LOGD(" SegmentTemplate attribute: %s = %s. \n",
+                //LOGD(" SegmentTemplate attribute: %s = %s. ",
                 //            atrrPtr->name, atrrPtr->children->content);
                 atrrPtr = atrrPtr->next;
             }
@@ -295,7 +295,7 @@ static awSegmentTimeline* SegmentTimelineTraverse(xmlNodePtr node, awMpd* mpd)
 
 static int ContentComponentTraverse(xmlNodePtr node, AW_List* list)
 {
-    CDX_LOGI("ContentComponentTraverse is not complete yet");
+    LOGI("ContentComponentTraverse is not complete yet");
     CDX_UNUSE(node);
     CDX_UNUSE(list);
     return 0;
@@ -330,15 +330,15 @@ static int BaseUrlTraverse(xmlNodePtr node, AW_List* container)
     {
         if(!strcmp((const char*)attrPtr->name, "serviceLocation"))
         {
-            //CDX_LOGD("Period: href. \n");
+            //LOGD("Period: href. ");
             url->serviceLocation= MpdParseString((char*)attrPtr->children->content);
         }
         else if(!strcmp((const char*)attrPtr->name, "byteRange"))
         {
-            //CDX_LOGD("Period: href. \n");
+            //LOGD("Period: href. ");
             url->byteRange= MpdParseByteRange((char*)attrPtr->children->content);
         }
-        //CDX_LOGD("  attribute: %s = %s. \n", attrPtr->name, attrPtr->children->content);
+        //LOGD("  attribute: %s = %s. ", attrPtr->name, attrPtr->children->content);
         attrPtr = attrPtr->next;
     }
 
@@ -423,7 +423,7 @@ static void commonAttributeTraverse(xmlNodePtr node, MPD_CommonAttributes* com)
                 com->starts_with_sap = MpdParseInt((char*)atrrPtr->children->content);
             }
         }
-        //CDX_LOGD(" SegmentTemplate attribute: %s = %s. \n",
+        //LOGD(" SegmentTemplate attribute: %s = %s. ",
         //    atrrPtr->name, atrrPtr->children->content);
         atrrPtr = atrrPtr->next;
     }
@@ -480,7 +480,7 @@ static void SegmentBaseGeneric(xmlNodePtr node, awMpd* mpd, awSegmentBase* seg)
             seg->time_shift_buffer_depth = MpdParseDuration((char*)atrrPtr->children->content);
         }
 
-        //CDX_LOGD(" SegmentTemplate attribute: %s = %s. \n",
+        //LOGD(" SegmentTemplate attribute: %s = %s. ",
         //    atrrPtr->name, atrrPtr->children->content);
         atrrPtr = atrrPtr->next;
     }
@@ -491,11 +491,11 @@ static void SegmentBaseGeneric(xmlNodePtr node, awMpd* mpd, awSegmentBase* seg)
     node = node->children;
     while(node != NULL)
     {
-        CDX_LOGD("node->name = %s.\n", node->name);
+        LOGD("node->name = %s.", node->name);
         if(!strcmp((const char*)node->name, "Initialization"))
         {
             //progInf->title = strdup(content);
-            CDX_LOGD("Initialization.\n");
+            LOGD("Initialization.");
             seg->initializationSegment = MpdParseUrl(node);
         }
         else if(!strcmp((const char*)node->name, "RepresentationIndex"))
@@ -543,7 +543,7 @@ static void MutipleSegmentBaseTraverse(xmlNodePtr node, awMpd* mpd, awSegmentTem
     node = node->children;
     while(node != NULL)
     {
-        CDX_LOGD("node->name = %s.\n", node->name);
+        LOGD("node->name = %s.", node->name);
         if(!strcmp((const char*)node->name, "SegmentTimeline"))
         {
             seg->segmentTimeline = SegmentTimelineTraverse(node, mpd);
@@ -588,11 +588,11 @@ static awSegmentTemplate* SegmentTemplateTraverse(xmlNodePtr node, awMpd* mpd)
         else if (!strcasecmp((const char*)atrrPtr->name, "initialisation") ||
                  !strcasecmp((const char*)atrrPtr->name, "initialization"))
         {
-            CDX_LOGD("Wornning: wrong spell, got %s but expected 'initialization' \n",
+            LOGD("Wornning: wrong spell, got %s but expected 'initialization' ",
                       atrrPtr->children->content);
             seg->initialization = MpdParseString((char*)atrrPtr->children->content);
         }
-        CDX_LOGD("SegmentTemplate attribute: %s = %s. \n",
+        LOGD("SegmentTemplate attribute: %s = %s. ",
                   atrrPtr->name, atrrPtr->children->content);
         atrrPtr = atrrPtr->next;
     }
@@ -637,7 +637,7 @@ static int RepresentationTraverse(xmlNodePtr node, awMpd* mpd, AW_List* containe
         {
             rep->mediaStreamStructureId = MpdParseString((char*)atrrPtr->children->content);
         }
-        //CDX_LOGD(" SegmentTemplate attribute: %s = %s. \n",
+        //LOGD(" SegmentTemplate attribute: %s = %s. ",
         //    atrrPtr->name, atrrPtr->children->content);
         atrrPtr = atrrPtr->next;
     }
@@ -648,7 +648,7 @@ static int RepresentationTraverse(xmlNodePtr node, awMpd* mpd, AW_List* containe
     node = node->children;
     while(node != NULL)
     {
-        //CDX_LOGD("node->name = %s.\n", node->name);
+        //LOGD("node->name = %s.", node->name);
         if(!strcmp((const char*)node->name, "BaseURL"))
         {
             //progInf->title = strdup(content);
@@ -787,7 +787,7 @@ static int AdaptionSetTraverse(xmlNodePtr node, awMpd* mpd, AW_List* adption)
             }
         }
 
-        CDX_LOGD("  attribute: %s = %s. \n", atrrPtr->name, atrrPtr->children->content);
+        LOGD("  attribute: %s = %s. ", atrrPtr->name, atrrPtr->children->content);
         atrrPtr = atrrPtr->next;
     }
 
@@ -797,7 +797,7 @@ static int AdaptionSetTraverse(xmlNodePtr node, awMpd* mpd, AW_List* adption)
     node = node->children;
     while(node != NULL)
     {
-        //CDX_LOGD("node->name = %s.\n", node->name);
+        //LOGD("node->name = %s.", node->name);
         if(!strcmp((const char*)node->name, "Accessibility"))
         {
             //progInf->title = strdup(content);
@@ -821,7 +821,7 @@ static int AdaptionSetTraverse(xmlNodePtr node, awMpd* mpd, AW_List* adption)
         }
         else if(!strcmp((const char*)node->name, "ContentComponent"))
         {
-            //CDX_LOGD("AdaptionSet: ContentComponent. \n");
+            //LOGD("AdaptionSet: ContentComponent. ");
             ContentComponentTraverse(node, set->contentComponent);
         }
         else if(!strcmp((const char*)node->name, "SegmentBase"))
@@ -834,13 +834,13 @@ static int AdaptionSetTraverse(xmlNodePtr node, awMpd* mpd, AW_List* adption)
         }
         else if(!strcmp((const char*)node->name, "SegmentTemplate"))
         {
-            //CDX_LOGD("AdaptionSet: SegmentTemplate. \n");
+            //LOGD("AdaptionSet: SegmentTemplate. ");
             set->segmentTemplate = SegmentTemplateTraverse(node, mpd);
             //todo
         }
         else if(!strcmp((const char*)node->name, "Representation"))
         {
-            //CDX_LOGD("AdaptionSet: Representation. \n");
+            //LOGD("AdaptionSet: Representation. ");
             ret = RepresentationTraverse(node, mpd, set->representation);
             if(ret < 0) return -1;
         }
@@ -863,7 +863,7 @@ static int ProgramInfTraverse(xmlNodePtr node, awMpd* mpd)
     {
         if(!strcmp((const char*)atrrPtr->name, "moreInformationURL"))
         {
-            CDX_LOGD("moreInformationURL. \n");
+            LOGD("moreInformationURL. ");
             progInf->moreInformationURL = MpdParseString((char*)atrrPtr->children->content);
         }
         else if(!strcmp((const char*)atrrPtr->name, "lang"))
@@ -871,7 +871,7 @@ static int ProgramInfTraverse(xmlNodePtr node, awMpd* mpd)
             progInf->lang = MpdParseString((char*)atrrPtr->children->content);
         }
 
-        CDX_LOGD("  attribute: %s = %s. \n", atrrPtr->name, atrrPtr->children->content);
+        LOGD("  attribute: %s = %s. ", atrrPtr->name, atrrPtr->children->content);
         atrrPtr = atrrPtr->next;
     }
 
@@ -879,11 +879,11 @@ static int ProgramInfTraverse(xmlNodePtr node, awMpd* mpd)
     node = node->children;
     while(node != NULL)
     {
-        CDX_LOGD("node->name = %s.\n", node->name);
+        LOGD("node->name = %s.", node->name);
         if(!strcmp((const char*)node->name, "Title"))
         {
             //char* content = (char*)xmlNodeGetContent(node);
-            //CDX_LOGD("Title content = %s\n", content);
+            //LOGD("Title content = %s", content);
             progInf->title = (char*)xmlNodeGetContent(node);
         }
         else if(!strcmp((const char*)node->name, "Source"))
@@ -929,36 +929,36 @@ static int PeriodTraverse(xmlNodePtr node, awMpd* mpd)
     {
         if(!strcmp((const char*)attrPtr->name, "href"))
         {
-            CDX_LOGD("Period: href. \n");
+            LOGD("Period: href. ");
             period->xlinkHref = MpdParseString((char*)attrPtr->children->content);
         }
         else if(!strcmp((const char*)attrPtr->name, "actuate"))
         {
-            CDX_LOGD("Period: href. \n");
+            LOGD("Period: href. ");
             period->xlinkActuate = !strcmp((char*)attrPtr->children->content, "onLoad") ? 1: 0;
         }
         else if(!strcmp((const char*)attrPtr->name, "id"))
         {
-            CDX_LOGD("Period: id. \n");
+            LOGD("Period: id. ");
             period->id = MpdParseString((char*)attrPtr->children->content);
         }
         else if(!strcmp((const char*)attrPtr->name, "start"))
         {
-            CDX_LOGD("Period: duration. \n");
+            LOGD("Period: duration. ");
             period->start = MpdParseDuration((char*)attrPtr->children->content);
         }
         else if(!strcmp((const char*)attrPtr->name, "duration"))
         {
-            CDX_LOGD("Period: duration. \n");
+            LOGD("Period: duration. ");
             period->duration = MpdParseDuration((char*)attrPtr->children->content);
         }
         else if(!strcmp((const char*)attrPtr->name, "bitstreamSwitching"))
         {
-            CDX_LOGD("Period: bitstreamSwitching. \n");
+            LOGD("Period: bitstreamSwitching. ");
             period->isBitstreamSwitching = MpdParseBool((char*)attrPtr->children->content);
         }
 
-        //CDX_LOGD("  attribute: %s = %s. \n", attrPtr->name, attrPtr->children->content);
+        //LOGD("  attribute: %s = %s. ", attrPtr->name, attrPtr->children->content);
         attrPtr = attrPtr->next;
     }
 
@@ -966,36 +966,36 @@ static int PeriodTraverse(xmlNodePtr node, awMpd* mpd)
     node = node->children;
     while(node != NULL)
     {
-        //CDX_LOGD("node->name = %s.\n", node->name);
+        //LOGD("node->name = %s.", node->name);
         if(!strcmp((const char*)node->name, "BaseURL"))
         {
-            CDX_LOGD("Period: BaseURL is not complete. \n");
+            LOGD("Period: BaseURL is not complete. ");
             if(BaseUrlTraverse(node, period->baseURL) < 0)
                 return -1;
         }
         else if(!strcmp((const char*)node->name, "SegmentBase"))
         {
-            CDX_LOGD("Period: SegmentBase. \n");
+            LOGD("Period: SegmentBase. ");
             period->segmentBase = SegmentBaseTraverse(node, mpd);
         }
         else if(!strcmp((const char*)node->name, "SegmentList"))
         {
-            CDX_LOGD("Period: SegmentList. \n");
+            LOGD("Period: SegmentList. ");
             //todo
         }
         else if(!strcmp((const char*)node->name, "SegmentTemplate"))
         {
-            CDX_LOGD("Period: SegmentTemplate. \n");
+            LOGD("Period: SegmentTemplate. ");
             period->segmentTemplate = SegmentTemplateTraverse(node, mpd);
         }
         else if(!strcmp((const char*)node->name, "AdaptationSet"))
         {
-            CDX_LOGD("Period: AdaptationSet. \n");
+            LOGD("Period: AdaptationSet. ");
             ret = AdaptionSetTraverse(node, mpd, period->adaptationSets);
         }
         else if(!strcmp((const char*)node->name, "SubSet"))
         {
-            CDX_LOGD("Period: SubSet. \n");
+            LOGD("Period: SubSet. ");
             //todo
         }
         node = node->next;
@@ -1017,7 +1017,7 @@ static int MpdTraverse(xmlNodePtr node, awMpd* mpd)
     // parse the mpd node attribute
     if(!strcmp((const char*)node->name, "MPD"))
     {
-        CDX_LOGD("MPD node\n");
+        LOGD("MPD node");
 
         xmlAttrPtr atrrPtr = node->properties;
         while(atrrPtr != NULL)
@@ -1079,13 +1079,13 @@ static int MpdTraverse(xmlNodePtr node, awMpd* mpd)
             {
                 mpd->availabilityEndTime = MpdParseDate((char*)atrrPtr->children->content);
             }
-            //CDX_LOGD("  attribute: %s = %s. \n", atrrPtr->name, atrrPtr->children->content);
+            //LOGD("  attribute: %s = %s. ", atrrPtr->name, atrrPtr->children->content);
             atrrPtr = atrrPtr->next;
         }
     }
     else
     {
-        CDX_LOGW("warning: the root node is not MPD.\n");
+        LOGW("warning: the root node is not MPD.");
         return -1;
     }
 
@@ -1101,31 +1101,31 @@ static int MpdTraverse(xmlNodePtr node, awMpd* mpd)
     {
         if(!strcmp((const char*)node->name, "ProgramInformation"))
         {
-            CDX_LOGD("ProgramInformation node\n");
+            LOGD("ProgramInformation node");
             if(ProgramInfTraverse(node, mpd) < 0)
                 return -1;
         }
         else if(!strcmp((const char*)node->name, "Period"))
         {
-            CDX_LOGD("Period node\n");
+            LOGD("Period node");
             if(PeriodTraverse(node, mpd) < 0)
                 return -1;
         }
         else if(!strcmp((const char*)node->name, "Location"))
         {
-            CDX_LOGD("Location node\n");
+            LOGD("Location node");
             //if(PeriodTraverse(node, mpd) < 0)
             return -1;
         }
         else if(!strcmp((const char*)node->name, "Metrics"))
         {
-            CDX_LOGD("Metrics node\n");
+            LOGD("Metrics node");
             //if(PeriodTraverse(node, mpd) < 0)
             return -1;
         }
         else if(!strcmp((const char*)node->name, "BaseURL"))
         {
-            CDX_LOGD("BaseURL node\n");
+            LOGD("BaseURL node");
             if(BaseUrlTraverse(node, mpd->baseURLs) < 0)
                 return -1;
         }
@@ -1142,7 +1142,7 @@ static awMpd* InitMpd()
     awMpd* mpd = (awMpd*)malloc(sizeof(awMpd));
     if(mpd == NULL)
     {
-        CDX_LOGD("mpd molloc error.\n");
+        LOGD("mpd molloc error.");
         return NULL;
     }
     memset(mpd, 0, sizeof(awMpd));
@@ -1163,19 +1163,19 @@ static awMpd* InitMpd()
 /****************************************************/
 static void MpdDescriptorFree(void *item)
 {
-    CDX_LOGD("[MPD] descriptor not implemented\n");
+    LOGD("[MPD] descriptor not implemented");
     free(item);
 }
 
 void MpdContentComponentFree(void *item)
 {
-    CDX_LOGD("[MPD] descriptor not implemented\n");
+    LOGD("[MPD] descriptor not implemented");
     free(item);
 }
 
 void SubRepresentationFree(void *item)
 {
-    CDX_LOGD("[MPD] SubRepresentationFree not implemented\n");
+    LOGD("[MPD] SubRepresentationFree not implemented");
     free(item);
 }
 
@@ -1562,7 +1562,7 @@ static void AdaptationSetFree(void* item)
 
 static void SubSetFree(void* item)
 {
-    CDX_LOGD("W: subset is not complete.\n");
+    LOGD("W: subset is not complete.");
     CDX_UNUSE(item);
 }
 
@@ -1682,7 +1682,7 @@ awMpd* ParseMpdFile(char* filename, int fd, char* buffer,
 
     if((filename == NULL) && (fd<0) && ((buffer == NULL) || (size == 0)) )
     {
-        CDX_LOGD("mpd file is not exist!.\n");
+        LOGD("mpd file is not exist!.");
         return NULL;
     }
 
@@ -1703,19 +1703,19 @@ awMpd* ParseMpdFile(char* filename, int fd, char* buffer,
 
     if (NULL == doc)
     {
-        CDX_LOGE("Document not parsed successfully\n");
+        LOGE("Document not parsed successfully");
         return NULL;
     }
 
     rootNode = xmlDocGetRootElement(doc); // read root node
     if (NULL == rootNode)
     {
-        CDX_LOGE("empty document\n");
+        LOGE("empty document");
         goto parse_err;
     }
     if(strcmp((const char*)rootNode->name, "MPD"))
     {
-        CDX_LOGI("Warning: the root node is not 'MPD'. \n");
+        LOGI("Warning: the root node is not 'MPD'. ");
     }
 
     mpd = InitMpd();

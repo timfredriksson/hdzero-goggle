@@ -17,7 +17,7 @@
 *******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "DemuxTypeMap"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include "DemuxTypeMap.h"
 

@@ -204,7 +204,7 @@ static cdx_err __CdxMetaSetInt64(struct CdxMetaS *meta,
 
     item = Palloc(impl->pool, sizeof(*item));
     if (!item) {
-        CDX_LOGE("malloc fail size:%u", (cdx_uint32)sizeof(*item));
+        LOGE("malloc fail size:%u", (cdx_uint32)sizeof(*item));
         return -1;
     }
 
@@ -259,13 +259,13 @@ static cdx_err __CdxMetaSetString(struct CdxMetaS *meta,
 
     item = Palloc(impl->pool, sizeof(*item));
     if (!item) {
-        CDX_LOGE("malloc fail size:%u", (cdx_uint32)sizeof(*item));
+        LOGE("malloc fail size:%u", (cdx_uint32)sizeof(*item));
         return -1;
     }
 
     item->val = Pstrdup(impl->pool, val);
     if (!item->val) {
-        CDX_LOGE("malloc fail size:%u", (cdx_uint32)strlen(val));
+        LOGE("malloc fail size:%u", (cdx_uint32)strlen(val));
         return -1;
     }
     strncpy(item->name, name, CDX_META_ITEM_NAMESIZE);
@@ -403,7 +403,7 @@ static cdx_err __CdxMetaSetObject(struct CdxMetaS *meta, cdx_char *name, void *v
 
     item = Palloc(impl->pool, sizeof(*item));
     if (!item) {
-        CDX_LOGE("malloc fail size:%u", (cdx_uint32)sizeof(*item));
+        LOGE("malloc fail size:%u", (cdx_uint32)sizeof(*item));
         return -1;
     }
 

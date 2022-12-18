@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 #include <CdxTypes.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <AwPool.h>
 
 #include "CdxKeyedVector.h"
@@ -53,7 +53,7 @@ int CdxKeyedVectorAdd(CdxKeyedVectorT *keyedVector,
 
     if (keyedVector->index >= keyedVector->size - 1)
     {
-        CDX_LOGW("keyedVector is full");
+        LOGW("keyedVector is full");
         return -1;
     }
 
@@ -77,7 +77,7 @@ int CdxKeyedVectorAdd(CdxKeyedVectorT *keyedVector,
 err:
     free(keyedVector->item[index].key);
     free(keyedVector->item[index].val);
-    logw("strdup error");
+    LOGW("strdup error");
     return -1;
 }
 

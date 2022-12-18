@@ -397,7 +397,7 @@ typedef struct MPPCallbackInfo {
 #define CHECK_MPP_CALLBACK(FuncPtr)                                 \
     do {                                                            \
         if (FuncPtr == NULL) {                                      \
-            aloge("Error! User should RegisterCallback to mpp!");   \
+            LOGE("Error! User should RegisterCallback to mpp!");   \
             return -1;                                              \
         }                                                           \
     } while (0)

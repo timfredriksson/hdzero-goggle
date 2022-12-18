@@ -24,7 +24,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "AvsCounter"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -144,16 +144,16 @@ static int avscounter_start(struct CedarxAvscounterContext *context)
         long long nDuration = avscounter_get_system_time() - context->mSystemPauseBaseTime;
         context->mSystemPauseDuration += nDuration;
         context->mStatus = AvsCounter_StateExecuting;
-        alogd("(f:%s, l:%d) Avscounter status [%s]->[run], pauseDuration[%lld][%lld]ms", __FUNCTION__, __LINE__, 
+        LOGD("(f:%s, l:%d) Avscounter status [%s]->[run], pauseDuration[%lld][%lld]ms", __FUNCTION__, __LINE__, 
             context->mStatus==AvsCounter_StateIdle?"idle":"pause", nDuration/1000, context->mSystemPauseDuration/1000);
     }
     else if(AvsCounter_StateExecuting == context->mStatus)
     {
-        alogd("(f:%s, l:%d) Avscounter already run", __FUNCTION__, __LINE__);
+        LOGD("(f:%s, l:%d) Avscounter already run", __FUNCTION__, __LINE__);
     }
     else
     {
-        aloge("(f:%s, l:%d) fatal error! wrong status[%d]", __FUNCTION__, __LINE__, context->mStatus);
+        LOGE("(f:%s, l:%d) fatal error! wrong status[%d]", __FUNCTION__, __LINE__, context->mStatus);
     }
 	pthread_mutex_unlock(&context->mutex);
     return ret;
@@ -165,22 +165,22 @@ static int avscounter_pause(struct CedarxAvscounterContext *context)
     pthread_mutex_lock(&context->mutex);
     if(AvsCounter_StateExecuting == context->mStatus)
     {
-        alogd("(f:%s, l:%d) Avscounter status run->pause", __FUNCTION__, __LINE__);
+        LOGD("(f:%s, l:%d) Avscounter status run->pause", __FUNCTION__, __LINE__);
         context->mSystemPauseBaseTime = avscounter_get_system_time();
         context->mStatus = AvsCounter_StatePause;
     }
     else if(AvsCounter_StatePause == context->mStatus)
     {
-        alogd("(f:%s, l:%d) Avscounter already pause", __FUNCTION__, __LINE__);
+        LOGD("(f:%s, l:%d) Avscounter already pause", __FUNCTION__, __LINE__);
     }
     else if(AvsCounter_StateIdle == context->mStatus)
     {
-        alogd("(f:%s, l:%d) Avscounter status idle->pause", __FUNCTION__, __LINE__);
+        LOGD("(f:%s, l:%d) Avscounter status idle->pause", __FUNCTION__, __LINE__);
         context->mStatus = AvsCounter_StatePause;
     }
     else
     {
-        aloge("(f:%s, l:%d) fatal error! wrong status[%d]", __FUNCTION__, __LINE__, context->mStatus);
+        LOGE("(f:%s, l:%d) fatal error! wrong status[%d]", __FUNCTION__, __LINE__, context->mStatus);
     }
     
 	pthread_mutex_unlock(&context->mutex);

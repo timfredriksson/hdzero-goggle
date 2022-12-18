@@ -599,7 +599,7 @@ int cfg_get_double(dictionary *ini, char *main, char *sub, double *val)
 		return -1;
 	}
 	*val = ret;
-	//printf("MAGIC_NUM/1.0 = %f, MAGIC_NUM = %d\n", MAGIC_NUM/1.0, MAGIC_NUM);
+	//LOGI("MAGIC_NUM/1.0 = %f, MAGIC_NUM = %d\n", MAGIC_NUM/1.0, MAGIC_NUM);
 	return 0;
 }
 

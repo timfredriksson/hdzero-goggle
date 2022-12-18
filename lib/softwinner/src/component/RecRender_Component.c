@@ -19,7 +19,7 @@
 //#include <CDX_LogNDebug.h>
 //#define LOG_NDEBUG 0
 #define LOG_TAG "RecRender_Component"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -150,7 +150,7 @@ ERRORTYPE RecSinkCB_EventHandler(
      PARAM_IN unsigned int nData2,
      PARAM_IN void* pEventData){
 
-    alogv("event[%d]");
+    LOGV("event[%d]");
     ERRORTYPE   eError = SUCCESS;
     RECRENDERDATATYPE *pRecRenderData = (RECRENDERDATATYPE*)pAppData;
     //int data;
@@ -161,23 +161,23 @@ ERRORTYPE RecSinkCB_EventHandler(
             ERRORTYPE eError = (ERRORTYPE)nData1;
             if(ERR_MUX_SAMESTATE == eError)
             {
-                aloge("eventError, RecSink sameState");
+                LOGE("eventError, RecSink sameState");
             }
             else if(ERR_MUX_INVALIDSTATE == eError)
             {
-                aloge("eventError, RecSink invalidState");
+                LOGE("eventError, RecSink invalidState");
             }
             else if(ERR_MUX_INCORRECT_STATE_OPERATION == eError)
             {
-                aloge("eventError, RecSink incorrect state operation");
+                LOGE("eventError, RecSink incorrect state operation");
             }
             else if(ERR_MUX_INCORRECT_STATE_TRANSITION == eError)
             {
-                aloge("eventError, RecSink incorrect state transition");
+                LOGE("eventError, RecSink incorrect state transition");
             }
             else if(ERR_MUX_NOT_PERM == eError)
             {
-                aloge("meet eventUndefinedError, RecSink is turn to invalidState[%d]", nData2);
+                LOGE("meet eventUndefinedError, RecSink is turn to invalidState[%d]", nData2);
             }
             break;
         }
@@ -185,13 +185,13 @@ ERRORTYPE RecSinkCB_EventHandler(
         {
             if (COMP_CommandStateSet == nData1)
             {
-                alogv("eventCmdComplete, RecSink in state[%d]", (COMP_STATETYPE)nData2);
+                LOGV("eventCmdComplete, RecSink in state[%d]", (COMP_STATETYPE)nData2);
             }
             else if(SwitchFile == nData1)
             {
                 ERRORTYPE switchRet = (ERRORTYPE)pEventData;
                 BOOL bCacheFlag = pRecRenderData->cache_manager?TRUE:FALSE;
-                alogd("recSink MuxerId[%d] cacheFlag[%d] switch file ret[0x%x] done", (int)nData2, bCacheFlag, switchRet);
+                LOGD("recSink MuxerId[%d] cacheFlag[%d] switch file ret[0x%x] done", (int)nData2, bCacheFlag, switchRet);
                 if(bCacheFlag && switchRet==SUCCESS)
                 {
                     message_t msg;
@@ -203,7 +203,7 @@ ERRORTYPE RecSinkCB_EventHandler(
             else if(SwitchFileNormal == nData1)
             {
                 ERRORTYPE switchRet = (ERRORTYPE)pEventData;
-                alogd("recSink MuxerId[%d] switch file normal ret[0x%x], begin to switch!", (int)nData2, switchRet);
+                LOGD("recSink MuxerId[%d] switch file normal ret[0x%x], begin to switch!", (int)nData2, switchRet);
             }
             break;
         }
@@ -224,7 +224,7 @@ ERRORTYPE RecSinkCB_EventHandler(
         }
         default:
         {
-            aloge("fatal error! unknown event[%d]", eEvent);
+            LOGE("fatal error! unknown event[%d]", eEvent);
             eError = ERR_MUX_NOT_SUPPORT;
             break;
         }
@@ -249,7 +249,7 @@ ERRORTYPE RecSinkCB_EmptyBufferDone(
     }
     else
     {
-        aloge("fatal error! wrong RSPacket type[%d]", pRSPacket->mSourceType);
+        LOGE("fatal error! wrong RSPacket type[%d]", pRSPacket->mSourceType);
         return ERR_MUX_NOT_SUPPORT;
     }
     return SUCCESS;
@@ -467,7 +467,7 @@ ERRORTYPE RecRender_RefBuffer(
         }
         else
         {
-            aloge("fatal error! not find AFrmId[%d] in used list.", pRSPacket->mId);
+            LOGE("fatal error! not find AFrmId[%d] in used list.", pRSPacket->mId);
             eError = ERR_MUX_UNEXIST;
         }
         pthread_mutex_unlock(&pRecRenderData->mVideoInputFrameListMutex);
@@ -491,7 +491,7 @@ ERRORTYPE RecRender_RefBuffer(
         }
         else
         {
-            aloge("fatal error! not find AFrmId[%d] in used list.", pRSPacket->mId);
+            LOGE("fatal error! not find AFrmId[%d] in used list.", pRSPacket->mId);
             eError = ERR_MUX_UNEXIST;
         }
         pthread_mutex_unlock(&pRecRenderData->mAudioInputFrameListMutex);
@@ -515,14 +515,14 @@ ERRORTYPE RecRender_RefBuffer(
         }
         else
         {
-            aloge("fatal error! not find TFrmId[%d] in used list.", pRSPacket->mId);
+            LOGE("fatal error! not find TFrmId[%d] in used list.", pRSPacket->mId);
             eError = ERR_MUX_UNEXIST;
         }
         pthread_mutex_unlock(&pRecRenderData->mTextInputFrameListMutex);
     }
     else
     {
-        aloge("fatal error! invalid streamType[%d]", pRSPacket->mStreamType);
+        LOGE("fatal error! invalid streamType[%d]", pRSPacket->mStreamType);
         eError = ERR_MUX_UNEXIST;
     }
     return eError;
@@ -561,7 +561,7 @@ ERRORTYPE RecRender_ReleaseBuffer(
                 eRet = pInPortTunnelComp->FillThisBuffer(pInPortTunnelComp, &obh);
                 if(eRet != SUCCESS)
                 {
-                    aloge("fatal error! fill this buffer fail[0x%x], video frame id=[%d], check code!", eRet, pEntry->stEncodedStream.nID);
+                    LOGE("fatal error! fill this buffer fail[0x%x], video frame id=[%d], check code!", eRet, pEntry->stEncodedStream.nID);
                     pthread_mutex_lock(&pRecRenderData->mVideoInputFrameListMutex);
                     list_add_tail(&pEntry->mList, &pRecRenderData->mVideoInputFrameUsedList);
                     //list_move_tail(&pEntry->mList, &pRecRenderData->mVideoInputFrameUsedList);
@@ -578,7 +578,7 @@ ERRORTYPE RecRender_ReleaseBuffer(
             {
                 if(pEntry->mUsedRefCnt < 0)
                 {
-                    aloge("fatal error! usedRefCnt[%d]<0, check code!", pEntry->mUsedRefCnt);
+                    LOGE("fatal error! usedRefCnt[%d]<0, check code!", pEntry->mUsedRefCnt);
                     eRet = ERR_MUX_NOT_PERM;
                 }
                 pthread_mutex_unlock(&pRecRenderData->mVideoInputFrameListMutex);
@@ -586,7 +586,7 @@ ERRORTYPE RecRender_ReleaseBuffer(
         }
         else
         {
-            aloge("fatal error! not find VFrmId[%d] in used list.", pRSPacket->mId);
+            LOGE("fatal error! not find VFrmId[%d] in used list.", pRSPacket->mId);
             eRet = ERR_MUX_UNEXIST;
             pthread_mutex_unlock(&pRecRenderData->mVideoInputFrameListMutex);
         }
@@ -621,7 +621,7 @@ ERRORTYPE RecRender_ReleaseBuffer(
                 eRet = pInPortTunnelComp->FillThisBuffer(pInPortTunnelComp, &obh);
                 if (eRet != SUCCESS)
                 {
-                    aloge("fatal error! fill this buffer fail[0x%x], audio frame id=[%d], check code!", eRet, pEntry->stEncodedStream.nID);
+                    LOGE("fatal error! fill this buffer fail[0x%x], audio frame id=[%d], check code!", eRet, pEntry->stEncodedStream.nID);
                     pthread_mutex_lock(&pRecRenderData->mAudioInputFrameListMutex);
                     list_add_tail(&pEntry->mList, &pRecRenderData->mAudioInputFrameUsedList);
                     //list_move_tail(&pEntry->mList, &pRecRenderData->mAudioInputFrameUsedList);
@@ -638,7 +638,7 @@ ERRORTYPE RecRender_ReleaseBuffer(
             {
                 if(pEntry->mUsedRefCnt < 0)
                 {
-                    aloge("fatal error! usedRefCnt[%d]<0, check code!", pEntry->mUsedRefCnt);
+                    LOGE("fatal error! usedRefCnt[%d]<0, check code!", pEntry->mUsedRefCnt);
                     eRet = ERR_MUX_NOT_PERM;
                 }
                 pthread_mutex_unlock(&pRecRenderData->mAudioInputFrameListMutex);
@@ -646,7 +646,7 @@ ERRORTYPE RecRender_ReleaseBuffer(
         }
         else
         {
-            aloge("fatal error! not find AFrmId[%d] in used list.", pRSPacket->mId);
+            LOGE("fatal error! not find AFrmId[%d] in used list.", pRSPacket->mId);
             eRet = ERR_MUX_UNEXIST;
             pthread_mutex_unlock(&pRecRenderData->mAudioInputFrameListMutex);
         }
@@ -681,7 +681,7 @@ ERRORTYPE RecRender_ReleaseBuffer(
                 eRet = pInPortTunnelComp->FillThisBuffer(pInPortTunnelComp, &obh);
                 if(eRet != SUCCESS)
                 {
-                    aloge("fatal error! fill this buffer fail[0x%x], text frame id=[%d], check code!", eRet, pEntry->stEncodedStream.nID);
+                    LOGE("fatal error! fill this buffer fail[0x%x], text frame id=[%d], check code!", eRet, pEntry->stEncodedStream.nID);
                     pthread_mutex_lock(&pRecRenderData->mTextInputFrameListMutex);
                     list_add_tail(&pEntry->mList, &pRecRenderData->mTextInputFrameUsedList);
                     //list_move_tail(&pEntry->mList, &pRecRenderData->mTextInputFrameUsedList);
@@ -698,7 +698,7 @@ ERRORTYPE RecRender_ReleaseBuffer(
             {
                 if(pEntry->mUsedRefCnt < 0)
                 {
-                    aloge("fatal error! usedRefCnt[%d]<0, check code!", pEntry->mUsedRefCnt);
+                    LOGE("fatal error! usedRefCnt[%d]<0, check code!", pEntry->mUsedRefCnt);
                     eRet = ERR_MUX_NOT_PERM;
                 }
                 pthread_mutex_unlock(&pRecRenderData->mTextInputFrameListMutex);
@@ -706,14 +706,14 @@ ERRORTYPE RecRender_ReleaseBuffer(
         }
         else
         {
-            aloge("fatal error! not find TFrmId[%d] in used list.", pRSPacket->mId);
+            LOGE("fatal error! not find TFrmId[%d] in used list.", pRSPacket->mId);
             eRet = ERR_MUX_UNEXIST;
             pthread_mutex_unlock(&pRecRenderData->mTextInputFrameListMutex);
         }
     }
     else
     {
-        aloge("fatal error! invalid streamType[%d]", pRSPacket->mStreamType);
+        LOGE("fatal error! invalid streamType[%d]", pRSPacket->mStreamType);
         eRet = ERR_MUX_NOT_PERM;
     }
     return eRet;
@@ -739,7 +739,7 @@ ERRORTYPE RecRender_AddOutputSinkInfo(RECRENDERDATATYPE *pRecRenderData, int nCh
     int eRet = SUCCESS;
     CdxOutputSinkInfo SinkInfo;
     configCdxOutputSinkInfo(&SinkInfo, pChnAttr, nFd);
-    alogd("(of:%d, fd:%d, callback_out_flag:%d, cache_flag:%d)", SinkInfo.nMuxerMode, SinkInfo.nOutputFd, SinkInfo.nCallbackOutFlag, SinkInfo.bBufFromCacheFlag);
+    LOGD("(of:%d, fd:%d, callback_out_flag:%d, cache_flag:%d)", SinkInfo.nMuxerMode, SinkInfo.nOutputFd, SinkInfo.nCallbackOutFlag, SinkInfo.bBufFromCacheFlag);
 
     //int i = 0;
     //find if the same output_format sinkInfo exist
@@ -747,7 +747,7 @@ ERRORTYPE RecRender_AddOutputSinkInfo(RECRENDERDATATYPE *pRecRenderData, int nCh
     pthread_mutex_lock(&pRecRenderData->mSinkInfoListMutex);
     if(list_empty(&pRecRenderData->mIdleSinkInfoList))
     {
-        alogw("Low probability! sinkInfo is not enough, increase one!");
+        LOGW("Low probability! sinkInfo is not enough, increase one!");
         RecSink *pNode = (RecSink*)malloc(sizeof(RecSink));
         if(pNode)
         {
@@ -757,7 +757,7 @@ ERRORTYPE RecRender_AddOutputSinkInfo(RECRENDERDATATYPE *pRecRenderData, int nCh
         }
         else
         {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             eRet = ERR_MUX_ILLEGAL_PARAM;
             pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);
             return eRet;
@@ -800,16 +800,16 @@ ERRORTYPE RecRender_AddOutputSinkInfo(RECRENDERDATATYPE *pRecRenderData, int nCh
             }
             else
             {
-                aloge("fatal error! RecSink empty this buffer fail!");
+                LOGE("fatal error! RecSink empty this buffer fail!");
                 pCacheRSPacket->mRefCnt--;
                 if(pCacheRSPacket->mRefCnt<=0)
                 {
-                    aloge("fatal error! used packet refCnt=[%d], check code!", pCacheRSPacket->mRefCnt);
+                    LOGE("fatal error! used packet refCnt=[%d], check code!", pCacheRSPacket->mRefCnt);
                 }
             }
             nUsingCnt++;
         }
-        alogd("send [%d]cacheUsingPackets to muxerId[%d]", nUsingCnt, pEntry->mMuxerId);
+        LOGD("send [%d]cacheUsingPackets to muxerId[%d]", nUsingCnt, pEntry->mMuxerId);
         pRecRenderData->cache_manager->UnlockPacketList((COMP_HANDLETYPE)pRecRenderData->cache_manager);
     }
     pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);
@@ -854,23 +854,23 @@ static ERRORTYPE RecRender_RemoveOutputSinkInfo(RECRENDERDATATYPE *pRecRenderDat
             }
             else
             {
-                aloge("fatal error! more than one mux channel[%d]?", pMuxChnEntry->mChnId);
+                LOGE("fatal error! more than one mux channel[%d]?", pMuxChnEntry->mChnId);
             }
         }
     }
     if(0==nFindFlag)
     {
-        aloge("fatal error! not find an exist muxChn[%d]", nChnId);
+        LOGE("fatal error! not find an exist muxChn[%d]", nChnId);
         pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);
         return ERR_MUX_ILLEGAL_PARAM;
     }
-    alogd("(muxChn:%d, muxerId:%d)", nChnId, nMuxerId);
+    LOGD("(muxChn:%d, muxerId:%d)", nChnId, nMuxerId);
     nFindFlag = 0;
     list_for_each_entry(pSinkInfo, &pRecRenderData->mValidSinkInfoList, mList)
     {
         if(pSinkInfo->mMuxerId == nMuxerId)
         {
-            alogd("find an exist Array[%d], muxerId[%d]:\n"
+            LOGD("find an exist Array[%d], muxerId[%d]:"
                 "nMuxerMode[%d], fd[%d], fallocateLen[%d], callbackOutFlag[%d]",
                 i, pSinkInfo->mMuxerId, pSinkInfo->nMuxerMode, pSinkInfo->nOutputFd, pSinkInfo->nFallocateLen, pSinkInfo->nCallbackOutFlag);
             nFindFlag = 1;
@@ -884,7 +884,7 @@ static ERRORTYPE RecRender_RemoveOutputSinkInfo(RECRENDERDATATYPE *pRecRenderDat
         {
             if(pSinkInfo->mMuxerId == nMuxerId)
             {
-                alogd("find an exist Array[%d], muxerId[%d], during switching file:\n"
+                LOGD("find an exist Array[%d], muxerId[%d], during switching file:"
                     "nMuxerMode[%d], fd[%d], fallocateLen[%d], callbackOutFlag[%d]",
                     i, pSinkInfo->mMuxerId, pSinkInfo->nMuxerMode, pSinkInfo->nOutputFd, pSinkInfo->nFallocateLen, pSinkInfo->nCallbackOutFlag);
                 nFindFlag = 1;
@@ -895,7 +895,7 @@ static ERRORTYPE RecRender_RemoveOutputSinkInfo(RECRENDERDATATYPE *pRecRenderDat
     }
     if(0==nFindFlag)
     {
-        aloge("fatal error! not find an exist muxerId[%d]", nMuxerId);
+        LOGE("fatal error! not find an exist muxerId[%d]", nMuxerId);
         pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);
         return ERR_MUX_ILLEGAL_PARAM;
     }
@@ -919,7 +919,7 @@ static ERRORTYPE RecRender_RemoveOutputSinkInfo(RECRENDERDATATYPE *pRecRenderDat
         }
         if(0 == nFindFlag)
         {
-            aloge("fatal error! why chnAttrNode of muxerId[%d] is not exist?", nMuxerId);
+            LOGE("fatal error! why chnAttrNode of muxerId[%d] is not exist?", nMuxerId);
         }
         pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);
         return SUCCESS;
@@ -1106,7 +1106,7 @@ ERRORTYPE RecRenderSetGroupAttr(
 
     if(pRecRenderData->state!=COMP_StateIdle && pRecRenderData->state!=COMP_StateLoaded)
     {
-        aloge("fatal error! cannot set groupAttr in wrong state[0x%x]", pRecRenderData->state);
+        LOGE("fatal error! cannot set groupAttr in wrong state[0x%x]", pRecRenderData->state);
         return ERR_MUX_INCORRECT_STATE_OPERATION;
     }
 
@@ -1252,13 +1252,13 @@ ERRORTYPE RecRenderSendCommand(
     int     nMsgDataSize = 0;
     memset(&msg, 0, sizeof(message_t));
 
-    alogv("RecRenderSendCommand: %d", Cmd);
+    LOGV("RecRenderSendCommand: %d", Cmd);
 
     pRecRenderData = (RECRENDERDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
 
     if (pRecRenderData->state == COMP_StateInvalid)
     {
-        alogd("stateInvalid deny command[0x%x]", Cmd);
+        LOGD("stateInvalid deny command[0x%x]", Cmd);
         eError = ERR_MUX_INVALIDSTATE;
         goto OMX_CONF_CMD_BAIL;
     }
@@ -1275,17 +1275,17 @@ ERRORTYPE RecRenderSendCommand(
 
         case COMP_CommandVendorAddChn:
         {
-            alogv("call COMP CommandVendorAddChn in state[%d]", pRecRenderData->state);
+            LOGV("call COMP CommandVendorAddChn in state[%d]", pRecRenderData->state);
             if(pRecRenderData->state != COMP_StateExecuting && pRecRenderData->state != COMP_StateIdle)
             {
-                aloge("fatal error! why call COMP CommandVendorAddChn in invalid state[%d]", pRecRenderData->state);
+                LOGE("fatal error! why call COMP CommandVendorAddChn in invalid state[%d]", pRecRenderData->state);
                 eError = ERR_MUX_INCORRECT_STATE_OPERATION;
                 goto OMX_CONF_CMD_BAIL;
             }
             eCmd = VendorAddOutputSinkInfo;
             if(NULL==pCmdData)
             {
-                alogw("MUX_CHN_ATTR_S == NULL");
+                LOGW("MUX_CHN_ATTR_S == NULL");
                 eError = ERR_MUX_ILLEGAL_PARAM;
                 goto OMX_CONF_CMD_BAIL;
             }
@@ -1295,10 +1295,10 @@ ERRORTYPE RecRenderSendCommand(
         }
         case COMP_CommandVendorRemoveChn:
         {
-            alogd("call COMP CommandVendorRemoveChn in state[%d], remove muxerId[%d]", pRecRenderData->state, nParam1);
+            LOGD("call COMP CommandVendorRemoveChn in state[%d], remove muxerId[%d]", pRecRenderData->state, nParam1);
             if(pRecRenderData->state != COMP_StateExecuting && pRecRenderData->state != COMP_StateIdle)
             {
-                aloge("fatal error! why call COMP CommandVendorRemoveChn in invalid state[%d]", pRecRenderData->state);
+                LOGE("fatal error! why call COMP CommandVendorRemoveChn in invalid state[%d]", pRecRenderData->state);
                 eError = ERR_MUX_ILLEGAL_PARAM;
                 goto OMX_CONF_CMD_BAIL;
             }
@@ -1307,19 +1307,19 @@ ERRORTYPE RecRenderSendCommand(
         }
         case COMP_CommandSwitchFile:
         {
-            alogd("OMX CommandSwitchFile nMuxerId=%d", nParam1);
+            LOGD("OMX CommandSwitchFile nMuxerId=%d", nParam1);
             eCmd = SwitchFile;
             break;
         }
         case COMP_CommandSwitchFileNormal:
         {
-            alogd("OMX CommandSwitchFile normal nMuxerId=%d", nParam1);
+            LOGD("OMX CommandSwitchFile normal nMuxerId=%d", nParam1);
             eCmd = SwitchFileNormal;
             break;
         }
 
         default:
-            aloge("fatal error! unknown command[0x%x]", Cmd);
+            LOGE("fatal error! unknown command[0x%x]", Cmd);
             eCmd = -1;
             break;
     }
@@ -1416,12 +1416,12 @@ ERRORTYPE RecRenderSetShutDownType(
         if(pEntry->mMuxerId == pShutDownType->mMuxerId)
         {
             pEntry->SetShutDownNow(pEntry, pShutDownType->mbShutDownNowFlag);
-            alogd("the MuxerId[%d], ShutDownNow[%d]", pEntry->mMuxerId, pShutDownType->mbShutDownNowFlag);
+            LOGD("the MuxerId[%d], ShutDownNow[%d]", pEntry->mMuxerId, pShutDownType->mbShutDownNowFlag);
         }
         else if(-1 == pShutDownType->mMuxerId)
         {
             pEntry->SetShutDownNow(pEntry, pShutDownType->mbShutDownNowFlag);
-            alogd("the MuxerId[%d], ShutDownNow[%d]", pEntry->mMuxerId, pShutDownType->mbShutDownNowFlag);
+            LOGD("the MuxerId[%d], ShutDownNow[%d]", pEntry->mMuxerId, pShutDownType->mbShutDownNowFlag);
         }
     }
 
@@ -1509,7 +1509,7 @@ ERRORTYPE RecRenderGetConfig(
             break;
         }
         default:
-            aloge("fatal error! unknown index[0x%x]", nIndex);
+            LOGE("fatal error! unknown index[0x%x]", nIndex);
             break;
     }
 
@@ -1561,7 +1561,7 @@ ERRORTYPE RecRenderSetConfig(
         {
             if (pRecRenderData->state != COMP_StateExecuting)
             {
-                alogw("omx IndexConfigVendorSwitchFd state[%d] is not valid", pRecRenderData->state);
+                LOGW("omx IndexConfigVendorSwitchFd state[%d] is not valid", pRecRenderData->state);
             }
             CdxFdT *pCdxFd = (CdxFdT*)pComponentConfigStructure;
             pthread_mutex_lock(&pRecRenderData->mSinkInfoListMutex);
@@ -1584,14 +1584,14 @@ ERRORTYPE RecRenderSetConfig(
             }
             if(i!=1)
             {
-                aloge("fatal error! switch muxerId[%d], [%d]times", pEntry->mMuxerId, i);
+                LOGE("fatal error! switch muxerId[%d], [%d]times", pEntry->mMuxerId, i);
             }
 
             list_for_each_entry(pEntry, &pRecRenderData->mValidSinkInfoList, mList)
             {
                 if(pEntry->mMuxerId == pCdxFd->mMuxerId)
                 {
-                    alogd("switch fd[%d] for muxerId[%d]", pCdxFd->mFd, pEntry->mMuxerId);
+                    LOGD("switch fd[%d] for muxerId[%d]", pCdxFd->mFd, pEntry->mMuxerId);
                     // can reset FD, when encode
                     pEntry->SwitchFd(pEntry, pCdxFd->mFd, pCdxFd->mnFallocateLen, pCdxFd->mIsImpact);
                     bFindFlag = TRUE;
@@ -1606,7 +1606,7 @@ ERRORTYPE RecRenderSetConfig(
                 }
                 if(pEntry->mMuxerId == pCdxFd->mMuxerId)
                 {
-                    alogd("not switch fd[%d] again for muxerId[%d] during switching file", pCdxFd->mFd, pEntry->mMuxerId);
+                    LOGD("not switch fd[%d] again for muxerId[%d] during switching file", pCdxFd->mFd, pEntry->mMuxerId);
                     // can reset FD, when encode
                     //pEntry->SwitchFd(pEntry, pCdxFd->mFd, (char*)pCdxFd->mPath, pCdxFd->mnFallocateLen, pCdxFd->mIsImpact);
                     bFindFlag = TRUE;
@@ -1620,7 +1620,7 @@ ERRORTYPE RecRenderSetConfig(
         {
             if (pRecRenderData->state != COMP_StateExecuting)
             {
-                alogw("COMP IndexConfigVendorSetSdcardState state[%d] is not valid, sdcardState[%d]", pRecRenderData->state, *(int*)pComponentConfigStructure);
+                LOGW("COMP IndexConfigVendorSetSdcardState state[%d] is not valid, sdcardState[%d]", pRecRenderData->state, *(int*)pComponentConfigStructure);
             }
             pRecRenderData->mbSdCardState = (BOOL)*(int*)pComponentConfigStructure;
             pthread_mutex_lock(&pRecRenderData->mSinkInfoListMutex);
@@ -1644,7 +1644,7 @@ ERRORTYPE RecRenderSetConfig(
                 }
                 else
                 {
-                    aloge("fatal error! cache_manager already exist in state[%d]", pRecRenderData->state);
+                    LOGE("fatal error! cache_manager already exist in state[%d]", pRecRenderData->state);
                 }
             }
             break;
@@ -1657,7 +1657,7 @@ ERRORTYPE RecRenderSetConfig(
                 pRecRenderData->venc_extradata_info.pBuffer = (unsigned char *)malloc(pH264SpsPps->nLength);
                 if(pRecRenderData->venc_extradata_info.pBuffer == NULL)
                 {
-                    aloge("pRecRenderData->venc_extradata_info.data == NULL");
+                    LOGE("pRecRenderData->venc_extradata_info.data == NULL");
                     break;
                 }
                 memcpy(pRecRenderData->venc_extradata_info.pBuffer, pH264SpsPps->pBuffer, pH264SpsPps->nLength);
@@ -1665,7 +1665,7 @@ ERRORTYPE RecRenderSetConfig(
             }
             else
             {
-                aloge("set video extra data error");
+                LOGE("set video extra data error");
             }
 
             /* 
@@ -1706,7 +1706,7 @@ ERRORTYPE RecRenderSetConfig(
         }
         default:
         {
-            aloge("fatal error! unknown nIndex[0x%x] in state[%d]", nIndex, pRecRenderData->state);
+            LOGE("fatal error! unknown nIndex[0x%x] in state[%d]", nIndex, pRecRenderData->state);
             eError = ERR_MUX_ILLEGAL_PARAM;
             break;
         }
@@ -1726,11 +1726,11 @@ ERRORTYPE RecRenderComponentTunnelRequest(
     RECRENDERDATATYPE *pRecRenderData = (RECRENDERDATATYPE *) (((MM_COMPONENTTYPE*) hComponent)->pComponentPrivate);
     if (pRecRenderData->state == COMP_StateExecuting)
     {
-        alogw("Be careful! tunnel request may be some danger in StateExecuting");
+        LOGW("Be careful! tunnel request may be some danger in StateExecuting");
     }
     else if (pRecRenderData->state != COMP_StateIdle)
     {
-        aloge("fatal error! tunnel request can't be in state[0x%x]!", pRecRenderData->state);
+        LOGE("fatal error! tunnel request can't be in state[0x%x]!", pRecRenderData->state);
         eError = ERR_MUX_INCORRECT_STATE_OPERATION;
         goto COMP_CMD_FAIL;
     }
@@ -1751,7 +1751,7 @@ ERRORTYPE RecRenderComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_MUX_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1768,7 +1768,7 @@ ERRORTYPE RecRenderComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_MUX_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1785,7 +1785,7 @@ ERRORTYPE RecRenderComponentTunnelRequest(
     }
     if(FALSE == bFindFlag)
     {
-        aloge("fatal error! portIndex[%d] wrong!", nPort);
+        LOGE("fatal error! portIndex[%d] wrong!", nPort);
         eError = ERR_MUX_ILLEGAL_PARAM;
         goto COMP_CMD_FAIL;
     }
@@ -1796,7 +1796,7 @@ ERRORTYPE RecRenderComponentTunnelRequest(
     pPortTunnelInfo->eTunnelType = (pPortDef->eDomain == COMP_PortDomainOther) ? TUNNEL_TYPE_CLOCK : TUNNEL_TYPE_COMMON;
     if(NULL==hTunneledComp && 0==nTunneledPort && NULL==pTunnelSetup)
     {
-        alogd("omx_core cancel setup tunnel on port[%d]", nPort);
+        LOGD("omx_core cancel setup tunnel on port[%d]", nPort);
         eError = SUCCESS;
         goto COMP_CMD_FAIL;
     }
@@ -1814,7 +1814,7 @@ ERRORTYPE RecRenderComponentTunnelRequest(
         ((MM_COMPONENTTYPE*)hTunneledComp)->GetConfig(hTunneledComp, COMP_IndexParamPortDefinition, &out_port_def);
         if(out_port_def.eDir != COMP_DirOutput)
         {
-            aloge("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
+            LOGE("fatal error! tunnel port index[%d] direction is not output!", nTunneledPort);
             eError = ERR_MUX_ILLEGAL_PARAM;
             goto COMP_CMD_FAIL;
         }
@@ -1823,7 +1823,7 @@ ERRORTYPE RecRenderComponentTunnelRequest(
         //The component B informs component A about the final result of negotiation.
         if(pTunnelSetup->eSupplier != pPortBufSupplier->eBufferSupplier)
         {
-            alogw("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
+            LOGW("Low probability! use input portIndex[%d] buffer supplier[%d] as final!", nPort, pPortBufSupplier->eBufferSupplier);
             pTunnelSetup->eSupplier = pPortBufSupplier->eBufferSupplier;
         }
         COMP_PARAM_BUFFERSUPPLIERTYPE oSupplier;
@@ -1885,7 +1885,7 @@ ERRORTYPE RecRenderEmptyThisBuffer(
        && (pRecRenderData->state != COMP_StatePause)
        )
     {
-        alogd("send buffer in invalid state[0x%x]!", pRecRenderData->state);
+        LOGD("send buffer in invalid state[0x%x]!", pRecRenderData->state);
         pthread_mutex_unlock(&pRecRenderData->mStateMutex);
         return ERR_MUX_INCORRECT_STATE_OPERATION;
     }
@@ -1896,13 +1896,13 @@ ERRORTYPE RecRenderEmptyThisBuffer(
     {
         if (ftell(fp_bs) == 0)
         {// Write SPS/PPS info
-            alogd("===== Write SPS/PPS Info");
+            LOGD("===== Write SPS/PPS Info");
             fwrite(pRecRenderData->venc_extradata_info.pBuffer, 1, pRecRenderData->venc_extradata_info.nLength, fp_bs);
         }
                 
         fwrite(pOutFrame->pBuffer, 1, pOutFrame->nBufferLen, fp_bs);
         fwrite(pOutFrame->pBufferExtra, 1, pOutFrame->nBufferExtraLen, fp_bs);
-        alogv("nBufferLen = %d nBufferExtraLen = %d KeyFrame = %d", pOutFrame->nBufferLen, pOutFrame->nBufferExtraLen, (pOutFrame->nFlags & CEDARV_FLAG_KEYFRAME) != 0);
+        LOGV("nBufferLen = %d nBufferExtraLen = %d KeyFrame = %d", pOutFrame->nBufferLen, pOutFrame->nBufferExtraLen, (pOutFrame->nFlags & CEDARV_FLAG_KEYFRAME) != 0);
     }
 #endif
 
@@ -1912,7 +1912,7 @@ ERRORTYPE RecRenderEmptyThisBuffer(
         EncodedStream *pOutFrame = (EncodedStream*)pBuffer->pOutputPortPrivate;
         if (pOutFrame->nFilledLen == 0)
         {
-            alogw("Video Pkt[ID=%d Pts=%lld] FilledLen[%d] not Match, BufferLen=%d BufferExtraLen=%d"
+            LOGW("Video Pkt[ID=%d Pts=%lld] FilledLen[%d] not Match, BufferLen=%d BufferExtraLen=%d"
                 ,pOutFrame->nID, pOutFrame->nTimeStamp, pOutFrame->nFilledLen, pOutFrame->nBufferLen, pOutFrame->nBufferExtraLen);
             //pOutFrame->nFilledLen = pOutFrame->nBufferLen + pOutFrame->nBufferExtraLen;
         }
@@ -1922,13 +1922,13 @@ ERRORTYPE RecRenderEmptyThisBuffer(
         // Ensure there is Idle node
         if (list_empty(&pRecRenderData->mVideoInputFrameIdleList))
         {
-            alogv("Low probability! RecRender idle frame is empty! Total Num = %d", pRecRenderData->mVideoInputFrameNum);
+            LOGV("Low probability! RecRender idle frame is empty! Total Num = %d", pRecRenderData->mVideoInputFrameNum);
             ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
             if (NULL == pNode)
             {
                 pthread_mutex_unlock(&pRecRenderData->mVideoInputFrameListMutex);
                 pthread_mutex_unlock(&pRecRenderData->mStateMutex);
-                aloge("fatal error! malloc fail!");
+                LOGE("fatal error! malloc fail!");
                 eError = ERR_MUX_NOMEM;
                 return eError;
             }
@@ -1958,7 +1958,7 @@ ERRORTYPE RecRenderEmptyThisBuffer(
         EncodedStream *pOutFrame = (EncodedStream*)pBuffer->pOutputPortPrivate;
         if (pOutFrame->nFilledLen == 0)
         {
-            alogw("Audio Pkt[ID=%d Pts=%lld] FilledLen[%d] not Match, BufferLen=%d BufferExtraLen=%d"
+            LOGW("Audio Pkt[ID=%d Pts=%lld] FilledLen[%d] not Match, BufferLen=%d BufferExtraLen=%d"
                 ,pOutFrame->nID, pOutFrame->nTimeStamp, pOutFrame->nFilledLen, pOutFrame->nBufferLen, pOutFrame->nBufferExtraLen);
             //pOutFrame->nFilledLen = pOutFrame->nBufferLen + pOutFrame->nBufferExtraLen;
         }
@@ -1968,13 +1968,13 @@ ERRORTYPE RecRenderEmptyThisBuffer(
         // Ensure there is Idle node
         if (list_empty(&pRecRenderData->mAudioInputFrameIdleList))
         {
-            alogw("Low probability! RecRender idle frame is empty! Total Num = %d", pRecRenderData->mAudioInputFrameNum);
+            LOGW("Low probability! RecRender idle frame is empty! Total Num = %d", pRecRenderData->mAudioInputFrameNum);
             ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
             if (NULL == pNode)
             {
                 pthread_mutex_unlock(&pRecRenderData->mAudioInputFrameListMutex);
                 pthread_mutex_unlock(&pRecRenderData->mStateMutex);
-                aloge("fatal error! malloc fail!");
+                LOGE("fatal error! malloc fail!");
                 eError = ERR_MUX_NOMEM;
                 return eError;
             }
@@ -2003,7 +2003,7 @@ ERRORTYPE RecRenderEmptyThisBuffer(
         EncodedStream    *pOutFrame = (EncodedStream*)pBuffer->pOutputPortPrivate;
         if (pOutFrame->nFilledLen == 0)
         {
-            alogw("text Pkt[ID=%d Pts=%lld] FilledLen[%d] not Match, BufferLen=%d BufferExtraLen=%d"
+            LOGW("text Pkt[ID=%d Pts=%lld] FilledLen[%d] not Match, BufferLen=%d BufferExtraLen=%d"
                 ,pOutFrame->nID, pOutFrame->nTimeStamp, pOutFrame->nFilledLen, pOutFrame->nBufferLen, pOutFrame->nBufferExtraLen);
             //pOutFrame->nFilledLen = pOutFrame->nBufferLen + pOutFrame->nBufferExtraLen;
         }
@@ -2012,13 +2012,13 @@ ERRORTYPE RecRenderEmptyThisBuffer(
 
         if (list_empty(&pRecRenderData->mTextInputFrameIdleList))
         {
-            alogw("Low probability! RecRender idle frame is empty! Total Num = %d", pRecRenderData->mAudioInputFrameNum);
+            LOGW("Low probability! RecRender idle frame is empty! Total Num = %d", pRecRenderData->mAudioInputFrameNum);
             ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
             if (NULL == pNode)
             {
                 pthread_mutex_unlock(&pRecRenderData->mTextInputFrameListMutex);
                 pthread_mutex_unlock(&pRecRenderData->mStateMutex);
-                aloge("fatal error! malloc fail!");
+                LOGE("fatal error! malloc fail!");
                 eError = ERR_MUX_NOMEM;
                 return eError;
             }
@@ -2044,7 +2044,7 @@ ERRORTYPE RecRenderEmptyThisBuffer(
     }
     else
     {
-        aloge("fatal error! inputPortIndex[%d] match nothing!", pBuffer->nInputPortIndex);
+        LOGE("fatal error! inputPortIndex[%d] match nothing!", pBuffer->nInputPortIndex);
     }
     pthread_mutex_unlock(&pRecRenderData->mStateMutex);
     return eError;
@@ -2062,7 +2062,7 @@ static ERRORTYPE RecRenderFlushCacheData(RECRENDERDATATYPE *pRecRenderData)
     if (!pRecRenderData->mbSdCardState) return SUCCESS;
 
     nPacketCount = pRecRenderData->cache_manager->GetReadyPacketCount((COMP_HANDLETYPE)pRecRenderData->cache_manager);
-    alogd("cacheManager left [%d]packets wait to flush", nPacketCount);
+    LOGD("cacheManager left [%d]packets wait to flush", nPacketCount);
     pthread_mutex_lock(&pRecRenderData->mSinkInfoListMutex);
     while (1)
     {
@@ -2084,7 +2084,7 @@ static ERRORTYPE RecRenderFlushCacheData(RECRENDERDATATYPE *pRecRenderData)
                 }
                 else
                 {
-                    aloge("fatal error! RecSink muxerId[%d] empty this buffer fail!", pEntry->mMuxerId);
+                    LOGE("fatal error! RecSink muxerId[%d] empty this buffer fail!", pEntry->mMuxerId);
                     pRecRenderData->cache_manager->ReleasePacket(pRecRenderData->cache_manager, pCacheRSPacket->mId);
                 }
             }
@@ -2099,7 +2099,7 @@ static ERRORTYPE RecRenderFlushCacheData(RECRENDERDATATYPE *pRecRenderData)
                 }
                 else
                 {
-                    aloge("fatal error! RecSink muxerId[%d] empty this buffer fail!", pEntry->mMuxerId);
+                    LOGE("fatal error! RecSink muxerId[%d] empty this buffer fail!", pEntry->mMuxerId);
                     pRecRenderData->cache_manager->ReleasePacket(pRecRenderData->cache_manager, pCacheRSPacket->mId);
                 }
             }
@@ -2110,7 +2110,7 @@ static ERRORTYPE RecRenderFlushCacheData(RECRENDERDATATYPE *pRecRenderData)
     pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);
     if(nPacketCount != nCounter)
     {
-        aloge("fatal error! cacheManger packet count exception! [%d]!=[%d]", nPacketCount, nCounter);
+        LOGE("fatal error! cacheManger packet count exception! [%d]!=[%d]", nPacketCount, nCounter);
     }
     return ret;
 }
@@ -2149,9 +2149,9 @@ ERRORTYPE RecRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if(pRecRenderData->mSinkInfoValidNum != 0)
     {
-        aloge("fatal error! valid sink info[%d]!=0", pRecRenderData->mSinkInfoValidNum);
+        LOGE("fatal error! valid sink info[%d]!=0", pRecRenderData->mSinkInfoValidNum);
     }
-    pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);   // ???Õâ¸öMuxÃ»ÓÐÏú»Ù£¿
+    pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);   // ???ï¿½ï¿½ï¿½MuxÃ»ï¿½ï¿½ï¿½ï¿½ï¿½Ù£ï¿½
 
     // should already release all video frame
     int iIdleVideoFrameCnt = 0;
@@ -2162,15 +2162,15 @@ ERRORTYPE RecRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if (iIdleVideoFrameCnt < pRecRenderData->mVideoInputFrameNum)
     {
-        aloge("fatal error! inputFrames[%d]<[%d] must return all before!", iIdleVideoFrameCnt, pRecRenderData->mVideoInputFrameNum);
+        LOGE("fatal error! inputFrames[%d]<[%d] must return all before!", iIdleVideoFrameCnt, pRecRenderData->mVideoInputFrameNum);
     }
     if (!list_empty(&pRecRenderData->mVideoInputFrameReadyList))
     {
-        aloge("fatal error! why readyInputFrame is not empty?");
+        LOGE("fatal error! why readyInputFrame is not empty?");
     }
     if (!list_empty(&pRecRenderData->mVideoInputFrameUsedList))
     {
-        aloge("fatal error! why usedInputFrame is not empty?");
+        LOGE("fatal error! why usedInputFrame is not empty?");
     }
     if (!list_empty(&pRecRenderData->mVideoInputFrameIdleList))
     {
@@ -2183,7 +2183,7 @@ ERRORTYPE RecRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if(pRecRenderData->mVideoInputFrameNum != MUX_FIFO_LEVEL)
     {
-        alogw("Low probability! RecRender idle frame Total Num: %d -> %d", MUX_FIFO_LEVEL, pRecRenderData->mVideoInputFrameNum);
+        LOGW("Low probability! RecRender idle frame Total Num: %d -> %d", MUX_FIFO_LEVEL, pRecRenderData->mVideoInputFrameNum);
     }
     // should already release all audio frame
     int iIdleAudioFrameCnt = 0;
@@ -2193,15 +2193,15 @@ ERRORTYPE RecRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if (iIdleAudioFrameCnt < pRecRenderData->mAudioInputFrameNum)
     {
-        aloge("fatal error! inputFrames[%d]<[%d] must return all before!", iIdleAudioFrameCnt, pRecRenderData->mAudioInputFrameNum);
+        LOGE("fatal error! inputFrames[%d]<[%d] must return all before!", iIdleAudioFrameCnt, pRecRenderData->mAudioInputFrameNum);
     }
     if (!list_empty(&pRecRenderData->mAudioInputFrameReadyList))
     {
-        aloge("fatal error! why readyInputFrame is not empty?");
+        LOGE("fatal error! why readyInputFrame is not empty?");
     }
     if (!list_empty(&pRecRenderData->mAudioInputFrameUsedList))
     {
-        aloge("fatal error! why usedInputFrame is not empty?");
+        LOGE("fatal error! why usedInputFrame is not empty?");
     }
     if (!list_empty(&pRecRenderData->mAudioInputFrameIdleList))
     {
@@ -2221,15 +2221,15 @@ ERRORTYPE RecRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if (iIdleTextFrameCnt < pRecRenderData->mTextInputFrameNum)
     {
-        aloge("fatal error! inputFrames[%d]<[%d] must return all before!", iIdleTextFrameCnt, pRecRenderData->mTextInputFrameNum);
+        LOGE("fatal error! inputFrames[%d]<[%d] must return all before!", iIdleTextFrameCnt, pRecRenderData->mTextInputFrameNum);
     }
     if (!list_empty(&pRecRenderData->mTextInputFrameReadyList))
     {
-        aloge("fatal error! why readyInputFrame is not empty?");
+        LOGE("fatal error! why readyInputFrame is not empty?");
     }
     if (!list_empty(&pRecRenderData->mTextInputFrameUsedList))
     {
-        aloge("fatal error! why usedInputFrame is not empty?");
+        LOGE("fatal error! why usedInputFrame is not empty?");
     }
     if (!list_empty(&pRecRenderData->mTextInputFrameIdleList))
     {
@@ -2245,7 +2245,7 @@ ERRORTYPE RecRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     put_message(&pRecRenderData->cmd_queue, &msg);
     //cdx_sem_up(&pRecRenderData->cdx_sem_wait_message);
 
-    alogv("wait recorder render component exit!...");
+    LOGV("wait recorder render component exit!...");
     // Wait for thread to exit so we can get the status into "error"
     pthread_join(pRecRenderData->thread_id, (void*) &eError);
 
@@ -2283,7 +2283,7 @@ ERRORTYPE RecRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
     }
     if(nodeNum!=pRecRenderData->mSinkInfoTotalNum)
     {
-        aloge("fatal error! frame node number is not match[%d][%d]", nodeNum, pRecRenderData->mSinkInfoTotalNum);
+        LOGE("fatal error! frame node number is not match[%d][%d]", nodeNum, pRecRenderData->mSinkInfoTotalNum);
     }
     pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);
 
@@ -2307,10 +2307,10 @@ ERRORTYPE RecRenderComponentDeInit(PARAM_IN COMP_HANDLETYPE hComponent)
         free(pRecRenderData);
         pRecRenderData = NULL;
     }
-    //alogd("[%s]sync_1", strrchr(__FILE__, '/')+1);
+    //LOGD("[%s]sync_1", strrchr(__FILE__, '/')+1);
     //sync();
-    //alogd("[%s]sync_2", strrchr(__FILE__, '/')+1);
-    alogd("recorder render component exited!");
+    //LOGD("[%s]sync_2", strrchr(__FILE__, '/')+1);
+    LOGD("recorder render component exited!");
 
     return eError;
 }
@@ -2343,7 +2343,7 @@ ERRORTYPE RecRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pRecRenderData->mStateMutex, NULL);
     if(err!=0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_MUX_NOMEM;
         goto EXIT;
     }
@@ -2356,7 +2356,7 @@ ERRORTYPE RecRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         RecSink *pNode = (RecSink*)malloc(sizeof(RecSink));
         if(NULL == pNode)
         {
-            aloge("fatal error! malloc fail[%s]!", strerror(errno));
+            LOGE("fatal error! malloc fail[%s]!", strerror(errno));
             break;
         }
         memset(pNode, 0, sizeof(RecSink));
@@ -2366,7 +2366,7 @@ ERRORTYPE RecRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pRecRenderData->mSinkInfoListMutex, NULL);
     if(err!=0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_MUX_NOMEM;
         goto EXIT;
     }
@@ -2380,7 +2380,7 @@ ERRORTYPE RecRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
         if (NULL == pNode)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             eError = ERR_MUX_NOMEM;
             goto EXIT;
         }
@@ -2392,7 +2392,7 @@ ERRORTYPE RecRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pRecRenderData->mVideoInputFrameListMutex, NULL);
     if (err!=0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_MUX_NOMEM;
         goto EXIT;
     }
@@ -2406,7 +2406,7 @@ ERRORTYPE RecRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
         if (NULL == pNode)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             eError = ERR_MUX_NOMEM;
             goto EXIT;
         }
@@ -2418,7 +2418,7 @@ ERRORTYPE RecRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pRecRenderData->mAudioInputFrameListMutex, NULL);
     if(err!=0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_MUX_NOMEM;
         goto EXIT;
     }
@@ -2432,7 +2432,7 @@ ERRORTYPE RecRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
         ENCODER_NODE_T *pNode = (ENCODER_NODE_T*)malloc(sizeof(ENCODER_NODE_T));
         if (NULL == pNode)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             eError = ERR_MUX_NOMEM;
             goto EXIT;
         }
@@ -2444,7 +2444,7 @@ ERRORTYPE RecRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
     err = pthread_mutex_init(&pRecRenderData->mTextInputFrameListMutex, NULL);
     if(err!=0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         eError = ERR_MUX_NOMEM;
         goto EXIT;
     }
@@ -2498,7 +2498,7 @@ ERRORTYPE RecRenderComponentInit(PARAM_IN COMP_HANDLETYPE hComponent)
 
     if(message_create(&pRecRenderData->cmd_queue) < 0)
     {
-        aloge("message error!");
+        LOGE("message error!");
         eError = ERR_MUX_NOMEM;
         goto EXIT;
     }
@@ -2526,7 +2526,7 @@ void adjustAvsCounter(void* pThreadData)
 
     // avs_counter_get_time_us(&now_avs_counter);
     pRecRenderData->avs_counter->get_time(pRecRenderData->avs_counter, &now_avs_counter);
-    alogv("now_avs_counter: %lld", now_avs_counter);
+    LOGV("now_avs_counter: %lld", now_avs_counter);
 
     mediaTimediff = (int)(pRecRenderData->duration - pRecRenderData->duration_audio);
     if(mediaTimediff > 100 || mediaTimediff < -100)
@@ -2549,7 +2549,7 @@ void adjustAvsCounter(void* pThreadData)
         // avs_counter_adjust_abs(adjust_ratio);
         pRecRenderData->avs_counter->adjust(pRecRenderData->avs_counter, adjust_ratio);
 #endif
-        alogd("----adjust ratio:%d, video:%lld audio:%lld diff:%d diff-percent:%d ----",
+        LOGD("----adjust ratio:%d, video:%lld audio:%lld diff:%d diff-percent:%d ----",
                 adjust_ratio, pRecRenderData->duration, pRecRenderData->duration_audio,
                 mediaTimediff, mediaTimediff / (AVS_ADJUST_PERIOD_MS/100));
     }
@@ -2557,7 +2557,7 @@ void adjustAvsCounter(void* pThreadData)
     {
         //avs_counter_adjust_abs(0);
         pRecRenderData->avs_counter->adjust(pRecRenderData->avs_counter, 0);
-        alogd("----adjust ratio: 0, video: %lld(ms), auido: %lld(ms), diff: %lld(ms)",
+        LOGD("----adjust ratio: 0, video: %lld(ms), auido: %lld(ms), diff: %lld(ms)",
             pRecRenderData->duration, pRecRenderData->duration_audio, pRecRenderData->duration - pRecRenderData->duration_audio);
     }
 }
@@ -2584,7 +2584,7 @@ static void* RecRender_ComponentThread(void* pThreadData)
     RecSinkPacket   RSPacket;
     RecSinkPacket   *pCacheRSPacket;
     ERRORTYPE eRet;
-    alogv("Recorder Render ComponentThread start run...");
+    LOGV("Recorder Render ComponentThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"MuxerComp", 0, 0, 0);
 
     while (1)
@@ -2595,7 +2595,7 @@ PROCESS_MESSAGE:
             cmd = cmd_msg.command;
             cmddata = (unsigned int)cmd_msg.para0;
 
-            alogv("RecRender ComponentThread get_message cmd:%d", cmd);
+            LOGV("RecRender ComponentThread get_message cmd:%d", cmd);
 
             // State transition command
             if (cmd == SetState)
@@ -2640,7 +2640,7 @@ PROCESS_MESSAGE:
                         {
                             if (pRecRenderData->state != COMP_StateIdle)
                             {
-                                aloge("fatal error! curState[0x%x] is wrong", pRecRenderData->state);
+                                LOGE("fatal error! curState[0x%x] is wrong", pRecRenderData->state);
                                 pRecRenderData->pCallbacks->EventHandler(
                                         pRecRenderData->hSelf,
                                         pRecRenderData->pAppData,
@@ -2649,7 +2649,7 @@ PROCESS_MESSAGE:
                                         0,
                                         NULL);
                             }
-                            alogv("RecRender set state LOADED");
+                            LOGV("RecRender set state LOADED");
                             RecRenderFlushCacheData(pRecRenderData);
                             //stop all RecSinks,
                             RecSink *pRecSinkEntry;
@@ -2663,16 +2663,16 @@ PROCESS_MESSAGE:
                             }
 
                             //release all frames.
-                            alogd("release all frames to VEnc, AEnc and TEnc, when state[0x%x]->[0x%x]", pRecRenderData->state, COMP_StateLoaded);
+                            LOGD("release all frames to VEnc, AEnc and TEnc, when state[0x%x]->[0x%x]", pRecRenderData->state, COMP_StateLoaded);
                             pthread_mutex_lock(&pRecRenderData->mVideoInputFrameListMutex);
                             ENCODER_NODE_T *pVEntry, *pVTmp;
                             if (!list_empty(&pRecRenderData->mVideoInputFrameUsedList))
                             {
-                                aloge("fatal error:Used video frame should all released before!");
+                                LOGE("fatal error:Used video frame should all released before!");
 
                                 list_for_each_entry_safe(pVEntry, pVTmp, &pRecRenderData->mVideoInputFrameUsedList, mList)
                                 {
-                                    aloge("RefCnt[%d]", pVEntry->mUsedRefCnt);
+                                    LOGE("RefCnt[%d]", pVEntry->mUsedRefCnt);
                                     list_move_tail(&pVEntry->mList, &pRecRenderData->mVideoInputFrameIdleList);
 
                                     MM_COMPONENTTYPE *pInPortTunnelComp = (MM_COMPONENTTYPE*)(pRecRenderData->sInPortTunnelInfo[RECR_PORT_INDEX_VIDEO].hTunnel);
@@ -2683,17 +2683,17 @@ PROCESS_MESSAGE:
                                     eRet = pInPortTunnelComp->FillThisBuffer(pInPortTunnelComp, &obh);
                                     if(eRet != SUCCESS)
                                     {
-                                        aloge("fatal error! fill this buffer fail[0x%x], video frame id=[%d], discard it!", eRet, pVEntry->stEncodedStream.nID);
+                                        LOGE("fatal error! fill this buffer fail[0x%x], video frame id=[%d], discard it!", eRet, pVEntry->stEncodedStream.nID);
                                     }
                                 }
                             }
                             if (!list_empty(&pRecRenderData->mVideoInputFrameReadyList))
                             {
-                                alogd("Ready video frame should all release before!");
+                                LOGD("Ready video frame should all release before!");
 
                                 list_for_each_entry_safe(pVEntry, pVTmp, &pRecRenderData->mVideoInputFrameReadyList, mList)
                                 {
-                                    alogw("RefCnt[%d]", pVEntry->mUsedRefCnt);
+                                    LOGW("RefCnt[%d]", pVEntry->mUsedRefCnt);
                                     list_move_tail(&pVEntry->mList, &pRecRenderData->mVideoInputFrameIdleList);
 
                                     MM_COMPONENTTYPE *pInPortTunnelComp = (MM_COMPONENTTYPE*)(pRecRenderData->sInPortTunnelInfo[RECR_PORT_INDEX_VIDEO].hTunnel);
@@ -2704,7 +2704,7 @@ PROCESS_MESSAGE:
                                     eRet = pInPortTunnelComp->FillThisBuffer(pInPortTunnelComp, &obh);
                                     if (eRet != SUCCESS)
                                     {
-                                        aloge("fatal error! fill this buffer fail[0x%x], video frame id=[%d], discard it!", eRet, pVEntry->stEncodedStream.nID);
+                                        LOGE("fatal error! fill this buffer fail[0x%x], video frame id=[%d], discard it!", eRet, pVEntry->stEncodedStream.nID);
                                     }
                                 }
                             }
@@ -2716,11 +2716,11 @@ PROCESS_MESSAGE:
                             }
                             if (iIdleVideoFrameCnt != pRecRenderData->mVideoInputFrameNum)
                             {
-                                aloge("fatal error! video input frames [%d]<[%d] must return all before", iIdleVideoFrameCnt, pRecRenderData->mVideoInputFrameNum);
+                                LOGE("fatal error! video input frames [%d]<[%d] must return all before", iIdleVideoFrameCnt, pRecRenderData->mVideoInputFrameNum);
                             }
                             else
                             {
-                                alogd("Release all video input frame [%d]", pRecRenderData->mVideoInputFrameNum);
+                                LOGD("Release all video input frame [%d]", pRecRenderData->mVideoInputFrameNum);
                             }
                             pthread_mutex_unlock(&pRecRenderData->mVideoInputFrameListMutex);
 
@@ -2728,11 +2728,11 @@ PROCESS_MESSAGE:
                             ENCODER_NODE_T *pAEntry, *pATmp;
                             if (!list_empty(&pRecRenderData->mAudioInputFrameUsedList))
                             {
-                                aloge("fatal error! used audio frame should all released before!");
+                                LOGE("fatal error! used audio frame should all released before!");
 
                                 list_for_each_entry_safe(pAEntry, pATmp, &pRecRenderData->mAudioInputFrameUsedList, mList)
                                 {
-                                    aloge("RefCnt[%d]", pAEntry->mUsedRefCnt);
+                                    LOGE("RefCnt[%d]", pAEntry->mUsedRefCnt);
                                     list_move_tail(&pAEntry->mList, &pRecRenderData->mAudioInputFrameIdleList);
                                     MM_COMPONENTTYPE *pInPortTunnelComp = (MM_COMPONENTTYPE*)(pRecRenderData->sInPortTunnelInfo[RECR_PORT_INDEX_AUDIO].hTunnel);
                                     COMP_BUFFERHEADERTYPE obh;
@@ -2742,17 +2742,17 @@ PROCESS_MESSAGE:
                                     eRet = pInPortTunnelComp->FillThisBuffer(pInPortTunnelComp, &obh);
                                     if(eRet != SUCCESS)
                                     {
-                                        aloge("fatal error! fill this buffer fail[0x%x], audio frame id=[%d], discard it!", eRet, pAEntry->stEncodedStream.nID);
+                                        LOGE("fatal error! fill this buffer fail[0x%x], audio frame id=[%d], discard it!", eRet, pAEntry->stEncodedStream.nID);
                                     }
                                 }
                             }
                             if (!list_empty(&pRecRenderData->mAudioInputFrameReadyList))
                             {
-                                alogd("Ready audio frame should all released before!");
+                                LOGD("Ready audio frame should all released before!");
 
                                 list_for_each_entry_safe(pAEntry, pATmp, &pRecRenderData->mAudioInputFrameReadyList, mList)
                                 {
-                                    alogw("RefCnt[%d]", pAEntry->mUsedRefCnt);
+                                    LOGW("RefCnt[%d]", pAEntry->mUsedRefCnt);
                                     list_move_tail(&pAEntry->mList, &pRecRenderData->mAudioInputFrameIdleList);
                                     MM_COMPONENTTYPE *pInPortTunnelComp = (MM_COMPONENTTYPE*)(pRecRenderData->sInPortTunnelInfo[RECR_PORT_INDEX_AUDIO].hTunnel);
                                     COMP_BUFFERHEADERTYPE obh;
@@ -2762,7 +2762,7 @@ PROCESS_MESSAGE:
                                     eRet = pInPortTunnelComp->FillThisBuffer(pInPortTunnelComp, &obh);
                                     if (eRet != SUCCESS)
                                     {
-                                        aloge("fatal error! fill this buffer fail[0x%x], audio frame id=[%d], discard it!", eRet, pAEntry->stEncodedStream.nID);
+                                        LOGE("fatal error! fill this buffer fail[0x%x], audio frame id=[%d], discard it!", eRet, pAEntry->stEncodedStream.nID);
                                     }
                                 }
                             }
@@ -2774,11 +2774,11 @@ PROCESS_MESSAGE:
                             }
                             if (iIdleAudioFrameCnt != pRecRenderData->mAudioInputFrameNum)
                             {
-                                aloge("fatal error! audio input frames [%d]<[%d] must return all before", iIdleAudioFrameCnt, pRecRenderData->mAudioInputFrameNum);
+                                LOGE("fatal error! audio input frames [%d]<[%d] must return all before", iIdleAudioFrameCnt, pRecRenderData->mAudioInputFrameNum);
                             }
                             else
                             {
-                                alogd("Release all audio input frame [%d]", pRecRenderData->mAudioInputFrameNum);
+                                LOGD("Release all audio input frame [%d]", pRecRenderData->mAudioInputFrameNum);
                             }
                             pthread_mutex_unlock(&pRecRenderData->mAudioInputFrameListMutex);
 
@@ -2786,11 +2786,11 @@ PROCESS_MESSAGE:
                             ENCODER_NODE_T *pTEntry, *pTTmp;
                             if (!list_empty(&pRecRenderData->mTextInputFrameUsedList))
                             {
-                                aloge("fatal error! used text frame should all released before!");
+                                LOGE("fatal error! used text frame should all released before!");
 
                                 list_for_each_entry_safe(pTEntry, pTTmp, &pRecRenderData->mTextInputFrameUsedList, mList)
                                 {
-                                    aloge("RefCnt[%d]", pTEntry->mUsedRefCnt);
+                                    LOGE("RefCnt[%d]", pTEntry->mUsedRefCnt);
                                     list_move_tail(&pTEntry->mList, &pRecRenderData->mTextInputFrameIdleList);
                                     MM_COMPONENTTYPE *pInPortTunnelComp = (MM_COMPONENTTYPE*)(pRecRenderData->sInPortTunnelInfo[RECR_PORT_INDEX_TEXT].hTunnel);
                                     COMP_BUFFERHEADERTYPE obh;
@@ -2800,17 +2800,17 @@ PROCESS_MESSAGE:
                                     eRet = pInPortTunnelComp->FillThisBuffer(pInPortTunnelComp, &obh);
                                     if(eRet != SUCCESS)
                                     {
-                                        aloge("fatal error! fill this buffer fail[0x%x], text frame id=[%d], discard it!", eRet, pTEntry->stEncodedStream.nID);
+                                        LOGE("fatal error! fill this buffer fail[0x%x], text frame id=[%d], discard it!", eRet, pTEntry->stEncodedStream.nID);
                                     }
                                 }
                             }
                             if (!list_empty(&pRecRenderData->mTextInputFrameReadyList))
                             {
-                                alogd("Ready text frame should all released before!");
+                                LOGD("Ready text frame should all released before!");
 
                                 list_for_each_entry_safe(pTEntry, pTTmp, &pRecRenderData->mTextInputFrameReadyList, mList)
                                 {
-                                    alogw("RefCnt[%d]", pTEntry->mUsedRefCnt);
+                                    LOGW("RefCnt[%d]", pTEntry->mUsedRefCnt);
                                     list_move_tail(&pTEntry->mList, &pRecRenderData->mTextInputFrameIdleList);
                                     MM_COMPONENTTYPE *pInPortTunnelComp = (MM_COMPONENTTYPE*)(pRecRenderData->sInPortTunnelInfo[RECR_PORT_INDEX_TEXT].hTunnel);
                                     COMP_BUFFERHEADERTYPE obh;
@@ -2820,7 +2820,7 @@ PROCESS_MESSAGE:
                                     eRet = pInPortTunnelComp->FillThisBuffer(pInPortTunnelComp, &obh);
                                     if(eRet != SUCCESS)
                                     {
-                                        aloge("fatal error! fill this buffer fail[0x%x], text frame id=[%d], discard it!", eRet, pTEntry->stEncodedStream.nID);
+                                        LOGE("fatal error! fill this buffer fail[0x%x], text frame id=[%d], discard it!", eRet, pTEntry->stEncodedStream.nID);
                                     }
                                 }
                             }
@@ -2832,11 +2832,11 @@ PROCESS_MESSAGE:
                             }
                             if (iIdleTextFrameCnt != pRecRenderData->mTextInputFrameNum)
                             {
-                                aloge("fatal error! text input frames [%d]<[%d] must return all before", iIdleTextFrameCnt, pRecRenderData->mTextInputFrameNum);
+                                LOGE("fatal error! text input frames [%d]<[%d] must return all before", iIdleTextFrameCnt, pRecRenderData->mTextInputFrameNum);
                             }
                             else
                             {
-                                alogd("Release all text input frame [%d]", pRecRenderData->mTextInputFrameNum);
+                                LOGD("Release all text input frame [%d]", pRecRenderData->mTextInputFrameNum);
                             }
 
                             pthread_mutex_unlock(&pRecRenderData->mTextInputFrameListMutex);
@@ -2856,14 +2856,14 @@ PROCESS_MESSAGE:
                                     COMP_CommandStateSet,
                                     pRecRenderData->state,
                                     NULL);
-                            alogv("RecRender set state LOADED ok");
+                            LOGV("RecRender set state LOADED ok");
                             break;
                         }
                         case COMP_StateIdle:
                         {
                             if (pRecRenderData->state == COMP_StateInvalid)
                             {
-                                aloge("InvalidState[%d]->[%d]", pRecRenderData->state, COMP_StateIdle);
+                                LOGE("InvalidState[%d]->[%d]", pRecRenderData->state, COMP_StateIdle);
                                 pRecRenderData->pCallbacks->EventHandler(
                                         pRecRenderData->hSelf,
                                         pRecRenderData->pAppData,
@@ -2874,7 +2874,7 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                alogv("recRender turn to stateIdle, [%d]->[%d]", pRecRenderData->state, COMP_StateIdle);
+                                LOGV("recRender turn to stateIdle, [%d]->[%d]", pRecRenderData->state, COMP_StateIdle);
                                 pRecRenderData->state = COMP_StateIdle;
                                 pRecRenderData->pCallbacks->EventHandler(
                                         pRecRenderData->hSelf,
@@ -2902,7 +2902,7 @@ PROCESS_MESSAGE:
                                         pRecRenderData->track_exist |= 1<<CODEC_TYPE_VIDEO;
                                         if(pRecRenderData->sInPortTunnelInfo[RECR_PORT_INDEX_VIDEO].hTunnel == NULL)
                                         {
-                                            aloge("fatal error! hnd_venc_comp is null");
+                                            LOGE("fatal error! hnd_venc_comp is null");
                                             pRecRenderData->state = COMP_StateInvalid;
                                             pRecRenderData->pCallbacks->EventHandler(
                                                     pRecRenderData->hSelf,
@@ -2920,7 +2920,7 @@ PROCESS_MESSAGE:
                                         pRecRenderData->track_exist |= 1<<CODEC_TYPE_AUDIO;
                                         if(pRecRenderData->sInPortTunnelInfo[RECR_PORT_INDEX_AUDIO].hTunnel == NULL)
                                         {
-                                            aloge("fatal error! hnd_aenc_comp is null");
+                                            LOGE("fatal error! hnd_aenc_comp is null");
                                             pRecRenderData->state = COMP_StateInvalid;
                                             pRecRenderData->pCallbacks->EventHandler(
                                                     pRecRenderData->hSelf,
@@ -2938,7 +2938,7 @@ PROCESS_MESSAGE:
                                         pRecRenderData->track_exist |= 1<<CODEC_TYPE_TEXT;
                                         if(pRecRenderData->sInPortTunnelInfo[RECR_PORT_INDEX_TEXT].hTunnel == NULL)
                                         {
-                                            aloge("fatal error! hnd_tenc_comp is null");
+                                            LOGE("fatal error! hnd_tenc_comp is null");
                                             pRecRenderData->state = COMP_StateInvalid;
                                             pRecRenderData->pCallbacks->EventHandler(
                                                     pRecRenderData->hSelf,
@@ -2976,11 +2976,11 @@ PROCESS_MESSAGE:
                                     }
                                     if(!list_empty(&pRecRenderData->mSwitchingSinkInfoList))
                                     {
-                                        aloge("fatal error! switchingSinkList is not empty! check code!");
+                                        LOGE("fatal error! switchingSinkList is not empty! check code!");
                                     }
                                     if(nFdFlag)
                                     {
-                                        alogd("[%d] RecSinks when turn to OMX_StateExecuting", nFdFlag);
+                                        LOGD("[%d] RecSinks when turn to OMX_StateExecuting", nFdFlag);
                                     }
                                 }
                                 else if (pRecRenderData->state == COMP_StatePause)
@@ -2997,7 +2997,7 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                aloge("InvalidState[%d]->[%d]", pRecRenderData->state, COMP_StateExecuting);
+                                LOGE("InvalidState[%d]->[%d]", pRecRenderData->state, COMP_StateExecuting);
                                 pRecRenderData->pCallbacks->EventHandler(
                                         pRecRenderData->hSelf,
                                         pRecRenderData->pAppData,
@@ -3024,7 +3024,7 @@ PROCESS_MESSAGE:
                             }
                             else
                             {
-                                aloge("InvalidState[%d]->[%d]", pRecRenderData->state, COMP_StatePause);
+                                LOGE("InvalidState[%d]->[%d]", pRecRenderData->state, COMP_StatePause);
                                 pRecRenderData->pCallbacks->EventHandler(
                                         pRecRenderData->hSelf,
                                         pRecRenderData->pAppData,
@@ -3037,7 +3037,7 @@ PROCESS_MESSAGE:
                         }
                         default:
                         {
-                            aloge("fatal error! InvalidState[%d]->[%d]", pRecRenderData->state, (COMP_STATETYPE) (cmddata));
+                            LOGE("fatal error! InvalidState[%d]->[%d]", pRecRenderData->state, (COMP_STATETYPE) (cmddata));
                             break;
                         }
                     }
@@ -3065,7 +3065,7 @@ PROCESS_MESSAGE:
                     if ((pChnAttr->mMediaFileFormat == MEDIA_FILE_FORMAT_MP3) || \
                         (pChnAttr->mMediaFileFormat == MEDIA_FILE_FORMAT_AAC) )
                     {
-                        aloge("grp attr not set to audio, but now set chn to audio out");
+                        LOGE("grp attr not set to audio, but now set chn to audio out");
                         eRet = FAILURE;
                     }
                 }
@@ -3075,7 +3075,7 @@ PROCESS_MESSAGE:
                     eRet = RecRender_AddOutputSinkInfo(pRecRenderData, nChnId, pChnAttr, nFd);
                     if (eRet != SUCCESS)
                     {
-                        aloge("fatal error! why RecRender AddOutputSinkInfo()[0x%x] fail?", eRet);
+                        LOGE("fatal error! why RecRender AddOutputSinkInfo()[0x%x] fail?", eRet);
                     }
                 }
                 free(cmd_msg.mpData);
@@ -3096,7 +3096,7 @@ PROCESS_MESSAGE:
                 eRet = RecRender_RemoveOutputSinkInfo(pRecRenderData, (int)cmddata);
                 if(eRet != SUCCESS)
                 {
-                    aloge("fatal error! why RecRender_RemoveOutputSinkInfo()[0x%x] fail?", eRet);
+                    LOGE("fatal error! why RecRender_RemoveOutputSinkInfo()[0x%x] fail?", eRet);
                 }
                 pRecRenderData->pCallbacks->EventHandler(
                         pRecRenderData->hSelf,
@@ -3108,9 +3108,9 @@ PROCESS_MESSAGE:
             }
             else if (SwitchFile == cmd)
             {
-                //alogd("<F:%s, L:%d>Switch file rec_file=%d", pRecRenderData->rec_file);
+                //LOGD("<F:%s, L:%d>Switch file rec_file=%d", pRecRenderData->rec_file);
                 int nMuxerId = (int)cmddata;
-                alogd("Switch file at muxerId[%d]", nMuxerId);
+                LOGD("Switch file at muxerId[%d]", nMuxerId);
                 pthread_mutex_lock(&pRecRenderData->mSinkInfoListMutex);
                 int i=0;
                 RecSink *pEntry, *pTmp;
@@ -3125,13 +3125,13 @@ PROCESS_MESSAGE:
                 {
                     if(pEntry->mMuxerId == nMuxerId)
                     {
-                        alogw("Switch file at muxerId[%d] during switching, ignore it!", nMuxerId);
+                        LOGW("Switch file at muxerId[%d] during switching, ignore it!", nMuxerId);
                         i++;
                     }
                 }
                 if(i!=1)
                 {
-                    aloge("fatal error! Switch file at muxerId[%d],[%d]times", nMuxerId, i);
+                    LOGE("fatal error! Switch file at muxerId[%d],[%d]times", nMuxerId, i);
                 }
 
                 list_for_each_entry_safe(pEntry, pTmp, &pRecRenderData->mValidSinkInfoList, mList)
@@ -3155,7 +3155,7 @@ PROCESS_MESSAGE:
                         }
                         else
                         {
-                            aloge("fatal error! Switch file in callback mode muxerId[%d]", nMuxerId);
+                            LOGE("fatal error! Switch file in callback mode muxerId[%d]", nMuxerId);
                         }
                         break;
                     }
@@ -3169,7 +3169,7 @@ PROCESS_MESSAGE:
                 BOOL bCacheFlag = pRecRenderData->cache_manager?TRUE:FALSE;
                 if(bCacheFlag!=TRUE)
                 {
-                    aloge("fatal error! no cache manager but send SwitchFileDone, muxerId[%d], why?", nMuxerId);
+                    LOGE("fatal error! no cache manager but send SwitchFileDone, muxerId[%d], why?", nMuxerId);
                     goto EndProcessMessage;
                 }
                 int i=0;
@@ -3191,7 +3191,7 @@ PROCESS_MESSAGE:
                 }
                 if(i!=1)
                 {
-                    aloge("fatal error! switch file done at muxerId[%d],[%d]times", nMuxerId, i);
+                    LOGE("fatal error! switch file done at muxerId[%d],[%d]times", nMuxerId, i);
                 }
 
                 list_for_each_entry(pEntry, &pRecRenderData->mSwitchingSinkInfoList, mList)
@@ -3204,7 +3204,7 @@ PROCESS_MESSAGE:
                 }
                 if(bFindFlag!=TRUE)
                 {
-                    aloge("fatal error! not find muxerId[%d] when switch file done", nMuxerId);
+                    LOGE("fatal error! not find muxerId[%d] when switch file done", nMuxerId);
                     pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);
                     goto EndProcessMessage;
                 }
@@ -3252,17 +3252,17 @@ PROCESS_MESSAGE:
                         }
                         else
                         {
-                            aloge("fatal error! RecSink muxerId[%d] empty this buffer fail!", pEntry->mMuxerId);
+                            LOGE("fatal error! RecSink muxerId[%d] empty this buffer fail!", pEntry->mMuxerId);
                             pRecRenderData->cache_manager->ReleasePacket(pRecRenderData->cache_manager, pPacketEntry->mId);
                         }
                         sendCnt++;
                      }
                      cnt++;
                 }
-                alogd("switch file done! Resend [%d]of[%d]usingPackets to muxerId[%d]!", sendCnt, cnt, pEntry->mMuxerId);
+                LOGD("switch file done! Resend [%d]of[%d]usingPackets to muxerId[%d]!", sendCnt, cnt, pEntry->mMuxerId);
                 if(pRecRenderData->cache_manager->GetReadyPacketCount(pRecRenderData->cache_manager)>0)
                 {
-                    aloge("fatal error! cache ReadyList impossible has element now!");
+                    LOGE("fatal error! cache ReadyList impossible has element now!");
                 }
                 //pthread_mutex_unlock(&pRecRenderData->cache_manager->mPacketListLock);
                 pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);
@@ -3270,7 +3270,7 @@ PROCESS_MESSAGE:
             else if (SwitchFileNormal == cmd)
             {
                 int nMuxerId = (int)cmddata;
-                alogd("Switch file normal at muxerId[%d]", nMuxerId);
+                LOGD("Switch file normal at muxerId[%d]", nMuxerId);
                 pthread_mutex_lock(&pRecRenderData->mSinkInfoListMutex);
                 int i=0;
                 RecSink *pEntry, *pTmp;
@@ -3285,13 +3285,13 @@ PROCESS_MESSAGE:
                 {
                     if(pEntry->mMuxerId == nMuxerId)
                     {
-                        alogw("Switch file normal at muxerId[%d] during switching, ignore it!", nMuxerId);
+                        LOGW("Switch file normal at muxerId[%d] during switching, ignore it!", nMuxerId);
                         i++;
                     }
                 }
                 if(i!=1)
                 {
-                    aloge("fatal error! Switch file at muxerId[%d],[%d]times", nMuxerId, i);
+                    LOGE("fatal error! Switch file at muxerId[%d],[%d]times", nMuxerId, i);
                 }
 
                 list_for_each_entry_safe(pEntry, pTmp, &pRecRenderData->mValidSinkInfoList, mList)
@@ -3309,7 +3309,7 @@ PROCESS_MESSAGE:
                         }
                         else
                         {
-                            aloge("fatal error! Switch file normal in callback mode muxerId[%d]", nMuxerId);
+                            LOGE("fatal error! Switch file normal in callback mode muxerId[%d]", nMuxerId);
                         }
                         break;
                     }
@@ -3318,7 +3318,7 @@ PROCESS_MESSAGE:
             }
             else if (RecRenderComp_InputFrameAvailable == cmd)
             {
-                alogv("inputFrameAvailable");
+                LOGV("inputFrameAvailable");
                 //pRecRenderData->mNoInputFrameFlag = 0;
             }
 EndProcessMessage:
@@ -3408,7 +3408,7 @@ EndProcessMessage:
                 }
                 else
                 {
-                    alogd("Be careful! Low impossible. curFailFlags[0x%x]!=[0x%x]", curFailFlags, buffer_fail_flags);
+                    LOGD("Be careful! Low impossible. curFailFlags[0x%x]!=[0x%x]", curFailFlags, buffer_fail_flags);
                     bNeedWaitMessage = 0;
                 }
                 if(curRecorderMode & RECORDER_MODE_VIDEO)
@@ -3426,7 +3426,7 @@ EndProcessMessage:
                 if(bNeedWaitMessage)
                 {
                     TMessage_WaitQueueNotEmpty(&pRecRenderData->cmd_queue, 0);
-                    //alogd("request nothing from all track, wait done");
+                    //LOGD("request nothing from all track, wait done");
                 }
                 goto PROCESS_MESSAGE;
             }
@@ -3436,7 +3436,7 @@ EndProcessMessage:
             {
                 if (pRecRenderData->cache_manager->PushPacket((COMP_HANDLETYPE)pRecRenderData->cache_manager, &RSPacket) != SUCCESS)
                 {
-                    aloge("fatal error! push packet to cache manager fail, impossible!");
+                    LOGE("fatal error! push packet to cache manager fail, impossible!");
                 }
                 pRecRenderData->cache_manager->ControlCacheLevel(pRecRenderData->cache_manager);
             }
@@ -3455,7 +3455,7 @@ EndProcessMessage:
                     }
                     else
                     {
-                        aloge("fatal error! RecSink empty this buffer fail!");
+                        LOGE("fatal error! RecSink empty this buffer fail!");
                         RecRender_ReleaseBuffer(pRecRenderData, &RSPacket);
                     }
                 }
@@ -3486,7 +3486,7 @@ EndProcessMessage:
                             }
                             else
                             {
-                                aloge("fatal error! RecSink empty this buffer fail!");
+                                LOGE("fatal error! RecSink empty this buffer fail!");
                                 pRecRenderData->cache_manager->ReleasePacket(pRecRenderData->cache_manager, pCacheRSPacket->mId);
                             }
                         }
@@ -3494,7 +3494,7 @@ EndProcessMessage:
                 }
                 if(nCacheReadyPacketNum > 1)
                 {
-                    //alogd("send [%d]cacheReadyPackets", nCacheReadyPacketNum);
+                    //LOGD("send [%d]cacheReadyPackets", nCacheReadyPacketNum);
                 }
             }
             pthread_mutex_unlock(&pRecRenderData->mSinkInfoListMutex);
@@ -3506,7 +3506,7 @@ EndProcessMessage:
         }
     }
 EXIT:
-    alogv("Recorder Render ComponentThread stopped");
+    LOGV("Recorder Render ComponentThread stopped");
     return (void*) SUCCESS;
 }
 

@@ -1,6 +1,6 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mm_comm_venc"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include "mm_comm_venc.h"
 #include <mm_comm_venc_op.h>
@@ -27,7 +27,7 @@ ERRORTYPE getPicSizeFromVENC_ATTR_S(VENC_ATTR_S *pVencAttr, SIZE_S *pPicSize)
             pPicSize->Height = pVencAttr->AttrH265e.mPicHeight;
             break;
         default:
-            aloge("fatal error! unsupport venc type[%d]", pVencAttr->Type);
+            LOGE("fatal error! unsupport venc type[%d]", pVencAttr->Type);
             ret = FAILURE;
             break;
     }

@@ -1,6 +1,8 @@
 
 #include "isp_math_util.h"
 
+#include <log/log.h>
+
 #define N 8
 
 void HorizontalMirror(int arr[64])
@@ -186,7 +188,7 @@ int ArrayStdVar(int x[], int n)
 int RoundQ4(int x)
 {
 	int ret;
-	//printf("x&0xf = %d\n",x&0xf);
+	//LOGI("x&0xf = %d\n",x&0xf);
 	if(0x8 > (x&0xf) )
 	{
 		ret = x>>4;
@@ -380,7 +382,7 @@ loop:
 	h = xa[khi] - xa[klo];
 	if (h == 0 )
 	{
-		printf("  pause  'bad  xa  input'");
+		LOGI("  pause  'bad  xa  input'");
 		return;
 	}
 	a = (xa[khi] - x) / h;
@@ -411,13 +413,13 @@ void spline_interp_u16(unsigned short x[], unsigned short y[], int n,
 		y2[i] = (unsigned short)(y_temp+0.5);
 	}
 #if 0
-	printf("\n");
+	LOGI("\n");
 
 	for (i = 0; i < n2; i++) {
-		printf("%d,", y2[i]);
+		LOGI("%d,", y2[i]);
 	}
 
-	printf("\n");
+	LOGI("\n");
 #endif
 	free(xa);
 	free(ya);

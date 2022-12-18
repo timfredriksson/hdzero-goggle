@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CdxBdParser"
 #include "CdxBdParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -60,7 +60,7 @@ static void *ExtOpendir(CdxStreamT *stream, char *dirUrl)
     CdxStreamControl(stream, STREAM_CMD_EXT_IO_OPERATION, &param);
     if (param.outRet == -1)
     {
-        CDX_LOGE("io operation opendir failure...");
+        LOGE("io operation opendir failure...");
         return NULL;
     }
     return param.outHdr;
@@ -98,12 +98,12 @@ static int ExtOpen(CdxStreamT *stream, char *fileUrl)
 
     if (param.outRet == -1)
     {
-        CDX_LOGE("open file failure");
+        LOGE("open file failure");
         return -1;
     }
 
     int fd = (int)(intptr_t)param.outHdr;
-    CDX_LOGV("open file success, fd(%d)", fd);
+    LOGV("open file success, fd(%d)", fd);
     return fd;
 }
 
@@ -122,7 +122,7 @@ static int OpenDir(CdxBdParser *bdParser, char *dirUrl)
     void *dirHdr = ExtOpendir(bdParser->cdxStream, dirUrl);
     if ((intptr_t)dirHdr < 0)
     {
-        CDX_LOGE("ExtOpendir failure...");
+        LOGE("ExtOpendir failure...");
         return -1;
     }
 
@@ -145,11 +145,11 @@ static int OpenFile(CdxBdParser *bdParser, char *fileUrl)
     int fd = ExtOpen(bdParser->cdxStream, fileUrl);
     if (fd == -1)
     {
-        CDX_LOGE("open file failure...(%s)", fileUrl);
+        LOGE("open file failure...(%s)", fileUrl);
         return -1;
     }
     bdParser->fd = fd;
-    CDX_LOGV("dup a new fd(%d)", bdParser->fd);
+    LOGV("dup a new fd(%d)", bdParser->fd);
     return 0;
 }
 
@@ -159,7 +159,7 @@ static int ReadFile(CdxBdParser *bdParser)
     int fileLen = lseek(bdParser->fd, 0, SEEK_END);
     if (fileLen <= 0 || fileLen > bdParser->fileBufSize)
     {
-        CDX_LOGW("read file fail, fd(%d) fileLen(%d), BufSize(%d)",
+        LOGW("read file fail, fd(%d) fileLen(%d), BufSize(%d)",
             bdParser->fd, fileLen, bdParser->fileBufSize);
         close(bdParser->fd);
         bdParser->fd = -1;
@@ -185,7 +185,7 @@ static cdx_int32 BdParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *pMediaI
     CdxBdParser *bdParser = (CdxBdParser*)parser;
     if(bdParser->status < CDX_PSR_IDLE)
     {
-        CDX_LOGE("status < CDX_PSR_IDLE, BdParserGetMediaInfo invaild");
+        LOGE("status < CDX_PSR_IDLE, BdParserGetMediaInfo invaild");
         bdParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -198,13 +198,13 @@ static cdx_int32 BdParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     CdxBdParser *bdParser = (CdxBdParser*)parser;
     if(bdParser->status != CDX_PSR_IDLE && bdParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGW("BdParserPrefetch invaild");
+        LOGW("BdParserPrefetch invaild");
         bdParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     if(bdParser->mErrno == PSR_EOS)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         return -1;
     }
     if(bdParser->status == CDX_PSR_PREFETCHED)
@@ -232,7 +232,7 @@ static cdx_int32 BdParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
     {
         bdParser->prefetchType = 2;
     }
-//    CDX_LOGD("bdParser->prefetchType = %d", bdParser->prefetchType);
+//    LOGD("bdParser->prefetchType = %d", bdParser->prefetchType);
 
     PlayItem *playItem;
     SubPlayItem *subPlayItem;
@@ -243,14 +243,14 @@ static cdx_int32 BdParserPrefetch(CdxParserT *parser, CdxPacketT *pkt)
 next_child:
     if(m == 3)
     {
-        CDX_LOGD("bdParser->status = PSR_EOS");
+        LOGD("bdParser->status = PSR_EOS");
         bdParser->mErrno = PSR_EOS;
         ret = -1;
         goto _exit;
     }
     if(!bdParser->child[bdParser->prefetchType])
     {
-        CDX_LOGD("child[%d]== NULL", bdParser->prefetchType);
+        LOGD("child[%d]== NULL", bdParser->prefetchType);
         m++;
         bdParser->prefetchType = (bdParser->prefetchType + 1)%3;
         goto next_child;
@@ -262,7 +262,7 @@ _prefetch:
         mErrno = CdxParserGetStatus(bdParser->child[bdParser->prefetchType]);
         if(mErrno == PSR_EOS)
         {
-            CDX_LOGD("child EOS, bdParser->prefetchType = %d", bdParser->prefetchType);
+            LOGD("child EOS, bdParser->prefetchType = %d", bdParser->prefetchType);
             if(bdParser->prefetchType == 2)
             {
                 m++;
@@ -279,7 +279,7 @@ _prefetch:
                     bdParser->prefetchType = (bdParser->prefetchType + 1)%3;
                     goto next_child;
                 }
-                CDX_LOGD("curSeqNum = %d", bdParser->curPlayItemIndex);
+                LOGD("curSeqNum = %d", bdParser->curPlayItemIndex);
 
                 playItem = bdParser->curPlaylist->playItems + bdParser->curPlayItemIndex;
                 clip = &playItem->clip;
@@ -287,11 +287,11 @@ _prefetch:
 
                 int fd;
                 sprintf(bdParser->fileUrl, "STREAM/%s.m2ts", clip->ClipName);
-                CDX_LOGD("child[0](%s)", bdParser->fileUrl);
+                LOGD("child[0](%s)", bdParser->fileUrl);
                 fd = ExtOpen(bdParser->cdxStream, bdParser->fileUrl);
                 if (fd == -1)
                 {
-                    CDX_LOGE("ExtOpen failure");
+                    LOGE("ExtOpen failure");
                     goto _exit;
                 }
                 sprintf(bdParser->fileUrl, "fd://%d?offset=0&length=0", fd);
@@ -304,7 +304,7 @@ _prefetch:
                 {
                     if(!bdParser->forceStop)
                     {
-                        CDX_LOGE(" CdxStreamOpen error!");
+                        LOGE(" CdxStreamOpen error!");
                         bdParser->mErrno = PSR_UNKNOWN_ERR;
                     }
                     ret = -1;
@@ -332,7 +332,7 @@ _prefetch:
                 ret = CdxParserPrefetch(bdParser->child[bdParser->prefetchType], pkt);
                 if(ret < 0)
                 {
-                    CDX_LOGE(" prefetch error!");
+                    LOGE(" prefetch error!");
                     bdParser->mErrno = PSR_UNKNOWN_ERR;
                     goto _exit;
                 }
@@ -350,7 +350,7 @@ _prefetch:
                     bdParser->prefetchType = (bdParser->prefetchType + 1)%3;
                     goto next_child;
                 }
-                CDX_LOGD("curSeqNum = %d", bdParser->curSubPlayItemIndex);
+                LOGD("curSeqNum = %d", bdParser->curSubPlayItemIndex);
                 subPlayItem = bdParser->curPlaylist->subPathE->subPlayItems +
                     bdParser->curSubPlayItemIndex;
                 clip = &subPlayItem->clip;
@@ -358,11 +358,11 @@ _prefetch:
 
                 int fd;
                 sprintf(bdParser->fileUrl, "STREAM/%s.m2ts", clip->ClipName);
-                CDX_LOGD("child[1](%s)", bdParser->fileUrl);
+                LOGD("child[1](%s)", bdParser->fileUrl);
                 fd = ExtOpen(bdParser->cdxStream, bdParser->fileUrl);
                 if (fd == -1)
                 {
-                    CDX_LOGE("ExtOpen failure");
+                    LOGE("ExtOpen failure");
                     goto _exit;
                 }
                 sprintf(bdParser->fileUrl, "fd://%d?offset=0&length=0", fd);
@@ -375,7 +375,7 @@ _prefetch:
                 {
                     if(!bdParser->forceStop)
                     {
-                        CDX_LOGE(" CdxStreamOpen error!");
+                        LOGE(" CdxStreamOpen error!");
                         bdParser->mErrno = PSR_UNKNOWN_ERR;
                     }
                     ret = -1;
@@ -387,7 +387,7 @@ _prefetch:
                 pthread_mutex_unlock(&bdParser->statusLock);
                 if(ret < 0)
                 {
-                    CDX_LOGE("CDX_PSR_CMD_REPLACE_STREAM fail, ret(%d)", ret);
+                    LOGE("CDX_PSR_CMD_REPLACE_STREAM fail, ret(%d)", ret);
                     bdParser->mErrno = PSR_UNKNOWN_ERR;
                     goto _exit;
                 }
@@ -406,7 +406,7 @@ _prefetch:
                 {
                     if(!bdParser->forceStop)
                     {
-                        CDX_LOGE(" prefetch error! ret(%d)", ret);
+                        LOGE(" prefetch error! ret(%d)", ret);
                         bdParser->mErrno = PSR_UNKNOWN_ERR;
                     }
                     goto _exit;
@@ -417,16 +417,16 @@ _prefetch:
         else
         {
             bdParser->mErrno = mErrno;
-            CDX_LOGE("CdxParserPrefetch mErrno = %d", mErrno);
+            LOGE("CdxParserPrefetch mErrno = %d", mErrno);
             goto _exit;
         }
     }
-//    CDX_LOGD("bdParser->prefetchType = %d", bdParser->prefetchType);
+//    LOGD("bdParser->prefetchType = %d", bdParser->prefetchType);
     if(!bdParser->prefetchType)
     {
         if(pkt->type == CDX_MEDIA_VIDEO)
         {
-            //CDX_LOGD("pkt->length = %d", pkt->length);
+            //LOGD("pkt->length = %d", pkt->length);
             bdParser->streamPts[0] = pkt->pts;
         }
         else if(pkt->type == CDX_MEDIA_AUDIO)
@@ -434,7 +434,7 @@ _prefetch:
             bdParser->streamPts[3] = pkt->pts;
         }
         /*
-        else if(pkt->type == CDX_MEDIA_SUBTITLE)//´ËÊ±text subtitle²»´æÔÚ
+        else if(pkt->type == CDX_MEDIA_SUBTITLE)//ï¿½ï¿½Ê±text subtitleï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         {
             bdParser->streamPts[2] = pkt->pts;
         }
@@ -443,14 +443,14 @@ _prefetch:
     else
     {
 
-        //CDX_LOGD("pkt->length = %d", pkt->length);
+        //LOGD("pkt->length = %d", pkt->length);
         bdParser->streamPts[bdParser->prefetchType] = pkt->pts;
     }
 
     if(bdParser->child[1]
         && bdParser->streamPts[0] + 2000000LL < bdParser->streamPts[1])
     {
-        CDX_LOGW("maybe BD_BASE pts jump");
+        LOGW("maybe BD_BASE pts jump");
         bdParser->streamPts[1] = 0;
     }
     memcpy(&bdParser->pkt, pkt, sizeof(CdxPacketT));
@@ -472,7 +472,7 @@ static cdx_int32 BdParserRead(CdxParserT *parser, CdxPacketT *pkt)
     CdxBdParser *bdParser = (CdxBdParser*)parser;
     if(bdParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
+        LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
         bdParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -493,7 +493,7 @@ static cdx_int32 BdParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
 cdx_int32 BdParserForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("BdParserForceStop start");
+    LOGI("BdParserForceStop start");
     CdxBdParser *bdParser = (CdxBdParser*)parser;
 
     int ret;
@@ -505,7 +505,7 @@ cdx_int32 BdParserForceStop(CdxParserT *parser)
         ret = CdxStreamForceStop(bdParser->cdxStream);
         if(ret < 0)
         {
-            CDX_LOGW("CdxStreamForceStop fail");
+            LOGW("CdxStreamForceStop fail");
         }
     }
     int i;
@@ -516,7 +516,7 @@ cdx_int32 BdParserForceStop(CdxParserT *parser)
             ret = CdxParserForceStop(bdParser->child[i]);
             if(ret < 0)
             {
-                CDX_LOGE("CdxParserForceStop fail");
+                LOGE("CdxParserForceStop fail");
                 //hlsParser->mErrno = CdxParserGetStatus(hlsParser->child[i]);
                 //return -1;
             }
@@ -526,7 +526,7 @@ cdx_int32 BdParserForceStop(CdxParserT *parser)
             ret = CdxStreamForceStop(bdParser->childStream[i]);
             if(ret < 0)
             {
-                CDX_LOGW("CdxStreamForceStop fail");
+                LOGW("CdxStreamForceStop fail");
                 //hlsParser->mErrno = PSR_UNKNOWN_ERR;
             }
         }
@@ -539,18 +539,18 @@ cdx_int32 BdParserForceStop(CdxParserT *parser)
     pthread_mutex_unlock(&bdParser->statusLock);
     bdParser->mErrno = PSR_USER_CANCEL;
     bdParser->status = CDX_PSR_IDLE;
-    CDX_LOGI("BdParserForceStop end");
+    LOGI("BdParserForceStop end");
     return 0;
 }
 
 cdx_int32 BdParserClrForceStop(CdxParserT *parser)
 {
-    CDX_LOGI("BdParserClrForceStop start");
+    LOGI("BdParserClrForceStop start");
     int i, ret;
     CdxBdParser *bdParser = (CdxBdParser*)parser;
     if(bdParser->status != CDX_PSR_IDLE)
     {
-        CDX_LOGW("bdParser->status != CDX_PSR_IDLE");
+        LOGW("bdParser->status != CDX_PSR_IDLE");
         bdParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -561,7 +561,7 @@ cdx_int32 BdParserClrForceStop(CdxParserT *parser)
         ret = CdxStreamClrForceStop(bdParser->cdxStream);
         if(ret < 0)
         {
-            CDX_LOGW("CdxStreamClrForceStop fail");
+            LOGW("CdxStreamClrForceStop fail");
             //hlsParser->mErrno = PSR_UNKNOWN_ERR;
             //return -1;
         }
@@ -573,7 +573,7 @@ cdx_int32 BdParserClrForceStop(CdxParserT *parser)
             ret = CdxParserClrForceStop(bdParser->child[i]);
             if(ret < 0)
             {
-                CDX_LOGE("CdxParserClrForceStop fail");
+                LOGE("CdxParserClrForceStop fail");
                 //hlsParser->mErrno = CdxParserGetStatus(hlsParser->child[i]);
                 //return -1;
             }
@@ -583,12 +583,12 @@ cdx_int32 BdParserClrForceStop(CdxParserT *parser)
             ret = CdxStreamClrForceStop(bdParser->childStream[i]);
             if(ret < 0)
             {
-                CDX_LOGW("CdxStreamClrForceStop fail");
+                LOGW("CdxStreamClrForceStop fail");
                 //hlsParser->mErrno = PSR_UNKNOWN_ERR;
             }
         }
     }
-    CDX_LOGI("BdParserClrForceStop end");
+    LOGI("BdParserClrForceStop end");
     return 0;
 }
 
@@ -602,7 +602,7 @@ static int BdParserControl(CdxParserT *parser, int cmd, void *param)
     {
         case CDX_PSR_CMD_SWITCH_AUDIO:
         case CDX_PSR_CMD_SWITCH_SUBTITLE:
-            CDX_LOGI(" bd parser is not support switch stream yet!!!");
+            LOGI(" bd parser is not support switch stream yet!!!");
             break;
         case CDX_PSR_CMD_SET_FORCESTOP:
             return BdParserForceStop(parser);
@@ -622,20 +622,20 @@ cdx_int32 BdParserGetStatus(CdxParserT *parser)
 cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType seekModeType)
 {
     CDX_UNUSE(seekModeType);
-    CDX_LOGD("BdParserSeekTo start, timeUs = %lld", timeUs);
+    LOGD("BdParserSeekTo start, timeUs = %lld", timeUs);
     CdxBdParser *bdParser = (CdxBdParser *)parser;
     bdParser->mErrno = PSR_OK;
     Playlist *playlist = bdParser->curPlaylist;
 
     if(timeUs < 0)
     {
-        CDX_LOGE("timeUs invalid");
+        LOGE("timeUs invalid");
         bdParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     else if(timeUs >= playlist->durationUs)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         bdParser->mErrno = PSR_EOS;
         return 0;
     }
@@ -644,7 +644,7 @@ cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType see
     if(bdParser->forceStop)
     {
         bdParser->mErrno = PSR_USER_CANCEL;
-        CDX_LOGE("PSR_USER_CANCEL");
+        LOGE("PSR_USER_CANCEL");
         pthread_mutex_unlock(&bdParser->statusLock);
         return -1;
     }
@@ -666,7 +666,7 @@ cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType see
     }
     mDurationUs -= item->durationUs;
     int64_t diff = timeUs - mDurationUs;
-    CDX_LOGD("timeUs=%lld, mDurationUs=%lld, diff=%lld", timeUs, mDurationUs, diff);
+    LOGD("timeUs=%lld, mDurationUs=%lld, diff=%lld", timeUs, mDurationUs, diff);
 
     bdParser->curSubPlayItemIndex = bdParser->curPlayItemIndex = i;
 
@@ -675,11 +675,11 @@ cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType see
 
     int fd;
     sprintf(bdParser->fileUrl, "STREAM/%s.m2ts", clip->ClipName);
-    CDX_LOGD("child[0](%s)", bdParser->fileUrl);
+    LOGD("child[0](%s)", bdParser->fileUrl);
     fd = ExtOpen(bdParser->cdxStream, bdParser->fileUrl);
     if (fd == -1)
     {
-        CDX_LOGE("ExtOpen failure");
+        LOGE("ExtOpen failure");
         goto _exit;
     }
     sprintf(bdParser->fileUrl, "fd://%d?offset=0&length=0", fd);
@@ -692,7 +692,7 @@ cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType see
     {
         if(!bdParser->forceStop)
         {
-            CDX_LOGE(" CdxStreamOpen error!");
+            LOGE(" CdxStreamOpen error!");
             bdParser->mErrno = PSR_UNKNOWN_ERR;
         }
         ret = -1;
@@ -704,7 +704,7 @@ cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType see
     pthread_mutex_unlock(&bdParser->statusLock);
     if(ret < 0)
     {
-        CDX_LOGE("CDX_PSR_CMD_REPLACE_STREAM fail");
+        LOGE("CDX_PSR_CMD_REPLACE_STREAM fail");
         bdParser->mErrno = PSR_UNKNOWN_ERR;
         goto _exit;
     }
@@ -717,11 +717,11 @@ cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType see
 
         int fd;
         sprintf(bdParser->fileUrl, "STREAM/%s.m2ts", clip->ClipName);
-        CDX_LOGD("child[0](%s)", bdParser->fileUrl);
+        LOGD("child[0](%s)", bdParser->fileUrl);
         fd = ExtOpen(bdParser->cdxStream, bdParser->fileUrl);
         if (fd == -1)
         {
-            CDX_LOGE("ExtOpen failure");
+            LOGE("ExtOpen failure");
             goto _exit;
         }
         sprintf(bdParser->fileUrl, "fd://%d?offset=0&length=0", fd);
@@ -734,7 +734,7 @@ cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType see
         {
             if(!bdParser->forceStop)
             {
-                CDX_LOGE(" CdxStreamOpen error!");
+                LOGE(" CdxStreamOpen error!");
                 bdParser->mErrno = PSR_UNKNOWN_ERR;
             }
             ret = -1;
@@ -746,7 +746,7 @@ cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType see
         pthread_mutex_unlock(&bdParser->statusLock);
         if(ret < 0)
         {
-            CDX_LOGE("CDX_PSR_CMD_REPLACE_STREAM fail");
+            LOGE("CDX_PSR_CMD_REPLACE_STREAM fail");
             bdParser->mErrno = PSR_UNKNOWN_ERR;
             goto _exit;
         }
@@ -764,7 +764,7 @@ cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType see
     STC *stc = clip->atc->stc + STC_id;
     cdx_uint32 aimPts = item->IN_time + diff * 45/1000;
 
-    //CDX_LOGD("IN_time=%u, aimPts=%u", item->IN_time, aimPts);
+    //LOGD("IN_time=%u, aimPts=%u", item->IN_time, aimPts);
     StreamInfo *stream = NULL;
     for(i = 0; i < clip->ps->number_of_streams_in_ps; i++)
     {
@@ -824,7 +824,7 @@ cdx_int32 BdParserSeekTo(CdxParserT *parser, cdx_int64  timeUs, SeekModeType see
         for(i = 0; i < clip->ps->number_of_streams_in_ps; i++)
         {
             stream = clip->ps->streams + i;
-            CDX_LOGD("clip=%p, clip->ps=%p, clip->ps->streams=%p, stream = %p",
+            LOGD("clip=%p, clip->ps=%p, clip->ps->streams=%p, stream = %p",
                 clip, clip->ps, clip->ps->streams, stream);
             if(stream->mediaType == TYPE_VIDEO)
             {
@@ -873,7 +873,7 @@ _exit:
     bdParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&bdParser->statusLock);
     pthread_cond_signal(&bdParser->cond);
-    CDX_LOGV("BdParserSeekTo end, ret = %d", ret);
+    LOGV("BdParserSeekTo end, ret = %d", ret);
     return ret;
 }
 CDX_INTERFACE void ClearProgramInfo(Clip *clip)
@@ -976,14 +976,14 @@ static cdx_int32 BdParserClose(CdxParserT *parser)
     int ret = BdParserForceStop(parser);
     if(ret < 0)
     {
-        CDX_LOGW("BdParserForceStop fail");
+        LOGW("BdParserForceStop fail");
     }
     if(bdParser->cdxStream)
     {
         ret = CdxStreamClose(bdParser->cdxStream);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamClose fail, ret(%d)", ret);
+            LOGE("CdxStreamClose fail, ret(%d)", ret);
         }
     }
     int i;
@@ -994,7 +994,7 @@ static cdx_int32 BdParserClose(CdxParserT *parser)
             ret = CdxParserClose(bdParser->child[i]);
             if(ret < 0)
             {
-                CDX_LOGE("CdxParserClose fail");
+                LOGE("CdxParserClose fail");
             }
         }
         else if(bdParser->childStream[i])
@@ -1002,7 +1002,7 @@ static cdx_int32 BdParserClose(CdxParserT *parser)
             ret = CdxStreamClose(bdParser->childStream[i]);
             if(ret < 0)
             {
-                CDX_LOGW("CdxStreamForceStop fail");
+                LOGW("CdxStreamForceStop fail");
                 //hlsParser->mErrno = PSR_UNKNOWN_ERR;
             }
         }
@@ -1066,7 +1066,7 @@ int CheckPlayItemForPlaylist(CdxBdParser *bdParser, Playlist *playlist)
     sprintf(bdParser->fileUrl, "STREAM/%s.m2ts", clip->ClipName);
     if(CheckAccess(bdParser, bdParser->fileUrl) < 0)
     {
-        CDX_LOGW("CheckAccess fail, url(%s)", bdParser->fileUrl);
+        LOGW("CheckAccess fail, url(%s)", bdParser->fileUrl);
         return -1;
     }
     return 0;
@@ -1080,7 +1080,7 @@ int CheckSubPlayItemForPlaylist(CdxBdParser *bdParser, Playlist *playlist)
         sprintf(bdParser->fileUrl, "STREAM/%s.m2ts", clip->ClipName);
         if(CheckAccess(bdParser, bdParser->fileUrl) < 0)
         {
-            CDX_LOGW("Check SubPlayItem Access fail, url(%s)", bdParser->fileUrl);
+            LOGW("Check SubPlayItem Access fail, url(%s)", bdParser->fileUrl);
             if(playlist->subPathE->subPlayItems)
             {
                 int i;
@@ -1105,7 +1105,7 @@ cdx_int64 parseMplsRoughly(CdxBdParser *bdParser,
     cdx_uint8 *cur = data;
     if(GetBE32Bits(cur) != MKBETAG('M', 'P', 'L', 'S'))
     {
-        CDX_LOGE("may not be playlist file");
+        LOGE("may not be playlist file");
         return -1;
     }
     cur += 4;
@@ -1143,7 +1143,7 @@ cdx_int64 parseMplsRoughly(CdxBdParser *bdParser,
         durationUs = parsePlayItem(playItem, cur);
         if(durationUs < 0)
         {
-            CDX_LOGE("parsePlayItem fail");
+            LOGE("parsePlayItem fail");
             return -1;
         }
         if(!prePlayItem || memcmp(prePlayItem, playItem, sizeof(PlayItem)))
@@ -1156,7 +1156,7 @@ cdx_int64 parseMplsRoughly(CdxBdParser *bdParser,
 
     if(CheckPlayItemForPlaylist(bdParser, playlist) == -1)
     {
-        CDX_LOGW("CheckPlayItemForPlaylist fail");
+        LOGW("CheckPlayItemForPlaylist fail");
         return -1;
     }
     playlist->curPosition = cur;
@@ -1168,7 +1168,7 @@ int SelectPlaylists(CdxBdParser *bdParser)
     int ret = OpenDir(bdParser, "PLAYLIST");
     if(ret < 0)
     {
-        CDX_LOGE("open dir fail:'PLAYLIST'");
+        LOGE("open dir fail:'PLAYLIST'");
         return -1;
     }
     char *extension;
@@ -1191,13 +1191,13 @@ int SelectPlaylists(CdxBdParser *bdParser)
         ret = OpenFile(bdParser, bdParser->fileUrl);
         if(ret < 0)
         {
-            CDX_LOGW("open file fail:%s", bdParser->fileUrl);
+            LOGW("open file fail:%s", bdParser->fileUrl);
             continue;
         }
         ret = ReadFile(bdParser);
         if(ret < 0)
         {
-            CDX_LOGW("read file fail:%s", bdParser->fileUrl);
+            LOGW("read file fail:%s", bdParser->fileUrl);
             continue;
         }
         playlist = CreatPlaylist();
@@ -1207,7 +1207,7 @@ int SelectPlaylists(CdxBdParser *bdParser)
         {
             if(durationUs < 0)
             {
-                CDX_LOGW("parseMplsRoughly fail, return(%lld)", durationUs);
+                LOGW("parseMplsRoughly fail, return(%lld)", durationUs);
             }
             DestroyPlaylist(playlist);
             continue;
@@ -1255,7 +1255,7 @@ int SelectPlaylists(CdxBdParser *bdParser)
     }
     if(CloseDir(bdParser) < 0)
     {
-        CDX_LOGE("close dir fail");
+        LOGE("close dir fail");
         return -1;
     }
     if(maxPlayTime > 30*60*1000*1000)
@@ -1263,7 +1263,7 @@ int SelectPlaylists(CdxBdParser *bdParser)
         CdxListForEachEntrySafe(playlist, playlist1, &bdParser->playlists, node)
         {
 
-            CDX_LOGD("SelectPlaylists playlist->durationUs = %lld", playlist->durationUs);
+            LOGD("SelectPlaylists playlist->durationUs = %lld", playlist->durationUs);
             if(playlist->durationUs < maxPlayTime - 5*60*1000*1000)//hkw
             {
                 CdxListDel(&playlist->node);
@@ -1280,7 +1280,7 @@ int parseClipInfo(Clip *clip, cdx_uint8 *data)
 {
     cdx_uint8 *cur = data + 7;
     clip->application_type = GetBE8Bits(cur);
-    CDX_LOGV("clip->application_type = %d", clip->application_type);
+    LOGV("clip->application_type = %d", clip->application_type);
     cur += 8;
     clip->number_of_source_packets = GetBE32Bits(cur);
     return 0;
@@ -1383,7 +1383,7 @@ int parseCPI(Clip *clip, cdx_uint8 *data)
                 | (epMapFine->PTS_EP_fine << 8);
             epMapFine->SPN_EP_fine |= epMapCoarse->SPN_EP_coarse & 0xfffe0000;
 
-            CDX_LOGV("epMapFine->PTS_EP_fine(%u), epMapFine->SPN_EP_fine(%u)",
+            LOGV("epMapFine->PTS_EP_fine(%u), epMapFine->SPN_EP_fine(%u)",
                 epMapFine->PTS_EP_fine, epMapFine->SPN_EP_fine);
         }
 
@@ -1431,7 +1431,7 @@ int parseProgramInfo(Clip *clip, cdx_uint8 *data)
                stream->coding_type == 0x1B || //AVC
                stream->coding_type == 0x24 || //HEVC
                stream->coding_type == 0xEA || //VC1
-               stream->coding_type == 0x20)//´ÓÁ÷ MVC
+               stream->coding_type == 0x20)//ï¿½ï¿½ï¿½ï¿½ MVC
             {
                 stream->mediaType = TYPE_VIDEO;
                 clip->videoCount++;
@@ -1446,9 +1446,9 @@ int parseProgramInfo(Clip *clip, cdx_uint8 *data)
                 metadata->ccFlag = (tmp & 0x02)>>1;
                 if(stream->coding_type == 0x20)
                 {
-                    CDX_LOGD("MVC Dependent view video(%d)",
+                    LOGD("MVC Dependent view video(%d)",
                         ps->number_of_streams_in_ps);
-                    break;//Ö»È¡ÁËÒ»¸ö´ÓÁ÷
+                    break;//Ö»È¡ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 }
             }
             else if(stream->coding_type == 0x80 ||
@@ -1463,7 +1463,7 @@ int parseProgramInfo(Clip *clip, cdx_uint8 *data)
                     stream->coding_type == 0xa1 ||
                     stream->coding_type == 0xa2)
             {
-                CDX_LOGV("############stream->coding_type(%d)", stream->coding_type);
+                LOGV("############stream->coding_type(%d)", stream->coding_type);
                 stream->mediaType = TYPE_AUDIO;
                 clip->audioCount++;
                 stream->metadata = (AudioMetaData *)CdxMalloc(sizeof(AudioMetaData));
@@ -1583,7 +1583,7 @@ int parseMpls(CdxBdParser *bdParser, Playlist *playlist, cdx_uint8 *data)
         cdx_int64 durationUs = parseMplsRoughly(bdParser, playlist, cur);
         if(durationUs < 0)
         {
-            CDX_LOGW("parseMplsRoughly fail");
+            LOGW("parseMplsRoughly fail");
             CdxListDel(&playlist->node);
             DestroyPlaylist(playlist);
             bdParser->playlistCount--;
@@ -1643,7 +1643,7 @@ int processMpls(CdxBdParser *bdParser, Playlist *playlist)
         cdx_int64 size = CdxStreamSize(bdParser->cdxStream);
         if(size > bdParser->fileBufSize)
         {
-            CDX_LOGE("size > bdParser->fileBufSize");
+            LOGE("size > bdParser->fileBufSize");
             return -1;
         }
         int readSize = 0;
@@ -1654,7 +1654,7 @@ int processMpls(CdxBdParser *bdParser, Playlist *playlist)
                 bdParser->fileBuf + readSize, (cdx_int32)size - readSize);
             if(ret < 0)
             {
-                CDX_LOGE("CdxStreamRead fail");
+                LOGE("CdxStreamRead fail");
                 return -1;
             }
             else if(ret == 0)
@@ -1668,17 +1668,17 @@ int processMpls(CdxBdParser *bdParser, Playlist *playlist)
     else
     {
         sprintf(bdParser->fileUrl, "PLAYLIST/%s", playlist->mplsFileName);
-        CDX_LOGD("bdParser->fileUrl(%s)", bdParser->fileUrl);
+        LOGD("bdParser->fileUrl(%s)", bdParser->fileUrl);
         ret = OpenFile(bdParser, bdParser->fileUrl);
         if(ret < 0)
         {
-            CDX_LOGW("open file fail:%s", bdParser->fileUrl);
+            LOGW("open file fail:%s", bdParser->fileUrl);
             return ret;
         }
         ret = ReadFile(bdParser);
         if(ret < 0)
         {
-            CDX_LOGW("read file fail:%s", bdParser->fileUrl);
+            LOGW("read file fail:%s", bdParser->fileUrl);
             return ret;
         }
     }
@@ -1690,13 +1690,13 @@ int parseDependentClpi(CdxBdParser *bdParser, Clip *clip)
     int ret = OpenFile(bdParser, bdParser->fileUrl);
     if(ret < 0)
     {
-        CDX_LOGW("open file fail:%s", bdParser->fileUrl);
+        LOGW("open file fail:%s", bdParser->fileUrl);
         return ret;
     }
     ret = ReadFile(bdParser);
     if(ret < 0)
     {
-        CDX_LOGW("read file fail:%s", bdParser->fileUrl);
+        LOGW("read file fail:%s", bdParser->fileUrl);
         return ret;
     }
     cdx_uint8 *data = bdParser->fileBuf;
@@ -1717,13 +1717,13 @@ int parseClpi(CdxBdParser *bdParser, Clip *clip, int firstItemIndex)
     int ret = OpenFile(bdParser, bdParser->fileUrl);
     if(ret < 0)
     {
-        CDX_LOGW("open file fail:%s", bdParser->fileUrl);
+        LOGW("open file fail:%s", bdParser->fileUrl);
         return ret;
     }
     ret = ReadFile(bdParser);
     if(ret < 0)
     {
-        CDX_LOGW("read file fail:%s", bdParser->fileUrl);
+        LOGW("read file fail:%s", bdParser->fileUrl);
         return ret;
     }
     cdx_uint8 *data = bdParser->fileBuf;
@@ -1762,7 +1762,7 @@ void PrintPlaylistInfo(Playlist *playlist)
         playItem = playlist->playItems + i;
         clip = &playItem->clip;
         sprintf(name, "STREAM/%s.m2ts", clip->ClipName);
-        CDX_LOGD("child[0](%s)", name);
+        LOGD("child[0](%s)", name);
     }
     if(playlist->subPathE)
     {
@@ -1771,14 +1771,14 @@ void PrintPlaylistInfo(Playlist *playlist)
             subPlayItem = playlist->subPathE->subPlayItems + i;
             clip = &subPlayItem->clip;
             sprintf(name, "STREAM/%s.m2ts", clip->ClipName);
-            CDX_LOGD("child[1](%s)", name);
+            LOGD("child[1](%s)", name);
         }
     }
 }
 
 int BdParserInit(CdxParserT *parser)
 {
-    CDX_LOGI("CdxBdParserInit start");
+    LOGI("CdxBdParserInit start");
        CdxBdParser *bdParser = (CdxBdParser*)parser;
 
     int ret;
@@ -1787,14 +1787,14 @@ int BdParserInit(CdxParserT *parser)
 
     if (0)  //!strncmp(bdParser->originalUrl + (bdParser->originalUrlLen - 5), ".mpls", 5))
     {
-    // TODO: ÉÏ²ãÖ¸¶¨mpls
+    // TODO: ï¿½Ï²ï¿½Ö¸ï¿½ï¿½mpls
     }
     else
     {
         ret = SelectPlaylists(bdParser);
         if(ret < 0)
         {
-            CDX_LOGE("SelectPlaylists fail");
+            LOGE("SelectPlaylists fail");
             goto _exit;
         }
 
@@ -1819,11 +1819,11 @@ int BdParserInit(CdxParserT *parser)
     //CdxListForEachEntry(playlist, &bdParser->playlists, node)
     CdxListForEachEntrySafe(playlist, playlist1, &bdParser->playlists, node)
     {
-        CDX_LOGD("playlist->durationUs = %lld", playlist->durationUs);
+        LOGD("playlist->durationUs = %lld", playlist->durationUs);
         ret = processMpls(bdParser, playlist);
         if(ret < 0)
         {
-            CDX_LOGE("parseMplsRoughly fail");
+            LOGE("parseMplsRoughly fail");
             goto _exit;
         }
         else if(ret == 1)
@@ -1836,7 +1836,7 @@ int BdParserInit(CdxParserT *parser)
     }
     if(!bdParser->playlistCount)
     {
-        CDX_LOGE("bdParser->playlistCount==0 !!");
+        LOGE("bdParser->playlistCount==0 !!");
         goto _exit;
     }
     if(!bdParser->curPlaylist)
@@ -1846,7 +1846,7 @@ int BdParserInit(CdxParserT *parser)
     }
 
     playlist = bdParser->curPlaylist;
-    CDX_LOGD("curPlaylist=%s", playlist->mplsFileName);
+    LOGD("curPlaylist=%s", playlist->mplsFileName);
     int i, flag1 = 0, flag2 = 0, flag3 = 0;
     for(i = 0; i < playlist->numer_of_PlayItems; i++)
     {
@@ -1869,7 +1869,7 @@ int BdParserInit(CdxParserT *parser)
         ret = parseClpi(bdParser, &playItem->clip, i);
         if(ret < 0 || playItem->clip.application_type != 1)
         {
-            CDX_LOGE("parseClpi fail");
+            LOGE("parseClpi fail");
             goto _exit;
         }
         prePlayItem = playItem;
@@ -1887,7 +1887,7 @@ int BdParserInit(CdxParserT *parser)
             ret = parseDependentClpi(bdParser, &subPlayItem->clip);
             if(ret < 0)
             {
-                CDX_LOGE("parseClpi fail");
+                LOGE("parseClpi fail");
                 goto _exit;
             }
             if(!flag2)
@@ -1922,7 +1922,7 @@ int BdParserInit(CdxParserT *parser)
             ret = parseClpi(bdParser, &subPlayItem->clip, i);
             if(ret < 0 || subPlayItem->clip.application_type != 8)
             {
-                CDX_LOGE("parseClpi fail");
+                LOGE("parseClpi fail");
                 goto _exit;
             }
             preSubPlayItem = subPlayItem;
@@ -1943,7 +1943,7 @@ int BdParserInit(CdxParserT *parser)
             ret = parseClpi(bdParser, &subPlayItem->clip, i);
             if(ret < 0 || subPlayItem->clip.application_type != 6)
             {
-                CDX_LOGE("parseClpi fail");
+                LOGE("parseClpi fail");
                 goto _exit;
             }
             if(!flag3)
@@ -1960,11 +1960,11 @@ int BdParserInit(CdxParserT *parser)
     bdParser->curClip = clip;
 
     sprintf(bdParser->fileUrl, "STREAM/%s.m2ts", clip->ClipName);
-    CDX_LOGD("child[0](%s)", bdParser->fileUrl);
+    LOGD("child[0](%s)", bdParser->fileUrl);
     fd = ExtOpen(bdParser->cdxStream, bdParser->fileUrl);
     if (fd == -1)
     {
-        CDX_LOGE("ExtOpen failure");
+        LOGE("ExtOpen failure");
         goto _exit;
     }
     sprintf(bdParser->fileUrl, "fd://%d?offset=0&length=0", fd);
@@ -1983,7 +1983,7 @@ int BdParserInit(CdxParserT *parser)
     close(fd);
     if(ret < 0)
     {
-        CDX_LOGE("CdxParserPrepare fail");
+        LOGE("CdxParserPrepare fail");
         goto _exit;
     }
 
@@ -1994,11 +1994,11 @@ int BdParserInit(CdxParserT *parser)
         bdParser->curSubClip = clip;
 
         sprintf(bdParser->fileUrl, "STREAM/%s.m2ts", clip->ClipName);
-        CDX_LOGD("child[1](%s)", bdParser->fileUrl);
+        LOGD("child[1](%s)", bdParser->fileUrl);
         fd = ExtOpen(bdParser->cdxStream, bdParser->fileUrl);
         if (fd == -1)
         {
-            CDX_LOGE("ExtOpen failure");
+            LOGE("ExtOpen failure");
             goto _exit;
         }
         sprintf(bdParser->fileUrl, "fd://%d?offset=0&length=0", fd);
@@ -2012,7 +2012,7 @@ int BdParserInit(CdxParserT *parser)
         close(fd);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserPrepare fail");
+            LOGE("CdxParserPrepare fail");
             goto _exit;
         }
     }
@@ -2022,11 +2022,11 @@ int BdParserInit(CdxParserT *parser)
         clip = &subPlayItem->clip;
 
         sprintf(bdParser->fileUrl, "STREAM/%s.m2ts", clip->ClipName);
-        CDX_LOGD("child[2](%s)", bdParser->fileUrl);
+        LOGD("child[2](%s)", bdParser->fileUrl);
         fd = ExtOpen(bdParser->cdxStream, bdParser->fileUrl);
         if (fd == -1)
         {
-            CDX_LOGE("ExtOpen failure");
+            LOGE("ExtOpen failure");
             goto _exit;
         }
         sprintf(bdParser->fileUrl, "fd://%d?offset=0&length=0", fd);
@@ -2039,7 +2039,7 @@ int BdParserInit(CdxParserT *parser)
         close(fd);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserPrepare fail");
+            LOGE("CdxParserPrepare fail");
             goto _exit;
         }
     }
@@ -2052,7 +2052,7 @@ int BdParserInit(CdxParserT *parser)
     ret = CdxParserGetMediaInfo(bdParser->child[0], &mediainfo);
     if(ret < 0)
     {
-        CDX_LOGE("CdxParserGetMediaInfo fail");
+        LOGE("CdxParserGetMediaInfo fail");
         goto _exit;
     }
     memcpy(pmediainfo, &mediainfo, sizeof(CdxMediaInfoT));
@@ -2125,7 +2125,7 @@ int BdParserInit(CdxParserT *parser)
         ret = CdxParserGetMediaInfo(bdParser->child[1], &mediainfo);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserGetMediaInfo fail");
+            LOGE("CdxParserGetMediaInfo fail");
             goto _exit;
         }
         cdxProgram1 = &mediainfo.program[0];
@@ -2136,7 +2136,7 @@ int BdParserInit(CdxParserT *parser)
         ret = CdxParserGetMediaInfo(bdParser->child[2], &mediainfo);
         if(ret < 0)
         {
-            CDX_LOGE("CdxParserGetMediaInfo fail");
+            LOGE("CdxParserGetMediaInfo fail");
             goto _exit;
         }
         cdxProgram1 = &mediainfo.program[0];
@@ -2145,17 +2145,17 @@ int BdParserInit(CdxParserT *parser)
     }
     if(cdxProgram->audioNum != playlist->audioCount)
     {
-        CDX_LOGW("cdxProgram->audioNum(%d), playlist->audioCount(%d)",
+        LOGW("cdxProgram->audioNum(%d), playlist->audioCount(%d)",
             cdxProgram->audioNum, playlist->audioCount);
     }
     if(cdxProgram->videoNum != playlist->videoCount)
     {
-        CDX_LOGW("cdxProgram->videoNum(%d), playlist->videoCount(%d)",
+        LOGW("cdxProgram->videoNum(%d), playlist->videoCount(%d)",
             cdxProgram->videoNum, playlist->videoCount);
     }
     if(cdxProgram->subtitleNum != playlist->subsCount)
     {
-        CDX_LOGW("cdxProgram->subtitleNum(%d), playlist->subsCount(%d)",
+        LOGW("cdxProgram->subtitleNum(%d), playlist->subsCount(%d)",
             cdxProgram->subtitleNum, playlist->subsCount);
     }
 
@@ -2166,7 +2166,7 @@ int BdParserInit(CdxParserT *parser)
     pmediainfo->programNum = 1;
     pmediainfo->programIndex = 0;
     cdxProgram->duration = playlist->durationUs/1000;
-    CDX_LOGD("playlist->durationUs = %lld", playlist->durationUs);
+    LOGD("playlist->durationUs = %lld", playlist->durationUs);
 #endif
     for(i = 0; i < 3; i++)
     {
@@ -2182,7 +2182,7 @@ int BdParserInit(CdxParserT *parser)
     bdParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&bdParser->statusLock);
     pthread_cond_signal(&bdParser->cond);
-    CDX_LOGI("CdxBdParserInit success");
+    LOGI("CdxBdParserInit success");
 
     return 0;
 
@@ -2193,7 +2193,7 @@ _exit:
     pthread_mutex_unlock(&bdParser->statusLock);
     pthread_cond_signal(&bdParser->cond);
 
-    CDX_LOGI("CdxBdParserInit fail");
+    LOGI("CdxBdParserInit fail");
     return -1;
 }
 static struct CdxParserOpsS bdParserOps =
@@ -2214,7 +2214,7 @@ CdxParserT *BdParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     CdxBdParser *bdParser = CdxMalloc(sizeof(CdxBdParser));
     if(!bdParser)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         CdxStreamClose(stream);
         return NULL;
     }
@@ -2230,7 +2230,7 @@ CdxParserT *BdParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     bdParser->fileUrl = (char *)CdxMalloc(64);
     if(!bdParser->fileUrl)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         goto open_error;
     }
 
@@ -2238,7 +2238,7 @@ CdxParserT *BdParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     bdParser->fileBuf = (cdx_uint8 *)CdxMalloc(bdParser->fileBufSize);
     if (!bdParser->fileBuf)
     {
-        CDX_LOGE("allocate memory fail");
+        LOGE("allocate memory fail");
         goto open_error;
     }
     memset(bdParser->streamPts, 0xff, sizeof(bdParser->streamPts));
@@ -2271,7 +2271,7 @@ cdx_uint32 BdParserProbe(CdxStreamProbeDataT *probeData)
 {
     if (probeData->len == 8 && memcmp(probeData->buf, "aw.bdmv.", 8) == 0)
     {
-        CDX_LOGI("bdmv file");
+        LOGI("bdmv file");
         return 100;
     }
 

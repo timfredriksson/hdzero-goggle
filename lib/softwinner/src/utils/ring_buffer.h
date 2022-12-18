@@ -8,10 +8,6 @@
 
 #include <stdbool.h>
 
-#define nb_loge printf
-#define nb_logw printf
-#define nb_logv printf
-
 /* max ring buffer size 3GB */
 #define MAX_RB_SIZE  (3*1024*1024*1024)
 

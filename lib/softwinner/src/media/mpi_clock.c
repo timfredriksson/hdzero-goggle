@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mpi_clock"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //rely on platform headers
 #include <stdlib.h>
@@ -59,13 +59,13 @@ ERRORTYPE CLOCK_Construct(void)
     gpClockChnManager = (ClockChnManager*)malloc(sizeof(ClockChnManager));
     if (NULL == gpClockChnManager) 
     {
-        aloge("alloc ClockChnManager error(%s)!", strerror(errno));
+        LOGE("alloc ClockChnManager error(%s)!", strerror(errno));
         return FAILURE;
     }
     ret = pthread_mutex_init(&gpClockChnManager->mLock, NULL);
     if (ret != 0)
     {
-        aloge("fatal error! mutex init fail");
+        LOGE("fatal error! mutex init fail");
         free(gpClockChnManager);
         gpClockChnManager = NULL;
         return FAILURE;
@@ -80,7 +80,7 @@ ERRORTYPE CLOCK_Destruct(void)
     {
         if (!list_empty(&gpClockChnManager->mList)) 
         {
-            aloge("fatal error! some clock channel still running when destroy clock device!");
+            LOGE("fatal error! some clock channel still running when destroy clock device!");
         }
         pthread_mutex_destroy(&gpClockChnManager->mLock);
         free(gpClockChnManager);
@@ -179,7 +179,7 @@ static CLOCK_CHN_MAP_S* CLOCK_CHN_MAP_S_Construct()
     CLOCK_CHN_MAP_S *pChannel = (CLOCK_CHN_MAP_S*)malloc(sizeof(CLOCK_CHN_MAP_S));
     if(NULL == pChannel)
     {
-        aloge("fatal error! malloc fail[%s]!", strerror(errno));
+        LOGE("fatal error! malloc fail[%s]!", strerror(errno));
         return NULL;
     }
     memset(pChannel, 0, sizeof(CLOCK_CHN_MAP_S));
@@ -191,7 +191,7 @@ static void CLOCK_CHN_MAP_S_Destruct(CLOCK_CHN_MAP_S *pChannel)
 {
     if(pChannel->mComp)
     {
-        aloge("fatal error! Clock component need free before!");
+        LOGE("fatal error! Clock component need free before!");
         COMP_FreeHandle(pChannel->mComp);
         pChannel->mComp = NULL;
     }
@@ -212,7 +212,7 @@ static ERRORTYPE ClockEventHandler(
     ret = COMP_GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &ClockChnInfo);
     if(ret == SUCCESS)
     {
-        alogv("clock event, MppChannel[%d][%d][%d]", ClockChnInfo.mModId, ClockChnInfo.mDevId, ClockChnInfo.mChnId);
+        LOGV("clock event, MppChannel[%d][%d][%d]", ClockChnInfo.mModId, ClockChnInfo.mDevId, ClockChnInfo.mChnId);
     }
 	CLOCK_CHN_MAP_S *pChn = (CLOCK_CHN_MAP_S*)pAppData;
 
@@ -222,18 +222,18 @@ static ERRORTYPE ClockEventHandler(
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("clock EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("clock EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(COMP_CommandVendorChangeANativeWindow == nData1)
             {
-                alogd("change video layer?");
+                LOGD("change video layer?");
                 break;
             }
             else
             {
-                alogw("Low probability! what command[0x%x]?", nData1);
+                LOGW("Low probability! what command[0x%x]?", nData1);
                 break;
             }
         }
@@ -241,28 +241,28 @@ static ERRORTYPE ClockEventHandler(
         {
             if(ERR_CLOCK_SAMESTATE == nData1)
             {
-                alogv("set same state to clock!");
+                LOGV("set same state to clock!");
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else if(ERR_CLOCK_INVALIDSTATE == nData1)
             {
-                aloge("why clock state turn to invalid!");
+                LOGE("why clock state turn to invalid!");
                 break;
             }
             else if(ERR_CLOCK_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("fatal error! clock state transition incorrect.");
+                LOGE("fatal error! clock state transition incorrect.");
                 break;
             }
             else
             {
-                aloge("fatal error! unknown error[0x%x]!", nData1);
+                LOGE("fatal error! unknown error[0x%x]!", nData1);
                 break;
             }
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
 	return SUCCESS;
@@ -278,12 +278,12 @@ ERRORTYPE AW_MPI_CLOCK_CreateChn(CLOCK_CHN ClockChn, CLOCK_CHN_ATTR_S *pAttr)
 {
     if(!(ClockChn>=0 && ClockChn <CLOCK_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ClockChn[%d]!", ClockChn);
+        LOGE("fatal error! invalid ClockChn[%d]!", ClockChn);
         return ERR_CLOCK_INVALID_CHNID;
     }
     if(NULL == pAttr)
     {
-        aloge("fatal error! illagal VencAttr!");
+        LOGE("fatal error! illagal VencAttr!");
         return ERR_CLOCK_ILLEGAL_PARAM;
     }
     pthread_mutex_lock(&gpClockChnManager->mLock);
@@ -300,7 +300,7 @@ ERRORTYPE AW_MPI_CLOCK_CreateChn(CLOCK_CHN ClockChn, CLOCK_CHN_ATTR_S *pAttr)
     eRet = COMP_GetHandle((COMP_HANDLETYPE*)&pNode->mComp, CDX_ComponentNameClock, (void*)pNode, &ClockCallback);
     if(eRet != SUCCESS)
     {
-        aloge("fatal error! get comp handle fail!");
+        LOGE("fatal error! get comp handle fail!");
     }
     MPP_CHN_S ChannelInfo;
     ChannelInfo.mModId = MOD_ID_CLOCK;
@@ -325,7 +325,7 @@ ERRORTYPE AW_MPI_CLOCK_DestroyChn(CLOCK_CHN ClockChn)
     ERRORTYPE ret;
     if(!(ClockChn>=0 && ClockChn <CLOCK_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ClockChn[%d]!", ClockChn);
+        LOGE("fatal error! invalid ClockChn[%d]!", ClockChn);
         return ERR_CLOCK_INVALID_CHNID;
     }
     CLOCK_CHN_MAP_S *pChn;
@@ -351,12 +351,12 @@ ERRORTYPE AW_MPI_CLOCK_DestroyChn(CLOCK_CHN ClockChn)
             }
             else if(nCompState == COMP_StateInvalid)
             {
-                alogw("Low probability! Component StateInvalid?");
+                LOGW("Low probability! Component StateInvalid?");
                 eRet = SUCCESS;
             }
             else
             {
-                aloge("fatal error! invalid ClockChn[%d] state[0x%x]!", ClockChn, nCompState);
+                LOGE("fatal error! invalid ClockChn[%d] state[0x%x]!", ClockChn, nCompState);
                 eRet = FAILURE;
             }
 
@@ -375,13 +375,13 @@ ERRORTYPE AW_MPI_CLOCK_DestroyChn(CLOCK_CHN ClockChn)
         }
         else
         {
-            aloge("fatal error! GetState fail!");
+            LOGE("fatal error! GetState fail!");
             ret = ERR_CLOCK_BUSY;
         }
     }
     else
     {
-        aloge("fatal error! no Clock component!");
+        LOGE("fatal error! no Clock component!");
         list_del(&pChn->mList);
         CLOCK_CHN_MAP_S_Destruct(pChn);
         ret = SUCCESS;
@@ -393,7 +393,7 @@ ERRORTYPE AW_MPI_CLOCK_Start(CLOCK_CHN ClockChn)
 {
     if(!(ClockChn>=0 && ClockChn <CLOCK_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ClockChn[%d]!", ClockChn);
+        LOGE("fatal error! invalid ClockChn[%d]!", ClockChn);
         return ERR_CLOCK_INVALID_CHNID;
     }
     CLOCK_CHN_MAP_S *pChn;
@@ -410,14 +410,14 @@ ERRORTYPE AW_MPI_CLOCK_Start(CLOCK_CHN ClockChn)
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateExecuting fail");
+            LOGE("fatal error! send command stateExecuting fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else
     {
-        alogd("ClockChannel[%d] State[0x%x], do nothing!", ClockChn, nCompState);
+        LOGD("ClockChannel[%d] State[0x%x], do nothing!", ClockChn, nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -427,7 +427,7 @@ ERRORTYPE AW_MPI_CLOCK_Stop(CLOCK_CHN ClockChn)
 {
     if(!(ClockChn>=0 && ClockChn <CLOCK_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ClockChn[%d]!", ClockChn);
+        LOGE("fatal error! invalid ClockChn[%d]!", ClockChn);
         return ERR_CLOCK_INVALID_CHNID;
     }
     CLOCK_CHN_MAP_S *pChn;
@@ -444,19 +444,19 @@ ERRORTYPE AW_MPI_CLOCK_Stop(CLOCK_CHN ClockChn)
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StateIdle, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! send command stateIdle fail");
+            LOGE("fatal error! send command stateIdle fail");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogv("ClockChannel[%d] State[0x%x], do nothing!", ClockChn, nCompState);
+        LOGV("ClockChannel[%d] State[0x%x], do nothing!", ClockChn, nCompState);
         ret = SUCCESS;
     }
     else
     {
-        aloge("fatal error! check ClockChannelState[0x%x]!", nCompState);
+        LOGE("fatal error! check ClockChannelState[0x%x]!", nCompState);
         ret = SUCCESS;
     }
     return ret;
@@ -466,7 +466,7 @@ ERRORTYPE AW_MPI_CLOCK_Pause(CLOCK_CHN ClockChn)
 {
     if(!(ClockChn>=0 && ClockChn <CLOCK_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ClockChn[%d]!", ClockChn);
+        LOGE("fatal error! invalid ClockChn[%d]!", ClockChn);
         return ERR_CLOCK_INVALID_CHNID;
     }
     CLOCK_CHN_MAP_S *pChn;
@@ -483,24 +483,24 @@ ERRORTYPE AW_MPI_CLOCK_Pause(CLOCK_CHN ClockChn)
         eRet = pChn->mComp->SendCommand(pChn->mComp, COMP_CommandStateSet, COMP_StatePause, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command statePause fail!");
+            LOGE("fatal error! Send command statePause fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StatePause == nCompState)
     {
-        alogd("ClockChannel[%d] already statePause.", ClockChn);
+        LOGD("ClockChannel[%d] already statePause.", ClockChn);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("ClockChannel[%d] stateIdle, can't turn to statePause!", ClockChn);
+        LOGD("ClockChannel[%d] stateIdle, can't turn to statePause!", ClockChn);
         ret = ERR_CLOCK_INCORRECT_STATE_TRANSITION;
     }
     else
     {
-        aloge("fatal error! check ClockChannel[%d]State[0x%x]!", ClockChn, nCompState);
+        LOGE("fatal error! check ClockChannel[%d]State[0x%x]!", ClockChn, nCompState);
         ret = ERR_CLOCK_INCORRECT_STATE_TRANSITION;
     }
     return ret;
@@ -510,7 +510,7 @@ ERRORTYPE AW_MPI_CLOCK_Seek(CLOCK_CHN ClockChn)
 {
     if(!(ClockChn>=0 && ClockChn <CLOCK_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ClockChn[%d]!", ClockChn);
+        LOGE("fatal error! invalid ClockChn[%d]!", ClockChn);
         return ERR_CLOCK_INVALID_CHNID;
     }
     CLOCK_CHN_MAP_S *pChn;
@@ -528,7 +528,7 @@ ERRORTYPE AW_MPI_CLOCK_Seek(CLOCK_CHN ClockChn)
     }
     else
     {
-        aloge("fatal error! check ClockChannel[%d]State[0x%x]!", ClockChn, nCompState);
+        LOGE("fatal error! check ClockChannel[%d]State[0x%x]!", ClockChn, nCompState);
         ret = ERR_CLOCK_INCORRECT_STATE_OPERATION;
     }
     return ret; 
@@ -545,7 +545,7 @@ ERRORTYPE AW_MPI_CLOCK_RegisterCallback(CLOCK_CHN ClockChn, MPPCallbackInfo *pCa
 {
     if(!(ClockChn>=0 && ClockChn <CLOCK_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ClockChn[%d]!", ClockChn);
+        LOGE("fatal error! invalid ClockChn[%d]!", ClockChn);
         return ERR_CLOCK_INVALID_CHNID;
     }
     CLOCK_CHN_MAP_S *pChn;
@@ -562,7 +562,7 @@ ERRORTYPE AW_MPI_CLOCK_GetCurrentMediaTime(CLOCK_CHN ClockChn, int* pMediaTime)
 {
     if(!(ClockChn>=0 && ClockChn <CLOCK_MAX_CHN_NUM))
     {
-        aloge("fatal error! invalid ClockChn[%d]!", ClockChn);
+        LOGE("fatal error! invalid ClockChn[%d]!", ClockChn);
         return ERR_CLOCK_INVALID_CHNID;
     }
     CLOCK_CHN_MAP_S *pChn;
@@ -589,7 +589,7 @@ ERRORTYPE AW_MPI_CLOCK_GetCurrentMediaTime(CLOCK_CHN ClockChn, int* pMediaTime)
     }
     else
     {
-        aloge("fatal error! call in wrong ClockChannel[%d]State[0x%x]!", ClockChn, nCompState);
+        LOGE("fatal error! call in wrong ClockChannel[%d]State[0x%x]!", ClockChn, nCompState);
         *pMediaTime = -1;
         ret = SUCCESS;
     }

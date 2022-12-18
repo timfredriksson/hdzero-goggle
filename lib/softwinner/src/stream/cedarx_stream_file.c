@@ -18,7 +18,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "cedarx_stream_file"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <unistd.h>
 #include <errno.h>
@@ -51,7 +51,7 @@ static void cedarx_stream_file_init(void)
     int err = pthread_mutex_init(&gFallocateLock, NULL);
     if (err != 0) 
     {
-        aloge("fatal error! pthread mutex init fail!");
+        LOGE("fatal error! pthread mutex init fail!");
     }
 }
 
@@ -62,7 +62,7 @@ static char *generateFilepathFromFd(const int fd)
     int ret;
     if(fd < 0)
     {
-        aloge("fatal error! fd[%d] wrong", fd);
+        LOGE("fatal error! fd[%d] wrong", fd);
         return NULL;
     }
 
@@ -70,11 +70,11 @@ static char *generateFilepathFromFd(const int fd)
     ret = readlink(fdPath, absoluteFilePath, 1024 - 1);
     if (ret == -1)
     {
-        aloge("fatal error! readlink[%s] failure, errno(%s)", fdPath, strerror(errno));
+        LOGE("fatal error! readlink[%s] failure, errno(%s)", fdPath, strerror(errno));
         return NULL;
     }
     absoluteFilePath[ret] = '\0';
-    alogd("readlink[%s], filePath[%s]", fdPath, absoluteFilePath);
+    LOGD("readlink[%s], filePath[%s]", fdPath, absoluteFilePath);
     return strdup(absoluteFilePath);
 }
 
@@ -116,9 +116,9 @@ ssize_t cdx_write_stream_file(const void *ptr, size_t size, size_t nmemb, struct
 //    	num_bytes_written /=size;
 //    }
 //    return num_bytes_written;
-    //alogd("ptr[%p], size[%d]nmemb[%d]file_handle[%p]!", ptr, size, nmemb, stream->file_handle);
+    //LOGD("ptr[%p], size[%d]nmemb[%d]file_handle[%p]!", ptr, size, nmemb, stream->file_handle);
     return fwrite(ptr, size, nmemb,stream->file_handle);
-    //alogd("writeNum[%d]", writeNum);
+    //LOGD("writeNum[%d]", writeNum);
 }
 
 long long cdx_get_stream_size_file(struct cdx_stream_info *stream)
@@ -154,7 +154,7 @@ int cdx_truncate_stream_file(struct cdx_stream_info *stream, cdx_off_t length)
     ret = ftruncate(nFd, length);
     if(ret!=0)
     {
-        aloge("fatal error! ftruncate fail");
+        LOGE("fatal error! ftruncate fail");
     }
     return ret;
 }
@@ -171,18 +171,18 @@ int cdx_fallocate_stream_file(struct cdx_stream_info *stream, int mode, int64_t 
         if (fallocate(nFd, mode, offset, len) < 0)
         //if((ret = posix_fallocate(nFd, offset, len)) != 0)
         {
-            aloge("Failed to fallocate size %lld, fd[%d], ret[%d](%s)", len, nFd, ret, strerror(errno));
+            LOGE("Failed to fallocate size %lld, fd[%d], ret[%d](%s)", len, nFd, ret, strerror(errno));
             pthread_mutex_unlock(&gFallocateLock);
             return -1;
         }
         tm2 = CDX_GetSysTimeUsMonotonic();
-        alogd("stream[%p] fallocate size(%lld)Byte, time(%lld)ms", stream, len, (tm2-tm1)/1000);
+        LOGD("stream[%p] fallocate size(%lld)Byte, time(%lld)ms", stream, len, (tm2-tm1)/1000);
         pthread_mutex_unlock(&gFallocateLock);
         return 0;
     }
     else
     {
-        aloge("fatal error! wrong fd[%d]", nFd);
+        LOGE("fatal error! wrong fd[%d]", nFd);
         return -1;
     }
 }
@@ -190,7 +190,7 @@ int cdx_fallocate_stream_file(struct cdx_stream_info *stream, int mode, int64_t 
 ///////////////////////////////////////////////////////////////////////////////
 int cdx_seek_fd_file(struct cdx_stream_info *stream, cdx_off_t offset, int whence)
 {
-    alogv("stream %p, cur offset 0x%08llx, seek offset 0x%08llx, whence %d, length 0x%08llx", 
+    LOGV("stream %p, cur offset 0x%08llx, seek offset 0x%08llx, whence %d, length 0x%08llx", 
 			stream, stream->fd_desc.cur_offset, offset, whence, stream->fd_desc.length);
     cdx_off_t seek_result;
 	if(whence == SEEK_SET) {
@@ -201,7 +201,7 @@ int cdx_seek_fd_file(struct cdx_stream_info *stream, cdx_off_t offset, int whenc
 		seek_result = lseek64(stream->fd_desc.fd, stream->fd_desc.cur_offset, SEEK_SET);
         if(-1 == seek_result)
         {
-            aloge("fatal error! seek failed (%s)", strerror(errno));
+            LOGE("fatal error! seek failed (%s)", strerror(errno));
             return -1;
         }
 	} else {
@@ -211,7 +211,7 @@ int cdx_seek_fd_file(struct cdx_stream_info *stream, cdx_off_t offset, int whenc
             //seek from backfront, no matter with current position and offset.
             if(stream->mFileEndOffset<stream->mFileSize)
             {
-                aloge("fatal error! called seek when endOffset[%lld]!=fileSize[%lld]", stream->mFileEndOffset, stream->mFileSize);
+                LOGE("fatal error! called seek when endOffset[%lld]!=fileSize[%lld]", stream->mFileEndOffset, stream->mFileSize);
                 offset -= (stream->mFileSize - stream->mFileEndOffset);
             }
             else if (stream->mFileEndOffset == stream->mFileSize)
@@ -219,7 +219,7 @@ int cdx_seek_fd_file(struct cdx_stream_info *stream, cdx_off_t offset, int whenc
             }
             else
             {
-                aloge("fatal error! [%lld]>[%lld]", stream->mFileEndOffset, stream->mFileSize);
+                LOGE("fatal error! [%lld]>[%lld]", stream->mFileEndOffset, stream->mFileSize);
                 assert(0);
             }
         }
@@ -251,14 +251,14 @@ int cdx_seek_fd_file(struct cdx_stream_info *stream, cdx_off_t offset, int whenc
             ssize_t wtSize = stream->write(NULL, 1, nExtendSize, stream);
             tm2 = CDX_GetSysTimeUsMonotonic();
             stream->mFtruncateFlag = 0;
-            alogd("directIO seek extend [%lld]bytes, use [%lld]ms", nExtendSize, (tm2-tm1)/1000);
+            LOGD("directIO seek extend [%lld]bytes, use [%lld]ms", nExtendSize, (tm2-tm1)/1000);
             if(wtSize == nExtendSize)
             {
                 seek_result = lseek64(stream->fd_desc.fd, 0, SEEK_CUR);
             }
             else
             {
-                aloge("fatal error! directIO truncate fail, wtSize[%ld]!=extendSize[%lld]", wtSize, nExtendSize);
+                LOGE("fatal error! directIO truncate fail, wtSize[%ld]!=extendSize[%lld]", wtSize, nExtendSize);
                 seek_result = -1;
             }
         }
@@ -278,7 +278,7 @@ int cdx_seek_fd_file(struct cdx_stream_info *stream, cdx_off_t offset, int whenc
 	int seek_ret = 0;
 	if(seek_result == -1) 
     {
-		aloge("fatal error! seek failed (%s)", strerror(errno));
+		LOGE("fatal error! seek failed (%s)", strerror(errno));
 		seek_ret = -1;
 	} 
     else 
@@ -287,7 +287,7 @@ int cdx_seek_fd_file(struct cdx_stream_info *stream, cdx_off_t offset, int whenc
 				? stream->fd_desc.offset : seek_result;
         if(seek_result < stream->fd_desc.offset)
         {
-            aloge("fatal error! seek pos[%lld]<offset[%lld]", seek_result, stream->fd_desc.offset);
+            LOGE("fatal error! seek pos[%lld]<offset[%lld]", seek_result, stream->fd_desc.offset);
         }
 	}
 	return seek_ret;
@@ -295,29 +295,29 @@ int cdx_seek_fd_file(struct cdx_stream_info *stream, cdx_off_t offset, int whenc
 
 cdx_off_t cdx_tell_fd_file(struct cdx_stream_info *stream)
 {
-    alogv("(f:%s, l:%d)");
+    LOGV("(f:%s, l:%d)");
 	return stream->fd_desc.cur_offset - stream->fd_desc.offset;
 }
 
 ssize_t cdx_read_fd_file(void *ptr, size_t size, size_t nmemb, struct cdx_stream_info *stream)
 {
-    alogv("(f:%s, l:%d)");
+    LOGV("(f:%s, l:%d)");
 	//seek to where current actual pos is.
 	ssize_t result = lseek64(stream->fd_desc.fd, stream->fd_desc.cur_offset, SEEK_SET);
 	if(result == -1) {
-        aloge("fatal error! seek fail!");
+        LOGE("fatal error! seek fail!");
 		return -1;
 	}
 
 	int bytesToBeRead = size * nmemb;
-	alogv("stream %p, cur offset 0x%08llx, require bytes %d, length 0x%08llx",
+	LOGV("stream %p, cur offset 0x%08llx, require bytes %d, length 0x%08llx",
 			stream, stream->fd_desc.cur_offset, bytesToBeRead, stream->fd_desc.length);
 
     result = read(stream->fd_desc.fd, ptr, bytesToBeRead);
     stream->fd_desc.cur_offset = lseek64(stream->fd_desc.fd, 0, SEEK_CUR);
     if(-1 == stream->fd_desc.cur_offset)
     {
-        aloge("fatal error! seek fail!");
+        LOGE("fatal error! seek fail!");
     }
     assert(stream->fd_desc.cur_offset >= stream->fd_desc.offset);
 
@@ -327,9 +327,9 @@ ssize_t cdx_read_fd_file(void *ptr, size_t size, size_t nmemb, struct cdx_stream
     }
     else
     {
-        aloge("fatal error! read [%d]bytes[%d] fail!", size*nmemb, result);
+        LOGE("fatal error! read [%d]bytes[%d] fail!", size*nmemb, result);
     }
-	alogv("stream %p, cur offset 0x%08llx, read bytes %d, length 0x%08llx",
+	LOGV("stream %p, cur offset 0x%08llx, read bytes %d, length 0x%08llx",
 			stream, stream->fd_desc.cur_offset, result, stream->fd_desc.length);
     return result;
 }
@@ -337,10 +337,10 @@ ssize_t cdx_read_fd_file(void *ptr, size_t size, size_t nmemb, struct cdx_stream
 #if (CDXCFG_FILE_SYSTEM==OPTION_FILE_SYSTEM_DIRECT_IO)
 ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx_stream_info *stream)
 {
-    alogv("(f:%s, l:%d)");
+    LOGV("(f:%s, l:%d)");
     off64_t result = lseek64(stream->fd_desc.fd, stream->fd_desc.cur_offset, SEEK_SET);
 	if(result == -1) {
-        aloge("fatal error! seek fail!");
+        LOGE("fatal error! seek fail!");
 		return -1;
 	}
     if(NULL == stream->mpAlignBuf)
@@ -349,7 +349,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
         int ret = posix_memalign((void **)&stream->mpAlignBuf, 4096, stream->mAlignBufSize);
         if(ret!=0)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             return -1;
         }
     }
@@ -361,7 +361,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
     {
         memset(stream->mpAlignBuf, 0xFF, stream->mAlignBufSize);
         fileOffset = lseek64(stream->fd_desc.fd, 0, SEEK_END);
-        alogd("use write() to ftruncate file! curOffset[%lld], endOffset[%lld], curSize[%lld], extend[%lld]bytes", 
+        LOGD("use write() to ftruncate file! curOffset[%lld], endOffset[%lld], curSize[%lld], extend[%lld]bytes", 
             __FUNCTION__, __LINE__, fileOffset, stream->mFileEndOffset, stream->mFileSize, nByteSize);
         stream->mFileEndOffset = stream->mFileSize;
 
@@ -379,7 +379,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
                 int ret = posix_memalign((void **)&pTmpBuf, 4096, nAlignByteSize);
                 if(ret!=0)
                 {
-                    aloge("fatal error! malloc fail!");
+                    LOGE("fatal error! malloc fail!");
                     return -1;
                 }
             }
@@ -388,7 +388,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
             off64_t wrtSize = write(stream->fd_desc.fd, pTmpBuf, nAlignByteSize);
             if(wrtSize!=nAlignByteSize)
             {
-                aloge("fatal error! [%lld]!=[%lld]", wrtSize, nAlignByteSize);
+                LOGE("fatal error! [%lld]!=[%lld]", wrtSize, nAlignByteSize);
             }
             fileOffset = stream->mFileEndOffset = stream->mFileSize = lseek64(stream->fd_desc.fd, 0, SEEK_CUR);
             if(nAlignByteSize <= stream->mAlignBufSize)
@@ -406,43 +406,43 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
         }
         else
         {
-            alogw("why it happened? write() instead of ftruncate(), left [%lld]bytes to write again!", nByteSize);
+            LOGW("why it happened? write() instead of ftruncate(), left [%lld]bytes to write again!", nByteSize);
         }
     }
     //process fileOffset align of first block.
     if(fileOffset%DIRECTIO_UNIT_SIZE!=0)
     {
-        alogd("DirectIO! process file offset not align![%lld]", fileOffset);
+        LOGD("DirectIO! process file offset not align![%lld]", fileOffset);
         alignOffset = (fileOffset/DIRECTIO_UNIT_SIZE)*DIRECTIO_UNIT_SIZE;
         off64_t seekRet = lseek64(stream->fd_desc.fd, alignOffset, SEEK_SET);
         if(-1 == seekRet)
         {
-            aloge("fatal error! seek fail!");
+            LOGE("fatal error! seek fail!");
             return -1;
         }
         int blockLeftSize = DIRECTIO_UNIT_SIZE - (fileOffset - alignOffset);
         result = read(stream->fd_desc.fd, stream->mpAlignBuf, DIRECTIO_UNIT_SIZE);
         if (-1 == result) 
         {
-        	aloge("fatal error! read [%d]bytes[%lld] fail!", DIRECTIO_UNIT_SIZE, result);
+        	LOGE("fatal error! read [%d]bytes[%lld] fail!", DIRECTIO_UNIT_SIZE, result);
             return -1;
         }
         if(result != DIRECTIO_UNIT_SIZE)
         {
-            alogw("fatal error! read [%d]bytes[%lld], maybe read file end!", DIRECTIO_UNIT_SIZE, result);
+            LOGW("fatal error! read [%d]bytes[%lld], maybe read file end!", DIRECTIO_UNIT_SIZE, result);
             //int trucRet = ftruncate(stream->fd_desc.fd, alignOffset + DIRECTIO_UNIT_SIZE);
             off64_t seekPos = lseek64(stream->fd_desc.fd, alignOffset, SEEK_SET);
             if(-1 == seekPos)
             {
-                aloge("fatal error! seek fail!");
+                LOGE("fatal error! seek fail!");
                 return -1;
             }
             memset(stream->mpAlignBuf+result, 0xFF, DIRECTIO_UNIT_SIZE-result);
             off64_t wrtSize = write(stream->fd_desc.fd, stream->mpAlignBuf, DIRECTIO_UNIT_SIZE);
-            alogw("fatal error! truncate size to [%lld]bytes!", alignOffset + DIRECTIO_UNIT_SIZE);
+            LOGW("fatal error! truncate size to [%lld]bytes!", alignOffset + DIRECTIO_UNIT_SIZE);
             if(-1 == wrtSize)
             {
-                aloge("fatal error! truncate fail");
+                LOGE("fatal error! truncate fail");
                 return -1;
             }
             stream->mFileEndOffset = alignOffset + result;
@@ -451,12 +451,12 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
         result = lseek64(stream->fd_desc.fd, alignOffset, SEEK_SET);
         if(-1 == result)
         {
-            aloge("fatal error! seek fail!");
+            LOGE("fatal error! seek fail!");
             return -1;
         }
         if(blockLeftSize >= nByteSize)
         {
-            alogd("can write done once! fileOffset[%lld][%lld], writeSize[%lld]", alignOffset, fileOffset, nByteSize);
+            LOGD("can write done once! fileOffset[%lld][%lld], writeSize[%lld]", alignOffset, fileOffset, nByteSize);
             if(0 == stream->mFtruncateFlag)
             {
                 memcpy(stream->mpAlignBuf + (fileOffset - alignOffset), pCurPtr, nByteSize);
@@ -464,14 +464,14 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
             result = write(stream->fd_desc.fd, stream->mpAlignBuf, DIRECTIO_UNIT_SIZE);
             if (result != DIRECTIO_UNIT_SIZE) 
             {
-                aloge("fatal error! write[%d]bytes[%lld] fail[%s]!", DIRECTIO_UNIT_SIZE, result, strerror(errno));
+                LOGE("fatal error! write[%d]bytes[%lld] fail[%s]!", DIRECTIO_UNIT_SIZE, result, strerror(errno));
                 return -1;
             }
             pCurPtr += nByteSize;
             result = lseek64(stream->fd_desc.fd, fileOffset+nByteSize, SEEK_SET);
             if(-1 == result)
             {
-                aloge("fatal error! seek fail!");
+                LOGE("fatal error! seek fail!");
                 return -1;
             }
             stream->fd_desc.cur_offset = result;
@@ -479,7 +479,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
         }
         else
         {
-            alogd("fileOffset[%lld][%lld], write[%d], need writeSize[%lld]", alignOffset, fileOffset, blockLeftSize, nByteSize);
+            LOGD("fileOffset[%lld][%lld], write[%d], need writeSize[%lld]", alignOffset, fileOffset, blockLeftSize, nByteSize);
             if(0 == stream->mFtruncateFlag)
             {
                 memcpy(stream->mpAlignBuf + (fileOffset - alignOffset), pCurPtr, blockLeftSize);
@@ -487,7 +487,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
             result = write(stream->fd_desc.fd, stream->mpAlignBuf, DIRECTIO_UNIT_SIZE);
             if (result != DIRECTIO_UNIT_SIZE) 
             {
-                aloge("fatal error! write[%d]bytes[%lld] fail[%s]!", blockLeftSize, result, strerror(errno));
+                LOGE("fatal error! write[%d]bytes[%lld] fail[%s]!", blockLeftSize, result, strerror(errno));
                 return -1;
             }
             pCurPtr += blockLeftSize;
@@ -501,7 +501,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
     {
 		if(pCurPtr!=NULL)
 		{
-        	alogw("directIO ptr[%p] not align [%d]bytes, size[%lld]bytes copy", pCurPtr, DIRECTIO_USER_MEMORY_ALIGN, alignSize);
+        	LOGW("directIO ptr[%p] not align [%d]bytes, size[%lld]bytes copy", pCurPtr, DIRECTIO_USER_MEMORY_ALIGN, alignSize);
 		}
         while(alignSize > 0)
         {
@@ -514,7 +514,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
                 result = write(stream->fd_desc.fd, stream->mpAlignBuf, stream->mAlignBufSize);
                 if(result != stream->mAlignBufSize)
                 {
-                    aloge("fatal error! write[%d]bytes[%lld] fail[%s]!", stream->mAlignBufSize, result, strerror(errno));
+                    LOGE("fatal error! write[%d]bytes[%lld] fail[%s]!", stream->mAlignBufSize, result, strerror(errno));
                     return -1;
                 }
                 pCurPtr += stream->mAlignBufSize;
@@ -524,7 +524,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
             {
                 if(alignSize%DIRECTIO_UNIT_SIZE!=0)
                 {
-                    aloge("fatal error! not align[%lld][%d]!", alignSize, DIRECTIO_UNIT_SIZE);
+                    LOGE("fatal error! not align[%lld][%d]!", alignSize, DIRECTIO_UNIT_SIZE);
                     assert(0);
                 }
                 if(0 == stream->mFtruncateFlag)
@@ -534,7 +534,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
                 result = write(stream->fd_desc.fd, stream->mpAlignBuf, alignSize);
                 if(result != alignSize)
                 {
-                    aloge("fatal error! write[%lld]bytes[%lld] fail[%s]!", alignSize, result, strerror(errno));
+                    LOGE("fatal error! write[%lld]bytes[%lld] fail[%s]!", alignSize, result, strerror(errno));
                     return -1;
                 }
                 pCurPtr += alignSize;
@@ -544,13 +544,13 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
     }
     else
     {
-        //alogd("directIO ptr[%p] and size[%lld] all align [%d]bytes, directly write", pCurPtr, alignSize, DIRECTIO_UNIT_SIZE);
+        //LOGD("directIO ptr[%p] and size[%lld] all align [%d]bytes, directly write", pCurPtr, alignSize, DIRECTIO_UNIT_SIZE);
         if(alignSize > 0)
         {
             result = write(stream->fd_desc.fd, pCurPtr, alignSize);
             if(result != alignSize)
             {
-                aloge("fatal error! write[%lld]bytes[%lld] fail[%s]!", alignSize, result, strerror(errno));
+                LOGE("fatal error! write[%lld]bytes[%lld] fail[%s]!", alignSize, result, strerror(errno));
                 return -1;
             }
             pCurPtr += alignSize;
@@ -560,17 +560,17 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
     //write last bytes, must < DIRECTIO_UNIT_SIZE
     if(nByteSize)
     {
-        alogd("DirectIO! left not align bytes[%lld] to process!", nByteSize);
+        LOGD("DirectIO! left not align bytes[%lld] to process!", nByteSize);
         off64_t curOffset = lseek64(stream->fd_desc.fd, 0, SEEK_CUR);   //must align.
         if(-1 == curOffset)
         {
-            aloge("fatal error! seek fail!");
+            LOGE("fatal error! seek fail!");
             return -1;
         }
         off64_t desOffset = curOffset + nByteSize;
         if(curOffset == stream->mFileEndOffset)
         {
-            alogd("DirectIO! not need read because curOffset[%lld]==fileEndOffset!", curOffset);
+            LOGD("DirectIO! not need read because curOffset[%lld]==fileEndOffset!", curOffset);
             result = 0;
         }
         else
@@ -578,13 +578,13 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
             result = read(stream->fd_desc.fd, stream->mpAlignBuf, DIRECTIO_UNIT_SIZE);
             if (-1 == result) 
             {
-            	aloge("fatal error! read [%d]bytes[%lld] fail!", DIRECTIO_UNIT_SIZE, result);
+            	LOGE("fatal error! read [%d]bytes[%lld] fail!", DIRECTIO_UNIT_SIZE, result);
                 return -1;
             }
         }
         if(result != DIRECTIO_UNIT_SIZE)
         {
-            alogw("read [%d]bytes[%lld], maybe read file end! extend file size to [%lld]bytes", 
+            LOGW("read [%d]bytes[%lld], maybe read file end! extend file size to [%lld]bytes", 
                 __FUNCTION__, __LINE__, DIRECTIO_UNIT_SIZE, result, curOffset + DIRECTIO_UNIT_SIZE);
             //I don't know whether it can run normally when call ftruncate() here, so I use write() to extend file size.
             memset(stream->mpAlignBuf+result, 0xFF, DIRECTIO_UNIT_SIZE-result);
@@ -600,20 +600,20 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
                 //if meet file physical end, process mEndOffset carefully.
                 if(stream->mFileEndOffset < desOffset)
                 {
-                    alogw("Be careful! update FileEndOffset[%lld] to [%lld]!", stream->mFileEndOffset, desOffset);
+                    LOGW("Be careful! update FileEndOffset[%lld] to [%lld]!", stream->mFileEndOffset, desOffset);
                     stream->mFileEndOffset = desOffset;
                 }
             }
             else if(curOffset + DIRECTIO_UNIT_SIZE > stream->mFileSize)
             {
-                aloge("fatal error! [%lld][%d][%lld]!", curOffset, DIRECTIO_UNIT_SIZE, stream->mFileSize);
+                LOGE("fatal error! [%lld][%d][%lld]!", curOffset, DIRECTIO_UNIT_SIZE, stream->mFileSize);
                 assert(0);
             }
         }
         result = lseek64(stream->fd_desc.fd, curOffset, SEEK_SET);
         if(-1 == result)
         {
-            aloge("fatal error! seek fail!");
+            LOGE("fatal error! seek fail!");
             return -1;
         }
         if(0 == stream->mFtruncateFlag)
@@ -623,7 +623,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
         result = write(stream->fd_desc.fd, stream->mpAlignBuf, DIRECTIO_UNIT_SIZE);
         if(result != DIRECTIO_UNIT_SIZE)
         {
-            aloge("fatal error! write[%d]bytes[%lld] fail[%s]!", DIRECTIO_UNIT_SIZE, result, strerror(errno));
+            LOGE("fatal error! write[%d]bytes[%lld] fail[%s]!", DIRECTIO_UNIT_SIZE, result, strerror(errno));
             return -1;
         }
         pCurPtr += nByteSize;
@@ -631,7 +631,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
         result = lseek64(stream->fd_desc.fd, desOffset, SEEK_SET);
         if(-1 == result)
         {
-            aloge("fatal error! seek fail!");
+            LOGE("fatal error! seek fail!");
             return -1;
         }
         stream->fd_desc.cur_offset = result;
@@ -642,7 +642,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
         fileOffset = lseek64(stream->fd_desc.fd, 0, SEEK_CUR);
         if(-1 == fileOffset)
         {
-            aloge("fatal error! seek fail!");
+            LOGE("fatal error! seek fail!");
             return -1;
         }
         stream->fd_desc.cur_offset = fileOffset;
@@ -663,7 +663,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
 {
 	int result = lseek64(stream->fd_desc.fd, stream->fd_desc.cur_offset, SEEK_SET);
 	if(result == -1) {
-        aloge("fatal error! seek fail!");
+        LOGE("fatal error! seek fail!");
 		return -1;
 	}
     ssize_t num_bytes_written = 0;
@@ -675,7 +675,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
         writeNum = write(stream->fd_desc.fd , (const void*)curPtr, leftCount);
         if(writeNum != leftCount)
         {
-            aloge("Stream[%p] write error [%d]!=[%u](%s)", stream, writeNum, leftCount, strerror(errno));
+            LOGE("Stream[%p] write error [%d]!=[%u](%s)", stream, writeNum, leftCount, strerror(errno));
             if(writeNum > 0)
             {
                 curPtr += writeNum;
@@ -686,12 +686,12 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
             {
                 if(EAGAIN == errno || EINTR == errno)
                 {
-                    alogd("Be careful. write error is[%d], writeNum[%d], continue", errno, writeNum);
+                    LOGD("Be careful. write error is[%d], writeNum[%d], continue", errno, writeNum);
                     continue;
                 }
                 else
                 {
-                    aloge("fatal error! write error is[%d], writeNum[%d], don't write again.", errno, writeNum);
+                    LOGE("fatal error! write error is[%d], writeNum[%d], don't write again.", errno, writeNum);
                     break;
                 }
             }
@@ -705,14 +705,14 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
 	cdx_off_t seekResult = lseek64(stream->fd_desc.fd, 0, SEEK_CUR);
     if(-1 == seekResult)
     {
-        aloge("fatal error! seek error!");
+        LOGE("fatal error! seek error!");
         return -1;
     }
 	stream->fd_desc.cur_offset = seekResult < stream->fd_desc.offset
 			? stream->fd_desc.offset: seekResult;
     if(seekResult < stream->fd_desc.offset)
     {
-        aloge("fatal error! write pos[%lld]<offset[%lld]", seekResult, stream->fd_desc.offset);
+        LOGE("fatal error! write pos[%lld]<offset[%lld]", seekResult, stream->fd_desc.offset);
     }
     if (num_bytes_written != -1) 
     {
@@ -720,7 +720,7 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
     }
     else
     {
-        aloge("fatal error! write[%d]bytes[%d] fail[%s]!", (size*nmemb), num_bytes_written, strerror(errno));
+        LOGE("fatal error! write[%d]bytes[%d] fail[%s]!", (size*nmemb), num_bytes_written, strerror(errno));
     }
 
     return num_bytes_written;
@@ -730,37 +730,37 @@ ssize_t cdx_write_fd_file(const void *ptr, size_t size, size_t nmemb, struct cdx
 
 long long cdx_get_fd_size_file(struct cdx_stream_info *stream)
 {
-    alogv("(f:%s, l:%d)");
+    LOGV("(f:%s, l:%d)");
     if(stream->mFileEndOffset != stream->mFileSize)
     {
-        aloge("fatal error! [%lld]!=[%lld]", stream->mFileEndOffset, stream->mFileSize);
+        LOGE("fatal error! [%lld]!=[%lld]", stream->mFileEndOffset, stream->mFileSize);
     }
 	//return stream->fd_desc.length;
 	cdx_off_t fdSize = lseek64(stream->fd_desc.fd, 0, SEEK_END);
     if(-1 == fdSize)
     {
-        aloge("fatal error! seek fail!");
+        LOGE("fatal error! seek fail!");
 	}
     cdx_off_t size = fdSize - stream->fd_desc.offset;
 	cdx_off_t seekResult = lseek64(stream->fd_desc.fd, stream->fd_desc.cur_offset, SEEK_SET);
     if(-1 == seekResult)
     {
-        aloge("fatal error! seek fail!");
+        LOGE("fatal error! seek fail!");
 	}
     if(size < 0)
     {
-        aloge("fatal error! size[%lld]<0, fdSize[%lld], offset[%lld]", size, fdSize, stream->fd_desc.offset);
+        LOGE("fatal error! size[%lld]<0, fdSize[%lld], offset[%lld]", size, fdSize, stream->fd_desc.offset);
     }
     return size;
 }
 
 int cdx_truncate_fd_file(struct cdx_stream_info *stream, cdx_off_t length)
 {
-    alogv("(f:%s, l:%d)");
+    LOGV("(f:%s, l:%d)");
     int ret = ftruncate(stream->fd_desc.fd, length);
     if(ret!=0)
     {
-        aloge("fatal error! ftruncate fail[%d]", ret);
+        LOGE("fatal error! ftruncate fail[%d]", ret);
     }
     stream->mFileSize = length;
     stream->mFileEndOffset = length;
@@ -769,10 +769,10 @@ int cdx_truncate_fd_file(struct cdx_stream_info *stream, cdx_off_t length)
 
 int cdx_fallocate_fd_file(struct cdx_stream_info *stream, int mode, int64_t offset, int64_t len)
 {
-    alogv("(f:%s, l:%d)");
+    LOGV("(f:%s, l:%d)");
     int ret = 0;
 #if (CDXCFG_FILE_SYSTEM==OPTION_FILE_SYSTEM_DIRECT_IO)
-    alogw("Don't fallocate when use directIO, mode[%d], offset[%lld], len[%lld]", mode, offset, len);
+    LOGW("Don't fallocate when use directIO, mode[%d], offset[%lld], len[%lld]", mode, offset, len);
     return 0;
 #else
     if(stream->fd_desc.fd >= 0)
@@ -783,18 +783,18 @@ int cdx_fallocate_fd_file(struct cdx_stream_info *stream, int mode, int64_t offs
         if (fallocate(stream->fd_desc.fd, mode, offset, len) < 0)
         //if((ret = posix_fallocate(stream->fd_desc.fd, offset, len)) != 0)
         {
-            aloge("fatal error! Failed to fallocate size %lld, ret[%d](%s)", len, ret, strerror(errno));
+            LOGE("fatal error! Failed to fallocate size %lld, ret[%d](%s)", len, ret, strerror(errno));
             pthread_mutex_unlock(&gFallocateLock);
             return -1;
         }
         tm2 = CDX_GetSysTimeUsMonotonic();
-        alogd("stream[%p] fallocate size(%lld)Byte, time(%lld)ms", stream, len, (tm2-tm1)/1000);
+        LOGD("stream[%p] fallocate size(%lld)Byte, time(%lld)ms", stream, len, (tm2-tm1)/1000);
         pthread_mutex_unlock(&gFallocateLock);
         return 0;
     }
     else
     {
-        aloge("fatal error! wrong fd[%d]", stream->fd_desc.fd);
+        LOGE("fatal error! wrong fd[%d]", stream->fd_desc.fd);
         return -1;
     }
 #endif
@@ -818,7 +818,7 @@ void file_destory_instream_handle(struct cdx_stream_info * stm_info)
     {
         if(0 == stm_info->fd_desc.fd)
         {
-            alogd("Be careful! fd==0!");
+            LOGD("Be careful! fd==0!");
         }
         //Local videos.
         close(stm_info->fd_desc.fd);
@@ -845,14 +845,14 @@ int file_create_instream_handle(CedarXDataSourceDesc *datasource_desc, struct cd
     stm_info->fd_desc.fd = -1;
     if(datasource_desc->source_type == CEDARX_SOURCE_FILEPATH) 
     {
-        alogv(" source url = %s", datasource_desc->source_url);
+        LOGV(" source url = %s", datasource_desc->source_url);
 //              stm_info->fd_desc.fd  = open(datasource_desc->source_url,
 //                      O_RDONLY | O_LARGEFILE, S_IRUSR | S_IWUSR | S_IRGRP
 //                      | S_IWGRP | S_IROTH | S_IWOTH);
         stm_info->file_handle = fopen(datasource_desc->source_url,"rb");
         if (stm_info->file_handle == NULL) 
         {
-            aloge(" fat_open error(%s)", strerror(errno));
+            LOGE(" fat_open error(%s)", strerror(errno));
             ret = -1;
         }
         if(-1 == ret)
@@ -865,7 +865,7 @@ int file_create_instream_handle(CedarXDataSourceDesc *datasource_desc, struct cd
         stm_info->write = cdx_write_stream_file;
         stm_info->getsize = cdx_get_stream_size_file;
         stm_info->destory = file_destory_instream_handle;
-        alogv("open url file:%s",datasource_desc->source_url);
+        LOGV("open url file:%s",datasource_desc->source_url);
         return ret;
     }       
     else if(datasource_desc->source_type == CEDARX_SOURCE_FD)
@@ -876,7 +876,7 @@ int file_create_instream_handle(CedarXDataSourceDesc *datasource_desc, struct cd
         stm_info->fd_desc.offset     = datasource_desc->ext_fd_desc.offset;
         stm_info->fd_desc.cur_offset = datasource_desc->ext_fd_desc.offset;
         stm_info->fd_desc.length     = datasource_desc->ext_fd_desc.length;
-        alogv("stm_info %p, open fd file:%d, offset %lld, length %lld", stm_info, stm_info->fd_desc.fd,
+        LOGV("stm_info %p, open fd file:%d, offset %lld, length %lld", stm_info, stm_info->fd_desc.fd,
                 stm_info->fd_desc.offset, stm_info->fd_desc.length);
         stm_info->seek      = cdx_seek_fd_file;
         stm_info->tell      = cdx_tell_fd_file;
@@ -889,7 +889,7 @@ int file_create_instream_handle(CedarXDataSourceDesc *datasource_desc, struct cd
     }
     else
     {
-        aloge("fatal error! source_type[%d] stream_type[%d] wrong!", datasource_desc->source_type, datasource_desc->stream_type);
+        LOGE("fatal error! source_type[%d] stream_type[%d] wrong!", datasource_desc->source_type, datasource_desc->stream_type);
         ret = -1;
         return ret;
     }
@@ -897,16 +897,16 @@ int file_create_instream_handle(CedarXDataSourceDesc *datasource_desc, struct cd
 
 static void destory_outstream_handle_file(struct cdx_stream_info *stm_info)
 {
-    alogv("(f:%s, l:%d)");
+    LOGV("(f:%s, l:%d)");
   #if (CDXCFG_FILE_SYSTEM==OPTION_FILE_SYSTEM_DIRECT_IO)
     if(stm_info->mFileEndOffset < stm_info->mFileSize)
     {
-        alogd("fd[%d], [%lld]<[%lld], DirectIO use ftruncate() before close.", 
+        LOGD("fd[%d], [%lld]<[%lld], DirectIO use ftruncate() before close.", 
             __FUNCTION__, __LINE__, stm_info->fd_desc.fd, stm_info->mFileEndOffset, stm_info->mFileSize);
         int ret = ftruncate(stm_info->fd_desc.fd, stm_info->mFileEndOffset);
         if(ret!=0)
         {
-            aloge("fatal error! ftruncate fail[%d]", ret);
+            LOGE("fatal error! ftruncate fail[%d]", ret);
         }
         stm_info->mFileSize = stm_info->mFileEndOffset;
     }
@@ -926,7 +926,7 @@ static void destory_outstream_handle_file(struct cdx_stream_info *stm_info)
     {
         if(0 == stm_info->fd_desc.fd)
         {
-            alogd("Be careful! close fd==0");
+            LOGD("Be careful! close fd==0");
         }
         close(stm_info->fd_desc.fd);
         stm_info->fd_desc.fd = -1;
@@ -965,12 +965,12 @@ int create_outstream_handle_file(struct cdx_stream_info *stm_info, CedarXDataSou
     stm_info->fd_desc.fd = -1;
     if(CEDARX_SOURCE_FD == datasource_desc->source_type)
     {
-        //alogd("fd[%d], offset[%lld], length[%lld]", datasource_desc->ext_fd_desc.fd, datasource_desc->ext_fd_desc.offset, datasource_desc->ext_fd_desc.length);
+        //LOGD("fd[%d], offset[%lld], length[%lld]", datasource_desc->ext_fd_desc.fd, datasource_desc->ext_fd_desc.offset, datasource_desc->ext_fd_desc.length);
         #if (CDXCFG_FILE_SYSTEM==OPTION_FILE_SYSTEM_DIRECT_IO)
             //get filepath, reopen again!
             stm_info->mpFilePath = generateFilepathFromFd(datasource_desc->ext_fd_desc.fd);
             stm_info->fd_desc.fd = open(stm_info->mpFilePath, O_CREAT | O_TRUNC | O_RDWR | O_DIRECT, 0666);
-            alogd("directIO dup fd[%d]->[%d]!", datasource_desc->ext_fd_desc.fd, stm_info->fd_desc.fd);
+            LOGD("directIO dup fd[%d]->[%d]!", datasource_desc->ext_fd_desc.fd, stm_info->fd_desc.fd);
             stm_info->fd_desc.offset = datasource_desc->ext_fd_desc.offset;
             stm_info->fd_desc.cur_offset = datasource_desc->ext_fd_desc.offset;
             stm_info->fd_desc.length = datasource_desc->ext_fd_desc.length;
@@ -978,11 +978,11 @@ int create_outstream_handle_file(struct cdx_stream_info *stm_info, CedarXDataSou
             stm_info->mFileSize = stm_info->mFileEndOffset;
             if(stm_info->mFileEndOffset!=0)
             {
-                aloge("fatal error! mEndOffset[%lld], mFileSize[%lld] should be 0!", stm_info->mFileEndOffset, stm_info->mFileSize);
+                LOGE("fatal error! mEndOffset[%lld], mFileSize[%lld] should be 0!", stm_info->mFileEndOffset, stm_info->mFileSize);
             }
             if(stm_info->fd_desc.cur_offset!=0)
             {
-                aloge("fatal error! cur_offset[%lld]!=0", stm_info->fd_desc.cur_offset);
+                LOGE("fatal error! cur_offset[%lld]!=0", stm_info->fd_desc.cur_offset);
             }
             stm_info->seek  = cdx_seek_fd_file ;
         	stm_info->tell  = cdx_tell_fd_file ;
@@ -1008,13 +1008,13 @@ int create_outstream_handle_file(struct cdx_stream_info *stm_info, CedarXDataSou
             }
             if (nFd < 0)
             {
-                aloge("fatal error! open file error[%s]! fd[%d][%d]", strerror(errno), datasource_desc->ext_fd_desc.fd, nFd);
+                LOGE("fatal error! open file error[%s]! fd[%d][%d]", strerror(errno), datasource_desc->ext_fd_desc.fd, nFd);
                 return -1;
             }
             stm_info->file_handle = fdopen(nFd, "w+b");
             if(stm_info->file_handle==NULL) 
             {
-                aloge("fatal error! get file fd failed");
+                LOGE("fatal error! get file fd failed");
                 close(nFd);
                 nFd = -1;
                 return -1;
@@ -1030,11 +1030,11 @@ int create_outstream_handle_file(struct cdx_stream_info *stm_info, CedarXDataSou
             stm_info->mFileSize = stm_info->mFileEndOffset;
             if(stm_info->mFileEndOffset!=0)
             {
-                aloge("fatal error! mEndOffset[%lld], mFileSize[%lld] should be 0!", stm_info->mFileEndOffset, stm_info->mFileSize);
+                LOGE("fatal error! mEndOffset[%lld], mFileSize[%lld] should be 0!", stm_info->mFileEndOffset, stm_info->mFileSize);
             }
             if(stm_info->fd_desc.cur_offset!=0)
             {
-                aloge("fatal error! cur_offset[%lld]!=0", stm_info->fd_desc.cur_offset);
+                LOGE("fatal error! cur_offset[%lld]!=0", stm_info->fd_desc.cur_offset);
             }
             stm_info->seek  = cdx_seek_fd_file ;
         	stm_info->tell  = cdx_tell_fd_file ;
@@ -1054,13 +1054,13 @@ int create_outstream_handle_file(struct cdx_stream_info *stm_info, CedarXDataSou
             stm_info->file_handle = fopen(datasource_desc->source_url, "w+b");
             if(stm_info->file_handle == NULL)
             {
-                aloge("Failed to open file %s(%s)", datasource_desc->source_url, strerror(errno));
+                LOGE("Failed to open file %s(%s)", datasource_desc->source_url, strerror(errno));
             	return -1;
             }
     }
     else
     {
-        aloge("fatal error! wrong source_type[%d]", datasource_desc->source_type);
+        LOGE("fatal error! wrong source_type[%d]", datasource_desc->source_type);
         return -1;
     }
 #endif
@@ -1088,7 +1088,7 @@ int stream_mkdir(char *dirName, int mode)
     ret = 0;
     if(access (dirName, F_OK) != 0)
     {
-        alogv("creat directory , path=%s is not exist,so creat it\n", dirName);
+        LOGV("creat directory , path=%s is not exist,so creat it", dirName);
         ret = mkdir(dirName, mode);
     }
     return ret;

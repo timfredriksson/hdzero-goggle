@@ -13,7 +13,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mpi_ai"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <plat_type.h>
@@ -33,7 +33,7 @@ static AI_CHANNEL_S *AIChannel_Construct(void)
 {
     AI_CHANNEL_S *pChn = (AI_CHANNEL_S*)malloc(sizeof(AI_CHANNEL_S));
     if (pChn == NULL) {
-        aloge("alloc AI_CHANNEL_S error[%s]!", strerror(errno));
+        LOGE("alloc AI_CHANNEL_S error[%s]!", strerror(errno));
         return NULL;
     }
     memset(pChn, 0, sizeof(AI_CHANNEL_S));
@@ -45,7 +45,7 @@ static void AIChannel_Destruct(AI_CHANNEL_S *pChn)
 {
     if (pChn != NULL) {
         if (pChn->mpComp != NULL) {
-            aloge("fatal error! AI component need free before!");
+            LOGE("fatal error! AI component need free before!");
             COMP_FreeHandle(pChn->mpComp);
             pChn->mpComp = NULL;
         }
@@ -68,7 +68,7 @@ static ERRORTYPE AIChannel_EventHandler(
     AI_CHANNEL_S *pChn = (AI_CHANNEL_S*)pAppData;
 
     //ret = pComp->GetConfig(hComponent, COMP_IndexVendorMPPChannelInfo, &aiChnInfo);
-    //alogv("audio device event, MppChannel[%d][%d][%d]", aiChnInfo.mModId, aiChnInfo.mDevId, aiChnInfo.mChnId);
+    //LOGV("audio device event, MppChannel[%d][%d][%d]", aiChnInfo.mModId, aiChnInfo.mDevId, aiChnInfo.mChnId);
 
     switch(eEvent)
     {
@@ -76,13 +76,13 @@ static ERRORTYPE AIChannel_EventHandler(
         {
             if(COMP_CommandStateSet == nData1)
             {
-                alogv("audio device EventCmdComplete, current StateSet[%d]", nData2);
+                LOGV("audio device EventCmdComplete, current StateSet[%d]", nData2);
                 cdx_sem_up(&pChn->mSemCompCmd);
                 break;
             }
             else
             {
-                alogw("Low probability! what data[%#x, %#x]?", nData1, nData2);
+                LOGW("Low probability! what data[%#x, %#x]?", nData1, nData2);
                 break;
             }
         }
@@ -90,19 +90,19 @@ static ERRORTYPE AIChannel_EventHandler(
         {
             if(ERR_AI_INVALIDSTATE == nData1)
             {
-                aloge("Impossible! Ai chn in invalid state!");
+                LOGE("Impossible! Ai chn in invalid state!");
             }
             else if(ERR_AI_INCORRECT_STATE_TRANSITION == nData1)
             {
-                aloge("Ai chn happen wrong state transition!");
+                LOGE("Ai chn happen wrong state transition!");
             }
             else if(ERR_AI_SAMESTATE == nData1)
             {
-                aloge("AI chn change state to the same!");
+                LOGE("AI chn change state to the same!");
             }
             else
             {
-                aloge("Ai chn happen ErrorEvent with data[%#x, %#x]", nData1, nData2);
+                LOGE("Ai chn happen ErrorEvent with data[%#x, %#x]", nData1, nData2);
             }
             break;
         }
@@ -116,7 +116,7 @@ static ERRORTYPE AIChannel_EventHandler(
             break;
         }
         default:
-            aloge("fatal error! unknown event[0x%x]", eEvent);
+            LOGE("fatal error! unknown event[0x%x]", eEvent);
             break;
     }
     return SUCCESS;
@@ -195,7 +195,7 @@ ERRORTYPE AW_MPI_AI_CreateChn(AUDIO_DEV AudioDevId, AI_CHN AiChn)
         ret = AW_MPI_AI_Enable(AudioDevId);
         if (ret != SUCCESS)
         {
-            aloge("enable AiDev failed!");
+            LOGE("enable AiDev failed!");
             return ERR_AI_NOT_ENABLED;
         }
     }
@@ -304,14 +304,14 @@ ERRORTYPE AW_MPI_AI_ResetChn(AUDIO_DEV AudioDevId, AI_CHN AiChn)
         eRet2 = pChn->mpComp->SendCommand(pChn->mpComp, COMP_CommandStateSet, COMP_StateLoaded, NULL);
         if(eRet2 != SUCCESS)
         {
-            aloge("fatal error! reset channel fail[0x%x]!", eRet2);
+            LOGE("fatal error! reset channel fail[0x%x]!", eRet2);
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         return eRet2;
     }
     else
     {
-        aloge("wrong status[0x%x], can't reset ai channel!", nCompState);
+        LOGE("wrong status[0x%x], can't reset ai channel!", nCompState);
         return ERR_AI_NOT_PERM;
     }
 }
@@ -334,24 +334,24 @@ ERRORTYPE AW_MPI_AI_PauseChn(AUDIO_DEV AudioDevId, AI_CHN AiChn)
         eRet = pChn->mpComp->SendCommand(pChn->mpComp, COMP_CommandStateSet, COMP_StatePause, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command statePause fail!");
+            LOGE("fatal error! Send command statePause fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StatePause == nCompState)
     {
-        alogd("AIChannel[%d] already statePause.", AiChn);
+        LOGD("AIChannel[%d] already statePause.", AiChn);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("AIChannel[%d] stateIdle, can't turn to statePause!", AiChn);
+        LOGD("AIChannel[%d] stateIdle, can't turn to statePause!", AiChn);
         ret = ERR_AI_INCORRECT_STATE_OPERATION;
     }
     else
     {
-        aloge("fatal error! check AIChannel[%d] State[0x%x]!", AiChn, nCompState);
+        LOGE("fatal error! check AIChannel[%d] State[0x%x]!", AiChn, nCompState);
         ret = ERR_AI_INCORRECT_STATE_OPERATION;
     }
     return ret;
@@ -380,24 +380,24 @@ ERRORTYPE AW_MPI_AI_ResumeChn(AUDIO_DEV AudioDevId, AI_CHN AiChn)
         eRet = pChn->mpComp->SendCommand(pChn->mpComp, COMP_CommandStateSet, COMP_StateExecuting, NULL);
         if(eRet != SUCCESS)
         {
-            aloge("fatal error! Send command statePause fail!");
+            LOGE("fatal error! Send command statePause fail!");
         }
         cdx_sem_down(&pChn->mSemCompCmd);
         ret = SUCCESS;
     }
     else if(COMP_StateExecuting == nCompState)
     {
-        alogd("AIChannel[%d] already stateExecuting.", AiChn);
+        LOGD("AIChannel[%d] already stateExecuting.", AiChn);
         ret = SUCCESS;
     }
     else if(COMP_StateIdle == nCompState)
     {
-        alogd("AIChannel[%d] stateIdle, can't turn to stateExecuting!", AiChn);
+        LOGD("AIChannel[%d] stateIdle, can't turn to stateExecuting!", AiChn);
         ret = ERR_AI_INCORRECT_STATE_OPERATION;
     }
     else
     {
-        aloge("fatal error! check AIChannel[%d] State[0x%x]!", AiChn, nCompState);
+        LOGE("fatal error! check AIChannel[%d] State[0x%x]!", AiChn, nCompState);
         ret = ERR_AI_INCORRECT_STATE_OPERATION;
     }
     return ret;

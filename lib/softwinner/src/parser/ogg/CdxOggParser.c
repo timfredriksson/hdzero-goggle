@@ -11,7 +11,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "CdxOggParser"
 #include "CdxOggParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxMemory.h>
 #include <errno.h>
 
@@ -151,7 +151,7 @@ static void av_set_pts_info(AVStream *s, int pts_wrap_bits,
     }
     else
     {
-        //av_log(NULL, AV_LOG_WARNING, "st:%d has too large timebase, reducing\n", s->index);
+        //av_log(NULL, AV_LOG_WARNING, "st:%d has too large timebase, reducing", s->index);
     }
 
     if(!s->time_base.num || !s->time_base.den)
@@ -201,7 +201,7 @@ static int ogg_new_stream(CdxOggParser *ogg, uint32_t serial)
     ogg->streams = realloc(ogg->streams, ogg->nstreams * sizeof(*ogg->streams));
     if(!ogg->streams)
     {
-        CDX_LOGE("realloc fail");
+        LOGE("realloc fail");
         return -1;
     }
     struct ogg_stream *os = ogg->streams + idx;
@@ -213,7 +213,7 @@ static int ogg_new_stream(CdxOggParser *ogg, uint32_t serial)
     os->buf           = malloc(os->bufsize);
     if(!os->buf)
     {
-        CDX_LOGE("malloc fail");
+        LOGE("malloc fail");
         return -1;
     }
     os->header        = -1;
@@ -223,11 +223,11 @@ static int ogg_new_stream(CdxOggParser *ogg, uint32_t serial)
     AVStream *st = av_new_stream (ogg, idx);
     if (!st)
     {
-        CDX_LOGE("av_new_stream fail");
+        LOGE("av_new_stream fail");
         return -1;
     }
     av_set_pts_info(st, 64, 1, 1000000);
-    CDX_LOGD("serial=0x%x, idx=%d", serial, idx);
+    LOGD("serial=0x%x, idx=%d", serial, idx);
     return idx;
 }
 static const struct ogg_codec *ogg_search_codec(uint8_t *buf, int size)
@@ -241,7 +241,7 @@ static const struct ogg_codec *ogg_search_codec(uint8_t *buf, int size)
     return NULL;
 }
 
-/**´ËÊ±Ó¦ÊÇÁíÒ»ÎïÀíÁ÷£¬ÒòÎªÍ¬Ò»ÎïÀíÁ÷µÄ¸÷Âß¼­Á÷µÄbosÊÇÏàÁÚµÄ
+/**ï¿½ï¿½Ê±Ó¦ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÍ¬Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½bosï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½
  * Replace the current stream with a new one. This is a typical webradio
  * situation where a new audio stream spawn (identified with a new serial) and
  * must replace the previous one (track switch).
@@ -254,7 +254,7 @@ static int ogg_replace_stream(CdxOggParser *ogg, uint32_t serial, int nsegs)
 
     if(ogg->nstreams != 1 || !ogg->seekable)
     {
-        CDX_LOGW("replace_stream is not supported in this situation");
+        LOGW("replace_stream is not supported in this situation");
         ogg->mErrno = PSR_EOS;
         return AVERROR_EOF;
     }
@@ -263,19 +263,19 @@ static int ogg_replace_stream(CdxOggParser *ogg, uint32_t serial, int nsegs)
     int64_t pos = CdxStreamTell(ogg->file);
     if(pos < 0)
     {
-        CDX_LOGE("CdxStreamTell fail, ret(%lld)", (long long int)pos);
+        LOGE("CdxStreamTell fail, ret(%lld)", (long long int)pos);
         return pos;
     }
     ret = CdxStreamSeek(ogg->file, nsegs, STREAM_SEEK_CUR);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamSeek fail, ret(%d)", ret);
+        LOGE("CdxStreamSeek fail, ret(%d)", ret);
         return ret;
     }
     ret = CdxStreamRead(ogg->file, magic, sizeof(magic));
     if(ret < (int)sizeof(magic))
     {
-        CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+        LOGE("CdxStreamRead fail, ret(%d)", ret);
         if(ret < 0)
         {
             return ret;
@@ -283,19 +283,19 @@ static int ogg_replace_stream(CdxOggParser *ogg, uint32_t serial, int nsegs)
         else
         {
             ogg->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return AVERROR_EOF;
         }
     }
     ret = CdxStreamSeek(ogg->file, pos, STREAM_SEEK_SET);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamSeek fail, ret(%d)", ret);
+        LOGE("CdxStreamSeek fail, ret(%d)", ret);
         return ret;
     }
     codec = ogg_search_codec(magic, sizeof(magic));
     if (!codec) {
-        CDX_LOGE("Cannot identify new stream, maybe unsupported");
+        LOGE("Cannot identify new stream, maybe unsupported");
 
         ogg->mErrno = PSR_EOS;
         return AVERROR_EOF;
@@ -306,7 +306,7 @@ static int ogg_replace_stream(CdxOggParser *ogg, uint32_t serial, int nsegs)
     }
     if (j >= ogg->nstreams)
     {
-        CDX_LOGW("replace_stream fail");//getmediainfoÖ»ÔÚ¿ªÊ¼Ê±×ö¹ý£¬ËùÒÔ¶Ô´ËnewStreamÊÇÎÞÐ§µÄ
+        LOGW("replace_stream fail");//getmediainfoÖ»ï¿½Ú¿ï¿½Ê¼Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶Ô´ï¿½newStreamï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½
         ogg->mErrno = PSR_EOS;
         return AVERROR_EOF;
     }
@@ -371,7 +371,7 @@ _nextPage:
     ret = CdxStreamRead(bc, sync, 4);
     if (ret < 4)
     {
-        CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+        LOGE("CdxStreamRead fail, ret(%d)", ret);
         if(ret < 0)
         {
             return ret;
@@ -379,7 +379,7 @@ _nextPage:
         else
         {
             ogg->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return AVERROR_EOF;
         }
     }
@@ -395,7 +395,7 @@ _nextPage:
             ret = CdxStreamSeek(bc, ogg->page_pos+4, SEEK_SET);
             if(ret < 0)
             {
-                CDX_LOGE("CdxStreamSeek fail");
+                LOGE("CdxStreamSeek fail");
                 return ret;
             }
             ogg->page_pos = -1;
@@ -404,26 +404,26 @@ _nextPage:
         ret = CdxStreamRead(bc, &sync[sp++ & 3], 1);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             return ret;
         }
         else if(ret == 0)
         {
             ogg->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return AVERROR_EOF;
         }
     } while (i++ < MAX_PAGE_SIZE);
 
     if (i >= MAX_PAGE_SIZE) {
-        CDX_LOGE("cannot find sync word");
+        LOGE("cannot find sync word");
         return AVERROR_INVALIDDATA;
     }
 
     ret = CdxStreamRead(bc, info, 23);
     if (ret < 23)
     {
-        CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+        LOGE("CdxStreamRead fail, ret(%d)", ret);
         if(ret < 0)
         {
             return ret;
@@ -431,7 +431,7 @@ _nextPage:
         else
         {
             ogg->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return AVERROR_EOF;
         }
     }
@@ -439,7 +439,7 @@ _nextPage:
     cdx_uint8 *data = info;
 
     if(Get8Bits(data) != 0){      /* version */
-        CDX_LOGE ("ogg page, unsupported version");
+        LOGE ("ogg page, unsupported version");
         return AVERROR_INVALIDDATA;
     }
 
@@ -457,7 +457,7 @@ _nextPage:
             idx_os = ogg_new_stream(ogg, serial);
 
         if (idx_os < 0) {
-            CDX_LOGE("failed to create or replace stream");
+            LOGE("failed to create or replace stream");
             return idx_os;
         }
     }
@@ -466,7 +466,7 @@ _nextPage:
     cdx_int64 pos = CdxStreamTell(bc);
     if(pos < 0)
     {
-        CDX_LOGE("CdxStreamTell fail");
+        LOGE("CdxStreamTell fail");
         return pos;
     }
     ogg->page_pos = os->page_pos = pos - 27;
@@ -477,7 +477,7 @@ _nextPage:
     ret = CdxStreamRead(bc, os->segments, nsegs);
     if (ret < nsegs)
     {
-        CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+        LOGE("CdxStreamRead fail, ret(%d)", ret);
         if(ret < 0)
         {
             return ret;
@@ -485,7 +485,7 @@ _nextPage:
         else
         {
             ogg->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return AVERROR_EOF;
         }
     }
@@ -502,20 +502,20 @@ _nextPage:
         cdx_int64 stream_size = CdxStreamSize(bc);
         if(stream_size < 0)
         {
-            CDX_LOGE("CdxStreamSize fail");
+            LOGE("CdxStreamSize fail");
             return -1;
         }
         cdx_int64 stream_cur = CdxStreamTell(bc);
         if(stream_cur < 0)
         {
-            CDX_LOGE("CdxStreamTell fail");
+            LOGE("CdxStreamTell fail");
             return -1;
         }
         size = (size > (stream_size - stream_cur)) ? (stream_size - stream_cur) : size;
         ret = CdxStreamSkip(bc, size);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamSkip fail");
+            LOGE("CdxStreamSkip fail");
             return -1;
         }
         goto _nextPage;
@@ -547,7 +547,7 @@ _nextPage:
 
         if (!nb)
         {
-            CDX_LOGE("malloc fail");
+            LOGE("malloc fail");
             return -1;
         }
         memcpy(nb, os->buf, os->bufpos);
@@ -555,10 +555,10 @@ _nextPage:
         os->buf = nb;
     }
 
-    ret = CdxStreamRead(bc, os->buf + os->bufpos, size);//ÕæµÄ½«page data¶ÁÈë
+    ret = CdxStreamRead(bc, os->buf + os->bufpos, size);//ï¿½ï¿½Ä½ï¿½page dataï¿½ï¿½ï¿½ï¿½
     if (ret < (int)size)
     {
-        CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+        LOGE("CdxStreamRead fail, ret(%d)", ret);
         if(ret < 0)
         {
             return ret;
@@ -566,7 +566,7 @@ _nextPage:
         else
         {
             ogg->mErrno = PSR_EOS;
-            CDX_LOGI("CdxStreamRead eos");
+            LOGI("CdxStreamRead eos");
             return AVERROR_EOF;
         }
     }
@@ -589,7 +589,7 @@ static int ogg_packet(CdxOggParser *ogg, int *sid, int *dstart, int *dsize,
     int complete_os = 0;
     int segp = 0, psize = 0;
 
-    CDX_LOGV("ogg_packet: curidx=%d", ogg->curidx);
+    LOGV("ogg_packet: curidx=%d", ogg->curidx);
     if (sid)
         *sid = -1;
 
@@ -608,7 +608,7 @@ static int ogg_packet(CdxOggParser *ogg, int *sid, int *dstart, int *dsize,
             if (os->header < 0) {
                 os->codec = ogg_search_codec(os->buf, os->bufpos);
                 if (!os->codec) {
-                    CDX_LOGW("Codec not found, idx=%d", idx_os);
+                    LOGW("Codec not found, idx=%d", idx_os);
                     os->header = 0;
                     os->invalid = 1;
                     return 0;
@@ -642,7 +642,7 @@ static int ogg_packet(CdxOggParser *ogg, int *sid, int *dstart, int *dsize,
     } while (!complete_os);
 
     if (os->granule == -1)
-        CDX_LOGW("Page at %lld is missing granule", (long long int)os->page_pos);
+        LOGW("Page at %lld is missing granule", (long long int)os->page_pos);
 
     os->incomplete = 0;
     ogg->curidx    = idx_os;
@@ -718,7 +718,7 @@ static int ogg_reset(CdxOggParser *ogg)
     int64_t start_pos = CdxStreamTell(ogg->file);
     if(start_pos < 0)
     {
-        CDX_LOGE("CdxStreamTell fail");
+        LOGE("CdxStreamTell fail");
         return -1;
     }
     struct ogg_stream *os;
@@ -767,26 +767,26 @@ ogg_gptopts (CdxOggParser *ogg, int i, uint64_t gp, int64_t *pdts)
 }
 static int64_t ogg_get_duration(CdxOggParser *ogg)
 {
-    CDX_LOGD("ogg_get_duration start");
+    LOGD("ogg_get_duration start");
     if(ogg->fileSize <= 0)
     {
-        CDX_LOGW("ogg->fileSize = %lld, ogg_get_duration fail.", ogg->fileSize);
+        LOGW("ogg->fileSize = %lld, ogg_get_duration fail.", ogg->fileSize);
         return 0;
     }
     if(!ogg->seekable)
     {
-        CDX_LOGW("ogg->seekable = 0, ogg_get_duration fail.");
+        LOGW("ogg->seekable = 0, ogg_get_duration fail.");
         return 0;
     }
     cdx_int64 pos = CdxStreamTell(ogg->file);
     if(pos < 0)
     {
-        CDX_LOGE("CdxStreamTell fail, ret(%lld)", pos);
+        LOGE("CdxStreamTell fail, ret(%lld)", pos);
         return -1;
     }
     if(ogg->fileSize - pos < MAX_PAGE_SIZE)
     {
-        CDX_LOGW("ogg->fileSize - pos < MAX_PAGE_SIZE");
+        LOGW("ogg->fileSize - pos < MAX_PAGE_SIZE");
         //return 0;
     }
 
@@ -814,7 +814,7 @@ _nextSeek:
 
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamSeek fail, ret(%d)", ret);
+        LOGE("CdxStreamSeek fail, ret(%d)", ret);
         return -1;
     }
 
@@ -824,7 +824,7 @@ _nextSeek:
         ret = CdxStreamRead(ogg->file, sync, 4);
         if (ret < 4)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 return -1;
@@ -844,7 +844,7 @@ _nextSeek:
             ret = CdxStreamRead(ogg->file, &sync[sp++ & 3], 1);
             if(ret < 0)
             {
-                CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+                LOGE("CdxStreamRead fail, ret(%d)", ret);
                 return -1;
             }
             else if(ret == 0)
@@ -854,7 +854,7 @@ _nextSeek:
         } while (i++ < MAX_PAGE_SIZE);
 
         if (i >= MAX_PAGE_SIZE) {
-            CDX_LOGE("cannot find sync word");
+            LOGE("cannot find sync word");
             return AVERROR_INVALIDDATA;
         }
         if(ret == 0)
@@ -865,7 +865,7 @@ _nextSeek:
         ret = CdxStreamRead(ogg->file, info, 23);
         if (ret < 23)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 return -1;
@@ -879,7 +879,7 @@ _nextSeek:
         data = info;
 
         if(Get8Bits(data) != 0){      /* version */
-            CDX_LOGE ("ogg page, unsupported version");
+            LOGE ("ogg page, unsupported version");
             return AVERROR_INVALIDDATA;
         }
 
@@ -892,7 +892,7 @@ _nextSeek:
         idx = ogg_find_stream(ogg, serial);
         if (idx < 0) {
 
-            CDX_LOGE("ogg_find_stream fail");
+            LOGE("ogg_find_stream fail");
             return -1;
         }
 
@@ -901,7 +901,7 @@ _nextSeek:
         ret = CdxStreamRead(ogg->file, segments, nsegs);
         if (ret < nsegs)
         {
-            CDX_LOGE("CdxStreamRead fail, ret(%d)", ret);
+            LOGE("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 return -1;
@@ -927,14 +927,14 @@ _nextSeek:
         cdx_int64 stream_cur = CdxStreamTell(ogg->file);
         if(stream_cur < 0)
         {
-            CDX_LOGE("CdxStreamTell fail");
+            LOGE("CdxStreamTell fail");
             return -1;
         }
         size = (size > (ogg->fileSize - stream_cur)) ? (ogg->fileSize - stream_cur) : size;
         ret = CdxStreamSkip(ogg->file, size);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamSkip fail");
+            LOGE("CdxStreamSkip fail");
             return -1;
         }
         tmpPos = CdxStreamTell(ogg->file);
@@ -953,7 +953,7 @@ _nextSeek:
 
     os = ogg->streams + finalIndex;
 
-    CDX_LOGI("finalGp = %lld, os->stream->codec->codec_type=%d",
+    LOGI("finalGp = %lld, os->stream->codec->codec_type=%d",
             finalGp, os->stream->codec->codec_type);
 
     if(os->stream->codec->codec_type == AVMEDIA_TYPE_VIDEO)
@@ -968,13 +968,13 @@ _nextSeek:
     }
     else
     {
-        CDX_LOGW("it is not supported");
+        LOGW("it is not supported");
     }
 
     ret = CdxStreamSeek(ogg->file, pos, SEEK_SET);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamSeek fail, ret(%d)", ret);
+        LOGE("CdxStreamSeek fail, ret(%d)", ret);
         return -1;
     }
 
@@ -995,16 +995,16 @@ static int ogg_read_header(CdxOggParser *ogg)
             return ret;
         }
     } while (!ogg->headers);
-    CDX_LOGI("found headers");
+    LOGI("found headers");
 
     for (j = 0; j < ogg->nstreams; j++) {
         struct ogg_stream *os = ogg->streams + j;
 
         if (os->header < 0) {
-            CDX_LOGE("Header parsing failed for stream %d", j);
+            LOGE("Header parsing failed for stream %d", j);
             ogg->streams[j].codec = NULL;
         } else if (os->codec && (os->nb_header < os->codec->nb_header)) {
-            CDX_LOGW("Headers mismatch for stream %d: expected %d received %d.",
+            LOGW("Headers mismatch for stream %d: expected %d received %d.",
                 j, os->codec->nb_header, os->nb_header);
         }
         /*
@@ -1018,12 +1018,12 @@ static int ogg_read_header(CdxOggParser *ogg)
     int64_t durationUs = ogg_get_duration(ogg);
     if(durationUs < 0)
     {
-        CDX_LOGE("ogg_get_duration fail, durationUs = %lld", (long long int)durationUs);
+        LOGE("ogg_get_duration fail, durationUs = %lld", (long long int)durationUs);
         return (int)durationUs;
     }
     else if(durationUs == 0)
     {
-        CDX_LOGE("ogg_get_duration durationUs == 0");
+        LOGE("ogg_get_duration durationUs == 0");
     }
     ogg->durationUs = (cdx_uint64)durationUs;
 
@@ -1092,7 +1092,7 @@ static int ogg_seek(CdxOggParser *ogg, cdx_int64 timeUs)
 
     if(ogg->hasAudio)
     {
-        CDX_LOGW("please check this code, when error happen");
+        LOGW("please check this code, when error happen");
 
         for (i = 0; i < ogg->nstreams; i++)
         {
@@ -1112,7 +1112,7 @@ static int ogg_seek(CdxOggParser *ogg, cdx_int64 timeUs)
         }
     }
 
-    CDX_LOGE("should not be here");
+    LOGE("should not be here");
     return -1;
 _start:
 
@@ -1136,13 +1136,13 @@ _start:
         ret = CdxStreamSeek(ogg->file, jump_file_pos, SEEK_SET);
         if(ret < 0)
         {
-            CDX_LOGE("CdxStreamSeek fail");
+            LOGE("CdxStreamSeek fail");
             return -1;
         }
         ret = CdxStreamRead(ogg->file, ogg->buf, ogg->bufSize);
         if(ret < ogg->bufSize)
         {
-            CDX_LOGW("CdxStreamRead fail, ret(%d)", ret);
+            LOGW("CdxStreamRead fail, ret(%d)", ret);
             if(ret < 0)
             {
                 return ret;
@@ -1150,8 +1150,8 @@ _start:
         }
 
         guess_frame = find_next_pts(ogg, ogg->buf, ret, &tmp);
-        CDX_LOGD("guess_frame=%lld", guess_frame);
-        /*//ÔÚ¼«¶ËÇé¿öÏÂ£¬ÓÐËÀÑ­»·µÄ·çÏÕ
+        LOGD("guess_frame=%lld", guess_frame);
+        /*//ï¿½Ú¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â£ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½Ä·ï¿½ï¿½ï¿½
         if(guess_frame == 0)
         {
             if(ret < ogg->bufSize)
@@ -1212,7 +1212,7 @@ _start:
 
     if(pos_find == 0)
     {
-        CDX_LOGW("ogm_seek, pos_find == 0");
+        LOGW("ogm_seek, pos_find == 0");
     }
     if(guess_frame != -1)
     {
@@ -1227,12 +1227,12 @@ _start:
         }
         else
         {
-            CDX_LOGW("it is not supported");
+            LOGW("it is not supported");
         }
     }
     else
     {
-        CDX_LOGW("should not be here.");
+        LOGW("should not be here.");
         ogg->seekTimeUs = timeUs;
     }
     if(pts_pos < ogg->data_offset)
@@ -1242,7 +1242,7 @@ _start:
     ret = CdxStreamSeek(ogg->file, pts_pos, SEEK_SET);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamSeek fail");
+        LOGE("CdxStreamSeek fail");
         return -1;
     }
 
@@ -1282,7 +1282,7 @@ static int64_t ogg_calc_pts(CdxOggParser *ogg, int idx_os, int64_t *dts)
         }
         else
         {
-            CDX_LOGW("it is not supported");
+            LOGW("it is not supported");
         }
     }
     else
@@ -1297,7 +1297,7 @@ static void ogg_validate_keyframe(CdxOggParser *ogg, int idx_os, int pstart, int
     if (psize && ogg->streams[idx_os].stream->codec->codec_id == CDX_CODEC_ID_THEORA) {
         if (!!(os->pflags & KEY_FRAME) != !(os->buf[pstart] & 0x40)) {
             os->pflags ^= KEY_FRAME;
-            CDX_LOGW("Broken file, %skeyframe not correctly marked.",
+            LOGW("Broken file, %skeyframe not correctly marked.",
                    (os->pflags & KEY_FRAME) ? "" : "non-");
         }
     }
@@ -1354,13 +1354,13 @@ retry:
             pkt->type = CDX_MEDIA_SUBTITLE;
             break;
         default:
-            CDX_LOGW("CDX_MEDIA_UNKNOWN");
+            LOGW("CDX_MEDIA_UNKNOWN");
             goto retry;
     }
     pkt->streamIndex = os->streamIndex;
 
     ogg->curStream = idx;
-    //CDX_LOGD("pkt->type = %d, ogg->curStream=%d, pts = %lld", pkt->type, ogg->curStream, pts);
+    //LOGD("pkt->type = %d, ogg->curStream=%d, pts = %lld", pkt->type, ogg->curStream, pts);
     ogg->pstart = pstart;
     pkt->flags |= (FIRST_PART|LAST_PART);
     return 0;
@@ -1371,7 +1371,7 @@ static cdx_int32 OggParserPrefetch(CdxParserT *parser, CdxPacketT *cdxPkt)
     CdxOggParser *oggParser = (CdxOggParser*)parser;
     if(oggParser->status != CDX_PSR_IDLE && oggParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PSR_IDLE && status != CDX_PSR_PREFETCHED, \
+        LOGE("status != CDX_PSR_IDLE && status != CDX_PSR_PREFETCHED, \
                   OggParserPrefetch invaild");
         oggParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
@@ -1392,12 +1392,12 @@ static cdx_int32 OggParserPrefetch(CdxParserT *parser, CdxPacketT *cdxPkt)
     }
     if(oggParser->mErrno == PSR_EOS)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         return -1;
     }
     if((oggParser->flags & DISABLE_VIDEO) && (oggParser->flags & DISABLE_AUDIO))
     {
-        CDX_LOGE("DISABLE_VIDEO && DISABLE_AUDIO");
+        LOGE("DISABLE_VIDEO && DISABLE_AUDIO");
         oggParser->mErrno = PSR_UNKNOWN_ERR;
         return -1;
     }
@@ -1415,7 +1415,7 @@ static cdx_int32 OggParserPrefetch(CdxParserT *parser, CdxPacketT *cdxPkt)
     pthread_mutex_lock(&oggParser->statusLock);
     if(ret < 0)
     {
-        CDX_LOGE("ogg_read_packet fail.");
+        LOGE("ogg_read_packet fail.");
         oggParser->status = CDX_PSR_IDLE;
     }
     else
@@ -1462,7 +1462,7 @@ static int VideoCodecMap(int codec_id)
 
         default:
         {
-            CDX_LOGE("VIDEO_CODEC_FORMAT_UNKNOWN, codec_id = %d", codec_id);
+            LOGE("VIDEO_CODEC_FORMAT_UNKNOWN, codec_id = %d", codec_id);
             vCodecFormat = VIDEO_CODEC_FORMAT_UNKNOWN;
             break;
         }
@@ -1476,7 +1476,7 @@ static int SetMediaInfo(CdxOggParser *oggParser)
     mediaInfo->bSeekable = oggParser->seekable;
     struct CdxProgramS *program = &mediaInfo->program[0];
     program->duration = oggParser->durationUs / 1000;//ms
-    CDX_LOGD("*********oggParser->durationUs=%llu", oggParser->durationUs);
+    LOGD("*********oggParser->durationUs=%llu", oggParser->durationUs);
     int i, j=0;
     struct ogg_stream *os;
     VideoStreamInfo *video = NULL;
@@ -1512,9 +1512,9 @@ static int SetMediaInfo(CdxOggParser *oggParser)
             video->nHeight = os->stream->codec->height;
             video->nFrameDuration = os->stream->codec->nFrameDuration =
                 os->stream->codec->time_base.num * 1000000LL/ os->stream->codec->time_base.den;
-            /*Á½Ö¡»­ÃæÖ®¼äµÄ¼ä¸ôÊ±¼ä£¬ÊÇÖ¡ÂÊµÄµ¹Êý£¬µ¥Î»Îªus*/
+            /*ï¿½ï¿½Ö¡ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½Ä¼ï¿½ï¿½Ê±ï¿½ä£¬ï¿½ï¿½Ö¡ï¿½ÊµÄµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»Îªus*/
             video->nFrameRate = 1000 * 1000000/video->nFrameDuration;
-            /*±íÊ¾Ã¿1000ÃëÓÐ¶àÉÙÖ¡»­Ãæ±»²¥·Å£¬ÀýÈç25000¡¢29970¡¢30000µÈ*/
+            /*ï¿½ï¿½Ê¾Ã¿1000ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½Ö¡ï¿½ï¿½ï¿½æ±»ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½25000ï¿½ï¿½29970ï¿½ï¿½30000ï¿½ï¿½*/
             video->nCodecSpecificDataLen = oggParser->tempVideoInfo.nCodecSpecificDataLen;
             video->pCodecSpecificData = oggParser->tempVideoInfo.pCodecSpecificData;
             os->streamIndex = 0;
@@ -1538,7 +1538,7 @@ static int SetMediaInfo(CdxOggParser *oggParser)
                     break;
                 default:
                     program->audio[j].eCodecFormat = AUDIO_CODEC_FORMAT_UNKNOWN;
-                    CDX_LOGE("AUDIO_CODEC_FORMAT_UNKNOWN, codec_id = %d", codec_id);
+                    LOGE("AUDIO_CODEC_FORMAT_UNKNOWN, codec_id = %d", codec_id);
                     break;
             }
 
@@ -1570,16 +1570,16 @@ static int SetMediaInfo(CdxOggParser *oggParser)
                 os->extradata = malloc(os->extradata_size);
                 if(!os->extradata)
                 {
-                    CDX_LOGE("!!!malloc fail");
+                    LOGE("!!!malloc fail");
                 }
                 else
                 {
-                    //CDX_LOGD("priv=%p, os->extradata=%p, priv->packet[0]=%p, priv->len[0]=%d",
+                    //LOGD("priv=%p, os->extradata=%p, priv->packet[0]=%p, priv->len[0]=%d",
                     //priv,os->extradata,priv->packet[0], priv->len[0]);
                     memcpy(os->extradata, priv->packet[0], priv->len[0]);
 
                     //CDX_BUF_DUMP(priv->packet[0], priv->len[0]);
-                    //CDX_LOGD("os->extradata=%p, priv->packet[0]=%p, priv->len[0]=%d",
+                    //LOGD("os->extradata=%p, priv->packet[0]=%p, priv->len[0]=%d",
                     //os->extradata,priv->packet[2], priv->len[2]);
                     memcpy(os->extradata + priv->len[0], priv->packet[2], priv->len[2]);
 
@@ -1588,7 +1588,7 @@ static int SetMediaInfo(CdxOggParser *oggParser)
                     program->audio[j].nCodecSpecificDataLen = os->extradata_size;
                     program->audio[j].pCodecSpecificData = os->extradata;
 
-                    //CDX_LOGD("os->extradata_size = %d,
+                    //LOGD("os->extradata_size = %d,
                     //program->audio[j].pCodecSpecificData=%p, j=%d",
                     //os->extradata_size, program->audio[j].pCodecSpecificData,j);
                 }
@@ -1604,7 +1604,7 @@ static int SetMediaInfo(CdxOggParser *oggParser)
         else if(os->stream->codec->codec_type == AVMEDIA_TYPE_SUBTITLE &&
                 SUBTITLE_STREAM_LIMIT > program->subtitleNum++)
         {
-            CDX_LOGW("subtitle is not support yet.");
+            LOGW("subtitle is not support yet.");
             os->invalid = 1;
         }
         else
@@ -1620,14 +1620,14 @@ static int SetMediaInfo(CdxOggParser *oggParser)
     oggParser->fpVideoStream[0] = fopen("/data/camera/ogg_videostream.es", "wb+");
     if (!oggParser->fpVideoStream[0])
     {
-        CDX_LOGE("open video stream debug file failure errno(%d)", errno);
+        LOGE("open video stream debug file failure errno(%d)", errno);
     }
     if(video && video->bIs3DStream)
     {
         oggParser->fpVideoStream[1] = fopen("/data/camera/ogg_minorvideostream.es", "wb+");
         if (!oggParser->fpVideoStream[1])
         {
-            CDX_LOGE("open video stream debug file failure errno(%d)", errno);
+            LOGE("open video stream debug file failure errno(%d)", errno);
         }
     }
 #endif
@@ -1638,23 +1638,23 @@ static int SetMediaInfo(CdxOggParser *oggParser)
         oggParser->fpAudioStream[i] = fopen(oggParser->url, "wb+");
         if (!oggParser->fpAudioStream[i])
         {
-            CDX_LOGE("open audio stream debug file failure errno(%d)", errno);
+            LOGE("open audio stream debug file failure errno(%d)", errno);
         }
-        //CDX_LOGD("******program->audio[i].nCodecSpecificDataLen = %d,
+        //LOGD("******program->audio[i].nCodecSpecificDataLen = %d,
         //program->audio[i].pCodecSpecificData=%p, i=%d",
         //program->audio[i].nCodecSpecificDataLen, program->audio[i].pCodecSpecificData, i);
         if(oggParser->fpAudioStream[i] &&
            program->audio[i].pCodecSpecificData &&
            program->audio[i].nCodecSpecificDataLen)
         {
-            //CDX_LOGD("******program->audio[i].nCodecSpecificDataLen = %d,
+            //LOGD("******program->audio[i].nCodecSpecificDataLen = %d,
             //program->audio[i].pCodecSpecificData=%p",
             //program->audio[i].nCodecSpecificDataLen,
             //program->audio[i].pCodecSpecificData);
             int ret = fwrite(program->audio[i].pCodecSpecificData, 1,
                              program->audio[i].nCodecSpecificDataLen, oggParser->fpAudioStream[i]);
             sync();
-            //CDX_LOGD("pos = %d, ret = %d", pos, ret);
+            //LOGD("pos = %d, ret = %d", pos, ret);
             //CDX_BUF_DUMP(program->audio[i].pCodecSpecificData,
             //program->audio[i].nCodecSpecificDataLen);
         }
@@ -1689,7 +1689,7 @@ static cdx_int32 ReadPacket(CdxOggParser *oggParser, CdxPacketT *pkt)
         }
         else
         {
-            CDX_LOGE("demux->fpVideoStream == NULL");
+            LOGE("demux->fpVideoStream == NULL");
         }
 
     }
@@ -1704,7 +1704,7 @@ static cdx_int32 ReadPacket(CdxOggParser *oggParser, CdxPacketT *pkt)
         }
         else
         {
-            CDX_LOGE("demux->fpAudioStream == NULL");
+            LOGE("demux->fpAudioStream == NULL");
         }
 
     }
@@ -1765,38 +1765,38 @@ static int MakeSpecificData(CdxOggParser *oggParser)
         pkt = NULL;
         if(oggParser->forceStop)
         {
-            CDX_LOGE("PSR_USER_CANCEL");
+            LOGE("PSR_USER_CANCEL");
             goto _exit;
         }
 
         pkt = (CdxPacketT *)malloc(sizeof(CdxPacketT));
         if(!pkt)
         {
-            CDX_LOGE("malloc fail.");
+            LOGE("malloc fail.");
             goto _exit;
         }
         ret = ogg_read_packet(oggParser, pkt);
         if(ret < 0)
         {
-            CDX_LOGW("PrefetchPacket fail.");
+            LOGW("PrefetchPacket fail.");
             goto _exit;
         }
         pkt->buf = (char *)malloc(pkt->length);
         if(!pkt->buf)
         {
-            CDX_LOGE("malloc fail.");
+            LOGE("malloc fail.");
             goto _exit;
         }
         pkt->buflen = pkt->length;
         ret = ReadPacket(oggParser, pkt);
         if(ret < 0)
         {
-            CDX_LOGE("ogg_read_packet fail");
+            LOGE("ogg_read_packet fail");
             goto _exit;
         }
         if(oggParser->packetNum >= MaxProbePacketNum)
         {
-            CDX_LOGE("oggParser->probePacketNum >= MaxProbePacketNum");
+            LOGE("oggParser->probePacketNum >= MaxProbePacketNum");
             goto _exit;
         }
         oggParser->packets[oggParser->packetNum++] = pkt;
@@ -1805,7 +1805,7 @@ static int MakeSpecificData(CdxOggParser *oggParser)
             if(pkt->length + oggParser->vProbeBuf.probeDataSize >
                oggParser->vProbeBuf.probeBufSize)
             {
-                CDX_LOGE("probeDataSize too big!");
+                LOGE("probeDataSize too big!");
                 goto _exit1;
             }
             else
@@ -1822,7 +1822,7 @@ static int MakeSpecificData(CdxOggParser *oggParser)
                                          CDX_PARSER_OGG);
             if(ret == PROBE_SPECIFIC_DATA_ERROR)
             {
-                CDX_LOGE("probeVideoSpecificData error");
+                LOGE("probeVideoSpecificData error");
                 goto _exit1;
             }
             else if(ret == PROBE_SPECIFIC_DATA_SUCCESS)
@@ -1839,7 +1839,7 @@ static int MakeSpecificData(CdxOggParser *oggParser)
             }
             else
             {
-                CDX_LOGE("probeVideoSpecificData (%d), it is unknown.", ret);
+                LOGE("probeVideoSpecificData (%d), it is unknown.", ret);
             }
         }
     }
@@ -1859,7 +1859,7 @@ _exit1:
 
 int OggParserInit(CdxParserT *parser)
 {
-    CDX_LOGI("OggParserInit start");
+    LOGI("OggParserInit start");
 
     CdxOggParser *oggParser = (CdxOggParser *)parser;
 
@@ -1869,13 +1869,13 @@ int OggParserInit(CdxParserT *parser)
     int ret = ogg_read_header(oggParser);
     if(ret < 0)
     {
-        CDX_LOGE("ogg_read_header fail");
+        LOGE("ogg_read_header fail");
         goto _exit;
     }
     ret = MakeSpecificData(oggParser);
     if(ret != PROBE_SPECIFIC_DATA_SUCCESS)
     {
-        CDX_LOGE("MakeSpecificData fail");
+        LOGE("MakeSpecificData fail");
         goto _exit;
     }
     SetMediaInfo(oggParser);
@@ -1887,7 +1887,7 @@ int OggParserInit(CdxParserT *parser)
     oggParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&oggParser->statusLock);
     pthread_cond_signal(&oggParser->cond);
-    CDX_LOGI("CdxOggOpenThread success");
+    LOGI("CdxOggOpenThread success");
     return 0;
 
 _exit:
@@ -1896,7 +1896,7 @@ _exit:
     oggParser->status = CDX_PSR_IDLE;
     pthread_mutex_unlock(&oggParser->statusLock);
     pthread_cond_signal(&oggParser->cond);
-    CDX_LOGI("CdxOggOpenThread fail");
+    LOGI("CdxOggOpenThread fail");
     return -1;
 }
 
@@ -1905,7 +1905,7 @@ static cdx_int32 OggParserRead(CdxParserT *parser, CdxPacketT *pkt)
     CdxOggParser *oggParser = (CdxOggParser*)parser;
     if(oggParser->status != CDX_PSR_PREFETCHED)
     {
-        CDX_LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
+        LOGE("status != CDX_PSR_PREFETCHED, we can not read!");
         oggParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -1942,7 +1942,7 @@ static cdx_int32 OggParserRead(CdxParserT *parser, CdxPacketT *pkt)
 
 cdx_int32 OggParserForceStop(CdxParserT *parser)
 {
-    CDX_LOGD("OggParserForceStop start");
+    LOGD("OggParserForceStop start");
     CdxOggParser *oggParser = (CdxOggParser*)parser;
     pthread_mutex_lock(&oggParser->statusLock);
     oggParser->forceStop = 1;
@@ -1950,7 +1950,7 @@ cdx_int32 OggParserForceStop(CdxParserT *parser)
     int ret = CdxStreamForceStop(oggParser->file);
     if(ret < 0)
     {
-        CDX_LOGE("CdxStreamForceStop fail");
+        LOGE("CdxStreamForceStop fail");
         //oggParser->mErrno = PSR_UNKNOWN_ERR;
         //return -1;
     }
@@ -1962,16 +1962,16 @@ cdx_int32 OggParserForceStop(CdxParserT *parser)
 
     oggParser->mErrno = PSR_USER_CANCEL;
     oggParser->status = CDX_PSR_IDLE;
-    CDX_LOGD("OggParserForceStop end");
+    LOGD("OggParserForceStop end");
     return 0;
 }
 cdx_int32 OggParserClrForceStop(CdxParserT *parser)
 {
-    CDX_LOGV("OggParserClrForceStop start");
+    LOGV("OggParserClrForceStop start");
     CdxOggParser *oggParser = (CdxOggParser*)parser;
     if(oggParser->status != CDX_PSR_IDLE)
     {
-        CDX_LOGW("oggParser->status != CDX_PSR_IDLE");
+        LOGW("oggParser->status != CDX_PSR_IDLE");
         oggParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -1979,9 +1979,9 @@ cdx_int32 OggParserClrForceStop(CdxParserT *parser)
     int ret = CdxStreamClrForceStop(oggParser->file);
     if(ret < 0)
     {
-        CDX_LOGW("CdxStreamClrForceStop fail");
+        LOGW("CdxStreamClrForceStop fail");
     }
-    CDX_LOGI("OggParserClrForceStop end");
+    LOGI("OggParserClrForceStop end");
     return 0;
 }
 static int OggParserControl(CdxParserT *parser, int cmd, void *param)
@@ -1994,7 +1994,7 @@ static int OggParserControl(CdxParserT *parser, int cmd, void *param)
     {
         case CDX_PSR_CMD_SWITCH_AUDIO:
         case CDX_PSR_CMD_SWITCH_SUBTITLE:
-            CDX_LOGI("pmp parser is not support switch stream yet!!!");
+            LOGI("pmp parser is not support switch stream yet!!!");
             break;
         case CDX_PSR_CMD_SET_FORCESTOP:
             return OggParserForceStop(parser);
@@ -2015,26 +2015,26 @@ cdx_int32 OggParserGetStatus(CdxParserT *parser)
 cdx_int32 OggParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType seekModeType)
 {
     CDX_UNUSE(seekModeType);
-    CDX_LOGD("OggParserSeekTo start, timeUs = %lld", timeUs);
+    LOGD("OggParserSeekTo start, timeUs = %lld", timeUs);
     CdxOggParser *oggParser = (CdxOggParser *)parser;
     oggParser->mErrno = PSR_OK;
     oggParser->status = CDX_PSR_IDLE;
     oggParser->packetPos = oggParser->packetNum;
     if(timeUs < 0)
     {
-        CDX_LOGE("timeUs invalid");
+        LOGE("timeUs invalid");
         oggParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
     else if((cdx_uint64)timeUs >= oggParser->durationUs)
     {
-        CDX_LOGI("PSR_EOS");
+        LOGI("PSR_EOS");
         oggParser->mErrno = PSR_EOS;
         return 0;
     }
     if(!oggParser->seekable)
     {
-        CDX_LOGE("seekable = false");
+        LOGE("seekable = false");
         oggParser->mErrno = PSR_UNKNOWN_ERR;
         return -1;
     }
@@ -2052,7 +2052,7 @@ cdx_int32 OggParserSeekTo(CdxParserT *parser, cdx_int64 timeUs, SeekModeType see
     int ret = ogg_seek(oggParser, timeUs);
     if(ret < 0)
     {
-        CDX_LOGE("ogg_seek fail, ret(%d)", ret);
+        LOGE("ogg_seek fail, ret(%d)", ret);
     }
     //oggParser->io_repositioned = 1;
 
@@ -2068,7 +2068,7 @@ static cdx_int32 OggParserClose(CdxParserT *parser)
     int ret = OggParserForceStop(parser);
     if(ret < 0)
     {
-        CDX_LOGW("PmpParserForceStop fail");
+        LOGW("PmpParserForceStop fail");
     }
 
     CdxStreamClose(oggParser->file);
@@ -2237,7 +2237,7 @@ static cdx_int32 OggParserGetMediaInfo(CdxParserT *parser, CdxMediaInfoT *pMedia
     CdxOggParser *oggParser = (CdxOggParser*)parser;
     if(oggParser->status < CDX_PSR_IDLE)
     {
-        CDX_LOGE("status < CDX_PSR_IDLE, OggParserGetMediaInfo invaild");
+        LOGE("status < CDX_PSR_IDLE, OggParserGetMediaInfo invaild");
         oggParser->mErrno = PSR_INVALID_OPERATION;
         return -1;
     }
@@ -2273,7 +2273,7 @@ CdxParserT *OggParserOpen(CdxStreamT *stream, cdx_uint32 flags)
     CdxOggParser *oggParser = CdxMalloc(sizeof(CdxOggParser));
     if(!oggParser)
     {
-        CDX_LOGE("malloc fail!");
+        LOGE("malloc fail!");
         CdxStreamClose(stream);
         return NULL;
     }
@@ -2304,12 +2304,12 @@ cdx_uint32 OggParserProbe(CdxStreamProbeDataT *probeData)
 {
     if(probeData->len < 6)
     {
-        CDX_LOGE("Probe data is not enough.");
+        LOGE("Probe data is not enough.");
         return 0;
     }
     if(memcmp("OggS", probeData->buf, 5) || probeData->buf[5] > 0x7)
     {
-        CDX_LOGE("It is not ogg version 0.");
+        LOGE("It is not ogg version 0.");
         return 0;
     }
     return 100;

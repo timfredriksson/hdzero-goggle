@@ -13,7 +13,7 @@
 // ref platform headers
 #include <linux/videodev2.h>
 #include <string.h>
-#include <utils/plat_log.h>
+#include <log/log.h>
 #include "cdx_list.h"
 #include "plat_defines.h"
 #include "plat_errno.h"
@@ -85,7 +85,7 @@ VENC_CODEC_TYPE map_PAYLOAD_TYPE_E_to_VENC_CODEC_TYPE(PAYLOAD_TYPE_E nPayLoadTyp
             nVenclibType = VENC_CODEC_JPEG;
             break;
         default:
-            aloge("fatal error! unknown PlayLoadType[%d]", nPayLoadType);
+            LOGE("fatal error! unknown PlayLoadType[%d]", nPayLoadType);
             nVenclibType = VENC_CODEC_H264;
             break;
     }
@@ -110,7 +110,7 @@ AUDIO_ENCODER_TYPE map_PAYLOAD_TYPE_E_to_AUDIO_ENCODER_TYPE(PAYLOAD_TYPE_E nPayL
             nAenclibType = AUDIO_ENCODER_MP3_TYPE;
             break;
         default:
-            aloge("fatal error! unknown PlayLoadType[%d]", nPayLoadType);
+            LOGE("fatal error! unknown PlayLoadType[%d]", nPayLoadType);
             nAenclibType = AUDIO_ENCODER_AAC_TYPE;
             break;
     }
@@ -132,7 +132,7 @@ enum EVIDEOCODECFORMAT map_PAYLOAD_TYPE_E_to_EVIDEOCODECFORMAT(PAYLOAD_TYPE_E nP
             nVDecLibType = VIDEO_CODEC_FORMAT_MJPEG;
             break;
         default:
-            alogw("fatal error! unsupported format[0x%x]", nPayLoadType);
+            LOGW("fatal error! unsupported format[0x%x]", nPayLoadType);
             nVDecLibType = VIDEO_CODEC_FORMAT_MJPEG;
             break;
     }
@@ -153,7 +153,7 @@ PAYLOAD_TYPE_E map_EVIDEOCODECFORMAT_to_PAYLOAD_TYPE_E(enum EVIDEOCODECFORMAT eC
             dstType = PT_H265;
             break;
         default:
-            aloge("fatal error! unsupported format[0x%x]", eCodecFormat);
+            LOGE("fatal error! unsupported format[0x%x]", eCodecFormat);
             dstType = PT_MAX;
             break;
     }
@@ -175,7 +175,7 @@ PAYLOAD_TYPE_E map_EAUDIOCODECFORMAT_to_PAYLOAD_TYPE_E(enum EAUDIOCODECFORMAT eC
             dstType = PT_MP3;
             break;
         default:
-            aloge("fatal error! unsupported format[0x%x]", eCodecFormat);
+            LOGE("fatal error! unsupported format[0x%x]", eCodecFormat);
             dstType = PT_MAX;
             break;
     }
@@ -218,7 +218,7 @@ unsigned int GetBitRateFromVENC_CHN_ATTR_S(VENC_CHN_ATTR_S *pAttr)
             nBitRate = 0;
             break;
         default:
-            alogw("unsupported temporary: chn attr RcAttr RcMode[0x%x]", pAttr->RcAttr.mRcMode);
+            LOGW("unsupported temporary: chn attr RcAttr RcMode[0x%x]", pAttr->RcAttr.mRcMode);
             nBitRate = 0;
             break;
     }

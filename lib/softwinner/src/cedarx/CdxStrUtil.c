@@ -14,7 +14,7 @@
 #include <ctype.h>
 
 #include <CdxMemory.h>
-#include <cdx_log.h>
+#include <log/log.h>
 #include <CdxList.h>
 
 void CdxStrTrimTail(cdx_char *str)

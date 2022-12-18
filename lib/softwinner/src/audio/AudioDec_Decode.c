@@ -14,12 +14,10 @@
 #include "memcheck.h"
 #endif
 
-#include "alib_log.h"
-
 #ifdef  LOG_TAG
-#undef  LOG_TAG
 #define LOG_TAG "AllwinnerAlibs"
 #endif
+#include <log/log.h>
 
 #ifdef  ALIB_DEBUG
 #undef  ALIB_DEBUG
@@ -40,7 +38,7 @@ extern "C" {
 
 static inline void LogVersionInfo(void)
 {
-    alib_logd("\n"
+    LOGD(""
          ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Audio <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n"
          "tag   : %s\n"
          "branch: %s\n"
@@ -314,7 +312,7 @@ static int ShowAbsBits(void *buf, int Len, void *mem)
             // nShowBitsReturn is a legarcy variable, never used...
             if(pAudioDecodeLib->pCedarAudioDec->BsInformation->nShowBitsReturn)
             {
-                //alib_logv("audio showbits empty...\n");
+                //LOGV("audio showbits empty...");
                 pAudioDecodeLib->pInternal.ulExitMean= 0;//clear exit
                 pAudioDecodeLib->pCedarAudioDec->BsInformation->nBitStreamUnderFlow = 1;
                 Len = FileInfo->BufLen;
@@ -378,7 +376,7 @@ static void FlushAbsBits(int Len, void *mem)
     //check if length of audio bitstream is valid
     if(Len > FileInfo->BufLen)
     {
-        //alib_logw("length of audio bitstream to be flushed is invalid!\n");
+        //LOGW("length of audio bitstream to be flushed is invalid!");
         //flush all audio bitstream
         Len = FileInfo->BufLen;
     }
@@ -392,7 +390,7 @@ static void FlushAbsBits(int Len, void *mem)
     FileInfo->BufLen -= Len;
     FileInfo->BufValideLen += Len;
     cdx_mutex_unlock(&pAudioDecodeLib->mutex_audiodec_thread);
-    //alib_logv("--buflen:%d,len:%d\n",FileInfo->BufLen,Len);
+    //LOGV("--buflen:%d,len:%d",FileInfo->BufLen,Len);
     //some audio bitstream buffer is free, send message to wake up audio decoder
 
     FileInfo->FileReadingOpsition += Len;
@@ -433,7 +431,7 @@ static int FREAD_AC320(void *buf, int Len, void *mem)
     Retlen = ShowAbsBits(buf, Len, (void*)FileInfo);
     FlushAbsBits(Retlen, (void*)FileInfo);
 
-    //alib_logv("----FREAD_AC320:%d,%d\n",Len,Retlen);
+    //LOGV("----FREAD_AC320:%d,%d",Len,Retlen);
     return Retlen;
 }
 
@@ -455,7 +453,7 @@ static int FSeek_AC320(int Len, void *mem)
     {
         return 0;
     }
-    //alib_logv("ad_cedar fseek %d",Len);
+    //LOGV("ad_cedar fseek %d",Len);
     cdx_mutex_lock(&pAudioDecodeLib->mutex_audiodec_thread);
     if(Len < 0)
     {
@@ -521,7 +519,7 @@ static int FSeek_AC320(int Len, void *mem)
                     nDataLen += Len - nDataLen;
                 }
             }
-            //alib_logv("FSeek_AC320_frmFifo_info:flush rdIdx[%d]\n", FileInfo->frmFifo->rdIdx);
+            //LOGV("FSeek_AC320_frmFifo_info:flush rdIdx[%d]", FileInfo->frmFifo->rdIdx);
         }
     }
     cdx_mutex_unlock(&pAudioDecodeLib->mutex_audiodec_thread);
@@ -617,13 +615,13 @@ static void* Wrapper_dlsym(const char* libname, void* handle, const char* symbol
 
 static void* Wrapper_dlopen(const char* libname, int mode)
 {
-    //alib_logd("%s open, use dlopen!",libname);
+    //LOGD("%s open, use dlopen!",libname);
     return dlopen(libname, mode);
 }
 
 static void Wrapper_dlclose(const char* libname, void* handle)
 {
-    //alib_logd("%s close, use dlclose!",libname);
+    //LOGD("%s close, use dlclose!",libname);
     dlclose(handle);
     return;
 }
@@ -638,7 +636,7 @@ static int InitCodec(AudioDecoderContextLib* pAudioDecodeLib, InitCodecInfo* ini
 {
     if(!pAudioDecodeLib || !initcodecinfo)
     {
-        alib_loge("InitCodec(%p) or pAudioDecodeLib NULL! broken down...", initcodecinfo);
+        LOGE("InitCodec(%p) or pAudioDecodeLib NULL! broken down...", initcodecinfo);
         return -1;
     }
     pAudioDecodeLib->handlename = "none";
@@ -646,18 +644,18 @@ static int InitCodec(AudioDecoderContextLib* pAudioDecodeLib, InitCodecInfo* ini
     pAudioDecodeLib->libhandle = Wrapper_dlopen(initcodecinfo->handle, RTLD_NOW);
     if(pAudioDecodeLib->libhandle == NULL)
     {
-        alib_loge("----Loading so fail");
+        LOGE("----Loading so fail");
         return -1;
     }
     else
     {
-        alib_logd("----Loading so success!");
+        LOGD("----Loading so success!");
         pAudioDecodeLib->handlename = initcodecinfo->handle;
     }
     pAudioDecodeLib->pCedarCodec = (CedarAudioCodec*)malloc(sizeof(CedarAudioCodec));
     if(!pAudioDecodeLib->pCedarCodec)
     {
-        alib_loge("pAudioDecodeLib->pCedarCodec malloc fail! broken down...");
+        LOGE("pAudioDecodeLib->pCedarCodec malloc fail! broken down...");
         if(pAudioDecodeLib->libhandle)
         {
             Wrapper_dlclose(pAudioDecodeLib->handlename, pAudioDecodeLib->libhandle);
@@ -670,7 +668,7 @@ static int InitCodec(AudioDecoderContextLib* pAudioDecodeLib, InitCodecInfo* ini
     pAudioDecodeLib->pCedarCodec->name = initcodecinfo->name;
     pAudioDecodeLib->pCedarCodec->init = Wrapper_dlsym(pAudioDecodeLib->handlename, pAudioDecodeLib->libhandle, initcodecinfo->init);
     pAudioDecodeLib->pCedarCodec->exit = Wrapper_dlsym(pAudioDecodeLib->handlename, pAudioDecodeLib->libhandle, initcodecinfo->exit);
-    alib_logv("%s, %s, %p, %p", pAudioDecodeLib->handlename, initcodecinfo->init, pAudioDecodeLib->pCedarCodec->init, pAudioDecodeLib->pCedarCodec->exit);
+    LOGV("%s, %s, %p, %p", pAudioDecodeLib->handlename, initcodecinfo->init, pAudioDecodeLib->pCedarCodec->init, pAudioDecodeLib->pCedarCodec->exit);
     pAudioDecodeLib->pCedarCodec->flag = initcodecinfo->flag;
     if(!pAudioDecodeLib->pCedarCodec->init || !pAudioDecodeLib->pCedarCodec->exit)
     {
@@ -684,7 +682,7 @@ static int InitCodec(AudioDecoderContextLib* pAudioDecodeLib, InitCodecInfo* ini
             free(pAudioDecodeLib->pCedarCodec);
             pAudioDecodeLib->pCedarCodec = NULL;
         }
-        alib_loge("%s get some dlsym fail! broken down....", initcodecinfo->handle);
+        LOGE("%s get some dlsym fail! broken down....", initcodecinfo->handle);
         return -1;
     }
     return 0;
@@ -694,14 +692,14 @@ static void ExitCodec(AudioDecoderContextLib* pAudioDecodeLib)
 {
     if(!pAudioDecodeLib)
     {
-        alib_loge("ExitCodec, pAudioDecodeLib is NULL!");
+        LOGE("ExitCodec, pAudioDecodeLib is NULL!");
         return ;
     }
     if(pAudioDecodeLib->libhandle)
     {
         Wrapper_dlclose(pAudioDecodeLib->handlename, pAudioDecodeLib->libhandle);
         pAudioDecodeLib->libhandle = NULL;
-        alib_logd("----dlclose so success!");
+        LOGD("----dlclose so success!");
     }
     if(pAudioDecodeLib->pCedarCodec)
     {
@@ -812,7 +810,7 @@ void AudioInternalCtl(int cmd, void* parm1, void* parm2)
             memcpy(parm2, &ret, sizeof(int));
             break;
         default:
-            alib_logd("Unknow cmd(%d)...", cmd);
+            LOGD("Unknow cmd(%d)...", cmd);
             break;
     }
 }
@@ -830,7 +828,7 @@ static int AC320DecInit(AudioDecoderContextLib *pAudioDecodeLib,BsInFor *pBsInFo
 #endif
     if(!pFileBs)
     {
-        alib_logw("can't open pFileBs\n");
+        LOGW("can't open pFileBs");
     }
 #endif
 
@@ -842,29 +840,29 @@ static int AC320DecInit(AudioDecoderContextLib *pAudioDecodeLib,BsInFor *pBsInFo
 #endif
     if(!pFilePcm)
     {
-        alib_logw("can't open pFileBs\n");
+        LOGW("can't open pFileBs");
     }
 #endif
 
     pExtraData = (unsigned char*)pAudioStreamInfo->pCodecSpecificData;
     nExtraDataLen  = pAudioStreamInfo->nCodecSpecificDataLen;
     #if 1
-    alib_logd("*************pAudioStreamInfo start******************");
-    alib_logd("eCodecFormat         :id(%d), name(%s)",   pAudioStreamInfo->eCodecFormat, CodecIDtoFormatName(pAudioStreamInfo->eCodecFormat));
-    alib_logd("eSubCodecFormat      :%d",   pAudioStreamInfo->eSubCodecFormat        );
-    alib_logd("nChannelNum          :%d",   pAudioStreamInfo->nChannelNum            );
-    alib_logd("nBitsPerSample       :%d",   pAudioStreamInfo->nBitsPerSample == 0?16:pAudioStreamInfo->nBitsPerSample);
-    alib_logd("nSampleRate          :%d",   pAudioStreamInfo->nSampleRate            );
-    alib_logd("nAvgBitrate          :%d",   pAudioStreamInfo->nAvgBitrate            );
-    alib_logd("nMaxBitRate          :%d",   pAudioStreamInfo->nMaxBitRate            );
-    alib_logd("nFileSize            :%d",   pAudioStreamInfo->nFileSize              );
-    alib_logd("eAudioBitstreamSource:%d",   pAudioStreamInfo->eAudioBitstreamSource  );
-    alib_logd("eDataEncodeType      :%d",   pAudioStreamInfo->eDataEncodeType        );
-    alib_logd("nCodecSpecificDataLen:%d",   pAudioStreamInfo->nCodecSpecificDataLen  );
-    alib_logd("pCodecSpecificData   :%p",   pAudioStreamInfo->pCodecSpecificData     );
-    alib_logd("nFlags               :%d",   pAudioStreamInfo->nFlags                 );
-    alib_logd("nBlockAlign          :%d",   pAudioStreamInfo->nBlockAlign            );
-    alib_logd("*************pAudioStreamInfo end  ******************");
+    LOGD("*************pAudioStreamInfo start******************");
+    LOGD("eCodecFormat         :id(%d), name(%s)",   pAudioStreamInfo->eCodecFormat, CodecIDtoFormatName(pAudioStreamInfo->eCodecFormat));
+    LOGD("eSubCodecFormat      :%d",   pAudioStreamInfo->eSubCodecFormat        );
+    LOGD("nChannelNum          :%d",   pAudioStreamInfo->nChannelNum            );
+    LOGD("nBitsPerSample       :%d",   pAudioStreamInfo->nBitsPerSample == 0?16:pAudioStreamInfo->nBitsPerSample);
+    LOGD("nSampleRate          :%d",   pAudioStreamInfo->nSampleRate            );
+    LOGD("nAvgBitrate          :%d",   pAudioStreamInfo->nAvgBitrate            );
+    LOGD("nMaxBitRate          :%d",   pAudioStreamInfo->nMaxBitRate            );
+    LOGD("nFileSize            :%d",   pAudioStreamInfo->nFileSize              );
+    LOGD("eAudioBitstreamSource:%d",   pAudioStreamInfo->eAudioBitstreamSource  );
+    LOGD("eDataEncodeType      :%d",   pAudioStreamInfo->eDataEncodeType        );
+    LOGD("nCodecSpecificDataLen:%d",   pAudioStreamInfo->nCodecSpecificDataLen  );
+    LOGD("pCodecSpecificData   :%p",   pAudioStreamInfo->pCodecSpecificData     );
+    LOGD("nFlags               :%d",   pAudioStreamInfo->nFlags                 );
+    LOGD("nBlockAlign          :%d",   pAudioStreamInfo->nBlockAlign            );
+    LOGD("*************pAudioStreamInfo end  ******************");
     #endif
 
 
@@ -872,14 +870,14 @@ static int AC320DecInit(AudioDecoderContextLib *pAudioDecodeLib,BsInFor *pBsInFo
 
     if(!pAudioDecodeLib->DecFileInfo.bufStart)
     {
-        alib_loge("err bufStart malloc");
+        LOGE("err bufStart malloc");
         return -1;
     }
 
     pAudioDecodeLib->DecFileInfo.frmFifo = (astream_fifo_t*)malloc(sizeof(astream_fifo_t));
     if(!pAudioDecodeLib->DecFileInfo.frmFifo)
     {
-        alib_loge("err frmFifo malloc");
+        LOGE("err frmFifo malloc");
         return -1;
     }
     memset(pAudioDecodeLib->DecFileInfo.frmFifo, 0x00, sizeof(astream_fifo_t));
@@ -887,7 +885,7 @@ static int AC320DecInit(AudioDecoderContextLib *pAudioDecodeLib,BsInFor *pBsInFo
 
     if(!pAudioDecodeLib->DecFileInfo.frmFifo->inFrames)
     {
-        alib_loge("err inFrames malloc");
+        LOGE("err inFrames malloc");
         return -1;
     }
 
@@ -919,7 +917,7 @@ static int AC320DecInit(AudioDecoderContextLib *pAudioDecodeLib,BsInFor *pBsInFo
         }
         else if(pAudioDecodeLib->pCedarCodec->flag & AD_CEDAR_CTRL_FLAG_BUILD_RMVB_SIPR_HDR)
         {
-            alib_logd("Sipr add rmvb head");
+            LOGD("Sipr add rmvb head");
 /*
                Head is something like this...
             cdx_uint32 ulSampleRate;
@@ -975,7 +973,7 @@ static int AC320DecInit(AudioDecoderContextLib *pAudioDecodeLib,BsInFor *pBsInFo
                     pExtra[ 6]= (pAudioStreamInfo->nSampleRate>>16) & 0xff;
                     pExtra[ 7]= (pAudioStreamInfo->nSampleRate>>24) & 0xff;
                     //891011nAvgBytesPerSec
-                    //alib_logd("pAudioStreamInfo->nAvgBitrate:0x%0x",pAudioStreamInfo->nAvgBitrate);
+                    //LOGD("pAudioStreamInfo->nAvgBitrate:0x%0x",pAudioStreamInfo->nAvgBitrate);
                     pExtra[ 8]= (pAudioStreamInfo->nAvgBitrate>>3)&0xff ;
                     pExtra[ 9]= (pAudioStreamInfo->nAvgBitrate>>11)&0xff ;
                     pExtra[10]= (pAudioStreamInfo->nAvgBitrate>>19)&0xff ;
@@ -1089,7 +1087,7 @@ static int AC320DecInit(AudioDecoderContextLib *pAudioDecodeLib,BsInFor *pBsInFo
             }
             else
             {
-                alib_logd("DecInit failed.");
+                LOGD("DecInit failed.");
                 return -1;
             }
         default:
@@ -1105,7 +1103,7 @@ static int AC320DecInit(AudioDecoderContextLib *pAudioDecodeLib,BsInFor *pBsInFo
 
     if(pAudioDecodeLib->pCedarAudioDec->DecInit(pAudioDecodeLib->pCedarAudioDec)<0)
     {
-        alib_loge("err DecInit");
+        LOGE("err DecInit");
         return -1;
     }
 
@@ -1139,14 +1137,14 @@ static void AC320DecExit(AudioDecoderContextLib *pAudioDecodeLib)
     ALIB_SAFE_FREE(pAudioDecodeLib->DecFileInfo.frmFifo);
     ALIB_SAFE_FREE(pAudioDecodeLib->DecFileInfo.bufStart);
 
-    alib_logv("ad_cedar exit 1...");
+    LOGV("ad_cedar exit 1...");
     if(pAudioDecodeLib->pCedarAudioDec)
     {
         pAudioDecodeLib->pCedarAudioDec->DecExit(pAudioDecodeLib->pCedarAudioDec);
         pAudioDecodeLib->pCedarCodec->exit(pAudioDecodeLib->pCedarAudioDec);
         pAudioDecodeLib->pCedarAudioDec = NULL;
     }
-    alib_logv("ad_cedar exit 2...");
+    LOGV("ad_cedar exit 2...");
     return;
 }
 
@@ -1167,10 +1165,10 @@ int ParseRequestAudioBitstreamBuffer(AudioDecoderLib* pDecoder,
     int nLengthToEnd = pAudioDecodeLib->DecFileInfo.bufStart + pAudioDecodeLib->DecFileInfo.BufToTalLen - pAudioDecodeLib->DecFileInfo.bufWritingPtr;
     int nWriteLenth = nRequireSize;
     astream_fifo_t* stream = pAudioDecodeLib->DecFileInfo.frmFifo;
-    //alib_logv("***LINE:%d,FUNC:%s,size:%d,offset:%d",__LINE__,__FUNCTION__,nRequireSize,*nOffset);
+    //LOGV("***LINE:%d,FUNC:%s,size:%d,offset:%d",__LINE__,__FUNCTION__,nRequireSize,*nOffset);
     if( nWriteLenth > pAudioDecodeLib->DecFileInfo.BufValideLen || stream->ValidchunkCnt >= AUDIO_BITSTREAM_BUFFER_MAX_FRAME_NUM)
     {
-        alib_logv("audio input bs buffer overflow: %d,%d,%d\n",nWriteLenth,pAudioDecodeLib->DecFileInfo.BufValideLen,stream->ValidchunkCnt);
+        LOGV("audio input bs buffer overflow: %d,%d,%d",nWriteLenth,pAudioDecodeLib->DecFileInfo.BufValideLen,stream->ValidchunkCnt);
         return -1;//OMX_ErrorOverflow;
     }
     //add for seek
@@ -1196,7 +1194,7 @@ int ParseRequestAudioBitstreamBuffer(AudioDecoderLib* pDecoder,
             *pBufSize = nRequireSize;
             *ppRingBuf = NULL;
             *pRingBufSize = 0;
-            alib_logv("audio bs hdr wrap nHoloLen0:%d nHoloLen1:%d addr0:%p addr1:%p pBuffer:%p",pAudioDecodeLib->Streambuffer.InputBsManage.nHoloLen0,
+            LOGV("audio bs hdr wrap nHoloLen0:%d nHoloLen1:%d addr0:%p addr1:%p pBuffer:%p",pAudioDecodeLib->Streambuffer.InputBsManage.nHoloLen0,
             pAudioDecodeLib->Streambuffer.InputBsManage.nHoloLen1,pAudioDecodeLib->Streambuffer.InputBsManage.pHoloStartAddr0,
             pAudioDecodeLib->Streambuffer.InputBsManage.pHoloStartAddr1,*ppBuf);
         }
@@ -1241,7 +1239,7 @@ int ParseRequestAudioBitstreamBuffer(AudioDecoderLib* pDecoder,
             *ppRingBuf = NULL;
             *pRingBufSize = 0;
         }
-        //alib_logv("ad_cedar_req pBuffer->pBuffer:%p TobeFillLen:%d",pBuffer->pBuffer,pBuffer->nTobeFillLen);
+        //LOGV("ad_cedar_req pBuffer->pBuffer:%p TobeFillLen:%d",pBuffer->pBuffer,pBuffer->nTobeFillLen);
     }
     return 0;//OMX_ErrorNone;
 }
@@ -1286,12 +1284,12 @@ int ParseUpdateAudioBitstreamData(AudioDecoderLib* pDecoder,
     {
         AdCedarUpdateAACPacketHdr(pAudioDecodeLib->Streambuffer.CedarAbsPackHdr, pAudioDecodeLib->Streambuffer.CedarAbsPackHdrLen, nFilledLen);
         memcpy(pAudioDecodeLib->Streambuffer.InputBsManage.pHoloStartAddr0,pAudioDecodeLib->Streambuffer.CedarAbsPackHdr,pAudioDecodeLib->Streambuffer.InputBsManage.nHoloLen0);
-        //alib_logw("audio bs wrap BSFILL_MODE_BSWRAP");
+        //LOGW("audio bs wrap BSFILL_MODE_BSWRAP");
     }
     else if(pAudioDecodeLib->Streambuffer.InputBsManage.mode == BSFILL_MODE_HDRWRAP)
     {
         AdCedarUpdateAACPacketHdr(pAudioDecodeLib->Streambuffer.CedarAbsPackHdr, pAudioDecodeLib->Streambuffer.CedarAbsPackHdrLen, nFilledLen);
-        //alib_logw("audio bs wrap BSFILL_MODE_HDRWRAP");
+        //LOGW("audio bs wrap BSFILL_MODE_HDRWRAP");
         memcpy(pAudioDecodeLib->Streambuffer.InputBsManage.pHoloStartAddr0,pAudioDecodeLib->Streambuffer.CedarAbsPackHdr,pAudioDecodeLib->Streambuffer.InputBsManage.nHoloLen0);
         memcpy(pAudioDecodeLib->Streambuffer.InputBsManage.pHoloStartAddr1,pAudioDecodeLib->Streambuffer.CedarAbsPackHdr + pAudioDecodeLib->Streambuffer.InputBsManage.nHoloLen0,pAudioDecodeLib->Streambuffer.InputBsManage.nHoloLen1);
     }
@@ -1351,7 +1349,7 @@ int ParseUpdateAudioBitstreamData(AudioDecoderLib* pDecoder,
            stream->inFrames[stream->wtIdx].ptsValid  = 0;
         }
     }
-    alib_logv("****parse pts:%lld,len:%d,BufLen:%d,wtIdx:%d",stream->inFrames[stream->wtIdx].pts,stream->inFrames[stream->wtIdx].len,pAudioDecodeLib->DecFileInfo.BufLen,stream->wtIdx);
+    LOGV("****parse pts:%lld,len:%d,BufLen:%d,wtIdx:%d",stream->inFrames[stream->wtIdx].pts,stream->inFrames[stream->wtIdx].len,pAudioDecodeLib->DecFileInfo.BufLen,stream->wtIdx);
     stream->wtIdx++;
     if(stream->wtIdx >= AUDIO_BITSTREAM_BUFFER_MAX_FRAME_NUM)
     {
@@ -1394,13 +1392,13 @@ void ParseBitstreamSeekSync(AudioDecoderLib* pDecoder, int64_t nSeekTime, int nG
     pFileBs = fopen("/data/camera/ad_cedar_bs.bin","wb");
     if(!pFileBs)
     {
-        alib_logw("can't open pFileBs\n");
+        LOGW("can't open pFileBs");
     }
 #endif
     if(pAudioDecodeLib->pCedarAudioDec->BsInformation->nDecodeMode != CDX_DECODER_MODE_RAWMUSIC)
     {
         astream_fifo_t* stream                     = pAudioDecodeLib->DecFileInfo.frmFifo;
-        alib_logd("ad_cedar seek sync ......nSeekTime:%lld",nSeekTime);
+        LOGD("ad_cedar seek sync ......nSeekTime:%lld",nSeekTime);
         //sync with input buffer
         pAudioDecodeLib->DecFileInfo.bufWritingPtr = pAudioDecodeLib->DecFileInfo.bufStart;
         pAudioDecodeLib->DecFileInfo.BufValideLen  = pAudioDecodeLib->DecFileInfo.BufToTalLen;
@@ -1419,7 +1417,7 @@ void ParseBitstreamSeekSync(AudioDecoderLib* pDecoder, int64_t nSeekTime, int nG
         int64_t dSeekRelativeTime                  = nSeekTime - pAudioDecodeLib->pCedarAudioDec->BsInformation->NowPTSTime;
         pAudioDecodeLib->pInternal.ulFFREVFlag     = dSeekRelativeTime >= 0 ? 0x44 : 0x66;
         pAudioDecodeLib->pInternal.ulFFREVStep     = llabs(dSeekRelativeTime) / 1000000;
-        alib_logd("seek relative time: %lld", dSeekRelativeTime);
+        LOGD("seek relative time: %lld", dSeekRelativeTime);
     }
 
     if(nGetAudioInfoFlag)
@@ -1440,7 +1438,7 @@ int InitializeAudioDecodeLib(AudioDecoderLib*    pDecoder,
     AudioDecoderContextLib *pAudioDecodeLib            = (AudioDecoderContextLib *)pDecoder;
     pAudioDecodeLib->DecFileInfo.tmpGlobalAudioDecData = (void*)pDecoder;
     pAudioDecodeLib->nAudioInfoFlags                  = pAudioStreamInfo->nFlags;
-    alib_logv("**** InitializeAudioDecodeLib codec_tpye:%d ****",pAudioStreamInfo->eCodecFormat);
+    LOGV("**** InitializeAudioDecodeLib codec_tpye:%d ****",pAudioStreamInfo->eCodecFormat);
 
     switch(pAudioStreamInfo->eCodecFormat)
     {
@@ -1587,7 +1585,7 @@ int InitializeAudioDecodeLib(AudioDecoderLib*    pDecoder,
 
     if(AC320DecInit(pAudioDecodeLib,pBsInFor,pAudioStreamInfo)<0)
     {
-        alib_logw("cedar audio dec init error!");
+        LOGW("cedar audio dec init error!");
         return -1;
     }
     return 0;
@@ -1607,7 +1605,7 @@ int DecodeAudioFrame(AudioDecoderLib* pDecoder,
 #endif
     if(pAudioDecodeLib->pInternal.ulFFREVFlag == 0x88)
     {
-        alib_logv("pAudioDecodeLib->pInternal.ulFFREVFlag 0x88");
+        LOGV("pAudioDecodeLib->pInternal.ulFFREVFlag 0x88");
     }
     pAudioDecodeLib->pInternal.ulFFREVFlag = 0x00;
     return ret;

@@ -17,7 +17,7 @@
 *******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "aw_demux"
-#include <utils/plat_log.h>
+#include <log/log.h>
 //#define CONFIG_LOG_LEVEL 3
 #include <dlfcn.h>
 
@@ -59,7 +59,7 @@ void clearCdxMediaInfoT(CdxMediaInfoT *pMediaInfo, int nParserType)
 
     if(CDX_PARSER_AVI == eParserType)
     {
-        alogd("avi need not free some members now!");
+        LOGD("avi need not free some members now!");
         /*for(i=0; i<pMediaInfo->program[0].audioNum; i++)
         {
             if(pMediaInfo->program[0].audio[i].pCodecSpecificData)
@@ -90,7 +90,7 @@ void clearCdxMediaInfoT(CdxMediaInfoT *pMediaInfo, int nParserType)
     }
     else
     {
-        alogd("parserType[%d] free nothing", eParserType);
+        LOGD("parserType[%d] free nothing", eParserType);
     }
 }
 void clearDataSourceFields(CdxDataSourceT* source)
@@ -130,11 +130,11 @@ void clearDataSourceFields(CdxDataSourceT* source)
 
 int AwDemuxerSetDataSource(/*out*/CdxDataSourceT *pDataSource, /*in*/CedarXDataSourceDesc *datasrc_desc)
 {
-    alogv("DemuxSetDataSource");
+    LOGV("DemuxSetDataSource");
     if(datasrc_desc->source_type == CEDARX_SOURCE_FILEPATH)
     {
         //* data source of url path.
-        aloge("error! no support current!");
+        LOGE("error! no support current!");
     }
     else if(datasrc_desc->source_type == CEDARX_SOURCE_FD)
     {
@@ -166,21 +166,21 @@ static int ParserCallbackProcess(void* pUserData, int eMessageId, void* param)
     AwDemuxerAPI *demux = (AwDemuxerAPI *)pUserData;
     switch(eMessageId) {
     case PARSER_NOTIFY_VIDEO_STREAM_CHANGE:
-        aloge("fatal error! not process PARSER_NOTIFY_VIDEO_STREAM_CHANGE, write code now!");
+        LOGE("fatal error! not process PARSER_NOTIFY_VIDEO_STREAM_CHANGE, write code now!");
         if(demux->mpEventHandler)
         {
             demux->mpEventHandler(demux->mpCookie, eMessageId, param);
         }
         break;
     case PARSER_NOTIFY_AUDIO_STREAM_CHANGE:
-        aloge("fatal error! not process PARSER_NOTIFY_AUDIO_STREAM_CHANGE, write code now!");
+        LOGE("fatal error! not process PARSER_NOTIFY_AUDIO_STREAM_CHANGE, write code now!");
         if(demux->mpEventHandler)
         {
             demux->mpEventHandler(demux->mpCookie, eMessageId, param);
         }
         break;
     default:
-        alogw("ignore demux callback message, eMessageId = 0x%x.", eMessageId);
+        LOGW("ignore demux callback message, eMessageId = 0x%x.", eMessageId);
         return -1;
     }
 
@@ -194,7 +194,7 @@ int aw_demux_open(struct CedarXDemuxerAPI *handle, /*out*/CdxMediaInfoT *pMediaI
     int ret = CDX_OK;
     int err;
     AwDemuxInfo *pPrivInfo = (AwDemuxInfo*)handle->reserved_usr_0;
-    alogd("==== aw_demux_open url:%s====", datasrc_desc->uri);
+    LOGD("==== aw_demux_open url:%s====", datasrc_desc->uri);
 
     aw_dmx = (AwDemuxerAPI *)calloc(1, sizeof(AwDemuxerAPI));
     if (aw_dmx == NULL) {
@@ -205,7 +205,7 @@ int aw_demux_open(struct CedarXDemuxerAPI *handle, /*out*/CdxMediaInfoT *pMediaI
     err = pthread_mutex_init(&aw_dmx->mMutex, NULL);
     if(err!=0)
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         ret = CDX_ERROR;
         goto ERROR_RET;
     }
@@ -232,13 +232,13 @@ int aw_demux_open(struct CedarXDemuxerAPI *handle, /*out*/CdxMediaInfoT *pMediaI
     contorlTask = &parserContorlTask;
     if(flags & MIRACST)
     {
-        alogw("flags[0x%x] not support MIRACST tmp", flags);
+        LOGW("flags[0x%x] not support MIRACST tmp", flags);
     }
     ret = CdxParserPrepare(datasrc_desc, flags, &aw_dmx->mMutex, NULL,
                 &aw_dmx->pParser, &aw_dmx->pStream, &parserContorlTask, NULL);
     if(ret < 0)
     {
-        alogw("Cdx ParserPrepare return error[%d], pParser[%p], pStream[%p]", ret, aw_dmx->pParser, aw_dmx->pStream);
+        LOGW("Cdx ParserPrepare return error[%d], pParser[%p], pStream[%p]", ret, aw_dmx->pParser, aw_dmx->pStream);
         if (aw_dmx->pParser != NULL)
         {
             //aw_dmx->pParser->ops->close(aw_dmx->pParser);
@@ -254,13 +254,13 @@ int aw_demux_open(struct CedarXDemuxerAPI *handle, /*out*/CdxMediaInfoT *pMediaI
         ret = CDX_ERROR;
         goto ERROR_RET1;
     }
-    alogd("aw_demux_open: aw_dmx->pParser(%p), parserType[%d], is it forbiden:)?", aw_dmx->pParser, aw_dmx->pParser->type);
+    LOGD("aw_demux_open: aw_dmx->pParser(%p), parserType[%d], is it forbiden:)?", aw_dmx->pParser, aw_dmx->pParser->type);
 
     CdxParserGetMediaInfo(aw_dmx->pParser, pMediaInfo);
 
     handle->reserved_0 = (void*)aw_dmx;
 
-    alogd("aw_demux_open success.");
+    LOGD("aw_demux_open success.");
     return CDX_OK;
 
 ERROR_RET1:
@@ -321,7 +321,7 @@ int aw_demux_seek(struct CedarXDemuxerAPI *handle, int64_t abs_seek_secs, int fl
     int seekRet = CdxParserSeekTo(aw_dmx->pParser, ((int64_t)abs_seek_secs*1000)*1000, AW_SEEK_PREVIOUS_SYNC);
     if(seekRet!=0)
     {
-        aloge("seek fail[%d]!", seekRet);
+        LOGE("seek fail[%d]!", seekRet);
         ret = CDX_ERROR;
     }
     return ret;
@@ -340,7 +340,7 @@ int  aw_demux_control(struct CedarXDemuxerAPI *handle, int cmd, int cmd_sub, voi
     {
         if(!aw_dmx)
         {
-            aloge("fatal error! aw_demux == NULL, cmd[%d], cmd_sub[0x%x], arg[%p]", cmd, cmd_sub, arg);
+            LOGE("fatal error! aw_demux == NULL, cmd[%d], cmd_sub[0x%x], arg[%p]", cmd, cmd_sub, arg);
             return CDX_ERROR;
         }
         switch (cmd_sub) {
@@ -375,23 +375,23 @@ int  aw_demux_control(struct CedarXDemuxerAPI *handle, int cmd, int cmd_sub, voi
     case CDX_DMX_CMD_GET_STATUS:
         if(!aw_dmx)
         {
-            aloge("fatal error! aw_demux == NULL, cmd[%d], cmd_sub[0x%x], arg[%p]", cmd, cmd_sub, arg);
+            LOGE("fatal error! aw_demux == NULL, cmd[%d], cmd_sub[0x%x], arg[%p]", cmd, cmd_sub, arg);
             return CDX_ERROR;
         }
-        alogd("aw_demux_control: aw_dmx->pParser(%p)", aw_dmx->pParser);
+        LOGD("aw_demux_control: aw_dmx->pParser(%p)", aw_dmx->pParser);
         ret = CdxParserGetStatus(aw_dmx->pParser);
         break;
     case CDX_DMX_CMD_SKIP_CHUNK_DATA:
     {
         if(!aw_dmx)
         {
-            aloge("fatal error! aw_demux == NULL, cmd[%d], cmd_sub[0x%x], arg[%p]", cmd, cmd_sub, arg);
+            LOGE("fatal error! aw_demux == NULL, cmd[%d], cmd_sub[0x%x], arg[%p]", cmd, cmd_sub, arg);
             return CDX_ERROR;
         }
         CdxPacketT *pPacket = (CdxPacketT*)arg;
         if(pPacket->length <= 0)
         {
-            aloge("fatal error! pkt length[%d]<=0, skip nothing", pPacket->length);
+            LOGE("fatal error! pkt length[%d]<=0, skip nothing", pPacket->length);
             break;
         }
         if(aw_dmx->mSkipSize < pPacket->length)
@@ -406,12 +406,12 @@ int  aw_demux_control(struct CedarXDemuxerAPI *handle, int cmd, int cmd_sub, voi
             aw_dmx->mpSkipChunk = (char*)malloc(nSkipSize);
             if(NULL == aw_dmx->mpSkipChunk)
             {
-                aloge("fatal error! malloc fail[%s]", strerror(errno));
+                LOGE("fatal error! malloc fail[%s]", strerror(errno));
                 ret = CDX_ERROR;
                 break;
             }
             aw_dmx->mSkipSize = nSkipSize;
-            alogd("malloc skip BufSize[%d]kB", aw_dmx->mSkipSize/1024);
+            LOGD("malloc skip BufSize[%d]kB", aw_dmx->mSkipSize/1024);
         }
         pPacket->buf = aw_dmx->mpSkipChunk;
         pPacket->ringBuf = NULL;
@@ -419,7 +419,7 @@ int  aw_demux_control(struct CedarXDemuxerAPI *handle, int cmd, int cmd_sub, voi
         pPacket->ringBufLen = 0;
         if(0!=CdxParserRead(aw_dmx->pParser, pPacket))
         {
-            aloge("fatal error! cdx parser read fail");
+            LOGE("fatal error! cdx parser read fail");
             ret = CDX_ERROR;
         }
         break;
@@ -428,7 +428,7 @@ int  aw_demux_control(struct CedarXDemuxerAPI *handle, int cmd, int cmd_sub, voi
     {
         if(!aw_dmx)
         {
-            aloge("fatal error! aw_demux == NULL, cmd[%d], cmd_sub[0x%x], arg[%p]", cmd, cmd_sub, arg);
+            LOGE("fatal error! aw_demux == NULL, cmd[%d], cmd_sub[0x%x], arg[%p]", cmd, cmd_sub, arg);
             return CDX_ERROR;
         }
         ret = (int)aw_dmx->pParser->type;
@@ -443,7 +443,7 @@ int  aw_demux_control(struct CedarXDemuxerAPI *handle, int cmd, int cmd_sub, voi
 
 void aw_demux_stop(struct CedarXDemuxerAPI *handle, void *arg)
 {
-    aloge("fatal error! not support!");
+    LOGE("fatal error! not support!");
 }
 
 extern "C" {

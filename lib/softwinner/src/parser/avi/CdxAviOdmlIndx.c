@@ -81,7 +81,7 @@ cdx_int32 ConfigIndxChunkInfo(ODML_INDEX_READER *pReader, AviStdIndexChunkT *pCk
         {
             if(pReader->wLongsPerEntry != 3)
             {
-                CDX_LOGV("wLongsPerEntry!=3");
+                LOGV("wLongsPerEntry!=3");
                 pReader->wLongsPerEntry = 3;
                 ret = AVI_ERR_FILE_DATA_WRONG;
             }
@@ -91,7 +91,7 @@ cdx_int32 ConfigIndxChunkInfo(ODML_INDEX_READER *pReader, AviStdIndexChunkT *pCk
         {
             if(pReader->wLongsPerEntry != 2)
             {
-                CDX_LOGV("wLongsPerEntry!=2");
+                LOGV("wLongsPerEntry!=2");
                 pReader->wLongsPerEntry = 2;
                 ret = AVI_ERR_FILE_DATA_WRONG;
             }
@@ -99,7 +99,7 @@ cdx_int32 ConfigIndxChunkInfo(ODML_INDEX_READER *pReader, AviStdIndexChunkT *pCk
         }
         default:
         {
-            CDX_LOGV("bIndexSubType[%d] wrong.", pReader->bIndexSubType);
+            LOGV("bIndexSubType[%d] wrong.", pReader->bIndexSubType);
             ret = AVI_ERR_FILE_DATA_WRONG;
             break;
         }
@@ -133,7 +133,7 @@ cdx_int32 LoadIndxChunk(ODML_SUPERINDEX_READER *pSuperReader, cdx_int32 indxTblE
     if(NULL == pSuperReader || NULL == pSuperReader->idxFp
         || NULL == pSuperReader->indxTblEntryArray)
     {
-        CDX_LOGE("impossile case, check!");
+        LOGE("impossile case, check!");
         return AVI_ERR_PARA_ERR;
     }
 
@@ -144,7 +144,7 @@ cdx_int32 LoadIndxChunk(ODML_SUPERINDEX_READER *pSuperReader, cdx_int32 indxTblE
 
     if(CdxStreamSeek(fp, pSuperIndxEntry->qwOffset, STREAM_SEEK_SET))
     {
-        CDX_LOGE("cdx_seek error.");
+        LOGE("cdx_seek error.");
         return AVI_ERR_READ_FILE_FAIL;
     }
     ret = GetNextChunkHead(fp, &chunk, &length); //fp read 8 byte here.
@@ -158,7 +158,7 @@ cdx_int32 LoadIndxChunk(ODML_SUPERINDEX_READER *pSuperReader, cdx_int32 indxTblE
     if(indxReader->size != pSuperIndxEntry->dwSize - 8)
     {
         //some file not same, so we ignore verify here.
-        CDX_LOGV("indx chunk size not same: [%d, %d]\n", indxReader->size, pSuperIndxEntry->dwSize);
+        LOGV("indx chunk size not same: [%d, %d]", indxReader->size, pSuperIndxEntry->dwSize);
         //return AVI_ERR_FILE_DATA_WRONG;
     }
     if(24 != CdxStreamRead(fp, indxReader->pFileBuffer, 24))//fp read 24 byte here
@@ -170,7 +170,7 @@ cdx_int32 LoadIndxChunk(ODML_SUPERINDEX_READER *pSuperReader, cdx_int32 indxTblE
     if(indxReader->bIndexSubType != pSuperReader->bIndexSubType
         || indxReader->dwChunkId != pSuperReader->dwChunkId)
     {
-        CDX_LOGV("something wrong, bIndexSubType[%d, %d], dwChunkId[%x, %x]\n",
+        LOGV("something wrong, bIndexSubType[%d, %d], dwChunkId[%x, %x]",
             indxReader->bIndexSubType, pSuperReader->bIndexSubType,
             indxReader->dwChunkId, pSuperReader->dwChunkId);
     }
@@ -222,14 +222,14 @@ cdx_int32 SearchIndxEntry(ODML_SUPERINDEX_READER *pSuperReader, AVI_CHUNK_POSITI
             }
             if(CdxStreamSeek(pSuperReader->idxFp, pSuperReader->fpPos, STREAM_SEEK_SET))
             {
-                CDX_LOGE("file seek error!\n");
+                LOGE("file seek error!");
                 return AVI_ERR_READ_FILE_FAIL;
             }
             if((pReader->bufIdxItem * entrySize) !=
                 CdxStreamRead(pSuperReader->idxFp, pReader->pFileBuffer, pReader->bufIdxItem *
                 entrySize))
             {
-                CDX_LOGE("file read error!\n");
+                LOGE("file read error!");
                 return AVI_ERR_READ_FILE_FAIL;
             }
             pReader->pIdxEntry = pReader->pFileBuffer;   //AVIINDEXENTRY
@@ -258,7 +258,7 @@ cdx_int32 SearchIndxEntry(ODML_SUPERINDEX_READER *pSuperReader, AVI_CHUNK_POSITI
     }
     else
     {
-        CDX_LOGV("this indx chunk search over.\n");
+        LOGV("this indx chunk search over.");
         pCkPos->ckOffset = -1;
         pCkPos->ixTblEntOffset = -1;
         pReader->ckReadEndFlag = 1;
@@ -292,7 +292,7 @@ cdx_int32 SearchNextODMLIndexEntry(ODML_SUPERINDEX_READER *pSuperReader, AVI_CHU
     if(NULL == pSuperReader || NULL == pSuperReader->idxFp
         || pSuperReader->indxTblEntryCnt <= 0 || NULL == pCkPos)
     {
-        CDX_LOGE("search_next_ODML_index_entry() para error.");
+        LOGE("search_next_ODML_index_entry() para error.");
         return AVI_ERR_PARA_ERR;
     }
     //*pchunk_body_size = 0;
@@ -303,7 +303,7 @@ cdx_int32 SearchNextODMLIndexEntry(ODML_SUPERINDEX_READER *pSuperReader, AVI_CHU
     pCkPos->chunkBodySize = 0;
     if(NULL == indxReader->pFileBuffer || NULL == pSuperReader->indxTblEntryArray)
     {
-        CDX_LOGE("search_next_ODML_index_entry() para error2.");
+        LOGE("search_next_ODML_index_entry() para error2.");
         return AVI_ERR_PARA_ERR;
     }
     if(1 == pSuperReader->readEndFlg)
@@ -323,12 +323,12 @@ cdx_int32 SearchNextODMLIndexEntry(ODML_SUPERINDEX_READER *pSuperReader, AVI_CHU
         }
         else if(AVI_ERR_SEARCH_INDEX_CHUNK_END == ret)
         {
-            CDX_LOGV("indx_chunk[%d] is search over\n", pSuperReader->indxTblEntryIdx);
+            LOGV("indx_chunk[%d] is search over", pSuperReader->indxTblEntryIdx);
             pSuperReader->indxTblEntryIdx++;
         }
         else
         {
-            CDX_LOGV("exception happens, ret=%d\n", ret);
+            LOGV("exception happens, ret=%d", ret);
             return ret;
         }
     }
@@ -352,12 +352,12 @@ cdx_int32 SearchNextODMLIndexEntry(ODML_SUPERINDEX_READER *pSuperReader, AVI_CHU
         }
         else if(AVI_ERR_SEARCH_INDEX_CHUNK_END == ret)
         {
-            CDX_LOGV("indx_chunk[%d] is search over\n", pSuperReader->indxTblEntryIdx);
+            LOGV("indx_chunk[%d] is search over", pSuperReader->indxTblEntryIdx);
             pSuperReader->indxTblEntryIdx++;
         }
         else
         {
-            CDX_LOGV("exception happens, ret=%d.", ret);
+            LOGV("exception happens, ret=%d.", ret);
             return ret;
         }
     }
@@ -423,7 +423,7 @@ cdx_int32 SearchAudioChunkIndxEntryOdmlIndex(ODML_SUPERINDEX_READER *pSuperReade
             {
                 pidxItem->audPtsArray[iAud] = audPts;
                 pidxItem->audChunkIndexOffsetArray[iAud] = pSuperReader->chunkIxTblEntOffset;
-                //LOGV("vidPts[%d], aud_ck_idx[%x]\n", vidPts, pidxItem->aud_chunk_idx);
+                //LOGV("vidPts[%d], aud_ck_idx[%x]", vidPts, pidxItem->aud_chunk_idx);
                 break;
             }
         }
@@ -431,7 +431,7 @@ cdx_int32 SearchAudioChunkIndxEntryOdmlIndex(ODML_SUPERINDEX_READER *pSuperReade
         { //use last valid value to fill pidxItem.
             if(AVI_ERR_SEARCH_INDEX_CHUNK_END == srchRet)
             {
-                CDX_LOGV("search aud chunk over!\n");
+                LOGV("search aud chunk over!");
             }
             audPts = (cdx_uint32)CalcAviAudioChunkPts(pAudStrmInfo,
                 pSuperReader->totalChunkSize - pSuperReader->chunkSize,
@@ -467,25 +467,25 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
 
     if(!p)
     {
-        CDX_LOGE("Check the para...");
+        LOGE("Check the para...");
         return AVI_ERR_PARA_ERR;
     }
     aviIn = (AviFileInT *)p->privData;
     if(!aviIn)
     {
-        CDX_LOGE("Check privData...");
+        LOGE("Check privData...");
         return AVI_ERR_PARA_ERR;
     }
     if(READ_CHUNK_BY_INDEX != aviIn->readmode || USE_INDX != aviIn->idxStyle)
     {
-        CDX_LOGE("readmode[%d], idxStyle[%d]", aviIn->readmode, aviIn->idxStyle);
+        LOGE("readmode[%d], idxStyle[%d]", aviIn->readmode, aviIn->idxStyle);
         return AVI_ERR_PARA_ERR;
     }
 
     //check if the index table is exist in media file
     if(!aviIn->hasIndx || !p->hasVideo)
     {
-        CDX_LOGW("No valid index table in the media file!");
+        LOGW("No valid index table in the media file!");
         return AVI_ERR_NO_INDEX_TABLE;
     }
 
@@ -495,7 +495,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
         aviIn->idx1Buf = (cdx_uint32 *)malloc(MAX_IDX_BUF_SIZE_FOR_INDEX_MODE);
         if(!aviIn->idx1Buf)
         {
-            CDX_LOGE("Request buffer for build index failed.");
+            LOGE("Request buffer for build index failed.");
             return AVI_ERR_REQMEM_FAIL;
         }
     }
@@ -507,18 +507,18 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
     curFilePos = CdxStreamTell(aviIn->fp);   //movi_start
 
     //1.first build video key frame table.
-    CDX_LOGV("build video key frame table.");
+    LOGV("build video key frame table.");
     ret = InitialPsrIndxTableReader(&aviIn->vidIndxReader, aviIn, p->videoStreamIndex);
     if(ret != AVI_SUCCESS)
     {
-        CDX_LOGV("InitialPsrIndxTableReader fail,ret[%d]\n", ret);
+        LOGV("InitialPsrIndxTableReader fail,ret[%d]", ret);
         DeinitialPsrIndxTableReader(&aviIn->vidIndxReader);
         goto __err0_idx1_buf;
     }
     vidReader = &aviIn->vidIndxReader;
     if(vidReader->indxTblEntryCnt <= 0)
     {
-        CDX_LOGV("No valid index table in the media file!\n");
+        LOGV("No valid index table in the media file!");
         ret = AVI_ERR_NO_INDEX_TABLE;
         goto __err0_idx1_buf;
     }
@@ -529,7 +529,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
         //chunk_body_size = 0;
         if(p->bAbortFlag)
         {
-            CDX_LOGV("odml index:detect abort flag,quit now!\n");
+            LOGV("odml index:detect abort flag,quit now!");
             ret = AVI_ERR_ABORT;
             goto __err0_idx1_buf;
         }
@@ -541,7 +541,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
             {
                 //because chunk_idx has increase 1 in search_next_ODML_index_entry()
                 pIdxItem->frameIdx = vidReader->chunkCounter - 1;
-                //CDX_LOGD("xxxxxxxxx keyframe idx(%d), AviBuildIdxForODMLIndexMode",
+                //LOGD("xxxxxxxxx keyframe idx(%d), AviBuildIdxForODMLIndexMode",
                 //pIdxItem->frameIdx);
                 pIdxItem->vidChunkOffset = chunkPos.ckOffset;
                 pIdxItem->vidChunkIndexOffset = chunkPos.ixTblEntOffset;
@@ -551,7 +551,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
                 remainIdxCnt--;
                 if(remainIdxCnt<=0)
                 {
-                    CDX_LOGV("idx1 buffer full! indx_idx[%d], indx_total[%d]\n",
+                    LOGV("idx1 buffer full! indx_idx[%d], indx_total[%d]",
                         vidReader->indxTblEntryIdx, vidReader->indxTblEntryCnt);
                     break;
                 }
@@ -563,7 +563,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
         }
         else
         {
-            CDX_LOGE("search ODML indx chunk error\n");
+            LOGE("search ODML indx chunk error");
             DeinitialPsrIndxTableReader(&aviIn->vidIndxReader);
             ret = srchRet;
             goto __err0_idx1_buf;
@@ -571,7 +571,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
         }
     }
     DeinitialPsrIndxTableReader(&aviIn->vidIndxReader);
-    CDX_LOGV("KeyframeTable odml index video done, cnt=%d, maxcnt=%d\n",
+    LOGV("KeyframeTable odml index video done, cnt=%d, maxcnt=%d",
         aviIn->indexCountInKeyfrmTbl,  MAX_IDX_BUF_SIZE_FOR_INDEX_MODE/sizeof(IdxTableItemT));
 
     //2. fill video key frame table with audio info, if it exist.
@@ -581,7 +581,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
     {
         if(iAud >= MAX_AUDIO_STREAM)
         {
-            CDX_LOGE("iAud[%d] >= MAX_AUDIO_STREAM[%d]", iAud, MAX_AUDIO_STREAM);
+            LOGE("iAud[%d] >= MAX_AUDIO_STREAM[%d]", iAud, MAX_AUDIO_STREAM);
             indexChunkOkFlag = 0;
             break;
         }
@@ -599,7 +599,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
         {
             if(p->bAbortFlag)
             {
-                CDX_LOGE("odml index : detect abort flag,quit now2!\n");
+                LOGE("odml index : detect abort flag,quit now2!");
                 ret = AVI_ERR_ABORT;
                 goto __err0_idx1_buf;
             }
@@ -618,7 +618,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
                     indexChunkOkFlag = 0;
                     DeinitialPsrIndxTableReader(&aviIn->audIndxReader);
                     ret = srchRet;
-                    CDX_LOGE("search failed.");
+                    LOGE("search failed.");
                     goto __err0_idx1_buf;
                 }
             }
@@ -644,12 +644,12 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
 
     if(CdxStreamSeek(aviIn->fp, (cdx_uint32)curFilePos, STREAM_SEEK_SET))
     {
-        CDX_LOGE("seek failed.");
+        LOGE("seek failed.");
         return AVI_ERR_FILE_FMT_ERR;
     }
     if(!aviIn->indexCountInKeyfrmTbl)
     {
-        CDX_LOGW("No key frame in the index table!!!");
+        LOGW("No key frame in the index table!!!");
 
         if(aviIn->idx1Buf)
         {
@@ -663,7 +663,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
         ret = InitialPsrIndxTableReader(vidReader, aviIn, p->videoStreamIndex);
         if(ret != AVI_SUCCESS)
         {
-            CDX_LOGE("initial odml indx fail, ret[%d]",ret);
+            LOGE("initial odml indx fail, ret[%d]",ret);
             goto __err0_idx1_buf;
         }
     }
@@ -672,7 +672,7 @@ cdx_int16 AviBuildIdxForODMLIndexMode(CdxAviParserImplT *p)
         ret = InitialPsrIndxTableReader(audReader, aviIn, p->audioStreamIndex);
         if(ret != AVI_SUCCESS)
         {
-            CDX_LOGE("initial odml indx fail, ret[%d]",ret);
+            LOGE("initial odml indx fail, ret[%d]",ret);
             goto __err0_idx1_buf;
         }
     }
@@ -726,12 +726,12 @@ cdx_int32 InitialPsrIndxTableReader(ODML_SUPERINDEX_READER *pReader, AviFileInT 
     CdxStreamT    *indxFp = aviIn->idxFp;
     if(NULL == sInfo || !sInfo->isODML || NULL == sInfo->indx || NULL == pReader)
     {
-        CDX_LOGE("no ODML indx, fatal error!");
+        LOGE("no ODML indx, fatal error!");
         return AVI_ERR_PARA_ERR;
     }
     if(aviIn->readmode == READ_CHUNK_SEQUENCE)
     {
-        CDX_LOGD("odml avi in readmode=READ_CHUNK_SEQUENCE, use avi_in->fp");
+        LOGD("odml avi in readmode=READ_CHUNK_SEQUENCE, use avi_in->fp");
         indxFp = aviIn->fp;   //because in readmode READ_CHUNK_SEQUENCE, idx_fp is NULL.
     }
     else
@@ -749,7 +749,7 @@ cdx_int32 InitialPsrIndxTableReader(ODML_SUPERINDEX_READER *pReader, AviFileInT 
         //first default point to super index chunk's header.
         pReader->idxFp = indxFp;
         pReader->readEndFlg = 0;
-        CDX_LOGV("stream index[%d], indxtbl_entry_cnt[%d]\n", streamIndex,
+        LOGV("stream index[%d], indxtbl_entry_cnt[%d]", streamIndex,
             pReader->indxTblEntryCnt);
         if(pReader->indxTblEntryCnt > 0)
         {
@@ -773,7 +773,7 @@ cdx_int32 InitialPsrIndxTableReader(ODML_SUPERINDEX_READER *pReader, AviFileInT 
             pReader->odmlIdxReader.pFileBuffer = (cdx_uint8 *)malloc(INDEX_CHUNK_BUFFER_SIZE);
             if(NULL == pReader->odmlIdxReader.pFileBuffer)
             {
-                CDX_LOGE("malloc fail.");
+                LOGE("malloc fail.");
                 ret = AVI_ERR_REQMEM_FAIL;
                 goto _error2;
             }
@@ -788,7 +788,7 @@ cdx_int32 InitialPsrIndxTableReader(ODML_SUPERINDEX_READER *pReader, AviFileInT 
     }
     else if(CDX_AVI_INDEX_OF_CHUNKS == sInfo->indx->bIndexType)
     { //we build super index for ourselves.
-        CDX_LOGW("super index type is CDX_AVI_INDEX_OF_CHUNKS, we don't support now!\n");
+        LOGW("super index type is CDX_AVI_INDEX_OF_CHUNKS, we don't support now!");
         return AVI_ERR_FAIL;
         #if 0
         avistdindex_chunk   *pindx_chunk = (avistdindex_chunk*)sinfo->indx;
@@ -831,7 +831,7 @@ cdx_int32 InitialPsrIndxTableReader(ODML_SUPERINDEX_READER *pReader, AviFileInT 
             = (CDX_U8*)PHY_MALLOC(INDEX_CHUNK_BUFFER_SIZE, 1024);
         if(NULL==preader->odml_ix_reader.filebuffer)
         {
-            LOGV("malloc fail\n");
+            LOGV("malloc fail");
             ret = AVI_ERR_REQMEM_FAIL;
             goto _error2;
         }
@@ -844,7 +844,7 @@ cdx_int32 InitialPsrIndxTableReader(ODML_SUPERINDEX_READER *pReader, AviFileInT 
     }
     else
     {
-        CDX_LOGW("we don't know how to process ODML case: CDX_AVI_INDEX_IS_DATA.");
+        LOGW("we don't know how to process ODML case: CDX_AVI_INDEX_IS_DATA.");
         return AVI_ERR_FAIL;
     }
     return ret;

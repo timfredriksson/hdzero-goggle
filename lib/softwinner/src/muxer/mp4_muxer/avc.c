@@ -20,7 +20,7 @@
  */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "avc"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include "libavutil/intreadwrite.h"
 //#include "avformat.h"
@@ -244,7 +244,7 @@ unsigned int FFIsomGetAvccSize(unsigned char *data, int len)
             int ret = ff_avc_parse_nal_units_buf(data, &buf, &len);
             if (ret < 0)
             {
-                alogw("fatal error! ret[%d] of ff_avc_parse_nal_units() < 0", ret);
+                LOGW("fatal error! ret[%d] of ff_avc_parse_nal_units() < 0", ret);
                 free(buf);
                 return 0;
             }

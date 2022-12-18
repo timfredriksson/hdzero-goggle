@@ -14,7 +14,7 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "video_buffer_manager"
 #include <string.h>
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include "cdx_list.h"
 #include "video_buffer_manager.h"
@@ -104,7 +104,7 @@ static VIDEO_FRAME_INFO_S *VBMGetSpecUsingFrameWithAddr(VideoBufferManager *pMgr
         pthread_mutex_unlock(&pMgr->mFrmListLock);
         return &pEntry->mFrame;
     } else {
-        aloge("Unknown video virvi frame, frame virtual address[%p]!", pVirAddr);
+        LOGE("Unknown video virvi frame, frame virtual address[%p]!", pVirAddr);
         pthread_mutex_unlock(&pMgr->mFrmListLock);
         return NULL;
     }
@@ -130,7 +130,7 @@ static int VBMReleaseFrame(VideoBufferManager *pMgr, VIDEO_FRAME_INFO_S *pFrame)
     if (found) {
         list_add_tail(&pEntry->mList, &pMgr->mFreeFrmList);
     } else {
-        aloge("Unknown video frame, frame id[%d]!", pFrame->mId);
+        LOGE("Unknown video frame, frame id[%d]!", pFrame->mId);
         pthread_mutex_unlock(&pMgr->mFrmListLock);
         return FAILURE;
     }
@@ -175,7 +175,7 @@ static int VBMWaitUsingFrmEmpty(VideoBufferManager *pMgr)
     pthread_mutex_lock(&pMgr->mFrmListLock);
     pMgr->mbWaitUsingFrmEmptyFlag = TRUE;
     while(!list_empty(&pMgr->mUsingFrmList)) {
-        alogd("wait all Using frame return");
+        LOGD("wait all Using frame return");
         pthread_cond_wait(&pMgr->mCondUsingFrmEmpty, &pMgr->mFrmListLock);
     }
     pMgr->mbWaitUsingFrmEmptyFlag = FALSE;
@@ -187,7 +187,7 @@ VideoBufferManager *VideoBufMgrCreate(int frmNum, int frmSize)
 {
     VideoBufferManager *pMgr = (VideoBufferManager *)malloc(sizeof(VideoBufferManager));
     if (pMgr == NULL) {
-        aloge("Alloc VideoBufferManager error!");
+        LOGE("Alloc VideoBufferManager error!");
         return NULL;
     }
     memset(pMgr, 0, sizeof(VideoBufferManager));
@@ -200,7 +200,7 @@ VideoBufferManager *VideoBufMgrCreate(int frmNum, int frmSize)
     for (i = 0; i < frmNum; ++i) {
         VideoFrameListInfo *pNode = (VideoFrameListInfo *)malloc(sizeof(VideoFrameListInfo));
         if (pNode == NULL) {
-            aloge("Alloc VideoFrameListInfo error!");
+            LOGE("Alloc VideoFrameListInfo error!");
             break;
         }
         memset(pNode, 0, sizeof(VideoFrameListInfo));
@@ -208,7 +208,7 @@ VideoBufferManager *VideoBufMgrCreate(int frmNum, int frmSize)
         pMgr->mFrameNodeNum++;
     }
 
-    aloge("Alloc %d input frame buffers in list manager.", pMgr->mFrameNodeNum);
+    LOGE("Alloc %d input frame buffers in list manager.", pMgr->mFrameNodeNum);
 
     pMgr->GetOldestUsingFrame = VBMGetOldestUsingFrame;
     pMgr->GetOldestValidFrame = VBMGetOldestValidFrame;
@@ -229,14 +229,14 @@ void VideoBufMgrDestroy(VideoBufferManager *pMgr)
     int frmnum = 0;
 
     if (pMgr == NULL) {
-        aloge("video input buffer manager has been unexist!!\n");
+        LOGE("video input buffer manager has been unexist!!");
         return;
     }
 
     pthread_mutex_lock(&pMgr->mFrmListLock);
     if (!list_empty(&pMgr->mUsingFrmList)) {
         // TODO: if we should release this frame list nodes
-        aloge("Fatal error! UsingFrmList is not empty! maybe some frames not release!");
+        LOGE("Fatal error! UsingFrmList is not empty! maybe some frames not release!");
     }
 
     if (!list_empty(&pMgr->mValidFrmList)) {
@@ -259,7 +259,7 @@ void VideoBufMgrDestroy(VideoBufferManager *pMgr)
     pthread_mutex_unlock(&pMgr->mFrmListLock);
 
     if (frmnum != pMgr->mFrameNodeNum) {
-        aloge("Fatal error! frame node number is not match[%d][%d]", frmnum, pMgr->mFrameNodeNum);
+        LOGE("Fatal error! frame node number is not match[%d][%d]", frmnum, pMgr->mFrameNodeNum);
     }
 
     pthread_cond_destroy(&pMgr->mCondUsingFrmEmpty);

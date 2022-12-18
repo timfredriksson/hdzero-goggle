@@ -378,7 +378,7 @@ static int _MovParseGlbl(MOVContext *c,MOV_atom_t a)
         return -1;
     st->codec.extradataSize = a.size-8;
     memcpy(st->codec.extradata, buffer+offset, a.size-8);
-    //CDX_LOGD("---  extradata_size = %d", st->codec.extradataSize);
+    //LOGD("---  extradata_size = %d", st->codec.extradataSize);
     return 0;
 }
 
@@ -497,7 +497,7 @@ static int _MovParseEsds(MOVContext *c,MOV_atom_t a)
             }
             case 0xdd: //OGG
             {
-                CDX_LOGW("it is ogg audio, not support");
+                LOGW("it is ogg audio, not support");
                 st->eCodecFormat = AUDIO_CODEC_FORMAT_UNKNOWN;
                 break;
             }
@@ -526,7 +526,7 @@ static int _MovParseEsds(MOVContext *c,MOV_atom_t a)
                 {
                     st->codec.width  = width;
                     st->codec.height = height;
-                    CDX_LOGD("esds width = %d, height = %d", st->codec.width, st->codec.height);
+                    LOGD("esds width = %d, height = %d", st->codec.width, st->codec.height);
                 }
             }
         }
@@ -559,7 +559,7 @@ static int _MovParseWave(MOVContext *c,MOV_atom_t a)
             offset += 4;
             if((a.size==0) || (a.type == 0))
             {
-                CDX_LOGV("mov atom is end!");
+                LOGV("mov atom is end!");
                 break;
             }
 
@@ -599,7 +599,7 @@ static int _MovParseHvcc(MOVContext *c,MOV_atom_t a)
     MOVStreamContext *st = c->streams[c->nb_streams-1];
 
     if(st->codec.extradata){
-        CDX_LOGW("mov extradata has been init???");
+        LOGW("mov extradata has been init???");
         free(st->codec.extradata);
     }
 
@@ -624,7 +624,7 @@ static int _MovParseAvcc(MOVContext *c,MOV_atom_t a)
     MOVStreamContext *st = c->streams[c->nb_streams-1];
 
     if(st->codec.extradata){
-    CDX_LOGW("mov extradata has been init???");
+    LOGW("mov extradata has been init???");
     free(st->codec.extradata);
     st->codec.extradata = NULL;
     }
@@ -634,7 +634,7 @@ static int _MovParseAvcc(MOVContext *c,MOV_atom_t a)
         return -1;
     st->codec.extradataSize = a.size - 8;
 
-    CDX_LOGV("mov_read_avcc size:%d",a.size);
+    LOGV("mov_read_avcc size:%d",a.size);
     memcpy(st->codec.extradata, buffer+offset, a.size-8);
     return 0;
 }
@@ -660,7 +660,7 @@ static int _MovParseSbgp(MOVContext *c,MOV_atom_t a)
     grouping_type = MoovGetLe32(buffer+offset);
     offset += 4;
 
-    logd("========= grouping_type:0x%x", grouping_type);
+    LOGD("========= grouping_type:0x%x", grouping_type);
     if(grouping_type != MKTAG('r', 'a', 'p', ' '))
         return 0;
     if(version == 1)
@@ -670,7 +670,7 @@ static int _MovParseSbgp(MOVContext *c,MOV_atom_t a)
     offset += 4;
     if(entries == 0)
     {
-        CDX_LOGW("---- sbgp entries is %d", entries);
+        LOGW("---- sbgp entries is %d", entries);
     }
 
     if(entries >= MAXENTRY)
@@ -701,7 +701,7 @@ static int _MovParseSbgp(MOVContext *c,MOV_atom_t a)
     }
 
     st->rap_group_count = i;
-    logd("==== st->rap_group_count: %d, st->rap_seek_count: %d",
+    LOGD("==== st->rap_group_count: %d, st->rap_seek_count: %d",
              st->rap_group_count, st->rap_seek_count);
     return 0;
 }
@@ -719,14 +719,14 @@ static int _MovParseCtts(MOVContext *c,MOV_atom_t a)
     CDX_S32 version = buffer[offset];
     if(version == 1)
     {
-        CDX_LOGW("Composition to Decode Box(cslg) must be here, see qtff");
+        LOGW("Composition to Decode Box(cslg) must be here, see qtff");
     }
 
     offset += 4; // version and flags
     entries = MoovGetBe32(buffer+offset);
     offset += 4;
 
-    CDX_LOGD("track[%d].ctts.entries = %d", c->nb_streams-1, entries);
+    LOGD("track[%d].ctts.entries = %d", c->nb_streams-1, entries);
     if(!entries)
         return 0;
     if(entries >= MAXENTRY || a.size < entries)
@@ -753,7 +753,7 @@ static int _MovParseCtts(MOVContext *c,MOV_atom_t a)
 
         if((FFABS(duration)>(1<<28)) && (i+2<entries))
         {
-            CDX_LOGW("CTTS invalid!");
+            LOGW("CTTS invalid!");
             free(st->ctts_data);
             st->ctts_data = NULL;
             st->ctts_size = 0;
@@ -793,7 +793,7 @@ static int _MovParseStco(MOVContext *c,MOV_atom_t a)
 
     if(entries == 0)
     {
-        CDX_LOGW("---- stco entries is %d, maybe an ISO base media file", entries);
+        LOGW("---- stco entries is %d, maybe an ISO base media file", entries);
     }
 
     if(entries >= MAXENTRY || (int)a.size < entries)//720000=25fps @ 8hour
@@ -828,7 +828,7 @@ static int _MovParseStsc(MOVContext *c,MOV_atom_t a)
 
     if(entries == 0)
     {
-        CDX_LOGW("---- stsc entries is %d, careful", entries);
+        LOGW("---- stsc entries is %d, careful", entries);
     }
     if(entries >= MAXENTRY || (int)a.size < entries)//modify by lys UINT_MAX / sizeof(MOV_stsc_t))
         return -1;
@@ -843,7 +843,7 @@ static int _MovParseStsc(MOVContext *c,MOV_atom_t a)
         // if will error,if add the code below
         //st->codec.extradataSize = MoovGetBe32(buffer+offset);
         offset += 4;
-        CDX_LOGW("read pcm size from stsc! 0x%x", st->codec.extradataSize);
+        LOGW("read pcm size from stsc! 0x%x", st->codec.extradataSize);
     }
     return 0;
 }
@@ -871,7 +871,7 @@ static int _MovParseStsz(MOVContext *c,MOV_atom_t a)
     offset += 4;
     //modify by lys //if (!st->sample_size) /* do not overwrite value computed in stsd */
     st->sample_size = sample_size;
-    CDX_LOGD("-- sample_size = %d", sample_size);
+    LOGD("-- sample_size = %d", sample_size);
     entries = MoovGetBe32(buffer+offset);
     offset += 4;
     st->stsz_size = entries;
@@ -920,7 +920,7 @@ static int _MovParseStts(MOVContext *c,MOV_atom_t a)
 
     if(entries == 0)
     {
-        CDX_LOGW("---- stts entries is %d, careful", entries);
+        LOGW("---- stts entries is %d, careful", entries);
     }
 
     if(size <= 0)
@@ -961,7 +961,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
     entries = MoovGetBe32(buffer+offset); //stsd entries
     if(entries > 2)
     {
-        logw("stsd entry: %d", entries);
+        LOGW("stsd entry: %d", entries);
         entries = 2;
     }
     offset += 4;
@@ -974,7 +974,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
         CDX_U32 size = MoovGetBe32(buffer+offset);  /* size */
         offset +=4;
         format = MoovGetLe32(buffer+offset);        /* data format */
-        //CDX_LOGD("---offset = %x, stsd format  = %c%c%c%c", offset, buffer[offset],
+        //LOGD("---offset = %x, stsd format  = %c%c%c%c", offset, buffer[offset],
         //buffer[offset+1], buffer[offset+2], buffer[offset+3]);
         offset +=4;
         st->codec.codecTag = format;
@@ -1068,7 +1068,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
                     c->video_stream_num++;
                     break;
                 case MKTAG('v', 'c', '-', '1'):    /* AVID IMX PAL */
-                CDX_LOGD(" the codec atom is vc-1, maybe the codec format is not right");
+                LOGD(" the codec atom is vc-1, maybe the codec format is not right");
                     st->eCodecFormat = VIDEO_CODEC_FORMAT_WMV1;
                     st->stsd_type = 1;
                     st->stream_index = c->video_stream_num;
@@ -1076,7 +1076,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
                     break;
 
                 case MKTAG('S', 'V', 'Q', '3'):
-                    CDX_LOGD("---- can not support svq3");
+                    LOGD("---- can not support svq3");
                     st->stsd_type = 0;
                     st->unsurpoort = 1;
                     st->read_va_end = 1;
@@ -1103,13 +1103,13 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
                 case MKTAG('m','s', 0 ,'U'):
                 case MKTAG('m','s', 0 ,'P'):
                 case MKTAG('.','m','p','3'):
-                    CDX_LOGD("----- mp3");
+                    LOGD("----- mp3");
                     st->eCodecFormat = AUDIO_CODEC_FORMAT_MP3;
                     st->eSubCodecFormat = 0;
                     st->stsd_type = 2;
                     st->stream_index = c->audio_stream_num;
                     c->audio_stream_num++;
-                    CDX_LOGD("--- audio stream index = %d", c->audio_stream_num);
+                    LOGD("--- audio stream index = %d", c->audio_stream_num);
                     break;
 
                 case MKTAG('.','m','p','2'):
@@ -1216,7 +1216,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
                     break;
 
                 case 0x1100736d:
-                    loge("unsupport this audio type");
+                    LOGE("unsupport this audio type");
                     st->unsurpoort = 1;
                     st->read_va_end = 1;
                     break;
@@ -1226,7 +1226,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
                 case MKTAG('T', 'X', '3', 'G'):
                 case MKTAG('t', 'e', 'x', 't'):
                 case MKTAG('t', 'x', '3', 'g'):
-                    CDX_LOGW(" subtitle is not define yet!!!!");
+                    LOGW(" subtitle is not define yet!!!!");
                     st->codec.codecType = CODEC_TYPE_SUBTITLE;  //for Jumanji.mp4, which 'hdlr'
                                                                 //atom do not have 'text'
                     st->eCodecFormat = SUBTITLE_CODEC_TIMEDTEXT;        // LYRIC_TXT;
@@ -1246,7 +1246,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
                     }
                     break;
                 default:
-                    CDX_LOGW("unknown format tag: <0x%x>", st->codec.codecTag);
+                    LOGW("unknown format tag: <0x%x>", st->codec.codecTag);
                     if(st->stsd_type == 0) // for cmov_kongfupanda.mov
                     {
                         st->stsd_type = 0;
@@ -1260,7 +1260,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
                 && (st->codec.codecType!=CODEC_TYPE_AUDIO)
                 && ((st->codec.codecType!=CODEC_TYPE_SUBTITLE)))
         {
-            CDX_LOGW("unknown format tag: <%d>", st->codec.codecTag);
+            LOGW("unknown format tag: <%d>", st->codec.codecTag);
             st->stsd_type = 0;
             st->read_va_end = 1;   // we do not need read samples of this stream,
                                    //so set the end flag
@@ -1351,7 +1351,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
                     st->stsd_type = 2;
                     break;
                 default:
-                    CDX_LOGW("unkown format <%x>", format);
+                    LOGW("unkown format <%x>", format);
                     st->stsd_type = 0;
                        break;
             }
@@ -1374,7 +1374,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
             offset += 2;
             st->codec.height = moovGetBe16(buffer+offset); /* height */
             offset += 2;
-            CDX_LOGD("stsd width = %d, height = %d", st->codec.width, st->codec.height);
+            LOGD("stsd width = %d, height = %d", st->codec.width, st->codec.height);
             //c->ptr_fpsr->vFormat.nWidth = st->codec.width;
             //c->ptr_fpsr->vFormat.nHeight = st->codec.height;
 
@@ -1554,7 +1554,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
             //LOGD("----------- subtitle  size = %d", fake_atom.size);
             if (format != MKTAG('m','p','4','s'))
             {
-                CDX_LOGD("-------- subtitle glbl, format = %x, offset = %x, size = %d",
+                LOGD("-------- subtitle glbl, format = %x, offset = %x, size = %d",
                     format, offset, fake_atom.size);
                 fake_atom.offset = offset;
                 s_mov_stsd_parser[MESSAGE_ID_GLBL].movParserFunc(c,fake_atom);
@@ -1567,7 +1567,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
         else
         {
             /* other codec type, just skip the entry body (rtp, mp4s, tmcd ...) */
-            CDX_LOGW(" We do not support this atom: <0x%x>", st->codec.codecType);
+            LOGW(" We do not support this atom: <0x%x>", st->codec.codecType);
             return 0;
         }
 
@@ -1590,7 +1590,7 @@ static int _MovParseStsd(MOVContext *c,MOV_atom_t a)
 
                 if((a.size==0) || (a.type == 0))
                 {
-                    CDX_LOGV("mov atom is end!");
+                    LOGV("mov atom is end!");
                     break;
                 }
 
@@ -1730,7 +1730,7 @@ static int _MovParseStbl(MOVContext *c,MOV_atom_t a)
         }
         else if(a.type == MKTAG( 'c', 't', 't', 's' ))
         {
-            CDX_LOGI(" !!!! careful ctts atom is tested yet");
+            LOGI(" !!!! careful ctts atom is tested yet");
             a.offset = offset;
             err = s_mov_stbl_parser[MESSAGE_ID_CTTS].movParserFunc(c,a);
             offset = offset + a.size - 8;
@@ -1743,7 +1743,7 @@ static int _MovParseStbl(MOVContext *c,MOV_atom_t a)
         }
         else if(a.type == MKTAG( 's', 'b', 'g', 'p' ))
         {
-            logd("============ sbgp");
+            LOGD("============ sbgp");
             a.offset = offset;
             err = s_mov_stbl_parser[MESSAGE_ID_SBGP].movParserFunc(c,a);
             offset = offset + a.size - 8;
@@ -1979,7 +1979,7 @@ static int _MovParseMdhd(MOVContext *c,MOV_atom_t a)
     char language[4] = {0};
     if(movLangToISO639(lang, language))
     {
-       CDX_LOGD("-- language = %s", language);
+       LOGD("-- language = %s", language);
        strcpy((char *)st->language, language);
     }
     //MoovGetBe16(buffer+offset); /* quality */
@@ -2156,13 +2156,13 @@ static int _MovParseTkhd(MOVContext *c,MOV_atom_t a)
             rotationDegrees = 180;
              strcpy((char*)st->rotate, "180");
         } else {
-            CDX_LOGW("We only support 0,90,180,270 degree rotation matrices");
+            LOGW("We only support 0,90,180,270 degree rotation matrices");
              strcpy((char*)st->rotate, "0");
             rotationDegrees = 0;
         }
 
         if (rotationDegrees != 0) {
-            CDX_LOGD("nRotation variable is not in vFormat");
+            LOGD("nRotation variable is not in vFormat");
             //c->ptr_fpsr->vFormat.nRotation = rotationDegrees;
         }
     }
@@ -2173,7 +2173,7 @@ static int _MovParseTkhd(MOVContext *c,MOV_atom_t a)
     offset += 4;
     st->width = width >> 16;
     st->height = height >> 16;
-    CDX_LOGD("tkhd width = %d, height = %d", st->width, st->height);
+    LOGD("tkhd width = %d, height = %d", st->width, st->height);
     // transform the display width/height according to the matrix
     // skip this if the display matrix is the default identity matrix
     // or if it is rotating the picture, ex iPhone 3GS
@@ -2195,7 +2195,7 @@ static int _MovParseTrex(MOVContext *c,MOV_atom_t a)
 
     if(a.size < 32)
     {
-        CDX_LOGI("warning: trex box <%d> is less than 32 bytes !", a.size);
+        LOGI("warning: trex box <%d> is less than 32 bytes !", a.size);
         return 0;
     }
 
@@ -2240,19 +2240,19 @@ static int _MovParseCmov(MOVContext *c,MOV_atom_t a)
     dcom_len = MoovGetBe32(cmov_data + offset);
     if (dcom_len != 12)
     {
-        CDX_LOGE("invalid data, <%ld>", dcom_len);
+        LOGE("invalid data, <%ld>", dcom_len);
         return -1;
     };
     offset += 4;
     if (MoovGetLe32(cmov_data + offset) != MKTAG('d', 'c', 'o', 'm'))
     {
-        CDX_LOGE("invalid data");
+        LOGE("invalid data");
         return -1;
     };
     offset += 4;
     if (MoovGetLe32(cmov_data + offset) != MKTAG('z', 'l', 'i', 'b'))
     {
-        CDX_LOGE("invalid data");
+        LOGE("invalid data");
         return -1;
     };
     offset += 4;
@@ -2262,7 +2262,7 @@ static int _MovParseCmov(MOVContext *c,MOV_atom_t a)
     offset += 4;
     if (MoovGetLe32(cmov_data + offset) != MKTAG('c', 'm', 'v', 'd'))
     {
-        CDX_LOGE("invalid data");
+        LOGE("invalid data");
         return -1;
     };
     offset += 4;
@@ -2275,7 +2275,7 @@ static int _MovParseCmov(MOVContext *c,MOV_atom_t a)
     if (uncompress(moov_data, (uLongf *)&moov_data_len,
             (const Bytef *)cmov_data + offset, cmov_len - offset) != Z_OK)
     {
-        CDX_LOGE("uncompress cmov data fail.");
+        LOGE("uncompress cmov data fail.");
         free(moov_data);
         return -1;
     }
@@ -2336,7 +2336,7 @@ static int _MovParseTrak(MOVContext *c,MOV_atom_t a)
         a.size = MoovGetBe32(buffer+offset);
         if(offset+a.size > total_size)
         {
-            logw("atom size error: %x", a.size);
+            LOGW("atom size error: %x", a.size);
             a.size = total_size - offset;
         }
         offset += 4;
@@ -2390,7 +2390,7 @@ static void movParseGnre(unsigned char *buffer, CDX_U8 *str, int size)
     offset ++; // unkown
 
     genre = buffer[offset];
-    CDX_LOGD("--- genre %s", ff_id3v1_genre_str[genre-1]);
+    LOGD("--- genre %s", ff_id3v1_genre_str[genre-1]);
     snprintf((char*)str, size, "%s", ff_id3v1_genre_str[genre-1]);
 }
 
@@ -2424,7 +2424,7 @@ static int _MovParseKeys(MOVContext *c,MOV_atom_t a)
             offset = offset + a.size - 8;
             if(mdta_index >= MAX_MDTA_NUMS)
             {
-                loge("parse mdta nums too big,beyond the scope.");
+                LOGE("parse mdta nums too big,beyond the scope.");
                 return -1;
             }
         }
@@ -2476,7 +2476,7 @@ static int _MovParseMeta(MOVContext *c,MOV_atom_t a)
             offset += 6;/* 'I''D''3''2' + 6 has the true id3v2 infomation*/
             a.size -= 6;
             a.offset = offset;
-            CDX_LOGD("Mov id3 offset : %d, id3 size : %d", a.offset, a.size);
+            LOGD("Mov id3 offset : %d, id3 size : %d", a.offset, a.size);
             c->id3v2 = GenerateId3(c->fp, c->moov_buffer + a.offset , a.size, ktrue);
             offset = a.offset + a.size;
         }
@@ -2614,7 +2614,7 @@ static int _MovParseUdta(MOVContext *c,MOV_atom_t a)
             break;
         case MKTAG('g','n','r','e'):
             //length = a.size-8-4-1;
-            CDX_LOGD("---- gnre, care");
+            LOGD("---- gnre, care");
             movParseGnre(buffer+offset, c->genre, sizeof(c->genre));
             //length = MIN(length, 31);
             //c->genre[length] = '\0';
@@ -2717,7 +2717,7 @@ static int _MovParseMvhd(MOVContext *c,MOV_atom_t a)
         }
         else
         {
-            CDX_LOGW("version<%d> is not support!", version);
+            LOGW("version<%d> is not support!", version);
         }
 
         c->time_scale = MoovGetBe32(buffer+offset); /* time scale */
@@ -2759,10 +2759,10 @@ static int _MovParseSenc(MOVContext *s,MOV_atom_t atom)
     unsigned int sample_count;
     int i, j;
 
-    CDX_LOGV("MovParseSenc,atom.size:%d",atom.size);
+    LOGV("MovParseSenc,atom.size:%d",atom.size);
 
     ret = CdxStreamRead(s->fp, buffer, 16); // a2394f52-5a9b-4f14-a244-6c427c648df4
-    CDX_LOGV("type=%2.2x%2.2x%2.2x%2.2x-%2.2x%2.2x-%2.2x%2.2x-%2.2x%2.2x-"
+    LOGV("type=%2.2x%2.2x%2.2x%2.2x-%2.2x%2.2x-%2.2x%2.2x-%2.2x%2.2x-"
         "%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x",
         buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7],
         buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15]);
@@ -2777,7 +2777,7 @@ static int _MovParseSenc(MOVContext *s,MOV_atom_t atom)
 
     ret = CdxStreamRead(s->fp, buffer, 4);
     sample_count = MoovGetBe32(buffer); //sample count
-    CDX_LOGV("sample_count=%d", sample_count);
+    LOGV("sample_count=%d", sample_count);
 
     if (s->senc_data)
     {
@@ -2786,7 +2786,7 @@ static int _MovParseSenc(MOVContext *s,MOV_atom_t atom)
     }
     s->senc_data = malloc(sample_count*sizeof(MOVSampleEnc));
     if (s->senc_data == NULL) {
-        CDX_LOGE("malloc fail.");
+        LOGE("malloc fail.");
         return -1;
     }
     memset(s->senc_data, 0, sample_count*sizeof(MOVSampleEnc));
@@ -2799,7 +2799,7 @@ static int _MovParseSenc(MOVContext *s,MOV_atom_t atom)
             ret = CdxStreamRead(s->fp, buffer, 2);
             entries = moovGetBe16(buffer);
             if (entries > 16) {
-                CDX_LOGE("region too large.");
+                LOGE("region too large.");
                 return -1;
             }
             s->senc_data[i].region_count = entries*2;
@@ -2856,7 +2856,7 @@ static int _MovParseTrun(MOVContext *s,MOV_atom_t atom)
 
     if(!st)
     {
-        CDX_LOGW(" could not find corresponding track id for trun!");
+        LOGW(" could not find corresponding track id for trun!");
         return -1;
     }
 
@@ -2930,7 +2930,7 @@ static int _MovParseTrun(MOVContext *s,MOV_atom_t atom)
     CDX_U64 data_offset = frag->base_data_offset + data_offset_delta;
     s->nDataOffsetDelta = data_offset_delta;
 
-    //CDX_LOGD("base data offset = %llx, data_offset_delta = %x, data_offset=%lld",
+    //LOGD("base data offset = %llx, data_offset_delta = %x, data_offset=%lld",
     //frag->base_data_offset, data_offset_delta, data_offset); //* for debug
     for(i=0; i<entries; i++)
     {
@@ -2989,13 +2989,13 @@ static int _MovParseTrun(MOVContext *s,MOV_atom_t atom)
         tmp->keyframe = keyframe; // keyframe is not need now
         tmp->index = i;
 
-        //CDX_LOGD("duration = %x, offset = %llx, sample size = %x, flag = %x, data_offset = %llu",
+        //LOGD("duration = %x, offset = %llx, sample size = %x, flag = %x, data_offset = %llu",
         //sample_duration, data_offset, tmp->size, sample_flags, data_offset);
         if(st->codec.codecType == CODEC_TYPE_VIDEO)
         {
             if( aw_list_add(s->Vsamples, tmp) < 0)
             {
-                CDX_LOGE("aw_list_add error!");
+                LOGE("aw_list_add error!");
                 return -1;
             }
         }
@@ -3003,7 +3003,7 @@ static int _MovParseTrun(MOVContext *s,MOV_atom_t atom)
         {
             if( aw_list_add(s->Asamples, tmp) < 0)
             {
-                CDX_LOGE("aw_list_add error!");
+                LOGE("aw_list_add error!");
                 return -1;
             }
         }
@@ -3022,7 +3022,7 @@ static int _MovParseTfhd(MOVContext *s,MOV_atom_t atom)
 {
     if(atom.size < 12)
     {
-        CDX_LOGI("Careful: the tfhd box size is less than 12 bytes!");
+        LOGI("Careful: the tfhd box size is less than 12 bytes!");
     }
 
     MOVFragment* frag = &s->fragment;
@@ -3035,7 +3035,7 @@ static int _MovParseTfhd(MOVContext *s,MOV_atom_t atom)
     ret = CdxStreamRead(s->fp, buffer, 4);
     if(ret < 4)
     {
-        CDX_LOGE("read failed.");
+        LOGE("read failed.");
         return -1;
     }
     flags = MoovGetBe24(buffer+1);  // version 1byte; tf_flags (3 bytes)
@@ -3046,7 +3046,7 @@ static int _MovParseTfhd(MOVContext *s,MOV_atom_t atom)
     track_id = MoovGetBe32(buffer);
     if(!track_id)
     {
-        CDX_LOGE("Track id =0.");
+        LOGE("Track id =0.");
         return -1;
     }
     frag->track_id = track_id;
@@ -3065,7 +3065,7 @@ static int _MovParseTfhd(MOVContext *s,MOV_atom_t atom)
     {
         if(!s->bSmsSegment) //* sms has no trex ??
         {
-            CDX_LOGE("Worning: could not find corresponding trex!");
+            LOGE("Worning: could not find corresponding trex!");
             return -1;
         }
     }
@@ -3139,7 +3139,7 @@ static int _MovParseTfhd(MOVContext *s,MOV_atom_t atom)
 
     if(size < 0)
     {
-        CDX_LOGI("the size<%d> is error", size);
+        LOGI("the size<%d> is error", size);
         return -1;
     }
 
@@ -3166,10 +3166,10 @@ static int _MovParseTraf(MOVContext *s,MOV_atom_t atom)
         a.size = MoovGetBe32(buffer);   //big endium
         a.type = MoovGetLe32(buffer+4);
 
-        //CDX_LOGD("traf  size = %x, type=%x", a.size, a.type);
+        //LOGD("traf  size = %x, type=%x", a.size, a.type);
         if((a.size == 0) || (a.type == 0))
         {
-            CDX_LOGE("atom error!");
+            LOGE("atom error!");
             return -1;
         }
 
@@ -3179,7 +3179,7 @@ static int _MovParseTraf(MOVContext *s,MOV_atom_t atom)
             ret = s_mov_moof_parser[MESSAGE_ID_TFHD].movParserFunc(s,a);
             if(ret < 0)
             {
-                CDX_LOGE("parse tfhd failed.");
+                LOGE("parse tfhd failed.");
                 return -1;
             }
         }
@@ -3189,7 +3189,7 @@ static int _MovParseTraf(MOVContext *s,MOV_atom_t atom)
             ret = s_mov_moof_parser[MESSAGE_ID_TRUN].movParserFunc(s,a);
             if(ret < 0)
             {
-                CDX_LOGE("parse trun failed.");
+                LOGE("parse trun failed.");
                 return -1;
             }
         }
@@ -3198,7 +3198,7 @@ static int _MovParseTraf(MOVContext *s,MOV_atom_t atom)
             ret = s_mov_moof_parser[MESSAGE_ID_SENC].movParserFunc(s,a);
             if(ret < 0)
             {
-                CDX_LOGE("parse trun failed.");
+                LOGE("parse trun failed.");
                 return -1;
             }
         }
@@ -3221,7 +3221,7 @@ static int _MovParseTraf(MOVContext *s,MOV_atom_t atom)
             }
         }
         offset += a.size;
-        //CDX_LOGD("offset=%u", offset);
+        //LOGD("offset=%u", offset);
     }
 
     return ret;
@@ -3275,11 +3275,11 @@ static int _MovParseMoof(MOVContext *s,unsigned char *buf,MOV_atom_t atom)
         //LOGD("type = %x, size=%x", a.type, a.size);
         if((a.size == 0) || (a.type == 0))
         {
-            CDX_LOGE(" moof atom error!");
+            LOGE(" moof atom error!");
             return -1;
         }
 
-        //CDX_LOGD("type = %x, size=%x", a.type, a.size);
+        //LOGD("type = %x, size=%x", a.type, a.size);
         if(a.type == MKTAG( 't', 'r', 'a', 'f' ))
         {
             ret = s_mov_moof_parser[MESSAGE_ID_TRAF].movParserFunc(s,a);
@@ -3336,7 +3336,7 @@ static int _MovParseSidx(MOVContext *s,unsigned char *buf,MOV_atom_t atom)
     size -= 8;
 
     int i;
-    //CDX_LOGD("nb_stream = %d, time_scale = %d", s->nb_streams, time_scale);
+    //LOGD("nb_stream = %d, time_scale = %d", s->nb_streams, time_scale);
     for(i=0; i<s->nb_streams; i++)
     {
         // streams->id is the stream track_id, set in 'tkhd' atom in every 'trak'
@@ -3348,7 +3348,7 @@ static int _MovParseSidx(MOVContext *s,unsigned char *buf,MOV_atom_t atom)
     }
     if(!st)
     {
-        CDX_LOGW("Worning: sidx- could not find corresponding stream id!");
+        LOGW("Worning: sidx- could not find corresponding stream id!");
         return -1;
     }
     st->time_scale = time_scale;
@@ -3360,7 +3360,7 @@ static int _MovParseSidx(MOVContext *s,unsigned char *buf,MOV_atom_t atom)
     {
         if(size < 8)
         {
-            CDX_LOGE("the size of 'sidx' is error!");
+            LOGE("the size of 'sidx' is error!");
             return -1;
         }
         int tmp;
@@ -3376,7 +3376,7 @@ static int _MovParseSidx(MOVContext *s,unsigned char *buf,MOV_atom_t atom)
     {
         if(size < 16)
         {
-            CDX_LOGE("the size of 'sidx' is error!");
+            LOGE("the size of 'sidx' is error!");
             return -1;
         }
         ret = CdxStreamRead(s->fp, buffer, 8);
@@ -3407,7 +3407,7 @@ static int _MovParseSidx(MOVContext *s,unsigned char *buf,MOV_atom_t atom)
     sidx = (MOVSidx*)realloc(s->sidx_buffer, refrence_count_end * sizeof(MOVSidx));
     if(!sidx)
     {
-        CDX_LOGE("sidx realloc error!");
+        LOGE("sidx realloc error!");
         return -1;
     }
     else
@@ -3436,7 +3436,7 @@ static int _MovParseSidx(MOVContext *s,unsigned char *buf,MOV_atom_t atom)
         int saptype = (d3&0x70000000) >> 28;
         if(!sap || saptype > 2)
         {
-            CDX_LOGI("not a Stream Access Point, unsupported type!");
+            LOGI("not a Stream Access Point, unsupported type!");
         }
 
         s->sidx_buffer[i].current_dts = s->sidx_time + total_duration;
@@ -3444,7 +3444,7 @@ static int _MovParseSidx(MOVContext *s,unsigned char *buf,MOV_atom_t atom)
         //s->sidx_buffer[i].offset = offset ;
         s->sidx_buffer[i].size = d1 & 0x7fffffff;
         s->sidx_buffer[i].duration = ((CDX_U64)d2) *1000/ (CDX_U64)time_scale ;
-        //CDX_LOGD("current_dts = %lld, sidx_time = %lld, total_duration = %lld",
+        //LOGD("current_dts = %lld, sidx_time = %lld, total_duration = %lld",
         //s->sidx_buffer[i].current_dts, s->sidx_time, total_duration);
         //LOGD("duration = %lld. offst = %lld", s->sidx_buffer[i].duration,
         //s->sidx_buffer[i].offset);
@@ -3511,7 +3511,7 @@ static int _MovParseMdat(MOVContext *s,unsigned char *buf,MOV_atom_t a)
 
         if(s->bSeekAble)
         {
-            //CDX_LOGD("---size=%llx, offset = %llx", size, CdxStreamTell(pb));
+            //LOGD("---size=%llx, offset = %llx", size, CdxStreamTell(pb));
             ret = CdxStreamSeek(s->fp, size-16, SEEK_CUR);
 
             if(ret < 0) return -1;
@@ -3556,7 +3556,7 @@ static int _MovParseMoov(MOVContext *c,unsigned char *buf,MOV_atom_t atom)
         return -1;
     }
 
-    CDX_LOGV("Moov atom size:%d\n",atom.size);
+    LOGV("Moov atom size:%d",atom.size);
 
     a.size = MoovGetBe32(buffer+offset);
     offset += 4;
@@ -3564,7 +3564,7 @@ static int _MovParseMoov(MOVContext *c,unsigned char *buf,MOV_atom_t atom)
     offset += 4;
     if((a.size==0) || (a.type == 0))
     {
-        CDX_LOGV("mov atom is end!");
+        LOGV("mov atom is end!");
     }
 
     total_size = a.size - 8;  // size of 'moov' atom
@@ -3583,7 +3583,7 @@ static int _MovParseMoov(MOVContext *c,unsigned char *buf,MOV_atom_t atom)
             offset += 4;
             if((a.size==0) || (a.type == 0))
             {
-                CDX_LOGV("mov atom is end!");
+                LOGV("mov atom is end!");
                 break;
             }
         }
@@ -3618,7 +3618,7 @@ static int _MovParseMoov(MOVContext *c,unsigned char *buf,MOV_atom_t atom)
             }
             else
             {
-                CDX_LOGW("the stream of this file is large than MOV_MAX_STREAMS !!!");
+                LOGW("the stream of this file is large than MOV_MAX_STREAMS !!!");
                 return -2;
             }
 
@@ -3651,7 +3651,7 @@ static int _MovParseMoov(MOVContext *c,unsigned char *buf,MOV_atom_t atom)
         }
         else if(a.type == MKTAG( 'm', 'e', 't', 'a' ))
         {
-            CDX_LOGD("===meta===");
+            LOGD("===meta===");
             a.offset = offset ;
             err = s_mov_moov_parser[MESSAGE_ID_META].movParserFunc(c,a);
             offset = offset + a.size - 8;
@@ -3677,7 +3677,7 @@ static int _MovParseWide(MOVContext *s,unsigned char *buf,MOV_atom_t a)
 
     if(a.size != 8)
     {
-       CDX_LOGW("care, the 'wide' atom size is not 8 <%d> ", a.size);
+       LOGW("care, the 'wide' atom size is not 8 <%d> ", a.size);
        if(s->bSeekAble)
        {
            ret = CdxStreamSeek(s->fp, a.size-8, SEEK_CUR);
@@ -3701,7 +3701,7 @@ static int _MovParseFtyp(MOVContext *s,unsigned char *buf,MOV_atom_t a)
     //size is out of boundary.
     if(a.size < 16 || a.size >= 1032)
     {
-        CDX_LOGE("error, the ftyp atom is invalid");
+        LOGE("error, the ftyp atom is invalid");
         return -1;
     }
     ret = CdxStreamRead(s->fp, buf, a.size-8);
@@ -3710,7 +3710,7 @@ static int _MovParseFtyp(MOVContext *s,unsigned char *buf,MOV_atom_t a)
 
     char* compatible = (char*)buf+8;
     buf[a.size-8] = '\0';
-    CDX_LOGD("---- compatible = %s", compatible);
+    LOGD("---- compatible = %s", compatible);
     //if the major brand and compatible brand are neithor "qt  ",
     //it is ISO base media file
     if (major_brand != MKTAG('q','t',' ',' ') && !strstr(compatible, "qt  "))
@@ -3756,7 +3756,7 @@ int _MovTop(MOVContext *s)
         ret = CdxStreamRead(s->fp, buf, 8);
         if(ret < 8)
         {
-            CDX_LOGI("end of file? reslut(%d)", ret);
+            LOGI("end of file? reslut(%d)", ret);
             break;
         }
 
@@ -3811,7 +3811,7 @@ int _MovTop(MOVContext *s)
                                 ret = CdxStreamRead(s->fp, s->moov_buffer+8+readlen , tmplen);
                                 if(ret < 0)
                                 {
-                                    CDX_LOGE("CdxStreamRead error!ret (%d)",ret);
+                                    LOGE("CdxStreamRead error!ret (%d)",ret);
                                     return -1;
                                 }
                                 readlen += tmplen;
@@ -3820,7 +3820,7 @@ int _MovTop(MOVContext *s)
             }
             else
             {
-                CDX_LOGI("duplicated moov atom, skip it!");
+                LOGI("duplicated moov atom, skip it!");
                 if(s->bSeekAble)
                 {
                     ret = CdxStreamSeek(s->fp, a.size-8, SEEK_CUR);
@@ -3874,7 +3874,7 @@ int _MovTop(MOVContext *s)
         }
         else if (a.type == MKTAG( 'm', 'o', 'o', 'f' ))
         {
-            CDX_LOGD("the mov file contain movie fragment box!");
+            LOGD("the mov file contain movie fragment box!");
             s->is_fragment = 1;
             if(!s->first_moof_offset)
             {

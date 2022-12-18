@@ -12,7 +12,7 @@
 ******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "vfmt_conversion"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <string.h>
@@ -122,11 +122,11 @@ PIXEL_FORMAT_E map_V4L2_PIX_FMT_to_PIXEL_FORMAT_E(int v4l2PixFmt)
         case V4L2_PIX_FMT_MJPEG:
         case V4L2_PIX_FMT_JPEG:
         case V4L2_PIX_FMT_H264:
-            alogd("compressed format[0x%x], default to MM_PIXEL_FORMAT_BUTT[0x%x]", MM_PIXEL_FORMAT_BUTT);
+            LOGD("compressed format[0x%x], default to MM_PIXEL_FORMAT_BUTT[0x%x]", MM_PIXEL_FORMAT_BUTT);
             nPixelFormat = MM_PIXEL_FORMAT_BUTT;
             break;
         default:
-            aloge("fatal error! unknown V4L2_PIX_FMT[0x%x]", v4l2PixFmt);
+            LOGE("fatal error! unknown V4L2_PIX_FMT[0x%x]", v4l2PixFmt);
             nPixelFormat = MM_PIXEL_FORMAT_BUTT;
             break;
     }
@@ -188,7 +188,7 @@ int map_PIXEL_FORMAT_E_to_V4L2_PIX_FMT(PIXEL_FORMAT_E format)
         case MM_PIXEL_FORMAT_RAW_SGRBG12:
             return V4L2_PIX_FMT_SGRBG12;
         default:
-            aloge("Unknown format 0x%x, use YUV420 instead.", format);
+            LOGE("Unknown format 0x%x, use YUV420 instead.", format);
             return V4L2_PIX_FMT_YUV420M;
     }
 }
@@ -211,7 +211,7 @@ VIDEO_FIELD_E map_V4L2_FIELD_to_VIDEO_FIELD_E(enum v4l2_field v4l2Field)
             nVideoField = VIDEO_FIELD_INTERLACED;
             break;
         default:
-            aloge("fatal error! unknown V4L2_FIELD[0x%x]", v4l2Field);
+            LOGE("fatal error! unknown V4L2_FIELD[0x%x]", v4l2Field);
             nVideoField = VIDEO_FIELD_FRAME;
             break;
     }
@@ -236,7 +236,7 @@ enum v4l2_field map_VIDEO_FIELD_E_to_V4L2_FIELD(VIDEO_FIELD_E eVideoField)
             v4l2Field = V4L2_FIELD_INTERLACED;
             break;
         default:
-            aloge("fatal error! unknown VIDEO_FIELD_E[0x%x]", eVideoField);
+            LOGE("fatal error! unknown VIDEO_FIELD_E[0x%x]", eVideoField);
             v4l2Field = V4L2_FIELD_NONE;
             break;
     }
@@ -266,7 +266,7 @@ PIXEL_FORMAT_E map_EPIXELFORMAT_to_PIXEL_FORMAT_E(enum EPIXELFORMAT vdecPixelFor
             dstPixelFormat = MM_PIXEL_FORMAT_YUYV_PACKAGE_422;
             break;
         default:
-            aloge("fatal error! unknown vdecPixelFormat[0x%x]", vdecPixelFormat);
+            LOGE("fatal error! unknown vdecPixelFormat[0x%x]", vdecPixelFormat);
             dstPixelFormat = MM_PIXEL_FORMAT_YVU_PLANAR_420;
             break;
     }
@@ -299,7 +299,7 @@ enum EPIXELFORMAT map_PIXEL_FORMAT_E_to_EPIXELFORMAT(PIXEL_FORMAT_E pixelFormat)
             vdecPixelFormat = PIXEL_FORMAT_YUYV;
             break;
         default:
-            aloge("unsupported temporary! pixelForamt[0x%x]", pixelFormat);
+            LOGE("unsupported temporary! pixelForamt[0x%x]", pixelFormat);
             break;
     }
     return vdecPixelFormat;

@@ -68,20 +68,20 @@ static int ShowTextEncMgrData(void *handle)
     GPS_t *gps_ptr = &pInBufMgr->in_pkt[wid].gps_data;
     GSENSOR_t *gsr_ptr = (GSENSOR_t*)&pInBufMgr->in_pkt[wid].gsensor_data;
 
-    ALOGD("=================[show MgrData]====================\n");
-    ALOGD("[in_frame ] gps(lat: %c%s, long: %c%s, speed: %s), gps(rid: %d, wid: %d, cnt: %d)\n",
+    LOGD("=================[show MgrData]====================");
+    LOGD("[in_frame ] gps(lat: %c%s, long: %c%s, speed: %s), gps(rid: %d, wid: %d, cnt: %d)",
         gps_ptr->lat_dir, gps_ptr->lat_val, gps_ptr->long_dir, gps_ptr->long_val, gps_ptr->speed,
         pInBufMgr->read_id, pInBufMgr->write_id, pInBufMgr->buf_used);
-    ALOGD("[in_frame ] gsensor(xa: %f, ya: %f, za: %f), gsensor(rid: %d, wid: %d, cnt: %d)\n",
+    LOGD("[in_frame ] gsensor(xa: %f, ya: %f, za: %f), gsensor(rid: %d, wid: %d, cnt: %d)",
         gsr_ptr->xa, gsr_ptr->ya, gsr_ptr->za, pInBufMgr->read_id, pInBufMgr->write_id, pInBufMgr->buf_used);
-    ALOGD("[in_frame ] driver_id(%s)\n", pInBufMgr->in_pkt[wid].driver_id_data.driver_id);
+    LOGD("[in_frame ] driver_id(%s)", pInBufMgr->in_pkt[wid].driver_id_data.driver_id);
 
-    ALOGD("[out_frame] packet(rid: %d, wid: %d, used_cnt: %d), total_packet_cnt: %d\n",
+    LOGD("[out_frame] packet(rid: %d, wid: %d, used_cnt: %d), total_packet_cnt: %d",
         pOutBufMgr->read_id, pOutBufMgr->write_id, pOutBufMgr->buf_used, pOutBufMgr->total_packet_cnt);
     wid = (pOutBufMgr->write_id  - 1 + TEXTENC_PACKET_CNT) % TEXTENC_PACKET_CNT;    // the pkt that be encoded just now
-    ALOGD("[last_pkt ] last_encode_pkt info(wid: %d, buf_id: %d, pts: %lld)\n",
+    LOGD("[last_pkt ] last_encode_pkt info(wid: %d, buf_id: %d, pts: %lld)",
         wid, pOutBufMgr->out_pkt[wid].buf_id, pOutBufMgr->out_pkt[wid].pts);
-    ALOGD("===================================================\n");
+    LOGD("===================================================");
 
     return 0;
 }
@@ -97,7 +97,7 @@ static int RequestWriteBuf(void *handle, void *pInBuf,int size)
 
     pthread_mutex_lock(&pDataMgr->in_buf_lock);
     if (pInBufMgr->buf_used >= TEXTENC_PACKET_CNT) {
-        ALOGE("(f:%s, l:%d) Low speed card! InBuf fifo full, discard this frame! InBuf_info(rid:%d, wid:%d, used_cnt:%d)",
+        LOGE("(f:%s, l:%d) Low speed card! InBuf fifo full, discard this frame! InBuf_info(rid:%d, wid:%d, used_cnt:%d)",
             __FUNCTION__, __LINE__, pInBufMgr->read_id, pInBufMgr->write_id, pInBufMgr->buf_used);
         pthread_mutex_unlock(&pDataMgr->in_buf_lock);
         return -1;
@@ -114,7 +114,7 @@ static int RequestWriteBuf(void *handle, void *pInBuf,int size)
 
     }
 
-//    ALOGE("zjx_gps_data2:%x-%x-%x-%d-%d-%d-%x-%x-%x-%x",
+//    LOGE("zjx_gps_data2:%x-%x-%x-%d-%d-%d-%x-%x-%x-%x",
 //        cur_pkt->gps_data.Hour,cur_pkt->gps_data.Minute,cur_pkt->gps_data.Second,\
 //        cur_pkt->gps_data.Year,cur_pkt->gps_data.Month,cur_pkt->gps_data.Day,\
 //        cur_pkt->gps_data.Latitude,cur_pkt->gps_data.Longitude,cur_pkt->gps_data.Speed,cur_pkt->gps_data.Angle);
@@ -137,19 +137,19 @@ static int ShowInFrameData(void *handle)
 
     if (TEXTENC_PACK_TYPE_GPS == (enable_flag & (1<<TEXTENC_INPUT_TYPE_GPS))) {
         GPS_t *ptr = &pInBufMgr->in_pkt[pInBufMgr->read_id].gps_data;
-        ALOGD("(f:%s, l:%d) gps: (%c%s, %c%s, %s)\n", __FUNCTION__, __LINE__,
+        LOGD("(f:%s, l:%d) gps: (%c%s, %c%s, %s)", __FUNCTION__, __LINE__,
             ptr->lat_dir, ptr->lat_val, ptr->long_dir, ptr->long_val, ptr->speed);
     }
     if (TEXTENC_PACK_TYPE_GSENSOR == (enable_flag & (1<<TEXTENC_INPUT_TYPE_GSENSOR))) {
         GSENSOR_t *ptr = &pInBufMgr->in_pkt[pInBufMgr->read_id].gsensor_data[0];
-        ALOGD("(f:%s, l:%d) gsensor: (%f, %f, %f)\n", __FUNCTION__, __LINE__, ptr->xa, ptr->ya, ptr->za);
+        LOGD("(f:%s, l:%d) gsensor: (%f, %f, %f)", __FUNCTION__, __LINE__, ptr->xa, ptr->ya, ptr->za);
     }
     if (TEXTENC_PACK_TYPE_ADAS == (enable_flag & (1<<TEXTENC_INPUT_TYPE_ADAS))) {
 
     }
     if (TEXTENC_PACK_TYPE_DRIVER_ID == (enable_flag & (1<<TEXTENC_INPUT_TYPE_DRIVER_ID))) {
         char *ptr = pInBufMgr->in_pkt[pInBufMgr->read_id].driver_id_data.driver_id;
-        ALOGD("(f:%s, l:%d) driver_id: (%s)\n", __FUNCTION__, __LINE__, ptr);
+        LOGD("(f:%s, l:%d) driver_id: (%s)", __FUNCTION__, __LINE__, ptr);
     }
 
     return 0;
@@ -167,7 +167,7 @@ static int PacketFillDateTime(char *ptr)
     *(ptr-2) = 0xFE;
     *(ptr-1) = 0xFE;
     memcpy(ptr, buf, DATE_TIME_LEN);
-//  ALOGD("(f:%s, l:%d) data&time: [%s]", __FUNCTION__, __LINE__, buf);
+//  LOGD("(f:%s, l:%d) data&time: [%s]", __FUNCTION__, __LINE__, buf);
 
     return 0;
 }
@@ -305,14 +305,14 @@ static int PacketGCTransform(char *ptr)
     for (i = 0; i < 6; i++)
         dst[i] = ConvertNumSystem(buf);
     memcpy(ptr + 3, dst, 6);
-//  ALOGD("(f:%s, l:%d) after 10-6 transform, gps-latitude-decimal_part: [%s]", __FUNCTION__, __LINE__, dst);
+//  LOGD("(f:%s, l:%d) after 10-6 transform, gps-latitude-decimal_part: [%s]", __FUNCTION__, __LINE__, dst);
 
     memset(buf, 0, 8);
     memcpy(buf, ptr + 13, 6);
     for (i = 0; i < 6; i++)
         dst[i] = ConvertNumSystem(buf);
     memcpy(ptr + 13, dst, 6);
-//  ALOGD("(f:%s, l:%d) after 10-6 transform, gps-longitude-decimal_part: [%s]", __FUNCTION__, __LINE__, dst);
+//  LOGD("(f:%s, l:%d) after 10-6 transform, gps-longitude-decimal_part: [%s]", __FUNCTION__, __LINE__, dst);
 
     return 0;
 }
@@ -384,7 +384,7 @@ static int GetValidEncPktCnt(void *handle)
     pthread_mutex_lock(&pDataMgr->out_buf_lock);
     ret = pOutBufMgr->prefetch_cnt;
     if (ret != 0) {
-        ALOGW("(f:%s, l:%d) Be careful! InBuf_info(rid:%d, wid:%d, used:%d, prefetch_cnt:%d)", __FUNCTION__, __LINE__,
+        LOGW("(f:%s, l:%d) Be careful! InBuf_info(rid:%d, wid:%d, used:%d, prefetch_cnt:%d)", __FUNCTION__, __LINE__,
             pOutBufMgr->read_id, pOutBufMgr->write_id, pOutBufMgr->buf_used, pOutBufMgr->prefetch_cnt);
     }
     pthread_mutex_unlock(&pDataMgr->out_buf_lock);
@@ -425,27 +425,27 @@ int ShowOutFrameData(void *handle, int cur_rid, int pkt_id)
     unsigned int i;
     char *ptr;
 
-    ALOGD("============[show OutFrame]============\n");
-    ALOGD("PacketInfo -> (cnt, rid, wid): (%d, %d, %d), enced_pkt_cnt: %d\n", pOutBufMgr->buf_used,
+    LOGD("============[show OutFrame]============");
+    LOGD("PacketInfo -> (cnt, rid, wid): (%d, %d, %d), enced_pkt_cnt: %d", pOutBufMgr->buf_used,
         pOutBufMgr->read_id, pOutBufMgr->write_id, pOutBufMgr->total_packet_cnt);
     if (cur_rid == 1) {     // 1: show packet[out_buf_packet_rid]; 0: show packet[pkt_id]
         ptr = pOutBufMgr->out_pkt[pOutBufMgr->read_id].out_data;
         for (i = 0; i < TEXTENC_PACKET_SIZE; i++) {
             if (i%16 == 0)
-                ALOGD("%#5x: ", i);
-            ALOGD("%2x%c", (unsigned char)ptr[i], i%16 == 15 ? '\n':' ');
+                LOGD("%#5x: ", i);
+            LOGD("%2x%c", (unsigned char)ptr[i], i%16 == 15 ? '\n':' ');
         }
     } else if (cur_rid == 0 && pkt_id < TEXTENC_PACKET_CNT) {
         ptr = pOutBufMgr->out_pkt[pkt_id].out_data;
         for (i = 0; i < TEXTENC_PACKET_SIZE; i++) {
             if (i%16 == 0)
-                ALOGD("%#5x: ", i);
-            ALOGD("%2x%c", (unsigned char)ptr[i], i%16 == 15 ? '\n':' ');
+                LOGD("%#5x: ", i);
+            LOGD("%2x%c", (unsigned char)ptr[i], i%16 == 15 ? '\n':' ');
         }
     } else {
-        ALOGE("(%s) param error! cur_rid: [%d], pkt_id: [%d]\n", __FUNCTION__, cur_rid, pkt_id);
+        LOGE("(%s) param error! cur_rid: [%d], pkt_id: [%d]", __FUNCTION__, cur_rid, pkt_id);
     }
-    ALOGD("\n=======================================\n");
+    LOGD("\n=======================================");
 
     return 0;
 }
@@ -457,7 +457,7 @@ static int RequestTextEncBuf(void *handle, void ** pOutbuf, unsigned int * outSi
 
     pthread_mutex_lock(&pDataMgr->out_buf_lock);
     if (pOutBufMgr->prefetch_cnt <= 0) {
-        ALOGE("(f:%s, l:%d) get EncBuf failed! prefetch_cnt = %d!\n", __FUNCTION__, __LINE__, pOutBufMgr->prefetch_cnt);
+        LOGE("(f:%s, l:%d) get EncBuf failed! prefetch_cnt = %d!", __FUNCTION__, __LINE__, pOutBufMgr->prefetch_cnt);
         pthread_mutex_unlock(&pDataMgr->out_buf_lock);
         return -1;
     }
@@ -469,7 +469,7 @@ static int RequestTextEncBuf(void *handle, void ** pOutbuf, unsigned int * outSi
     *timeStamp = pOutBufMgr->out_pkt[rid].pts;
     *pBufId = pOutBufMgr->out_pkt[rid].buf_id;
     pOutBufMgr->prefetch_cnt--;
-//    ALOGE("zjx_rq_text:%d-%d-%lld",pOutBufMgr->out_pkt[rid].buf_id,rid,pOutBufMgr->out_pkt[rid].pts);
+//    LOGE("zjx_rq_text:%d-%d-%lld",pOutBufMgr->out_pkt[rid].buf_id,rid,pOutBufMgr->out_pkt[rid].pts);
     pthread_mutex_unlock(&pDataMgr->out_buf_lock);
 
     return 0;
@@ -486,7 +486,7 @@ static int ReturnTextEncBuf(void *handle, void* pOutbuf, unsigned int outSize, l
     rid = (rid - 1 + TEXTENC_PACKET_CNT) % TEXTENC_PACKET_CNT;
     EncPacket_t *pEncData = &pOutBufMgr->out_pkt[rid];
     if (nBufId != pOutBufMgr->out_pkt[rid].buf_id || timeStamp != pOutBufMgr->out_pkt[rid].pts) {
-        ALOGE("(f:%s, l:%d) return param error! OutBuf_info(pts:%lld, BufId:%d), Return_info(size:%d, pts:%lld, BufId:%d)!\n",
+        LOGE("(f:%s, l:%d) return param error! OutBuf_info(pts:%lld, BufId:%d), Return_info(size:%d, pts:%lld, BufId:%d)!",
             __FUNCTION__, __LINE__, pEncData->pts, pEncData->buf_id, outSize, timeStamp, nBufId);
         pthread_mutex_unlock(&pDataMgr->out_buf_lock);
         return -1;
@@ -506,18 +506,18 @@ static int ReleaseTextEncBuf(void *handle, void* pOutbuf, unsigned int outSize, 
     pthread_mutex_lock(&pDataMgr->out_buf_lock);
     if (pOutBufMgr->buf_used == 0) {
         pthread_mutex_unlock(&pDataMgr->out_buf_lock);
-        ALOGE("(f:%s, l:%d) fatal error! no valid fifo to release!", __FUNCTION__, __LINE__);
+        LOGE("(f:%s, l:%d) fatal error! no valid fifo to release!", __FUNCTION__, __LINE__);
         return -1;
     }
     int pos = ((char*)pOutbuf - (char*)pOutBufMgr->out_pkt) / sizeof(EncPacket_t);
     EncPacket_t *pEncData = &pOutBufMgr->out_pkt[pos];
 
-//    ALOGE("zjx_rls_text:%d-%d-%lld-%d-%lld",pOutBufMgr->out_pkt[pos].buf_id,pos,pOutBufMgr->out_pkt[pos].pts,
+//    LOGE("zjx_rls_text:%d-%d-%lld-%d-%lld",pOutBufMgr->out_pkt[pos].buf_id,pos,pOutBufMgr->out_pkt[pos].pts,
 //        nBufId,timeStamp);
 
     
     if (pEncData->buf_id != nBufId || pEncData->pts != timeStamp) {
-        ALOGE("(f:%s, l:%d) release pkt verify failed! OutBuf_info(pts:%lld, bufid:%d), Release_info(size:%d, pts:%lld, bufid:%d)",
+        LOGE("(f:%s, l:%d) release pkt verify failed! OutBuf_info(pts:%lld, bufid:%d), Release_info(size:%d, pts:%lld, bufid:%d)",
             __FUNCTION__, __LINE__, pEncData->pts, pEncData->buf_id, outSize, timeStamp, nBufId);
 //        ret = -1;
     }
@@ -531,14 +531,14 @@ TEXTENCCONTENT_t *TextEncInit(__text_enc_info_t *pTEncInfo)
 {
     TEXTENCCONTENT_t* htext_enc = (TEXTENCCONTENT_t*)malloc(sizeof(TEXTENCCONTENT_t));
     if (htext_enc == NULL) {
-        ALOGE("malloc TEXTENCCONTENT_t failed!");
+        LOGE("malloc TEXTENCCONTENT_t failed!");
         return NULL;
     }
     memset(htext_enc, 0, sizeof(TEXTENCCONTENT_t));
 
     TextEncDataManager *pDataMgr = (TextEncDataManager *)malloc(sizeof(TextEncDataManager));
     if (pDataMgr == NULL) {
-        ALOGE("malloc TextEncDataManager failed!");
+        LOGE("malloc TextEncDataManager failed!");
         goto EXIT;
     }
     htext_enc->priv_data = pDataMgr;
@@ -569,7 +569,7 @@ EXIT:
 void TextEncExit(void *handle)
 {
     TEXTENCCONTENT_t* htext_enc = (TEXTENCCONTENT_t*)handle;
-    LOGV("(f:%s, l:%d) free TextEncoder!\n", __FUNCTION__, __LINE__);
+    LOGV("(f:%s, l:%d) free TextEncoder!", __FUNCTION__, __LINE__);
     if (htext_enc->priv_data != NULL) {
         TextEncDataManager *pDataMgr = (TextEncDataManager *)(((TEXTENCCONTENT_t*)handle)->priv_data);
         pthread_mutex_destroy(&pDataMgr->in_buf_lock);

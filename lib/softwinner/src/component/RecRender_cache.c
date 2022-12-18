@@ -17,7 +17,7 @@
 *******************************************************************************/
 //#define LOG_NDEBUG 0
 #define LOG_TAG "RecRender_cache"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 //ref platform headers
 #include <stdlib.h>
@@ -68,7 +68,7 @@ static ERRORTYPE RPCMGetDuration_l(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OU
     RsPacketCacheManager *manager = (RsPacketCacheManager*)hComponent;
 	if (manager == NULL)
 	{
-		aloge("Buffer manager is NULL!");
+		LOGE("Buffer manager is NULL!");
 		return ERR_MUX_NOMEM;
 	}
     int64_t     nUsingBeginPts  = -1;   //unit:us
@@ -128,7 +128,7 @@ static ERRORTYPE RPCMGetDuration_l(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OU
             nFindReadyBeginPtsFlag = TRUE;
         }
     }
-//    alogd("flag[%d][%d] U[%lld][%lld] R[%lld][%lld]",
+//    LOGD("flag[%d][%d] U[%lld][%lld] R[%lld][%lld]",
 //        nFindUsingBeginPtsFlag, nFindReadyBeginPtsFlag, 
 //        nUsingBeginPts, nUsingLastPts, nReadyBeginPts, nReadyLastPts);
     if(nFindUsingBeginPtsFlag)
@@ -151,7 +151,7 @@ static ERRORTYPE RPCMGetDuration_l(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OU
     pRPCMDuration->mTotalDuration = nTotalDuration;
     pRPCMDuration->mUsingPacketDuration = nUsingDuration;
     pRPCMDuration->mReadyDuration = nReadyDuration;
-    alogv("U[%lld] R[%lld] T[%lld] C[%lld]", nUsingDuration, nReadyDuration, nTotalDuration, manager->mCacheTime);
+    LOGV("U[%lld] R[%lld] T[%lld] C[%lld]", nUsingDuration, nReadyDuration, nTotalDuration, manager->mCacheTime);
 
 	return SUCCESS;
 }
@@ -196,7 +196,7 @@ static ERRORTYPE RPCMIncreaseIdlePacketList(RsPacketCacheManager *pThiz)
         pRSPacket = (RecSinkPacket*)malloc(sizeof(RecSinkPacket));
         if(NULL == pRSPacket)
         {
-            aloge("fatal error! malloc fail");
+            LOGE("fatal error! malloc fail");
             eError = ERR_MUX_NOMEM;
             break;
         }
@@ -212,7 +212,7 @@ static ERRORTYPE RPCMIncreaseDataBufList(RsPacketCacheManager *pThiz, int nSize)
     int ret = posix_memalign((void **)&pDB->mpBuffer, 4096, nSize);
     if(ret!=0)
     {
-        aloge("fatal error! malloc size[%d] fail(%s)!", nSize, strerror(errno));
+        LOGE("fatal error! malloc size[%d] fail(%s)!", nSize, strerror(errno));
         goto _err0;
     }
     pDB->mSize = nSize;
@@ -251,7 +251,7 @@ static ERRORTYPE RPCMPushPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Re
     //prepare idle RSPacket and dataBuffer.
     if(list_empty(&manager->mIdlePacketList))
     {
-        alogw("idlePacketList are all used, malloc more!");
+        LOGW("idlePacketList are all used, malloc more!");
         if(SUCCESS!=RPCMIncreaseIdlePacketList(manager))
         {
             pthread_mutex_unlock(&manager->mPacketListLock);
@@ -269,7 +269,7 @@ static ERRORTYPE RPCMPushPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Re
             return ERR_MUX_NOMEM;
         }
         nLeftBufSize = manager->mBufSize - manager->mUsedBufSize;
-        alogd("increase dataBuf size to [%d]KB! packetSize[%d]KB, leftSize[%d]KB",
+        LOGD("increase dataBuf size to [%d]KB! packetSize[%d]KB, leftSize[%d]KB",
             manager->mBufSize/1024, nPacketDataSize/1024, nLeftBufSize/1024);
     }
     // get one RecSinkPacket from mIdlePacketList
@@ -278,14 +278,14 @@ static ERRORTYPE RPCMPushPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Re
     //if exception, discard packet.
     if(pRSPacket->mSize0 < 0 || pRSPacket->mSize1 < 0 || (pRSPacket->mSize0==0&&pRSPacket->mSize1>0))
     {
-        aloge("fatal error! packetSize[%d][%d]<0, check code!", pRSPacket->mSize0, pRSPacket->mSize1);
+        LOGE("fatal error! packetSize[%d][%d]<0, check code!", pRSPacket->mSize0, pRSPacket->mSize1);
         pthread_mutex_unlock(&manager->mPacketListLock);
         return ERR_MUX_ILLEGAL_PARAM;
     }
     //if empty packet, push to readyPacketList, we accept empty packet.
     if(pRSPacket->mSize0 + pRSPacket->mSize1 <= 0)
     {
-        //alogd("empty packet, need not copy.");
+        //LOGD("empty packet, need not copy.");
         pPacketEntry->mpData0 = manager->mpWritePos;
         manager->mPacketCount++;
         list_move_tail(&pPacketEntry->mList, &manager->mReadyPacketList);
@@ -315,7 +315,7 @@ static ERRORTYPE RPCMPushPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Re
     }
     if(!nLocateFlag)
     {
-        aloge("fatal error! why locate dataBuf fail?");
+        LOGE("fatal error! why locate dataBuf fail?");
         pthread_mutex_unlock(&manager->mPacketListLock);
         return ERR_MUX_UNEXIST;
     }
@@ -324,11 +324,11 @@ static ERRORTYPE RPCMPushPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Re
     {
         if(pWritePos < pDataBufEntry->mpBuffer || pWritePos >= pDataBufEntry->mpBuffer+pDataBufEntry->mSize)
         {
-            aloge("fatal error! pWt wrong, check code!");
+            LOGE("fatal error! pWt wrong, check code!");
         }
         if(nDataBufNum>=2)
         {
-            aloge("fatal error! need 3 or more dataBuf to copy packetSize[%d]KB, don't support, discard packet, modify AVPACKET_CACHE_ENLARGE_SIZE!", 
+            LOGE("fatal error! need 3 or more dataBuf to copy packetSize[%d]KB, don't support, discard packet, modify AVPACKET_CACHE_ENLARGE_SIZE!", 
                 nPacketDataSize/1024);
             pthread_mutex_unlock(&manager->mPacketListLock);
             return ERR_MUX_NOT_SUPPORT;
@@ -435,7 +435,7 @@ static ERRORTYPE RPCMPushPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Re
         }
         else
         {
-            aloge("fatal error! impossible come here, check code!");
+            LOGE("fatal error! impossible come here, check code!");
         }
     }
     if(TRUE == nDoneFlag)
@@ -452,7 +452,7 @@ static ERRORTYPE RPCMPushPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Re
     }
     if(nDataBufNum>=2)
     {
-        aloge("fatal error! need 3 or more dataBuf to copy packetSize[%d]KB, don't support, discard packet, modify AVPACKET_CACHE_ENLARGE_SIZE!", 
+        LOGE("fatal error! need 3 or more dataBuf to copy packetSize[%d]KB, don't support, discard packet, modify AVPACKET_CACHE_ENLARGE_SIZE!", 
             nPacketDataSize/1024);
         pthread_mutex_unlock(&manager->mPacketListLock);
         return ERR_MUX_NOT_SUPPORT;
@@ -462,25 +462,25 @@ static ERRORTYPE RPCMPushPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Re
     {
         if(pWritePos < pDataBufEntry->mpBuffer || pWritePos >= pDataBufEntry->mpBuffer+pDataBufEntry->mSize)
         {
-            aloge("fatal error! pWt wrong, check code!");
+            LOGE("fatal error! pWt wrong, check code!");
         }
         if(nLoopEndFlag)
         {
-            aloge("fatal error! not enough dataBuf to contain packetSize[%d]KB? check code!", nPacketDataSize/1024);
+            LOGE("fatal error! not enough dataBuf to contain packetSize[%d]KB? check code!", nPacketDataSize/1024);
             break;
         }
         if(pDataBufEntry == pLocateDataBufEntry)
         {
             if(manager->mpReadPos < pDataBufEntry->mpBuffer || manager->mpReadPos >= pDataBufEntry->mpBuffer+pDataBufEntry->mSize)
             {
-                aloge("fatal error! mpReadPos[%p] is wrong?[%p][%p], check code!",
+                LOGE("fatal error! mpReadPos[%p] is wrong?[%p][%p], check code!",
                     manager->mpReadPos, pDataBufEntry->mpBuffer, pDataBufEntry->mpBuffer+pDataBufEntry->mSize);
             }
             nLoopEndFlag = TRUE;
         }
         if(nDataBufNum>=2)
         {
-            aloge("fatal error! need 3 or more dataBuf to copy packetSize[%d]KB, don't support, discard packet, modify AVPACKET_CACHE_ENLARGE_SIZE!", 
+            LOGE("fatal error! need 3 or more dataBuf to copy packetSize[%d]KB, don't support, discard packet, modify AVPACKET_CACHE_ENLARGE_SIZE!", 
                 nPacketDataSize/1024);
             pthread_mutex_unlock(&manager->mPacketListLock);
             return ERR_MUX_NOT_SUPPORT;
@@ -587,7 +587,7 @@ static ERRORTYPE RPCMPushPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Re
         }
         else
         {
-            aloge("fatal error! impossible come here, check code!");
+            LOGE("fatal error! impossible come here, check code!");
         }
     }
     if(TRUE == nDoneFlag)
@@ -604,7 +604,7 @@ static ERRORTYPE RPCMPushPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_IN Re
     }
     else
     {
-        aloge("fatal error! copy [%d]KB fail!", nPacketDataSize/1024);
+        LOGE("fatal error! copy [%d]KB fail!", nPacketDataSize/1024);
         pthread_mutex_unlock(&manager->mPacketListLock);
         return ERR_MUX_ILLEGAL_PARAM;
     }
@@ -619,14 +619,14 @@ _configPts:
     {
         if ((pPacketEntry->mPts - manager->mFirstPts)/1000 >= manager->mCacheTime)
         {
-            alogd("cache manager full![%lld]-[%lld]>=[%lld]ms", pPacketEntry->mPts/1000, manager->mFirstPts/1000, manager->mCacheTime);
+            LOGD("cache manager full![%lld]-[%lld]>=[%lld]ms", pPacketEntry->mPts/1000, manager->mFirstPts/1000, manager->mCacheTime);
             manager->mIsFull = TRUE;
         }
     }
     //verify size at last.
     if(nPacketDataSize!=(pPacketEntry->mSize0 + pPacketEntry->mSize1) || nPacketDataSize!=(pRSPacket->mSize0+pRSPacket->mSize1))
     {
-        aloge("fatal error! verify packetSize fail.[%d][%d][%d][%d][%d], check code!", 
+        LOGE("fatal error! verify packetSize fail.[%d][%d][%d][%d][%d], check code!", 
             nPacketDataSize, pPacketEntry->mSize0, pPacketEntry->mSize1, pRSPacket->mSize0, pRSPacket->mSize1);
     }
     pthread_mutex_unlock(&manager->mPacketListLock);
@@ -640,7 +640,7 @@ ERRORTYPE RPCMGetPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT RecSinkPa
 
 	if (manager == NULL)
 	{
-		aloge("Buffer manager is NULL!");
+		LOGE("Buffer manager is NULL!");
 		return ERR_MUX_NULL_PTR;
 	}
 
@@ -654,7 +654,7 @@ ERRORTYPE RPCMGetPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT RecSinkPa
 	}
 	else
 	{
-		alogv("Buffer empty!");
+		LOGV("Buffer empty!");
 		eError = ERR_MUX_UNEXIST;
 	}
 	pthread_mutex_unlock(&manager->mPacketListLock);
@@ -682,20 +682,20 @@ ERRORTYPE RPCMRefPacket(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT int nId)
                 else
                 {
                     nFindFlag++;
-                    aloge("fatal error! repeat packetId[%d],[%d], check code!", nId, nFindFlag);
+                    LOGE("fatal error! repeat packetId[%d],[%d], check code!", nId, nFindFlag);
                 }
                 break;
             }
         }
         if(0==nFindFlag)
         {
-            aloge("fatal error! nId[%d] is not find!", nId);
+            LOGE("fatal error! nId[%d] is not find!", nId);
             eError = ERR_MUX_UNEXIST;
         }
 	}
 	else
 	{
-		aloge("fatal error! nId[%d] is wrong!", nId);
+		LOGE("fatal error! nId[%d] is wrong!", nId);
 		eError = ERR_MUX_UNEXIST;
 	}
 	pthread_mutex_unlock(&manager->mPacketListLock);
@@ -743,20 +743,20 @@ static ERRORTYPE RPCMReleasePacket_l(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_
                     }
                     else
                     {
-                        aloge("fatal error! packetId[%d] refCnt[%d]==0, check code!", nId, pEntry->mRefCnt);
+                        LOGE("fatal error! packetId[%d] refCnt[%d]==0, check code!", nId, pEntry->mRefCnt);
                     }
                 }
                 else
                 {
                     nFindFlag++;
-                    aloge("fatal error! repeat packetId[%d],[%d], check code!", nId, nFindFlag);
+                    LOGE("fatal error! repeat packetId[%d],[%d], check code!", nId, nFindFlag);
                 }
                 break;
             }
         }
         if(0==nFindFlag)
         {
-            aloge("fatal error! nId[%d] is not find!", nId);
+            LOGE("fatal error! nId[%d] is not find!", nId);
             eError = ERR_MUX_UNEXIST;
         }
         if(pReleaseEntry)
@@ -764,7 +764,7 @@ static ERRORTYPE RPCMReleasePacket_l(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_
             RecSinkPacket   *pFirstEntry = list_first_entry(&manager->mUsingPacketList, RecSinkPacket, mList);
             if(pReleaseEntry!=pFirstEntry)
             {
-                aloge("fatal error! must release first entry in using packet list! check code!");
+                LOGE("fatal error! must release first entry in using packet list! check code!");
             }
             //release packet
             char*     pData;
@@ -807,7 +807,7 @@ static ERRORTYPE RPCMReleasePacket_l(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_
                         }
                         else
                         {
-                            aloge("fatal error! what happend? mpData0[%p][%d], mpData1[%p][%d], DB[%p][%d]check code!",
+                            LOGE("fatal error! what happend? mpData0[%p][%d], mpData1[%p][%d], DB[%p][%d]check code!",
                                 pReleaseEntry->mpData0, pReleaseEntry->mSize0, pReleaseEntry->mpData1, pReleaseEntry->mSize1, pDBEntry->mpBuffer, pDBEntry->mSize);
                         }
                         manager->mUsedBufSize -= (pReleaseEntry->mSize0+pReleaseEntry->mSize1);
@@ -818,13 +818,13 @@ static ERRORTYPE RPCMReleasePacket_l(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_
                     else
                     {
                         nFindDBFlag++;
-                        aloge("fatal error! find more [%d]DataBuf, check code!", nFindFlag);
+                        LOGE("fatal error! find more [%d]DataBuf, check code!", nFindFlag);
                     }
                 }
             }
             if(0 == nFindDBFlag)
             {
-                aloge("fatal error! no dataBuf is not find! packet[%p][%d],[%p][%d]", 
+                LOGE("fatal error! no dataBuf is not find! packet[%p][%d],[%p][%d]", 
                     pReleaseEntry->mpData0, pReleaseEntry->mSize0, pReleaseEntry->mpData1, pReleaseEntry->mSize1);
                 eError = ERR_MUX_UNEXIST;
             }
@@ -832,7 +832,7 @@ static ERRORTYPE RPCMReleasePacket_l(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_
 	}
 	else
 	{
-		aloge("fatal error! nId[%d] is wrong!", nId);
+		LOGE("fatal error! nId[%d] is wrong!", nId);
 		eError = ERR_MUX_UNEXIST;
 	}
     
@@ -840,7 +840,7 @@ static ERRORTYPE RPCMReleasePacket_l(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_
     {
         if(nReleaseFlag)
         {
-            aloge("fatal error! should not release this cachePacketId[%d], check code!", nId);
+            LOGE("fatal error! should not release this cachePacketId[%d], check code!", nId);
         }
         if(nFindFlag)
         {
@@ -848,24 +848,24 @@ static ERRORTYPE RPCMReleasePacket_l(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_
             {
                 if(manager->mWaitReleaseUsingPacketId == nId)
                 {
-                    alogv("signal releaseUsingPacketId[%d], maybe fwrite slow!", manager->mWaitReleaseUsingPacketId);
+                    LOGV("signal releaseUsingPacketId[%d], maybe fwrite slow!", manager->mWaitReleaseUsingPacketId);
                     manager->mWaitReleaseUsingPacketFlag = FALSE;
                     manager->mWaitReleaseUsingPacketId = -1;
                     pthread_cond_signal(&manager->mCondReleaseUsingPacket);
                 }
                 else
                 {
-                    aloge("fatal error! waitReleasePacketId[%d]!=releaseId[%d], check code!", 
+                    LOGE("fatal error! waitReleasePacketId[%d]!=releaseId[%d], check code!", 
                         manager->mWaitReleaseUsingPacketId, nId);
                 }
             }
             else if(pDesEntry->mRefCnt <= 0)
             {
-                aloge("fatal error! cachePacketId[%d] refCnt[%d]<=0, check code!", nId, pDesEntry->mRefCnt);
+                LOGE("fatal error! cachePacketId[%d] refCnt[%d]<=0, check code!", nId, pDesEntry->mRefCnt);
             }
             else
             {
-                alogd("Be careful! cachePacketId[%d] refCnt[%d], more recSink?", nId, pDesEntry->mRefCnt);
+                LOGD("Be careful! cachePacketId[%d] refCnt[%d], more recSink?", nId, pDesEntry->mRefCnt);
             }
         }
     }
@@ -904,21 +904,21 @@ static ERRORTYPE RPCMReleaseReadyPacket_l(PARAM_IN COMP_HANDLETYPE hComponent, P
                     pDesEntry = pEntry;
                     if(pEntry->mRefCnt!=0)
                     {
-                        aloge("fatal error! ready packet ref[%d]!=0, check code!", pEntry->mRefCnt);
+                        LOGE("fatal error! ready packet ref[%d]!=0, check code!", pEntry->mRefCnt);
                     }
                     pReleaseEntry = pEntry;
                 }
                 else
                 {
                     nFindFlag++;
-                    aloge("fatal error! repeat packetId[%d],[%d], check code!", nId, nFindFlag);
+                    LOGE("fatal error! repeat packetId[%d],[%d], check code!", nId, nFindFlag);
                 }
                 break;
             }
         }
         if(0==nFindFlag)
         {
-            aloge("fatal error! nId[%d] is not find!", nId);
+            LOGE("fatal error! nId[%d] is not find!", nId);
             eError = ERR_MUX_UNEXIST;
         }
         if(pReleaseEntry)
@@ -926,7 +926,7 @@ static ERRORTYPE RPCMReleaseReadyPacket_l(PARAM_IN COMP_HANDLETYPE hComponent, P
             RecSinkPacket   *pFirstEntry = list_first_entry(&manager->mReadyPacketList, RecSinkPacket, mList);
             if(pReleaseEntry!=pFirstEntry)
             {
-                aloge("fatal error! must release first entry in using packet list! check code!");
+                LOGE("fatal error! must release first entry in using packet list! check code!");
             }
             //release packet
             char*   pData;
@@ -969,7 +969,7 @@ static ERRORTYPE RPCMReleaseReadyPacket_l(PARAM_IN COMP_HANDLETYPE hComponent, P
                         }
                         else
                         {
-                            aloge("fatal error! what happend? mpData0[%p][%d], mpData1[%p][%d], DB[%p][%d]check code!",
+                            LOGE("fatal error! what happend? mpData0[%p][%d], mpData1[%p][%d], DB[%p][%d]check code!",
                                 pReleaseEntry->mpData0, pReleaseEntry->mSize0, pReleaseEntry->mpData1, pReleaseEntry->mSize1, pDBEntry->mpBuffer, pDBEntry->mSize);
                         }
                         manager->mUsedBufSize -= (pReleaseEntry->mSize0+pReleaseEntry->mSize1);
@@ -980,13 +980,13 @@ static ERRORTYPE RPCMReleaseReadyPacket_l(PARAM_IN COMP_HANDLETYPE hComponent, P
                     else
                     {
                         nFindDBFlag++;
-                        aloge("fatal error! find more [%d]DataBuf, check code!", nFindFlag);
+                        LOGE("fatal error! find more [%d]DataBuf, check code!", nFindFlag);
                     }
                 }
             }
             if(0 == nFindDBFlag)
             {
-                aloge("fatal error! no dataBuf is not find! packet[%p][%d],[%p][%d]",
+                LOGE("fatal error! no dataBuf is not find! packet[%p][%d],[%p][%d]",
                     pReleaseEntry->mpData0, pReleaseEntry->mSize0, pReleaseEntry->mpData1, pReleaseEntry->mSize1);
                 eError = ERR_MUX_UNEXIST;
             }
@@ -994,7 +994,7 @@ static ERRORTYPE RPCMReleaseReadyPacket_l(PARAM_IN COMP_HANDLETYPE hComponent, P
 	}
 	else
 	{
-		aloge("fatal error! nId[%d] is wrong!", nId);
+		LOGE("fatal error! nId[%d] is wrong!", nId);
 		eError = ERR_MUX_UNEXIST;
 	}
 	return eError;
@@ -1017,7 +1017,7 @@ static BOOL RPCMIsReady(PARAM_IN COMP_HANDLETYPE hComponent)
     RsPacketCacheManager *manager = (RsPacketCacheManager*)hComponent;
 	if (manager == NULL)
 	{
-		aloge("Buffer manager is NULL!");
+		LOGE("Buffer manager is NULL!");
 		return FALSE;
 	}
 	//pthread_mutex_lock(&manager->mPacketListLock);
@@ -1048,7 +1048,7 @@ static ERRORTYPE RPCMReleaseEarlistPacket(PARAM_IN COMP_HANDLETYPE hComponent, P
 	pthread_mutex_lock(&manager->mPacketListLock);
     if(FALSE == manager->mIsFull)
     {
-        aloge("fatal error! cache not full!");
+        LOGE("fatal error! cache not full!");
         pthread_mutex_unlock(&manager->mPacketListLock);
         return ERR_MUX_NOT_PERM;
     }
@@ -1063,11 +1063,11 @@ static ERRORTYPE RPCMReleaseEarlistPacket(PARAM_IN COMP_HANDLETYPE hComponent, P
         {
             if(manager->mWaitReleaseUsingPacketFlag!=FALSE)
             {
-                aloge("fatal error! why manager->mWaitReleaseUsingPacketFlag[%d]!=false?", manager->mWaitReleaseUsingPacketFlag);
+                LOGE("fatal error! why manager->mWaitReleaseUsingPacketFlag[%d]!=false?", manager->mWaitReleaseUsingPacketFlag);
             }
             manager->mWaitReleaseUsingPacketFlag = TRUE;
             manager->mWaitReleaseUsingPacketId = pReleaseEntry->mId;
-            alogv("need wait cachePacketId[%d]RefCnt[%d] release, maybe fwrite slow", manager->mWaitReleaseUsingPacketId, pReleaseEntry->mRefCnt);
+            LOGV("need wait cachePacketId[%d]RefCnt[%d] release, maybe fwrite slow", manager->mWaitReleaseUsingPacketId, pReleaseEntry->mRefCnt);
             while(manager->mWaitReleaseUsingPacketFlag)
             {
                 ret = pthread_cond_wait_timeout(&manager->mCondReleaseUsingPacket, &manager->mPacketListLock, waitTimeout);
@@ -1076,7 +1076,7 @@ static ERRORTYPE RPCMReleaseEarlistPacket(PARAM_IN COMP_HANDLETYPE hComponent, P
                 }
                 else
                 {
-                    alogw("Impossible! wait cachePacketId[%d][%d] refCnt[%d], timeout[%d]ms, ret[%d]", 
+                    LOGW("Impossible! wait cachePacketId[%d][%d] refCnt[%d], timeout[%d]ms, ret[%d]", 
                         pReleaseEntry->mId, manager->mWaitReleaseUsingPacketId, pReleaseEntry->mRefCnt, waitTimeout, ret);
                     if(manager->mWaitReleaseUsingPacketFlag)
                     {
@@ -1084,7 +1084,7 @@ static ERRORTYPE RPCMReleaseEarlistPacket(PARAM_IN COMP_HANDLETYPE hComponent, P
                     }
                     else
                     {
-                        aloge("fatal error! how this happened? timeout and flag is set to false!");
+                        LOGE("fatal error! how this happened? timeout and flag is set to false!");
                     }
                     break;
                 }
@@ -1102,12 +1102,12 @@ static ERRORTYPE RPCMReleaseEarlistPacket(PARAM_IN COMP_HANDLETYPE hComponent, P
         {
             if(pReleaseEntry->mRefCnt < 1)
             {
-                aloge("fatal error! earlist using packet ref cnt[%d] is wrong!", pReleaseEntry->mRefCnt);
+                LOGE("fatal error! earlist using packet ref cnt[%d] is wrong!", pReleaseEntry->mRefCnt);
                 eError = ERR_MUX_NOT_PERM;
             }
             else
             {
-                alogv("not force release earlist packet, ref cnt[%ld], bForce[%d]", pReleaseEntry->mRefCnt, bForce);
+                LOGV("not force release earlist packet, ref cnt[%ld], bForce[%d]", pReleaseEntry->mRefCnt, bForce);
                 eError = ERR_MUX_BUSY;
             }
         }
@@ -1117,13 +1117,13 @@ static ERRORTYPE RPCMReleaseEarlistPacket(PARAM_IN COMP_HANDLETYPE hComponent, P
         RecSinkPacket   *pReleaseEntry = list_first_entry(&manager->mReadyPacketList, RecSinkPacket, mList);
         if(pReleaseEntry->mRefCnt != 0)
         {
-            aloge("fatal error! why ready packet list ref[%d]!=0", pReleaseEntry->mRefCnt);
+            LOGE("fatal error! why ready packet list ref[%d]!=0", pReleaseEntry->mRefCnt);
         }
         eError = RPCMReleaseReadyPacket_l(hComponent, pReleaseEntry->mId);
     }
 	else
 	{
-		aloge("fatal error! mCacheTime[%lld]ms, check code!", manager->mCacheTime);
+		LOGE("fatal error! mCacheTime[%lld]ms, check code!", manager->mCacheTime);
 		eError = ERR_MUX_ILLEGAL_PARAM;
 	}
 	pthread_mutex_unlock(&manager->mPacketListLock);
@@ -1136,7 +1136,7 @@ static int RPCMGetReadyPacketCount(PARAM_IN COMP_HANDLETYPE hComponent)
     RsPacketCacheManager *manager = (RsPacketCacheManager*)hComponent;
 	if (manager == NULL)
 	{
-		aloge("Buffer manager is NULL!");
+		LOGE("Buffer manager is NULL!");
 		return -1;
 	}
 	pthread_mutex_lock(&manager->mPacketListLock);
@@ -1155,7 +1155,7 @@ ERRORTYPE RPCMQueryCacheState(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Cac
     pthread_mutex_lock(&manager->mPacketListLock);
     if(FALSE == manager->mIsFull)
     {
-        aloge("fatal error! cache not full!");
+        LOGE("fatal error! cache not full!");
         pthread_mutex_unlock(&manager->mPacketListLock);
         return ERR_MUX_SYS_NOTREADY;
     }
@@ -1177,7 +1177,7 @@ ERRORTYPE RPCMQueryCacheState(PARAM_IN COMP_HANDLETYPE hComponent, PARAM_OUT Cac
     pState->mValidSize = (nUsedCacheSize+nReadyCacheSize)/1024;
     pState->mTotalSize = manager->mBufSize/1024;
     pState->mValidSizePercent = pState->mValidSize*100/pState->mTotalSize;
-    alogv("manager[%p][%d]MB usingPacketCnt[%d], usingSize[%d], readyPacketCnt[%d], readySize[%d], sizePercent[%d]!", 
+    LOGV("manager[%p][%d]MB usingPacketCnt[%d], usingSize[%d], readyPacketCnt[%d], readySize[%d], sizePercent[%d]!", 
         manager, manager->mBufSize/(1024*1024), nUsedCacheCnt, nUsedCacheSize, nReadyCacheCnt, nReadyCacheSize, pState->mValidSizePercent);
     pthread_mutex_unlock(&manager->mPacketListLock);
     return SUCCESS;
@@ -1236,7 +1236,7 @@ static ERRORTYPE RPCMControlCacheLevel(PARAM_IN COMP_HANDLETYPE hComponent)
             bMeetVideoFlag = TRUE;
             if(!(pEntry->mFlags & AVPACKET_FLAG_KEYFRAME))
             {
-                alogv("first video packet is not keyFrame, need release!");
+                LOGV("first video packet is not keyFrame, need release!");
                 bReleaseVideoFrameFlag = TRUE;
             }
             break;
@@ -1251,7 +1251,7 @@ static ERRORTYPE RPCMControlCacheLevel(PARAM_IN COMP_HANDLETYPE hComponent)
                 bMeetVideoFlag = TRUE;
                 if(!(pEntry->mFlags & AVPACKET_FLAG_KEYFRAME))
                 {
-                    alogv("first video packet is not keyFrame, need release!");
+                    LOGV("first video packet is not keyFrame, need release!");
                     bReleaseVideoFrameFlag = TRUE;
                 }
                 break;
@@ -1271,20 +1271,20 @@ static ERRORTYPE RPCMControlCacheLevel(PARAM_IN COMP_HANDLETYPE hComponent)
             {
                 if((CODEC_TYPE_VIDEO == pEntry->mStreamType) && (pEntry->mFlags & AVPACKET_FLAG_KEYFRAME))
                 {
-                    alogv("continue release cache packet, meet keyFrame, stop!");
+                    LOGV("continue release cache packet, meet keyFrame, stop!");
                     bKeyFrameFlag = TRUE;
                     bStopFlag = TRUE;
                     break;
                 }
                 if(pEntry->mRefCnt>1)
                 {
-                    alogv("continue release cache packet, meet refCnt[%d]>1, stop!", pEntry->mRefCnt);
+                    LOGV("continue release cache packet, meet refCnt[%d]>1, stop!", pEntry->mRefCnt);
                     bStopFlag = TRUE;
                     break;
                 }
                 if(pEntry->mRefCnt<1)
                 {
-                    aloge("fatal error! continue release cache packet, meet refCnt[%d]<1, check code!", pEntry->mRefCnt);
+                    LOGE("fatal error! continue release cache packet, meet refCnt[%d]<1, check code!", pEntry->mRefCnt);
                     bStopFlag = TRUE;
                     eError = ERR_MUX_NOT_PERM;
                     break;
@@ -1292,7 +1292,7 @@ static ERRORTYPE RPCMControlCacheLevel(PARAM_IN COMP_HANDLETYPE hComponent)
                 eError = RPCMReleasePacket_l(hComponent, pEntry->mId);
                 if(SUCCESS!=eError)
                 {
-                    aloge("fatal error! continue release cache packet fail[0x%x]", eError);
+                    LOGE("fatal error! continue release cache packet fail[0x%x]", eError);
                     bStopFlag = TRUE;
                     break;
                 }
@@ -1306,19 +1306,19 @@ static ERRORTYPE RPCMControlCacheLevel(PARAM_IN COMP_HANDLETYPE hComponent)
             {
                 if((CODEC_TYPE_VIDEO == pEntry->mStreamType) && (pEntry->mFlags & AVPACKET_FLAG_KEYFRAME))
                 {
-                    alogv("continue release cache packet, meet keyFrame, stop!");
+                    LOGV("continue release cache packet, meet keyFrame, stop!");
                     bKeyFrameFlag = TRUE;
                     bStopFlag = TRUE;
                     break;
                 }
                 if(pEntry->mRefCnt!=0)
                 {
-                    aloge("fatal error! why ready packet ref[%d]!=0?", pEntry->mRefCnt);
+                    LOGE("fatal error! why ready packet ref[%d]!=0?", pEntry->mRefCnt);
                 }
                 eError = RPCMReleaseReadyPacket_l(hComponent, pEntry->mId);
                 if(SUCCESS!=eError)
                 {
-                    aloge("fatal error! continue release cache packet fail[0x%x]", eError);
+                    LOGE("fatal error! continue release cache packet fail[0x%x]", eError);
                     bStopFlag = TRUE;
                     break;
                 }
@@ -1326,7 +1326,7 @@ static ERRORTYPE RPCMControlCacheLevel(PARAM_IN COMP_HANDLETYPE hComponent)
             }
         }
         RPCMGetDuration_l(hComponent, &sRPCMDuration);
-        alogv("continue release cache packet: num[%d], meetKeyFrame[%d], totalDuration[%lld]ms, usingPacketDuration[%lld]ms", 
+        LOGV("continue release cache packet: num[%d], meetKeyFrame[%d], totalDuration[%lld]ms, usingPacketDuration[%lld]ms", 
             cnt, bKeyFrameFlag, sRPCMDuration.mTotalDuration, sRPCMDuration.mUsingPacketDuration);
     }
     pthread_mutex_unlock(&manager->mPacketListLock);
@@ -1373,7 +1373,7 @@ ERRORTYPE RsPacketCacheManagerInit(RsPacketCacheManager *pThiz, int64_t nCacheTi
     pThiz->mWaitReleaseUsingPacketId = -1;
     if(0 != pthread_mutex_init(&pThiz->mPacketListLock, NULL))
     {
-        aloge("pthread mutex init fail!");
+        LOGE("pthread mutex init fail!");
         return ERR_MUX_SYS_NOTREADY;
     }
     pthread_condattr_t  condAttr;
@@ -1384,7 +1384,7 @@ ERRORTYPE RsPacketCacheManagerInit(RsPacketCacheManager *pThiz, int64_t nCacheTi
     ret = pthread_cond_init(&pThiz->mCondReleaseUsingPacket, &condAttr);
     if(ret!=0)
     {
-        aloge("[%s]fatal error! pthread cond init fail", strrchr(__FILE__, '/')+1);
+        LOGE("[%s]fatal error! pthread cond init fail", strrchr(__FILE__, '/')+1);
         goto _err1;
     }
     
@@ -1442,7 +1442,7 @@ _err1:
 
 ERRORTYPE RsPacketCacheManagerDestroy(RsPacketCacheManager *pThiz)
 {
-    alogv("RsPacketCacheManager Destroy");
+    LOGV("RsPacketCacheManager Destroy");
     if (NULL == pThiz)
     {
         return SUCCESS;
@@ -1450,7 +1450,7 @@ ERRORTYPE RsPacketCacheManagerDestroy(RsPacketCacheManager *pThiz)
     pthread_mutex_lock(&pThiz->mPacketListLock);
     if(!list_empty(&pThiz->mReadyPacketList))
     {
-        aloge("fatal error! ready packet list is not empty!");
+        LOGE("fatal error! ready packet list is not empty!");
     }
     RecSinkPacket *pPktEntry, *pPktTmp;
     int cnt = 0;
@@ -1460,12 +1460,12 @@ ERRORTYPE RsPacketCacheManagerDestroy(RsPacketCacheManager *pThiz)
         {
             if(pPktEntry->mRefCnt != 1)
             {
-                aloge("fatal error! using packet refCnt[%d]!=1!", pPktEntry->mRefCnt);
+                LOGE("fatal error! using packet refCnt[%d]!=1!", pPktEntry->mRefCnt);
             }
             RPCMReleasePacket_l(pThiz, pPktEntry->mId);
             cnt++;
         }
-        alogd("release [%d]using packet!", cnt);
+        LOGD("release [%d]using packet!", cnt);
     }
     list_for_each_entry_safe(pPktEntry, pPktTmp, &pThiz->mIdlePacketList, mList)
     {
@@ -1497,17 +1497,17 @@ RsPacketCacheManager *RsPacketCacheManagerConstruct(int64_t nCacheTime)
 {
     RsPacketCacheManager *manager;
 
-    alogd("RsPacketCache Construct, cacheTime[%lld]",nCacheTime);
+    LOGD("RsPacketCache Construct, cacheTime[%lld]",nCacheTime);
 
     if (nCacheTime <= 0)
     {
-        aloge("Failed to alloc AVPACKET_CACHE_MANAGER(%s)!", strerror(errno));
+        LOGE("Failed to alloc AVPACKET_CACHE_MANAGER(%s)!", strerror(errno));
         return NULL;
     }
     manager = (RsPacketCacheManager*)malloc(sizeof(RsPacketCacheManager));
     if (manager == NULL)
     {
-        aloge("Failed to alloc AVPACKET_CACHE_MANAGER(%s)!", strerror(errno));
+        LOGE("Failed to alloc AVPACKET_CACHE_MANAGER(%s)!", strerror(errno));
         return NULL;
     }
     if(SUCCESS!=RsPacketCacheManagerInit(manager, nCacheTime))
@@ -1520,7 +1520,7 @@ RsPacketCacheManager *RsPacketCacheManagerConstruct(int64_t nCacheTime)
 
 void RsPacketCacheManagerDestruct(RsPacketCacheManager *manager)
 {
-	alogv("RsPacketCacheManager Destruct");
+	LOGV("RsPacketCacheManager Destruct");
     if(manager)
     {
         RsPacketCacheManagerDestroy(manager);

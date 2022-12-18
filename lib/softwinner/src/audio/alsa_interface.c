@@ -12,24 +12,24 @@
 ******************************************************************************/
 
 #define LOG_NDEBUG 0
-#define LOG_TAG "alsa_interface"
-#include <utils/plat_log.h>
+#define LOG_TAG    "alsa_interface"
+#include <log/log.h>
 
 #include <alsa_interface.h>
 
-//static long gVolume;
+// static long gVolume;
 static char aioDebugfsPath[256] = {0};
 static unsigned int updateCnt = 0;
 
-#define UPDATE_AIO_DEBUGFS_INFO(update_flag, item_flag, item, type, buf, path)  \
-    do {                                                                        \
-        if (update_flag & item_flag) {                                          \
-            update_flag &= ~item_flag;                                          \
-            memset(buf, 0, sizeof(buf));                                        \
-            sprintf(buf, "echo %x %d > %s\n", type, item, path);                \
-            system(buf);                                                        \
-        }                                                                       \
-    } while(0)
+#define UPDATE_AIO_DEBUGFS_INFO(update_flag, item_flag, item, type, buf, path) \
+    do {                                                                       \
+        if (update_flag & item_flag) {                                         \
+            update_flag &= ~item_flag;                                         \
+            memset(buf, 0, sizeof(buf));                                       \
+            sprintf(buf, "echo %x %d > %s\n", type, item, path);               \
+            system(buf);                                                       \
+        }                                                                      \
+    } while (0)
 
 enum {
     aiDEBit = 0,
@@ -54,31 +54,31 @@ enum {
 // 0-none item need update; !0-some items need update.
 static unsigned int aioDebugUpdataFlag = 0;
 enum {
-    aiDevEnableFlag = 1<<aiDEBit,     //ai dev updata falg
-    aiChnCntFlag = 1<<aiCCBit,
-    aiCardTypeFlag = 1<<aiCTBit,
-    aiSampleRateFlag = 1<<aiSRBit,
-    aiBitWidthFlag = 1<<aiBWBit,
-    aiTrackCntFlag = 1<<aiTCBit,
-    aibMuteFlag = 1<<aiBMBit,
-    aiVolumeFlag = 1<<aiVOLBit,
-    aoDevEnableFlag = 1<<aoDEBit,     //ao dev updata falg
-    aoChnCntFlag = 1<<aoCCBit,
-    aoCardTypeFlag = 1<<aoCTBit,
-    aoSampleRateFlag = 1<<aoSRBit,
-    aoBitWidthFlag = 1<<aoBWBit,
-    aoTrackCntFlag = 1<<aoTCBit,
-    aobMuteFlag = 1<<aoBMBit,
-    aoVolumeFlag = 1<<aoVOLBit,
+    aiDevEnableFlag = 1 << aiDEBit, // ai dev updata falg
+    aiChnCntFlag = 1 << aiCCBit,
+    aiCardTypeFlag = 1 << aiCTBit,
+    aiSampleRateFlag = 1 << aiSRBit,
+    aiBitWidthFlag = 1 << aiBWBit,
+    aiTrackCntFlag = 1 << aiTCBit,
+    aibMuteFlag = 1 << aiBMBit,
+    aiVolumeFlag = 1 << aiVOLBit,
+    aoDevEnableFlag = 1 << aoDEBit, // ao dev updata falg
+    aoChnCntFlag = 1 << aoCCBit,
+    aoCardTypeFlag = 1 << aoCTBit,
+    aoSampleRateFlag = 1 << aoSRBit,
+    aoBitWidthFlag = 1 << aoBWBit,
+    aoTrackCntFlag = 1 << aoTCBit,
+    aobMuteFlag = 1 << aoBMBit,
+    aoVolumeFlag = 1 << aoVOLBit,
 };
 
 //
-//These params about DevEnable, CardType, SampleRate, BitWidth,
-//will be auto updated by alsa kernel.So we should not update it at here.
+// These params about DevEnable, CardType, SampleRate, BitWidth,
+// will be auto updated by alsa kernel.So we should not update it at here.
 //
 static int aiDevEnable;
 static int aiChnCnt;
-static int aiCardType;     //0-codec; 1-linein
+static int aiCardType; // 0-codec; 1-linein
 static int aiSampleRate;
 static int aiBitWidth;
 static int aiTrackCnt;
@@ -87,22 +87,19 @@ static int aiVolume;
 
 static int aoDevEnable;
 static int aoChnCnt;
-static int aoCardType;     //0-codec; 1-hdmi
+static int aoCardType; // 0-codec; 1-hdmi
 static int aoSampleRate;
 static int aoBitWidth;
 static int aoTrackCnt;
 static int aobMute;
 static int aoVolume;
-static int aoPALevel;   //0-low; 1-high
+static int aoPALevel; // 0-low; 1-high
 
-int UpdateDebugfsInfo()
-{
-    //system("cat /proc/mounts | grep debugfs | awk '{print $2}'");
-    // /proc/sys/debug/mpp/sunxi-aio
-    if (aioDebugUpdataFlag)
-    {
-        if (updateCnt++ % 100 == 0)
-        {
+int UpdateDebugfsInfo() {
+    // system("cat /proc/mounts | grep debugfs | awk '{print $2}'");
+    //  /proc/sys/debug/mpp/sunxi-aio
+    if (aioDebugUpdataFlag) {
+        if (updateCnt++ % 100 == 0) {
             FILE *stream;
             char *cmd = "cat /proc/mounts | grep debugfs | awk '{print $2}'";
             int nbytes;
@@ -117,21 +114,21 @@ int UpdateDebugfsInfo()
                 /*
                  * Fixing the tailing whitespace.
                  */
-                for(nbytes; nbytes > 0; nbytes--) {
+                for (nbytes; nbytes > 0; nbytes--) {
                     if ((aioDebugfsPath[nbytes - 1] == 0x0a) ||
-                            (aioDebugfsPath[nbytes - 1] == 0x20))
+                        (aioDebugfsPath[nbytes - 1] == 0x20))
                         aioDebugfsPath[nbytes - 1] = '\0';
                     else
                         break;
                 }
 
-                strncat(aioDebugfsPath, "/mpp/sunxi-aio", sizeof(aioDebugfsPath)- nbytes);
+                strncat(aioDebugfsPath, "/mpp/sunxi-aio", sizeof(aioDebugfsPath) - nbytes);
             }
             pclose(stream);
         }
 
         if (access(aioDebugfsPath, F_OK) != 0) {
-            //alogv("sunxi-aio debugfs path not find!");
+            // LOGV("sunxi-aio debugfs path not find!");
             return -1;
         }
 
@@ -139,169 +136,165 @@ int UpdateDebugfsInfo()
 
         // format: echo X YZ > Path, here X must match code with aio.c in kernel
         // ai dev info
-        //UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiDevEnableFlag, aiDevEnable, aiDEBit, buf, aioDebugfsPath);
+        // UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiDevEnableFlag, aiDevEnable, aiDEBit, buf, aioDebugfsPath);
         UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiChnCntFlag, aiChnCnt, aiCCBit, buf, aioDebugfsPath);
-        //UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiCardTypeFlag, aiCardType, aiCTBit, buf, aioDebugfsPath);
-        //UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiSampleRateFlag, aiSampleRate, aiSRBit, buf, aioDebugfsPath);
-        //UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiBitWidthFlag, aiBitWidth, aiBWBit, buf, aioDebugfsPath);
+        // UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiCardTypeFlag, aiCardType, aiCTBit, buf, aioDebugfsPath);
+        // UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiSampleRateFlag, aiSampleRate, aiSRBit, buf, aioDebugfsPath);
+        // UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiBitWidthFlag, aiBitWidth, aiBWBit, buf, aioDebugfsPath);
         UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiTrackCntFlag, aiTrackCnt, aiTCBit, buf, aioDebugfsPath);
         UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aibMuteFlag, aibMute, aiBMBit, buf, aioDebugfsPath);
         UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aiVolumeFlag, aiVolume, aiVOLBit, buf, aioDebugfsPath);
 
         // ao dev info
-        //UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoDevEnableFlag, aoDevEnable, aoDEBit, buf, aioDebugfsPath);
+        // UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoDevEnableFlag, aoDevEnable, aoDEBit, buf, aioDebugfsPath);
         UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoChnCntFlag, aoChnCnt, aoCCBit, buf, aioDebugfsPath);
-        //UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoCardTypeFlag, aoCardType, aoCTBit, buf, aioDebugfsPath);
-        //UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoSampleRateFlag, aoSampleRate, aoSRBit, buf, aioDebugfsPath);
-       // UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoBitWidthFlag, aoBitWidth, aoBWBit, buf, aioDebugfsPath);
+        // UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoCardTypeFlag, aoCardType, aoCTBit, buf, aioDebugfsPath);
+        // UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoSampleRateFlag, aoSampleRate, aoSRBit, buf, aioDebugfsPath);
+        // UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoBitWidthFlag, aoBitWidth, aoBWBit, buf, aioDebugfsPath);
         UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoTrackCntFlag, aoTrackCnt, aoTCBit, buf, aioDebugfsPath);
         UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aobMuteFlag, aobMute, aoBMBit, buf, aioDebugfsPath);
         UPDATE_AIO_DEBUGFS_INFO(aioDebugUpdataFlag, aoVolumeFlag, aoVolume, aoVOLBit, buf, aioDebugfsPath);
 
         aioDebugUpdataFlag = 0;
-/*
-        // format: echo X YZ > Path, here X must match code with aio.c
-        // ai dev info
-        if (aioDebugUpdataFlag & aiDevEnableFlag)
-        {
-            aioDebugUpdataFlag &= ~aiDevEnableFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo 0 %d > %s\n", aiDevEnable, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aiChnCntFlag)
-        {
-            aioDebugUpdataFlag &= ~aiChnCntFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo 1 %d > %s\n", aiChnCnt, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aiCardTypeFlag)
-        {
-            aioDebugUpdataFlag &= ~aiCardTypeFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo 2 %d > %s\n", aiCardType, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aiSampleRateFlag)
-        {
-            aioDebugUpdataFlag &= ~aiSampleRateFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo 3 %d > %s\n", aiSampleRate, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aiBitWidthFlag)
-        {
-            aioDebugUpdataFlag &= ~aiBitWidthFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo 4 %d > %s\n", aiBitWidth, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aiTrackCntFlag)
-        {
-            aioDebugUpdataFlag &= ~aiTrackCntFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo 5 %d > %s\n", aiTrackCnt, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aibMuteFlag)
-        {
-            aioDebugUpdataFlag &= ~aibMuteFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo 6 %d > %s\n", aibMute, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aiVolumeFlag)
-        {
-            aioDebugUpdataFlag &= ~aiVolumeFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo 7 %d > %s\n", aiVolume, aioDebugfsPath);
-            system(buf);
-        }
+        /*
+                // format: echo X YZ > Path, here X must match code with aio.c
+                // ai dev info
+                if (aioDebugUpdataFlag & aiDevEnableFlag)
+                {
+                    aioDebugUpdataFlag &= ~aiDevEnableFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo 0 %d > %s\n", aiDevEnable, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aiChnCntFlag)
+                {
+                    aioDebugUpdataFlag &= ~aiChnCntFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo 1 %d > %s\n", aiChnCnt, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aiCardTypeFlag)
+                {
+                    aioDebugUpdataFlag &= ~aiCardTypeFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo 2 %d > %s\n", aiCardType, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aiSampleRateFlag)
+                {
+                    aioDebugUpdataFlag &= ~aiSampleRateFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo 3 %d > %s\n", aiSampleRate, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aiBitWidthFlag)
+                {
+                    aioDebugUpdataFlag &= ~aiBitWidthFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo 4 %d > %s\n", aiBitWidth, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aiTrackCntFlag)
+                {
+                    aioDebugUpdataFlag &= ~aiTrackCntFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo 5 %d > %s\n", aiTrackCnt, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aibMuteFlag)
+                {
+                    aioDebugUpdataFlag &= ~aibMuteFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo 6 %d > %s\n", aibMute, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aiVolumeFlag)
+                {
+                    aioDebugUpdataFlag &= ~aiVolumeFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo 7 %d > %s\n", aiVolume, aioDebugfsPath);
+                    system(buf);
+                }
 
-        // ao dev info
-        if (aioDebugUpdataFlag & aoDevEnableFlag)
-        {
-            aioDebugUpdataFlag &= ~aoDevEnableFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo 8 %d > %s\n", aoDevEnable, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aoChnCntFlag)
-        {
-            aioDebugUpdataFlag &= ~aoChnCntFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo 9 %d > %s\n", aoChnCnt, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aoCardTypeFlag)
-        {
-            aioDebugUpdataFlag &= ~aoCardTypeFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo a %d > %s\n", aoCardType, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aoSampleRateFlag)
-        {
-            aioDebugUpdataFlag &= ~aoSampleRateFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo b %d > %s\n", aoSampleRate, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aoBitWidthFlag)
-        {
-            aioDebugUpdataFlag &= ~aoBitWidthFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo c %d > %s\n", aoBitWidth, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aoTrackCntFlag)
-        {
-            aioDebugUpdataFlag &= ~aoTrackCntFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo d %d > %s\n", aoTrackCnt, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aobMuteFlag)
-        {
-            aioDebugUpdataFlag &= ~aobMuteFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo e %d > %s\n", aibMute, aioDebugfsPath);
-            system(buf);
-        }
-        if (aioDebugUpdataFlag & aoVolumeFlag)
-        {
-            aioDebugUpdataFlag &= ~aoVolumeFlag;
-            memset(buf, 0, sizeof(buf));
-            sprintf(buf, "echo f %d > %s\n", aoVolume, aioDebugfsPath);
-            system(buf);
-        }
-        aioDebugUpdataFlag = 0;
-*/
+                // ao dev info
+                if (aioDebugUpdataFlag & aoDevEnableFlag)
+                {
+                    aioDebugUpdataFlag &= ~aoDevEnableFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo 8 %d > %s\n", aoDevEnable, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aoChnCntFlag)
+                {
+                    aioDebugUpdataFlag &= ~aoChnCntFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo 9 %d > %s\n", aoChnCnt, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aoCardTypeFlag)
+                {
+                    aioDebugUpdataFlag &= ~aoCardTypeFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo a %d > %s\n", aoCardType, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aoSampleRateFlag)
+                {
+                    aioDebugUpdataFlag &= ~aoSampleRateFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo b %d > %s\n", aoSampleRate, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aoBitWidthFlag)
+                {
+                    aioDebugUpdataFlag &= ~aoBitWidthFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo c %d > %s\n", aoBitWidth, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aoTrackCntFlag)
+                {
+                    aioDebugUpdataFlag &= ~aoTrackCntFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo d %d > %s\n", aoTrackCnt, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aobMuteFlag)
+                {
+                    aioDebugUpdataFlag &= ~aobMuteFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo e %d > %s\n", aibMute, aioDebugfsPath);
+                    system(buf);
+                }
+                if (aioDebugUpdataFlag & aoVolumeFlag)
+                {
+                    aioDebugUpdataFlag &= ~aoVolumeFlag;
+                    memset(buf, 0, sizeof(buf));
+                    sprintf(buf, "echo f %d > %s\n", aoVolume, aioDebugfsPath);
+                    system(buf);
+                }
+                aioDebugUpdataFlag = 0;
+        */
     }
 
     return 0;
 }
 
-int clearDebugfsInfoByHwDev(int pcmFlag)
-{
-    if (pcmFlag == 0)
-    {
+int clearDebugfsInfoByHwDev(int pcmFlag) {
+    if (pcmFlag == 0) {
         aiDevEnable = 0;
         aiChnCnt = 0;
-        aiCardType = 0;     //0-codec; 1-linein
+        aiCardType = 0; // 0-codec; 1-linein
         aiSampleRate = 0;
         aiBitWidth = 0;
         aiTrackCnt = 0;
         aibMute = 0;
         aiVolume = 0;
         aioDebugUpdataFlag |= 0xff;
-    }
-    else
-    {
+    } else {
         aoDevEnable = 0;
         aoChnCnt = 0;
-        aoCardType = 0;     //0-codec; 1-hdmi
+        aoCardType = 0; // 0-codec; 1-hdmi
         aoSampleRate = 0;
         aoBitWidth = 0;
         aoTrackCnt = 0;
@@ -315,95 +308,90 @@ int clearDebugfsInfoByHwDev(int pcmFlag)
 }
 
 // pcmFlag: 0-cap update; 1-play update
-void updateDebugfsByChnCnt(int pcmFlag, int cnt)
-{
-    if (pcmFlag == 0)
-    {
+void updateDebugfsByChnCnt(int pcmFlag, int cnt) {
+    if (pcmFlag == 0) {
         aiChnCnt = cnt;
         aioDebugUpdataFlag |= aiChnCntFlag;
-    }
-    else
-    {
+    } else {
         aoChnCnt = cnt;
         aioDebugUpdataFlag |= aoChnCntFlag;
     }
 }
 
-int alsaSetPcmParams(PCM_CONFIG_S *pcmCfg)
-{
+int alsaSetPcmParams(PCM_CONFIG_S *pcmCfg) {
     snd_pcm_hw_params_t *params;
-//    snd_pcm_sw_params_t *swparams;
+    //    snd_pcm_sw_params_t *swparams;
     int err;
     unsigned int rate, bufTime, periodTime;
-//    snd_pcm_uframes_t startThreshold, stopThreshold;
+    //    snd_pcm_uframes_t startThreshold, stopThreshold;
     int dir = 0;
 
     if (pcmCfg->handle == NULL) {
-        aloge("PCM is not open yet!");
+        LOGE("PCM is not open yet!");
         return -1;
     }
-    alogd("set pcm params");
+    LOGD("set pcm params");
 
     snd_pcm_hw_params_alloca(&params);
-//    snd_pcm_sw_params_alloca(&swparams);
+    //    snd_pcm_sw_params_alloca(&swparams);
     err = snd_pcm_hw_params_any(pcmCfg->handle, params);
     if (err < 0) {
-        aloge("Broken configuration for this PCM: no configurations available");
+        LOGE("Broken configuration for this PCM: no configurations available");
         return -1;
     }
 
     err = snd_pcm_hw_params_set_access(pcmCfg->handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
     if (err < 0) {
-        aloge("Access type not available");
+        LOGE("Access type not available");
         return -1;
     }
 
     err = snd_pcm_hw_params_set_format(pcmCfg->handle, params, pcmCfg->format);
     if (err < 0) {
-        aloge("Sample format not available");
+        LOGE("Sample format not available");
         return -1;
     }
 
     err = snd_pcm_hw_params_set_channels(pcmCfg->handle, params, pcmCfg->chnCnt);
     if (err < 0) {
-        aloge("Channels count not available");
+        LOGE("Channels count not available");
         return -1;
     }
 
     rate = pcmCfg->sampleRate;
     err = snd_pcm_hw_params_set_rate_near(pcmCfg->handle, params, &pcmCfg->sampleRate, NULL);
     if (err < 0) {
-        aloge("set_rate_near error!");
+        LOGE("set_rate_near error!");
         return -1;
     }
     if (rate != pcmCfg->sampleRate) {
-        alogd("required sample_rate %d is not supported, use %d instead", rate, pcmCfg->sampleRate);
+        LOGD("required sample_rate %d is not supported, use %d instead", rate, pcmCfg->sampleRate);
     }
 
     snd_pcm_uframes_t periodSize = 1024;
     err = snd_pcm_hw_params_set_period_size_near(pcmCfg->handle, params, &periodSize, &dir);
     if (err < 0) {
-        aloge("set_period_size_near error!");
+        LOGE("set_period_size_near error!");
         return -1;
     }
     // double 1024-sample capacity -> 4
     snd_pcm_uframes_t bufferSize = periodSize * pcmCfg->chnCnt * snd_pcm_format_physical_width(pcmCfg->format) / 2;
     err = snd_pcm_hw_params_set_buffer_size_near(pcmCfg->handle, params, &bufferSize);
     if (err < 0) {
-        aloge("set_buffer_size_near error!");
+        LOGE("set_buffer_size_near error!");
         return -1;
     }
 
     err = snd_pcm_hw_params(pcmCfg->handle, params);
     if (err < 0) {
-        aloge("Unable to install hw params");
+        LOGE("Unable to install hw params");
         return -1;
     }
 
     snd_pcm_hw_params_get_period_size(params, &pcmCfg->chunkSize, 0);
     snd_pcm_hw_params_get_buffer_size(params, &pcmCfg->bufferSize);
     if (pcmCfg->chunkSize == pcmCfg->bufferSize) {
-        aloge("Can't use period equal to buffer size (%lu == %lu)", pcmCfg->chunkSize, pcmCfg->bufferSize);
+        LOGE("Can't use period equal to buffer size (%lu == %lu)", pcmCfg->chunkSize, pcmCfg->bufferSize);
         return -1;
     }
 
@@ -412,15 +400,14 @@ int alsaSetPcmParams(PCM_CONFIG_S *pcmCfg)
     pcmCfg->bitsPerFrame = pcmCfg->bitsPerSample * pcmCfg->chnCnt;
     pcmCfg->chunkBytes = pcmCfg->chunkSize * pcmCfg->bitsPerFrame / 8;
 
-    alogd("----------------ALSA setting----------------");
-    alogd(">>Channels:   %4d, BitWidth:  %4d, SampRate:   %4d", pcmCfg->chnCnt, pcmCfg->significantBitsPerSample, pcmCfg->sampleRate);
-    alogd(">>ChunkBytes: %4d, ChunkSize: %4d, BufferSize: %4d", pcmCfg->chunkBytes, (int)pcmCfg->chunkSize, (int)pcmCfg->bufferSize);
+    LOGD("----------------ALSA setting----------------");
+    LOGD(">>Channels:   %4d, BitWidth:  %4d, SampRate:   %4d", pcmCfg->chnCnt, pcmCfg->significantBitsPerSample, pcmCfg->sampleRate);
+    LOGD(">>ChunkBytes: %4d, ChunkSize: %4d, BufferSize: %4d", pcmCfg->chunkBytes, (int)pcmCfg->chunkSize, (int)pcmCfg->bufferSize);
 
     return 0;
 }
 
-int alsaOpenPcm(PCM_CONFIG_S *pcmCfg, const char *card, int pcmFlag)
-{
+int alsaOpenPcm(PCM_CONFIG_S *pcmCfg, const char *card, int pcmFlag) {
     snd_pcm_info_t *info;
     snd_pcm_stream_t stream;
     int err;
@@ -428,10 +415,10 @@ int alsaOpenPcm(PCM_CONFIG_S *pcmCfg, const char *card, int pcmFlag)
     int open_mode = 0;
 
     if (pcmCfg->handle != NULL) {
-        alogw("PCM is opened already!");
+        LOGW("PCM is opened already!");
         return 0;
     }
-    alogd("open pcm! card:[%s], pcmFlag:[%d](0-cap;1-play)", card, pcmFlag);
+    LOGD("open pcm! card:[%s], pcmFlag:[%d](0-cap;1-play)", card, pcmFlag);
 
     // 0-cap; 1-play
     stream = (pcmFlag == 0) ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK;
@@ -440,14 +427,14 @@ int alsaOpenPcm(PCM_CONFIG_S *pcmCfg, const char *card, int pcmFlag)
 
     snd_pcm_info_alloca(&info);
 
-    open_mode |= SND_PCM_NO_AUTO_RESAMPLE;  // not to used the auto resample
+    open_mode |= SND_PCM_NO_AUTO_RESAMPLE; // not to used the auto resample
     err = snd_pcm_open(&pcmCfg->handle, card, stream, open_mode);
     if (err < 0) {
-        aloge("audio open error: %s", snd_strerror(err));
+        LOGE("audio open error: %s", snd_strerror(err));
         return -1;
     }
     if ((err = snd_pcm_info(pcmCfg->handle, info)) < 0) {
-        aloge("snd_pcm_info error: %s", snd_strerror(err));
+        LOGE("snd_pcm_info error: %s", snd_strerror(err));
         return -1;
     }
 
@@ -460,31 +447,29 @@ int alsaOpenPcm(PCM_CONFIG_S *pcmCfg, const char *card, int pcmFlag)
         aioDebugUpdataFlag |= aiDevEnableFlag | aiCardTypeFlag | aiSampleRateFlag | aiBitWidthFlag | aiTrackCntFlag | aiVolumeFlag | aibMuteFlag;
     } else if (stream == SND_PCM_STREAM_PLAYBACK) {
         aoDevEnable = 1;
-        aoCardType = strncmp(card, "default", 7)==0?0:1;
+        aoCardType = strncmp(card, "default", 7) == 0 ? 0 : 1;
         aoSampleRate = pcmCfg->sampleRate;
         aoBitWidth = pcmCfg->bitsPerSample;
-        aoTrackCnt= pcmCfg->chnCnt;
+        aoTrackCnt = pcmCfg->chnCnt;
         aioDebugUpdataFlag |= aoDevEnableFlag | aoCardTypeFlag | aoSampleRateFlag | aoBitWidthFlag | aoTrackCntFlag | aoVolumeFlag | aobMuteFlag;
     }
 
     return 0;
 }
 
-void alsaClosePcm(PCM_CONFIG_S *pcmCfg, int pcmFlag)
-{
-    //alogd("close pcm");
+void alsaClosePcm(PCM_CONFIG_S *pcmCfg, int pcmFlag) {
+    // LOGD("close pcm");
     clearDebugfsInfoByHwDev(pcmFlag);
 
     if (pcmCfg->handle == NULL) {
-        aloge("PCM is not open yet!");
+        LOGE("PCM is not open yet!");
         return;
     }
     snd_pcm_close(pcmCfg->handle);
     pcmCfg->handle = NULL;
 }
 
-ssize_t alsaReadPcm(PCM_CONFIG_S *pcmCfg, void *data, size_t rcount)
-{
+ssize_t alsaReadPcm(PCM_CONFIG_S *pcmCfg, void *data, size_t rcount) {
     ssize_t ret;
     ssize_t result = 0;
     int err = 0;
@@ -494,7 +479,7 @@ ssize_t alsaReadPcm(PCM_CONFIG_S *pcmCfg, void *data, size_t rcount)
         rcount = pcmCfg->chunkSize;
 
     if (pcmCfg == NULL || data == NULL) {
-        aloge("invalid input parameter(pcmCfg=%p, data=%p)!", pcmCfg, data);
+        LOGE("invalid input parameter(pcmCfg=%p, data=%p)!", pcmCfg, data);
         return -1;
     }
 
@@ -504,13 +489,13 @@ ssize_t alsaReadPcm(PCM_CONFIG_S *pcmCfg, void *data, size_t rcount)
         if (ret == -EAGAIN || (ret >= 0 && (size_t)ret < rcount)) {
             snd_pcm_wait(pcmCfg->handle, 100);
         } else if (ret == -EPIPE) {
-            aloge("alsa_overflow_xrun(%s)!", strerror(errno));
+            LOGE("alsa_overflow_xrun(%s)!", strerror(errno));
             snd_pcm_prepare(pcmCfg->handle);
         } else if (ret == -ESTRPIPE) {
-            alogd("need recover(%s)!", strerror(errno));
+            LOGD("need recover(%s)!", strerror(errno));
             snd_pcm_recover(pcmCfg->handle, ret, 0);
         } else if (ret < 0) {
-            aloge("read error: %s", snd_strerror(ret));
+            LOGE("read error: %s", snd_strerror(ret));
             return -1;
         }
 
@@ -524,35 +509,31 @@ ssize_t alsaReadPcm(PCM_CONFIG_S *pcmCfg, void *data, size_t rcount)
     return result;
 }
 
-ssize_t alsaWritePcm(PCM_CONFIG_S *pcmCfg, void *data, size_t wcount)
-{
+ssize_t alsaWritePcm(PCM_CONFIG_S *pcmCfg, void *data, size_t wcount) {
     ssize_t ret;
     ssize_t result = 0;
     int err = 0;
     char cardName[sizeof(pcmCfg->cardName)] = {0};
 
     if (snd_pcm_state(pcmCfg->handle) == SND_PCM_STATE_SUSPENDED) {
-         while ((err = snd_pcm_resume(pcmCfg->handle)) == -EAGAIN) {
-             aloge("snd_pcm_resume again!");
-             sleep(1);
+        while ((err = snd_pcm_resume(pcmCfg->handle)) == -EAGAIN) {
+            LOGE("snd_pcm_resume again!");
+            sleep(1);
         }
-        switch(snd_pcm_state(pcmCfg->handle))
-        {
-            case SND_PCM_STATE_XRUN:
-            {
-                snd_pcm_drop(pcmCfg->handle);
-                break;
-            }
-            case SND_PCM_STATE_SETUP:
-                break;
-            default:
-            {
-                alogw("pcm_lib_state:%s",snd_pcm_state_name(snd_pcm_state(pcmCfg->handle)));
-                snd_pcm_prepare(pcmCfg->handle);
-                break;
-            }
+        switch (snd_pcm_state(pcmCfg->handle)) {
+        case SND_PCM_STATE_XRUN: {
+            snd_pcm_drop(pcmCfg->handle);
+            break;
         }
-	alsaSetPcmParams(pcmCfg);
+        case SND_PCM_STATE_SETUP:
+            break;
+        default: {
+            LOGW("pcm_lib_state:%s", snd_pcm_state_name(snd_pcm_state(pcmCfg->handle)));
+            snd_pcm_prepare(pcmCfg->handle);
+            break;
+        }
+        }
+        alsaSetPcmParams(pcmCfg);
     }
 
     while (wcount > 0) {
@@ -564,37 +545,37 @@ ssize_t alsaWritePcm(PCM_CONFIG_S *pcmCfg, void *data, size_t wcount)
         if (ret == -EAGAIN || (ret >= 0 && (size_t)ret < wcount)) {
             snd_pcm_wait(pcmCfg->handle, 100);
         } else if (ret == -EPIPE) {
-            //alogv("xrun!");
+            // LOGV("xrun!");
             snd_pcm_prepare(pcmCfg->handle);
         } else if (ret == -EBADFD) {
-            //alogw("careful! current pcm state: %d", snd_pcm_state(pcmCfg->handle));
+            // LOGW("careful! current pcm state: %d", snd_pcm_state(pcmCfg->handle));
             snd_pcm_prepare(pcmCfg->handle);
         } else if (ret == -ESTRPIPE) {
-            aloge("need recover!");
+            LOGE("need recover!");
             snd_pcm_recover(pcmCfg->handle, ret, 0);
         } else if (ret < 0) {
-            aloge("write error! ret:%d, %s", ret, snd_strerror(ret));
-            //0-cap; 1-play
+            LOGE("write error! ret:%d, %s", ret, snd_strerror(ret));
+            // 0-cap; 1-play
             alsaClosePcm(pcmCfg, 1);
-	    //FIXME: reopen
-            aloge("cardName:[%s], pcmFlag:[play]", pcmCfg->cardName);
+            // FIXME: reopen
+            LOGE("cardName:[%s], pcmFlag:[play]", pcmCfg->cardName);
             strncpy(cardName, pcmCfg->cardName, sizeof(pcmCfg->cardName));
             ret = alsaOpenPcm(pcmCfg, cardName, 1);
             if (ret < 0) {
-                aloge("alsaOpenPcm failed!");
-	        return ret;
-	    }
-	    ret = alsaSetPcmParams(pcmCfg);
+                LOGE("alsaOpenPcm failed!");
+                return ret;
+            }
+            ret = alsaSetPcmParams(pcmCfg);
             if (ret < 0) {
-                aloge("alsaSetPcmParams failed!");
-	        return ret;
-	    }
+                LOGE("alsaSetPcmParams failed!");
+                return ret;
+            }
             if (pcmCfg->handle != NULL) {
                 snd_pcm_reset(pcmCfg->handle);
-		snd_pcm_prepare(pcmCfg->handle);
-		snd_pcm_start(pcmCfg->handle);
-	    }
-            alogd("set pcm prepare finished!");
+                snd_pcm_prepare(pcmCfg->handle);
+                snd_pcm_start(pcmCfg->handle);
+            }
+            LOGD("set pcm prepare finished!");
             return ret;
         }
 
@@ -608,20 +589,18 @@ ssize_t alsaWritePcm(PCM_CONFIG_S *pcmCfg, void *data, size_t wcount)
     return result;
 }
 
-int alsaDrainPcm(PCM_CONFIG_S *pcmCfg)
-{
+int alsaDrainPcm(PCM_CONFIG_S *pcmCfg) {
     int err = 0;
 
     err = snd_pcm_drain(pcmCfg->handle);
-    if (err != 0){
-        aloge("drain pcm err! err=%d", err);
+    if (err != 0) {
+        LOGE("drain pcm err! err=%d", err);
     }
 
     return err;
 }
 
-int alsaOpenMixer(AIO_MIXER_S *mixer, const char *card)
-{
+int alsaOpenMixer(AIO_MIXER_S *mixer, const char *card) {
     snd_mixer_selem_id_t *sid;
     snd_mixer_elem_t *elem;
     int err = 0;
@@ -629,54 +608,54 @@ int alsaOpenMixer(AIO_MIXER_S *mixer, const char *card)
     if (mixer->handle != NULL) {
         return 0;
     }
-    alogd("open mixer");
+    LOGD("open mixer");
 
     snd_mixer_selem_id_alloca(&sid);
 
     err = snd_mixer_open(&mixer->handle, 0);
     if (err < 0) {
-        aloge("Mixer %s open error: %s\n", card, snd_strerror(err));
+        LOGE("Mixer %s open error: %s", card, snd_strerror(err));
         return err;
     }
 
     err = snd_mixer_attach(mixer->handle, card);
     if (err < 0) {
-        aloge("Mixer %s attach error: %s\n", card, snd_strerror(err));
+        LOGE("Mixer %s attach error: %s", card, snd_strerror(err));
         goto ERROR;
     }
 
     err = snd_mixer_selem_register(mixer->handle, NULL, NULL);
     if (err < 0) {
-        aloge("Mixer %s register error: %s\n", card, snd_strerror(err));
+        LOGE("Mixer %s register error: %s", card, snd_strerror(err));
         goto ERROR;
     }
 
     err = snd_mixer_load(mixer->handle);
     if (err < 0) {
-        aloge("Mixer %s load error: %s\n", card, snd_strerror(err));
+        LOGE("Mixer %s load error: %s", card, snd_strerror(err));
         goto ERROR;
     }
 
     for (elem = snd_mixer_first_elem(mixer->handle); elem; elem = snd_mixer_elem_next(elem)) {
         snd_mixer_selem_get_id(elem, sid);
-        //snd_mixer_selem_set_playback_volume_range(elem, AUDIO_VOLUME_MIN, AUDIO_VOLUME_MAX);
-        //snd_mixer_selem_set_capture_volume_range(elem, AUDIO_VOLUME_MIN, AUDIO_VOLUME_MAX);
-        // open lineout and mic switch
+        // snd_mixer_selem_set_playback_volume_range(elem, AUDIO_VOLUME_MIN, AUDIO_VOLUME_MAX);
+        // snd_mixer_selem_set_capture_volume_range(elem, AUDIO_VOLUME_MIN, AUDIO_VOLUME_MAX);
+        //  open lineout and mic switch
         const char *elem_name = snd_mixer_selem_get_name(elem);
 
         if (!strcmp(elem_name, AUDIO_LINEOUT_SWITCH) ||
             !strcmp(elem_name, AUDIO_DACL_MIXER) ||
-            //!strcmp(elem_name, AUDIO_DACR_MIXER) ||         // not need the DACR to mix DACL
+            //! strcmp(elem_name, AUDIO_DACR_MIXER) ||         // not need the DACR to mix DACL
             !strcmp(elem_name, AUDIO_LOUTPUT_DACL_MIXER) ||
-            //!strcmp(elem_name, AUDIO_ROUTPUT_DACR_MIXER) ||
-            //!strcmp(elem_name, AUDIO_LOUTPUT_DACR_MIXER) || // not need the DACR to mix DACL
+            //! strcmp(elem_name, AUDIO_ROUTPUT_DACR_MIXER) ||
+            //! strcmp(elem_name, AUDIO_LOUTPUT_DACR_MIXER) || // not need the DACR to mix DACL
             !strcmp(elem_name, AUDIO_AD0L_MIXER) ||
-            //!strcmp(elem_name, AUDIO_AD0R_MIXER) ||
-            !strcmp(elem_name, AUDIO_LADC_MIC1_SWITCH)// ||
-            //!strcmp(elem_name, AUDIO_RADC_MIC1_SWITCH) ||
-            //!strcmp(elem_name, AUDIO_LINEINL_SWITCH)
-            //!strcmp(elem_name, AUDIO_LINEINR_SWITCH)
-            ) {
+            //! strcmp(elem_name, AUDIO_AD0R_MIXER) ||
+            !strcmp(elem_name, AUDIO_LADC_MIC1_SWITCH) // ||
+            //! strcmp(elem_name, AUDIO_RADC_MIC1_SWITCH) ||
+            //! strcmp(elem_name, AUDIO_LINEINL_SWITCH)
+            //! strcmp(elem_name, AUDIO_LINEINR_SWITCH)
+        ) {
             // open switch
             snd_mixer_selem_set_playback_switch(elem, 0, 1);
         } else if (!strcmp(elem_name, AUDIO_LINEOUT_VOL)) {
@@ -684,36 +663,36 @@ int alsaOpenMixer(AIO_MIXER_S *mixer, const char *card)
             // user had better not change this ctrls, nor will cause wave distort!
             long vol_val = 27;
             snd_mixer_selem_set_playback_volume(elem, 0, vol_val);
-            alogd("set playback vol_val to value: %ld", vol_val);
-            aoVolume = 100*vol_val/AUDIO_VOLUME_MAX;
+            LOGD("set playback vol_val to value: %ld", vol_val);
+            aoVolume = 100 * vol_val / AUDIO_VOLUME_MAX;
             if (aiDevEnable) {
                 aioDebugUpdataFlag |= aoVolumeFlag;
             }
-        }  else if (!strcmp(elem_name, AUDIO_DAC_VOLUME)) {
-            snd_mixer_selem_set_playback_volume(elem, 0, 160);    // playback vol range: 0-255
+        } else if (!strcmp(elem_name, AUDIO_DAC_VOLUME)) {
+            snd_mixer_selem_set_playback_volume(elem, 0, 160); // playback vol range: 0-255
             snd_mixer_selem_set_playback_volume(elem, 1, 160);
         } else if (!strcmp(elem_name, AUDIO_DAC_MIXER_GAIN)) {
             // dac mixer gain -> AIF1DA0L -6dB.
-            //snd_mixer_selem_set_capture_volume(elem, 0, 8);
-            //dac mixer gain -> AIF1DA0R -6db.
-            //snd_mixer_selem_set_capture_volume(elem, 1, 8);
+            // snd_mixer_selem_set_capture_volume(elem, 0, 8);
+            // dac mixer gain -> AIF1DA0R -6db.
+            // snd_mixer_selem_set_capture_volume(elem, 1, 8);
         } else if (!strcmp(elem_name, AUDIO_LINEOUTL_MUX) || !strcmp(elem_name, AUDIO_LINEOUTR_MUX)) {
             // for LINEOUTL, 0: LOMIX -> LINEOUTL Mux; 1: OMIX_LR_SUM ->  LINEOUTL Mux
-            snd_mixer_selem_set_enum_item(elem, 0, 1);    // increase play volume when amplifier differential input
-        } else if (!strcmp(elem_name, AUDIO_MIC1_GAIN) ) {
-            snd_mixer_selem_set_capture_volume(elem, 0, 4);     // mic1 boost gain range: 0-7 -> use default(4:33dB)
+            snd_mixer_selem_set_enum_item(elem, 0, 1); // increase play volume when amplifier differential input
+        } else if (!strcmp(elem_name, AUDIO_MIC1_GAIN)) {
+            snd_mixer_selem_set_capture_volume(elem, 0, 4); // mic1 boost gain range: 0-7 -> use default(4:33dB)
         } else if (!strcmp(elem_name, AUDIO_ADC_GAIN)) {
-            snd_mixer_selem_set_capture_volume(elem, 0, 3);     // adc gain range: 0-7 -> use default(3:0dB)
+            snd_mixer_selem_set_capture_volume(elem, 0, 3); // adc gain range: 0-7 -> use default(3:0dB)
         } else if (!strcmp(elem_name, AUDIO_ADC_VOLUME)) {
-            snd_mixer_selem_set_capture_volume(elem, 0, 160);     // cap vol range: 0-255, higher may cause wave distort!
+            snd_mixer_selem_set_capture_volume(elem, 0, 160); // cap vol range: 0-255, higher may cause wave distort!
             snd_mixer_selem_set_capture_volume(elem, 1, 160);
             aiVolume = 100;
             if (aiDevEnable) {
                 aioDebugUpdataFlag |= aiVolumeFlag;
             }
-        } else if(!strcmp(elem_name, AUDIO_PA_SWITCH)){
-            alogd("set player pa switch level 0");
-            //snd_mixer_selem_set_playback_switch_all(elem, 0);
+        } else if (!strcmp(elem_name, AUDIO_PA_SWITCH)) {
+            LOGD("set player pa switch level 0");
+            // snd_mixer_selem_set_playback_switch_all(elem, 0);
             aoPALevel = 0;
         }
     }
@@ -726,26 +705,24 @@ ERROR:
     return err;
 }
 
-void alsaCloseMixer(AIO_MIXER_S *mixer)
-{
+void alsaCloseMixer(AIO_MIXER_S *mixer) {
     if (mixer->handle == NULL) {
         return;
     }
-    alogd("close mixer");
+    LOGD("close mixer");
 
     snd_mixer_close(mixer->handle);
     mixer->handle = NULL;
 }
 
-int alsaMixerSetVolume(AIO_MIXER_S *mixer, int playFlag, long value)
-{
+int alsaMixerSetVolume(AIO_MIXER_S *mixer, int playFlag, long value) {
     int err = 0;
 
     if (mixer->handle == NULL) {
         return -1;
     }
     if ((value < 0) || (value > 100)) {
-        aloge("want to setVol[0,100], but usr value=%ld is invalid!", value);
+        LOGE("want to setVol[0,100], but usr value=%ld is invalid!", value);
         return -1;
     }
 
@@ -753,19 +730,19 @@ int alsaMixerSetVolume(AIO_MIXER_S *mixer, int playFlag, long value)
     for (elem = snd_mixer_first_elem(mixer->handle); elem; elem = snd_mixer_elem_next(elem)) {
         const char *elem_name = snd_mixer_selem_get_name(elem);
         if (playFlag && !strcmp(elem_name, AUDIO_LINEOUT_VOL)) {
-            long realVol = value*AUDIO_VOLUME_MAX/100;
+            long realVol = value * AUDIO_VOLUME_MAX / 100;
             err = snd_mixer_selem_set_playback_volume(elem, 0, realVol);
-            alogd("playback setVolume:%ld, err:%d", realVol, err);
+            LOGD("playback setVolume:%ld, err:%d", realVol, err);
             aoVolume = value;
             if (aoDevEnable) {
                 aioDebugUpdataFlag |= aoVolumeFlag;
             }
             break;
         } else if (!playFlag && !strcmp(elem_name, AUDIO_ADC_VOLUME)) {
-            //map value(0-100) to realVol(110-160)
-            long realVol = 110+value/2;
+            // map value(0-100) to realVol(110-160)
+            long realVol = 110 + value / 2;
             err = snd_mixer_selem_set_capture_volume(elem, 0, realVol);
-            alogd("capture setVolume:%ld, err:%d", realVol, err);
+            LOGD("capture setVolume:%ld, err:%d", realVol, err);
             aiVolume = value;
             if (aiDevEnable) {
                 aioDebugUpdataFlag |= aiVolumeFlag;
@@ -776,8 +753,7 @@ int alsaMixerSetVolume(AIO_MIXER_S *mixer, int playFlag, long value)
     return err;
 }
 
-int alsaMixerGetVolume(AIO_MIXER_S *mixer, int playFlag, long *value)
-{
+int alsaMixerGetVolume(AIO_MIXER_S *mixer, int playFlag, long *value) {
     int err = 0;
 
     if (mixer->handle == NULL) {
@@ -792,7 +768,7 @@ int alsaMixerGetVolume(AIO_MIXER_S *mixer, int playFlag, long *value)
             err = snd_mixer_selem_get_playback_volume(elem, 0, &realVal);
             // scale from AUDIO_VOLUME_MAX to 100
             *value = realVal * 100 / AUDIO_VOLUME_MAX;
-            alogd("playback getVolume:%ld, dst:%ld, err:%d", realVal, *value, err);
+            LOGD("playback getVolume:%ld, dst:%ld, err:%d", realVal, *value, err);
             aoVolume = *value;
             if (aoDevEnable) {
                 aioDebugUpdataFlag |= aoVolumeFlag;
@@ -802,8 +778,8 @@ int alsaMixerGetVolume(AIO_MIXER_S *mixer, int playFlag, long *value)
             long realVal;
             err = snd_mixer_selem_get_capture_volume(elem, 0, &realVal);
             // scale from 110-160 to 0-100
-            *value = (realVal<110) ? 0:((realVal-110) * 2);
-            alogd("capture getVolume:%ld, dst:%ld, err:%d", realVal, *value, err);
+            *value = (realVal < 110) ? 0 : ((realVal - 110) * 2);
+            LOGD("capture getVolume:%ld, dst:%ld, err:%d", realVal, *value, err);
             aiVolume = *value;
             if (aiDevEnable) {
                 aioDebugUpdataFlag |= aiVolumeFlag;
@@ -814,8 +790,7 @@ int alsaMixerGetVolume(AIO_MIXER_S *mixer, int playFlag, long *value)
     return err;
 }
 
-int alsaMixerSetMute(AIO_MIXER_S *mixer, int playFlag, int bEnable)
-{
+int alsaMixerSetMute(AIO_MIXER_S *mixer, int playFlag, int bEnable) {
     int err = 0;
 
     if (mixer->handle == NULL) {
@@ -826,7 +801,7 @@ int alsaMixerSetMute(AIO_MIXER_S *mixer, int playFlag, int bEnable)
     for (elem = snd_mixer_first_elem(mixer->handle); elem; elem = snd_mixer_elem_next(elem)) {
         const char *elem_name = snd_mixer_selem_get_name(elem);
         if (playFlag && !strcmp(elem_name, AUDIO_LINEOUT_SWITCH)) {
-            alogd("set player master-volume switch state: %d", bEnable);
+            LOGD("set player master-volume switch state: %d", bEnable);
             if (bEnable) {
                 err = snd_mixer_selem_set_playback_switch(elem, 0, 0);
             } else {
@@ -838,7 +813,7 @@ int alsaMixerSetMute(AIO_MIXER_S *mixer, int playFlag, int bEnable)
             }
             break;
         } else if (!playFlag && !strcmp(elem_name, AUDIO_ADC_VOLUME)) {
-            alogd("set capture ADC volme state: %d", bEnable);
+            LOGD("set capture ADC volme state: %d", bEnable);
             if (bEnable) {
                 err = snd_mixer_selem_set_capture_volume(elem, 0, 0);
             } else {
@@ -854,8 +829,7 @@ int alsaMixerSetMute(AIO_MIXER_S *mixer, int playFlag, int bEnable)
     return err;
 }
 
-int alsaMixerGetMute(AIO_MIXER_S *mixer, int playFlag, int *pVolVal)
-{
+int alsaMixerGetMute(AIO_MIXER_S *mixer, int playFlag, int *pVolVal) {
     int err = 0;
 
     if (mixer->handle == NULL) {
@@ -867,8 +841,8 @@ int alsaMixerGetMute(AIO_MIXER_S *mixer, int playFlag, int *pVolVal)
         const char *elem_name = snd_mixer_selem_get_name(elem);
         if (playFlag && !strcmp(elem_name, AUDIO_LINEOUT_SWITCH)) {
             err = snd_mixer_selem_get_playback_switch(elem, 0, pVolVal);
-            alogd("get master-volume (0-mute; 1-unmute) switch state: %d", *pVolVal);
-            aobMute = (*pVolVal==0?1:0);
+            LOGD("get master-volume (0-mute; 1-unmute) switch state: %d", *pVolVal);
+            aobMute = (*pVolVal == 0 ? 1 : 0);
             if (aoDevEnable) {
                 aioDebugUpdataFlag |= aobMuteFlag;
             }
@@ -876,9 +850,9 @@ int alsaMixerGetMute(AIO_MIXER_S *mixer, int playFlag, int *pVolVal)
         } else if (!playFlag && !strcmp(elem_name, AUDIO_ADC_VOLUME)) {
             long tmpVol;
             err = snd_mixer_selem_get_capture_volume(elem, 0, &tmpVol);
-            *pVolVal = tmpVol<130?0:1;
-            alogd("get capture ADC volume(%ld) (0-mute; 1-unmute) switch state: %d", tmpVol, *pVolVal);
-            aibMute = (tmpVol<130?1:0);
+            *pVolVal = tmpVol < 130 ? 0 : 1;
+            LOGD("get capture ADC volume(%ld) (0-mute; 1-unmute) switch state: %d", tmpVol, *pVolVal);
+            aibMute = (tmpVol < 130 ? 1 : 0);
             if (aiDevEnable) {
                 aioDebugUpdataFlag |= aibMuteFlag;
             }
@@ -888,37 +862,27 @@ int alsaMixerGetMute(AIO_MIXER_S *mixer, int playFlag, int *pVolVal)
     return err;
 }
 
-int alsaMixerSetPlayBackPA(AIO_MIXER_S *mixer, int bHighLevel)
-{
+int alsaMixerSetPlayBackPA(AIO_MIXER_S *mixer, int bHighLevel) {
     int err = 0;
 
-    if (mixer->handle == NULL) 
-    {
+    if (mixer->handle == NULL) {
         return -1;
     }
 
     snd_mixer_elem_t *elem;
-    for (elem = snd_mixer_first_elem(mixer->handle); elem; elem = snd_mixer_elem_next(elem)) 
-    {
+    for (elem = snd_mixer_first_elem(mixer->handle); elem; elem = snd_mixer_elem_next(elem)) {
         const char *elem_name = snd_mixer_selem_get_name(elem);
-        if (!strcmp(elem_name, AUDIO_PA_SWITCH)) 
-        {
+        if (!strcmp(elem_name, AUDIO_PA_SWITCH)) {
             int ival;
-            bHighLevel = bHighLevel?1:0;
-            if(snd_mixer_selem_has_playback_switch(elem))
-            {
+            bHighLevel = bHighLevel ? 1 : 0;
+            if (snd_mixer_selem_has_playback_switch(elem)) {
                 snd_mixer_selem_get_playback_switch(elem, 0, &ival);
-                if (snd_mixer_selem_set_playback_switch(elem, 0, bHighLevel) >= 0)
-                {
+                if (snd_mixer_selem_set_playback_switch(elem, 0, bHighLevel) >= 0) {
+                } else {
+                    LOGE("fatal error! set value of playback switch control of a mixer simple element fail[%d]!", err);
                 }
-                else
-                {
-                    aloge("fatal error! set value of playback switch control of a mixer simple element fail[%d]!", err);
-                }
-            }
-            else
-            {
-                aloge("fatal error! playback switch control is not present!");
+            } else {
+                LOGE("fatal error! playback switch control is not present!");
             }
             break;
         }
@@ -926,29 +890,23 @@ int alsaMixerSetPlayBackPA(AIO_MIXER_S *mixer, int bHighLevel)
     return err;
 }
 
-int alsaMixerGetPlayBackPA(AIO_MIXER_S *mixer, int *pbHighLevel)
-{
+int alsaMixerGetPlayBackPA(AIO_MIXER_S *mixer, int *pbHighLevel) {
     int err = 0;
 
-    if (mixer->handle == NULL) 
-    {
+    if (mixer->handle == NULL) {
         return -1;
     }
 
     snd_mixer_elem_t *elem;
-    for (elem = snd_mixer_first_elem(mixer->handle); elem; elem = snd_mixer_elem_next(elem)) 
-    {
+    for (elem = snd_mixer_first_elem(mixer->handle); elem; elem = snd_mixer_elem_next(elem)) {
         const char *elem_name = snd_mixer_selem_get_name(elem);
-        if (!strcmp(elem_name, AUDIO_PA_SWITCH)) 
-        {
+        if (!strcmp(elem_name, AUDIO_PA_SWITCH)) {
             err = snd_mixer_selem_get_playback_switch(elem, 0, pbHighLevel);
-            if(err!=0)
-            {
-                aloge("fatal error! get player pa wrong[0x%x]", err);
+            if (err != 0) {
+                LOGE("fatal error! get player pa wrong[0x%x]", err);
             }
             break;
         }
     }
     return err;
 }
-

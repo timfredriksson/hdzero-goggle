@@ -13,7 +13,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "VideoDec_InputThread"
-#include <utils/plat_log.h>
+#include <log/log.h>
 
 #include <errno.h>
 //#include <ion/ion.h>
@@ -67,7 +67,7 @@ static void* InputThread(void* pThreadData)
     VIDEODEC_INPUT_DATA* pInputData = (VIDEODEC_INPUT_DATA*)pThreadData;
     VIDEODECDATATYPE* pVideoDecData = (VIDEODECDATATYPE*)pInputData->pVideoDecData;
 
-    aloge("VideoDecoder InputThread start run...");
+    LOGE("VideoDecoder InputThread start run...");
     prctl(PR_SET_NAME, (unsigned long)"VDecInput", 0, 0, 0);
     COMP_PARAM_PORTDEFINITIONTYPE *pPortDef            = &pVideoDecData->sInPortDef[VDEC_PORT_SUFFIX_DEMUX];
     COMP_INTERNAL_TUNNELINFOTYPE  *pPortTunnelInfo     = &pVideoDecData->sInPortTunnelInfo[VDEC_PORT_SUFFIX_DEMUX];
@@ -78,7 +78,7 @@ PROCESS_MESSAGE:
         if (get_message(&pInputData->cmd_queue, &cmd_msg) == 0) 
         {// pump message from message queue
 
-            alogv("input thread got message: cmd=%d cmddata=%d (2-Idle 3-Execute 4-Pause)", cmd, cmddata);
+            LOGV("input thread got message: cmd=%d cmddata=%d (2-Idle 3-Execute 4-Pause)", cmd, cmddata);
             cmd     = cmd_msg.command;
             cmddata = cmd_msg.para0;
 
@@ -92,7 +92,7 @@ PROCESS_MESSAGE:
                     {
                         if(pInputData->state!=COMP_StateIdle)
                         {
-                            aloge("fatal error! inputThread state[0x%x] != Idle", pInputData->state);
+                            LOGE("fatal error! inputThread state[0x%x] != Idle", pInputData->state);
                         }
                         if(pVideoDecData->mInputPortTunnelFlag)
                         {
@@ -107,7 +107,7 @@ PROCESS_MESSAGE:
                                     list_for_each(pList, &pInputData->mIdleVbsList) { cnt++; }
                                     if (cnt < pInputData->mNodeNum) 
                                     {
-                                        alogd("wait input thread [%d]nodes to idleList!", pInputData->mNodeNum - cnt);
+                                        LOGD("wait input thread [%d]nodes to idleList!", pInputData->mNodeNum - cnt);
                                         pthread_cond_wait(&pInputData->mVbsFullCond, &pInputData->mVbsListLock);
                                     } 
                                     else 
@@ -137,19 +137,19 @@ PROCESS_MESSAGE:
                                         }
                                         else
                                         {
-                                            aloge("fatal error! why return encoded frame fail[0x%x]?", eError);
+                                            LOGE("fatal error! why return encoded frame fail[0x%x]?", eError);
                                         }
                                     }
                                 }
                                 if(num > 0)
                                 {
-                                    alogd("VideoDec input thread return [%d]frames when state[%d] turning to loaded!", num, pInputData->state);
+                                    LOGD("VideoDec input thread return [%d]frames when state[%d] turning to loaded!", num, pInputData->state);
                                 }
                                 pthread_mutex_unlock(&pInputData->mVbsListLock);
                             }
                             else
                             {
-                                aloge("fatal error! bufferSupplier[0x%x] wrong!", pPortBufferSupplier->eBufferSupplier);
+                                LOGE("fatal error! bufferSupplier[0x%x] wrong!", pPortBufferSupplier->eBufferSupplier);
                             }
                         }
                         pInputData->state = COMP_StateLoaded;
@@ -179,13 +179,13 @@ PROCESS_MESSAGE:
                                         }
                                         else
                                         {
-                                            aloge("fatal error! why return encoded frame fail[0x%x]?", eError);
+                                            LOGE("fatal error! why return encoded frame fail[0x%x]?", eError);
                                         }
                                     }
                                 }
                                 if(num > 0)
                                 {
-                                    alogd("VideoDec input thread return [%d]frames when state[%d] turning to idle!", num, pInputData->state);
+                                    LOGD("VideoDec input thread return [%d]frames when state[%d] turning to idle!", num, pInputData->state);
                                 }
                                 pthread_mutex_unlock(&pInputData->mVbsListLock);
                             }
@@ -199,7 +199,7 @@ PROCESS_MESSAGE:
                         pthread_mutex_lock(&pInputData->mVbsListLock);
                         if(COMP_BufferSupplyOutput == pVideoDecData->sPortBufSupplier[VDEC_PORT_SUFFIX_DEMUX].eBufferSupplier)
                         {
-                            alogd("vdec demux port[%d] buffer supplier type is output! now has [%d]node, need malloc [%d]node", 
+                            LOGD("vdec demux port[%d] buffer supplier type is output! now has [%d]node, need malloc [%d]node", 
                                 pVideoDecData->sPortBufSupplier[VDEC_PORT_SUFFIX_DEMUX].nPortIndex, pInputData->mNodeNum, INPUT_BUF_COUNT_For_BufferSupplyOutput - pInputData->mNodeNum);
                             DMXPKT_NODE_T *pNode = NULL;
                             while(pInputData->mNodeNum < INPUT_BUF_COUNT_For_BufferSupplyOutput)
@@ -207,7 +207,7 @@ PROCESS_MESSAGE:
                                 pNode = (DMXPKT_NODE_T*)malloc(sizeof(DMXPKT_NODE_T));
                                 if(pNode == NULL)
                                 {
-                                    aloge("fatal error! malloc fail!");
+                                    LOGE("fatal error! malloc fail!");
                                     break;
                                 }
                                 memset(pNode, 0, sizeof(DMXPKT_NODE_T));
@@ -233,11 +233,11 @@ PROCESS_MESSAGE:
             } 
             else if(cmd == VDecComp_VbsAvailable)
             {
-                alogv("input thread got VDecComp_VbsAvailable message");
+                LOGV("input thread got VDecComp_VbsAvailable message");
             }
             else if(cmd == VDecComp_InputData_UsedVbsAvailable) //for COMP_BufferSupplyOutput
             {
-                alogv("input thread got VDecComp_InputData UsedVbsAvailable message");
+                LOGV("input thread got VDecComp_InputData UsedVbsAvailable message");
             }
             else if (cmd == StopPort) 
             {
@@ -271,7 +271,7 @@ PROCESS_MESSAGE:
         // Check Video Decoder
         if (NULL == pVideoDecData->pCedarV) 
         {
-            aloge("fatal error! vdecLib is not create, can't request buffer.");
+            LOGE("fatal error! vdecLib is not create, can't request buffer.");
             goto EXIT;
         }
 
@@ -283,7 +283,7 @@ PROCESS_MESSAGE:
         {
             if(pInputData->mNodeNum != INPUT_BUF_COUNT)
             {
-                aloge("fatal error! when dmx inPort use bufferSupplyInput, nodeNum[%d]!=[%d]", pInputData->mNodeNum, INPUT_BUF_COUNT);
+                LOGE("fatal error! when dmx inPort use bufferSupplyInput, nodeNum[%d]!=[%d]", pInputData->mNodeNum, INPUT_BUF_COUNT);
             }
             // check whether we should request buffer
             pthread_mutex_lock(&pInputData->mVbsListLock);
@@ -291,7 +291,7 @@ PROCESS_MESSAGE:
             {// no need to request buffer if Idle list is empty
                 if (pInputData->mWaitVbsValidFlag == TRUE)
                 {
-                    alogv("waiting message again when mWaitVbsValidFlag is set");
+                    LOGV("waiting message again when mWaitVbsValidFlag is set");
                 }
                 pInputData->mWaitVbsValidFlag = TRUE;
                 pthread_mutex_unlock(&pInputData->mVbsListLock);
@@ -305,10 +305,10 @@ PROCESS_MESSAGE:
                 bsTotalSize = VideoStreamBufferSize(pVideoDecData->pCedarV, 0); // inport bs space total size
                 bsValidSize = VideoStreamDataSize(pVideoDecData->pCedarV, 0);   // inport bs data_size that can be decode but have not be decoded
                 bsEmptySize = bsTotalSize - bsValidSize - 64;
-                //alogv("bsValidSize[%d] bsTotalSize[%d] bsEmptySize[%d]",bsValidSize, bsTotalSize, bsEmptySize);
+                //LOGV("bsValidSize[%d] bsTotalSize[%d] bsEmptySize[%d]",bsValidSize, bsTotalSize, bsEmptySize);
                 if (bsEmptySize < pInputData->nRequestLen)
                 {// request Vbs buffer again after A component return bs buffer
-                    alogv("low buffer (size = %d) from decode lib", bsEmptySize);
+                    LOGV("low buffer (size = %d) from decode lib", bsEmptySize);
                     pthread_mutex_unlock(&pInputData->mVbsListLock);
                     TMessage_WaitQueueNotEmpty(&pInputData->cmd_queue, 200);
                     goto PROCESS_MESSAGE;
@@ -340,7 +340,7 @@ PROCESS_MESSAGE:
                 pthread_mutex_unlock(&pVideoDecData->mVbsInputMutex);
                 if (eError != SUCCESS)
                 {
-                    aloge("fatal error! request buffer (size = %d) from decode lib fail, eError = %d", bsEmptySize, eError);
+                    LOGE("fatal error! request buffer (size = %d) from decode lib fail, eError = %d", bsEmptySize, eError);
                     pthread_mutex_unlock(&pInputData->mVbsListLock);
                     TMessage_WaitQueueNotEmpty(&pInputData->cmd_queue, 200);
                     goto PROCESS_MESSAGE;
@@ -360,7 +360,7 @@ PROCESS_MESSAGE:
 
                 if (eError == SUCCESS)
                 {
-                    alogv("alloc buffer from decode lib success! len = %d", pEntry->stEncodedStream.nTobeFillLen);
+                    LOGV("alloc buffer from decode lib success! len = %d", pEntry->stEncodedStream.nTobeFillLen);
                 }
                 else if ((eError & 0x1FFF) == EN_ERR_NOT_PERM)
                 {
@@ -369,7 +369,7 @@ PROCESS_MESSAGE:
                 }
                 else
                 {
-                    aloge("fatal error! Low probability! Tunneled inport component FillThisBuffer fail(%d)", eError);
+                    LOGE("fatal error! Low probability! Tunneled inport component FillThisBuffer fail(%d)", eError);
                     TMessage_WaitQueueNotEmpty(&pInputData->cmd_queue, 0);
                     goto PROCESS_MESSAGE;
                 }
@@ -393,7 +393,7 @@ PROCESS_MESSAGE:
                     }
                     else
                     {
-                        aloge("fatal error! why return encoded frame fail[0x%x]?", eError);
+                        LOGE("fatal error! why return encoded frame fail[0x%x]?", eError);
                     }
                 }
             }
@@ -404,12 +404,12 @@ PROCESS_MESSAGE:
         }
         else
         {
-            aloge("fatal error! unsupport demux inPort buffer supplier mode[0x%x]", pPortBufferSupplier->eBufferSupplier);
+            LOGE("fatal error! unsupport demux inPort buffer supplier mode[0x%x]", pPortBufferSupplier->eBufferSupplier);
         }
     }
 
 EXIT:
-    alogv("VideoDecoder InputThread stopped");
+    LOGV("VideoDecoder InputThread stopped");
     return (void*) SUCCESS;
 }
 
@@ -427,12 +427,12 @@ ERRORTYPE VideoDec_InputDataInit(VIDEODEC_INPUT_DATA *pInputData, void *pVideoDe
     int err = pthread_cond_init(&pInputData->mStateCond, &condAttr);
     if (err != 0) 
     {
-        aloge("fatal error! pthread cond init fail!");
+        LOGE("fatal error! pthread cond init fail!");
     }
     err = pthread_cond_init(&pInputData->mVbsFullCond, &condAttr);
     if (err != 0) 
     {
-        aloge("fatal error! pthread cond init fail!");
+        LOGE("fatal error! pthread cond init fail!");
     }
     
     pInputData->mWaitVbsValidFlag = FALSE;
@@ -452,7 +452,7 @@ ERRORTYPE VideoDec_InputDataInit(VIDEODEC_INPUT_DATA *pInputData, void *pVideoDe
         pNode = (DMXPKT_NODE_T*)malloc(sizeof(DMXPKT_NODE_T));
         if(pNode == NULL)
         {
-            aloge("fatal error! malloc fail!");
+            LOGE("fatal error! malloc fail!");
             eError = ERR_VDEC_NOMEM;
             pthread_mutex_unlock(&pInputData->mVbsListLock);
             goto EXIT6;
@@ -467,7 +467,7 @@ ERRORTYPE VideoDec_InputDataInit(VIDEODEC_INPUT_DATA *pInputData, void *pVideoDe
 
     if (message_create(&pInputData->cmd_queue)<0)
     {
-        aloge("create input cmd queue error!");
+        LOGE("create input cmd queue error!");
         eError = ERR_VDEC_NOMEM;
         goto EXIT6;
     }
@@ -522,7 +522,7 @@ ERRORTYPE VideoDec_InputDataDestroy(VIDEODEC_INPUT_DATA *pInputData)
     }
     if (!list_empty(&pInputData->mReadyVbsList)) 
     {
-        aloge("fatal error! ready vbs list is not empty!");
+        LOGE("fatal error! ready vbs list is not empty!");
         list_for_each_entry_safe(pEntry, pTmp, &pInputData->mReadyVbsList, mList)
         {
             list_del(&pEntry->mList);
@@ -531,7 +531,7 @@ ERRORTYPE VideoDec_InputDataDestroy(VIDEODEC_INPUT_DATA *pInputData)
     }
     if (!list_empty(&pInputData->mUsingVbsList)) 
     {
-        aloge("fatal error! using vbs list is not empty!");
+        LOGE("fatal error! using vbs list is not empty!");
         list_for_each_entry_safe(pEntry, pTmp, &pInputData->mUsingVbsList, mList)
         {
             list_del(&pEntry->mList);
@@ -540,7 +540,7 @@ ERRORTYPE VideoDec_InputDataDestroy(VIDEODEC_INPUT_DATA *pInputData)
     }
     if (!list_empty(&pInputData->mUsedVbsList)) 
     {
-        aloge("fatal error! used vbs list is not empty!");
+        LOGE("fatal error! used vbs list is not empty!");
         list_for_each_entry_safe(pEntry, pTmp, &pInputData->mUsedVbsList, mList)
         {
             list_del(&pEntry->mList);

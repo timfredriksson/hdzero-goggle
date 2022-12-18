@@ -12,12 +12,12 @@
 
 #include <stdint.h>
 #include "M3UParser.h"
-#include <cdx_log.h>
+#include <log/log.h>
 #include <ctype.h>
 #include <stdlib.h>
 
 //***********************************************************//
-/* ½«×Ö·û´®×ª»»ÎªÐ¡Ð´*/
+/* ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½×ªï¿½ï¿½ÎªÐ¡Ð´*/
 //***********************************************************//
 static void tolower_str(char *str)
 {
@@ -33,7 +33,7 @@ static void trim(AString *line)
 {
     if(line->mSize <= 0)
     {
-        CDX_LOGW("line->mSize <= 0");
+        LOGW("line->mSize <= 0");
         return ;
     }
     cdx_uint32 i = 0;
@@ -58,7 +58,7 @@ void trim_char1(char *str, cdx_uint32 length)
     cdx_uint32 len = strlen(str);
     if(!len)
     {
-        CDX_LOGW("strlen(str) == 0");
+        LOGW("strlen(str) == 0");
         return ;
     }
     cdx_uint32 i = 0;
@@ -101,12 +101,12 @@ static char * trim_char(char *str)
 /* Find the next occurence of the character "what" at or after "offset",*/
 /* but ignore occurences between quotation marks.*/
 /* Return the index of the occurrence or -1 if not found. */
-/* ÓÃÓÚÕÒ²»ÔÚ¡°¡±°ü¹üÖÐµÄwhat×Ö·û£¬µ÷ÓÃÊ±Ò»¶¨Òª±£Ö¤Èë¿Ú(¼´offset)µÄ×ó²à²»ÄÜÓÐ¡°*/
-/* what¿ÉÒÔÊÇ'"'£¬ÕâÒ»µãÓÅÓÚÔ­À´µÄº¯Êý. */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½ï¿½Ú¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½whatï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±Ò»ï¿½ï¿½Òªï¿½ï¿½Ö¤ï¿½ï¿½ï¿½(ï¿½ï¿½offset)ï¿½ï¿½ï¿½ï¿½à²»ï¿½ï¿½ï¿½Ð¡ï¿½*/
+/* whatï¿½ï¿½ï¿½ï¿½ï¿½ï¿½'"'ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½Äºï¿½ï¿½ï¿½. */
 //***********************************************************//
 static ssize_t M3uFindNextUnquoted(const AString *line, char what, cdx_uint32 offset)
 {
-    bool quoted = false;/*±íÊ¾»¹Ã»Óöµ½"*/
+    bool quoted = false;/*ï¿½ï¿½Ê¾ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½"*/
     while (offset < line->mSize)
     {
         char c = line->mData[offset];
@@ -121,14 +121,14 @@ static ssize_t M3uFindNextUnquoted(const AString *line, char what, cdx_uint32 of
 }
 
 //***********************************************************//
-/* ÓÃ×Ö·û´®str´´½¨AStringµÄ¶ÔÏó£¬´Óoffset¿ªÊ¼£¬×Ö·û¸öÊýÎªlength*/
+/* ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½strï¿½ï¿½ï¿½ï¿½AStringï¿½Ä¶ï¿½ï¿½ó£¬´ï¿½offsetï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½Îªlength*/
 //***********************************************************//
 static AString *creatAString(const char *str, cdx_uint32 offset, cdx_uint32 length)
 {
 /*
     if(str == NULL || length == 0 || offset + length > strlen(str))
     {
-        CDX_LOGE("ERROR_MALFORMED");
+        LOGE("ERROR_MALFORMED");
         return NULL;
     }
 */
@@ -264,10 +264,10 @@ PlaylistItem *findItemByIndex(Playlist *playlist, int index)
 }
 
 //***********************************************************//
-/* baseURL,url¶¼ÊÇ±ê×¼µÄ×Ö·û´®£¬¼´±ØÐëÒÔ¡®\0¡¯½áÊø£¬·ñÔòÕâÀïµÄstrstrµÈ²éÕÒÎÞ·¨ÖÕÖ¹*/
-/* ÕâÀïÈç¹ûbaseURL£¬urlÇ°ÃæÊÇÒ»Ð©Ç°µ¼µÄ¿Õ¸ñ£¬Ôòstrncasecmpº¯Êý»á³ö´í£¬ËùÒÔ×îºÃÔÚÒ»¿ªÊ¼²Ã¼ôÇ°ÃæµÄ
-   ¿Õ¸ñ*/
-/* º¯ÊýÄÚ²¿»á´´½¨AStringµÄ¶ÔÏó*/
+/* baseURL,urlï¿½ï¿½ï¿½Ç±ï¿½×¼ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¡ï¿½\0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½strstrï¿½È²ï¿½ï¿½ï¿½ï¿½Þ·ï¿½ï¿½ï¿½Ö¹*/
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½baseURLï¿½ï¿½urlÇ°ï¿½ï¿½ï¿½ï¿½Ò»Ð©Ç°ï¿½ï¿½ï¿½Ä¿Õ¸ï¿½ï¿½ï¿½strncasecmpï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ê¼ï¿½Ã¼ï¿½Ç°ï¿½ï¿½ï¿½
+   ï¿½Õ¸ï¿½*/
+/* ï¿½ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½á´´ï¿½ï¿½AStringï¿½Ä¶ï¿½ï¿½ï¿½*/
 //***********************************************************//
 static status_t MakeURL(const char *baseURL, const char *url, AString **out)
 {
@@ -287,7 +287,7 @@ static status_t MakeURL(const char *baseURL, const char *url, AString **out)
         *out = creatAString(url, 0, urlLen);
         if(!*out)
         {
-            CDX_LOGE("ERROR_MALFORMED");
+            LOGE("ERROR_MALFORMED");
             return ERROR_MALFORMED;
         }
         return OK;
@@ -295,7 +295,7 @@ static status_t MakeURL(const char *baseURL, const char *url, AString **out)
 
     cdx_uint32 memSize = 0;
     char *temp;
-    char *protocolEnd = strstr(baseURL, "//") + 2;/*ÎªÁËÆÁ±Îhttp://£¬https://Ö®¼äµÄ²îÒì*/
+    char *protocolEnd = strstr(baseURL, "//") + 2;/*Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½http://ï¿½ï¿½https://Ö®ï¿½ï¿½Ä²ï¿½ï¿½ï¿½*/
 
     if (url[0] == '/')
     {
@@ -308,11 +308,11 @@ static status_t MakeURL(const char *baseURL, const char *url, AString **out)
             temp = (char *)malloc(memSize);
             if (temp == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 return err_no_memory;
             }
             memcpy(temp, baseURL, pPathStart - baseURL);
-            memcpy(temp + (pPathStart - baseURL), url, urlLen + 1);/*urlÊÇÒÔ'\0'½áÎ²µÄ*/
+            memcpy(temp + (pPathStart - baseURL), url, urlLen + 1);/*urlï¿½ï¿½ï¿½ï¿½'\0'ï¿½ï¿½Î²ï¿½ï¿½*/
         }
         else
         {
@@ -321,7 +321,7 @@ static status_t MakeURL(const char *baseURL, const char *url, AString **out)
             temp = (char *)malloc(memSize);
             if (temp == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 return err_no_memory;
             }
             memcpy(temp, baseURL, baseLen);
@@ -341,13 +341,13 @@ static status_t MakeURL(const char *baseURL, const char *url, AString **out)
                 if(*slashPos == '/')
                     break;
             }
-            if (slashPos >= protocolEnd)/*ÕÒµ½*/
+            if (slashPos >= protocolEnd)/*ï¿½Òµï¿½*/
             {
                 memSize = slashPos - baseURL + urlLen + 2;
                 temp = (char *)malloc(memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return err_no_memory;
                 }
                 memcpy(temp, baseURL, slashPos - baseURL);
@@ -360,7 +360,7 @@ static status_t MakeURL(const char *baseURL, const char *url, AString **out)
                 temp = (char *)malloc(memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return err_no_memory;
                 }
                 memcpy(temp, baseURL, n);
@@ -374,7 +374,7 @@ static status_t MakeURL(const char *baseURL, const char *url, AString **out)
             temp = (char *)malloc(memSize);
             if (temp == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 return err_no_memory;
             }
             memcpy(temp, baseURL, n);
@@ -383,13 +383,13 @@ static status_t MakeURL(const char *baseURL, const char *url, AString **out)
         else
         {
             slashPos = strrchr(protocolEnd, '/');
-            if (slashPos != NULL)/*ÕÒµ½*/
+            if (slashPos != NULL)/*ï¿½Òµï¿½*/
             {
                 memSize = slashPos - baseURL + urlLen + 2;
                 temp = (char *)malloc(memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return err_no_memory;
                 }
                 memcpy(temp, baseURL, slashPos - baseURL);
@@ -402,7 +402,7 @@ static status_t MakeURL(const char *baseURL, const char *url, AString **out)
                 temp = (char *)malloc(memSize);
                 if (temp == NULL)
                 {
-                    CDX_LOGE("err_no_memory");
+                    LOGE("err_no_memory");
                     return err_no_memory;
                 }
                 memcpy(temp, baseURL, n);
@@ -414,7 +414,7 @@ static status_t MakeURL(const char *baseURL, const char *url, AString **out)
     *out = (AString *)malloc(sizeof(AString));
     if (!*out)
     {
-        CDX_LOGE("err_no_memory");
+        LOGE("err_no_memory");
         free(temp);
         return err_no_memory;
     }
@@ -485,9 +485,9 @@ static void destroyPlaylistItems(PlaylistItem *p)
             if (p->itemMeta.mAtom[i].mType == kTypeString)
             {
                 destroyAString(p->itemMeta.mAtom[i].u.stringValue);
-                /*p->itemMeta.mAtom[i].name²»ÓÃÊÍ·Å£¬ÒòÎªËü²»ÊÇ¶¯Ì¬·ÖÅäµÄ£¬*/
+                /*p->itemMeta.mAtom[i].nameï¿½ï¿½ï¿½ï¿½ï¿½Í·Å£ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½Ä£ï¿½*/
                 /*err = parseMetaDataDuration(&line, &itemMeta, "durationUs");
-                  ÖÐmeta->mAtom[meta->mNumAtom].mName=key;*/
+                  ï¿½ï¿½meta->mAtom[meta->mNumAtom].mName=key;*/
             }
         }
         destroyAString(p->mURI);
@@ -497,7 +497,7 @@ static void destroyPlaylistItems(PlaylistItem *p)
 }
 
 //***********************************************************//
-/* ÊÍ·ÅpËùÖ¸µÄÕû¸öPlaylistµÄÁ´±í¼°ÆäÑÓÉìmBaseURI.mData£¬mItems£¬¶ø²»ÊÇÊÍ·Åµ¥¸öPlaylist*/
+/* ï¿½Í·ï¿½pï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Playlistï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½mBaseURI.mDataï¿½ï¿½mItemsï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·Åµï¿½ï¿½ï¿½Playlist*/
 //***********************************************************//
 
 void destroyPlaylist(Playlist *playList)
@@ -603,7 +603,7 @@ static status_t parseMetaDataDuration( const AString *line, AMessage *meta, cons
     return setInt64(meta, key, (int64_t)(x * 1E6));
 }
 
-/*Èç·µ»ØÖµ²»ÊÇOK£¬length, offsetËä¿ÉÄÜÓÐÖµ£¬µ«ÎÞÕýÈ·º¬Òå£¬²»Ó¦Ê¹ÓÃ*/
+/*ï¿½ç·µï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½OKï¿½ï¿½length, offsetï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½ï¿½å£¬ï¿½ï¿½Ó¦Ê¹ï¿½ï¿½*/
 static status_t parseByteRange(const AString *line, uint64_t curOffset,
                                 uint64_t *length, uint64_t *offset)
 {
@@ -640,7 +640,7 @@ static status_t parseCipherInfo(AString *line, AMessage *meta, const AString *ba
     char *colonPos = strstr(line->mData, ":");
     if(colonPos == NULL)
     {
-        CDX_LOGE("ERROR_MALFORMED");
+        LOGE("ERROR_MALFORMED");
         return ERROR_MALFORMED;
     }
 
@@ -669,7 +669,7 @@ static status_t parseCipherInfo(AString *line, AMessage *meta, const AString *ba
 
         char *key = trim_char(attr);
         char *val = trim_char(equalPos + 1);
-        CDX_LOGV("key=%s value=%s", key, val);
+        LOGV("key=%s value=%s", key, val);
         tolower_str(key);
         cdx_uint32 len = strlen(val);
         if(!strcmp("uri", key))
@@ -678,7 +678,7 @@ static status_t parseCipherInfo(AString *line, AMessage *meta, const AString *ba
                     || val[0] != '"'
                     || val[len - 1] != '"')
             {
-                  CDX_LOGE("Expected quoted string for URI, got '%s' instead.", val);
+                  LOGE("Expected quoted string for URI, got '%s' instead.", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
@@ -687,7 +687,7 @@ static status_t parseCipherInfo(AString *line, AMessage *meta, const AString *ba
             err = MakeURL(baseURI->mData, val, &value);
             if (err != OK)
             {
-                CDX_LOGE("Failed to make absolute URI from '%s'", val);
+                LOGE("Failed to make absolute URI from '%s'", val);
                 goto _err;
             }
             setString(meta, "cipher-uri", value);
@@ -697,14 +697,14 @@ static status_t parseCipherInfo(AString *line, AMessage *meta, const AString *ba
             value = creatAString(val, 0, len);
             if (!value)
             {
-                CDX_LOGE("Failed to creatAString from '%s'", val);
+                LOGE("Failed to creatAString from '%s'", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
             setString(meta, "cipher-method", value);
             if(0 == strcasecmp(val, "NONE"))
             {
-                CDX_LOGD("cipher-method = NONE");
+                LOGD("cipher-method = NONE");
                 *methodIsNone = 1;
             }
         }
@@ -713,13 +713,13 @@ static status_t parseCipherInfo(AString *line, AMessage *meta, const AString *ba
             value = creatAString(val, 0, len);
             if (!value)
             {
-                CDX_LOGE("Failed to creatAString from '%s'", val);
+                LOGE("Failed to creatAString from '%s'", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
             setString(meta, "cipher-iv", value);
         }
-        value = NULL;/*ÖØÒª*/
+        value = NULL;/*ï¿½ï¿½Òª*/
     }
     return OK;
 _err:
@@ -732,7 +732,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
     char *colonPos = strstr(line->mData, ":");
     if(colonPos == NULL)
     {
-        CDX_LOGE("ERROR_MALFORMED");
+        LOGE("ERROR_MALFORMED");
         return ERROR_MALFORMED;
     }
     MediaItem *mediaItem = NULL;
@@ -786,7 +786,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
 
         char *key = trim_char(attr);
         char *val = trim_char(equalPos + 1);
-        CDX_LOGV("key=%s value=%s", key, val);
+        LOGV("key=%s value=%s", key, val);
 
         if (!strcasecmp("type", key))
         {
@@ -804,10 +804,10 @@ static status_t parseMedia(AString *line, Playlist *playlist)
             }
             else
             {
-                CDX_LOGW("Invalid media group type '%s'", val);
-                goto _err;/*ÓÐÐ©typeÎÒÃÇ²»Ê¶±ð£¬ÈçCLOSED-CAPTIONS£¬´ËÊ±²»ÄÜÈÏÎªÊÇ³ö´í£¬·ñÔò»áµ¼ÖÂÕû
-                            ¸öm3u8parser³ö´íÍË³ö*/
-                            /*Ó¦¸ÃÊÇgoto¶ø²»ÊÇreturn OK,ÒòÎª¸Ã¾ä´¦ÓÚwhileÖÐ£¬¿ÉÄÜÆäËüµØ·½ÉêÇëÁË×ÊÔ´
+                LOGW("Invalid media group type '%s'", val);
+                goto _err;/*ï¿½ï¿½Ð©typeï¿½ï¿½ï¿½Ç²ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½CLOSED-CAPTIONSï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Ç³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½áµ¼ï¿½ï¿½ï¿½ï¿½
+                            ï¿½ï¿½m3u8parserï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½*/
+                            /*Ó¦ï¿½ï¿½ï¿½ï¿½gotoï¿½ï¿½ï¿½ï¿½ï¿½ï¿½return OK,ï¿½ï¿½Îªï¿½Ã¾ä´¦ï¿½ï¿½whileï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´
                             */
             }
             bHaveGroupType = true;
@@ -819,7 +819,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
                     || val[0] != '"'
                     || val[len - 1] != '"')
             {
-                CDX_LOGE("Invalid string for group-id: '%s'", val);
+                LOGE("Invalid string for group-id: '%s'", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
@@ -837,7 +837,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
                     || val[0] != '"'
                     || val[len - 1] != '"')
             {
-                CDX_LOGE("Invalid quoted string for LANGUAGE: '%s'", val);
+                LOGE("Invalid quoted string for LANGUAGE: '%s'", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
@@ -855,7 +855,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
                     || val[0] != '"'
                     || val[len - 1] != '"')
             {
-                CDX_LOGE("Expected quoted string for NAME, got '%s' instead.", val);
+                LOGE("Expected quoted string for NAME, got '%s' instead.", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
@@ -877,7 +877,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
             }
             else
             {
-                CDX_LOGE("Expected YES or NO for AUTOSELECT attribute, got '%s' instead.", val);
+                LOGE("Expected YES or NO for AUTOSELECT attribute, got '%s' instead.", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
@@ -895,7 +895,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
             }
             else
             {
-                CDX_LOGE("Expected YES or NO for DEFAULT attribute, got '%s' instead.", val);
+                LOGE("Expected YES or NO for DEFAULT attribute, got '%s' instead.", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
@@ -913,7 +913,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
             }
             else
             {
-                CDX_LOGE("Expected YES or NO for FORCED attribute, got '%s' instead.", val);
+                LOGE("Expected YES or NO for FORCED attribute, got '%s' instead.", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
@@ -927,7 +927,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
                     || val[0] != '"'
                     || val[len - 1] != '"')
             {
-                CDX_LOGE("Expected quoted string for URI, got '%s' instead.", val);
+                LOGE("Expected quoted string for URI, got '%s' instead.", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
@@ -936,7 +936,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
             err = MakeURL(playlist->mBaseURI.mData, val, &groupURI);
             if (err != OK)
             {
-                CDX_LOGE("Failed to make absolute URI from '%s'", val);
+                LOGE("Failed to make absolute URI from '%s'", val);
                 goto _err;
             }
             if(groupURI)
@@ -948,7 +948,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
 
     if (!bHaveGroupType || !bHaveGroupID || !bHaveGroupName)
     {
-        CDX_LOGE("Incomplete EXT-X-MEDIA element.");
+        LOGE("Incomplete EXT-X-MEDIA element.");
         err = ERROR_MALFORMED;
         goto _err;
     }
@@ -966,7 +966,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
     {
         if (groupType != TYPE_SUBS)
         {
-            CDX_LOGE("The FORCED attribute MUST not be present on anything but SUBS media.");
+            LOGE("The FORCED attribute MUST not be present on anything but SUBS media.");
             err = ERROR_MALFORMED;
             goto _err;
         }
@@ -988,7 +988,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
     mediaItem = (MediaItem *)malloc(sizeof(MediaItem));
     if(mediaItem == NULL)
     {
-        CDX_LOGE("err_no_memory");
+        LOGE("err_no_memory");
         err = err_no_memory;
         goto _err;
     }
@@ -1012,7 +1012,7 @@ static status_t parseMedia(AString *line, Playlist *playlist)
         mediaGroup = (MediaGroup *)malloc(sizeof(MediaGroup));
         if(mediaGroup == NULL)
         {
-            CDX_LOGE("err_no_memory");
+            LOGE("err_no_memory");
             err = err_no_memory;
             goto _err;
         }
@@ -1036,12 +1036,12 @@ static status_t parseMedia(AString *line, Playlist *playlist)
     {
         if(mediaGroup->mType != groupType)
         {
-            CDX_LOGE("ERROR_MALFORMED.");
+            LOGE("ERROR_MALFORMED.");
             err = ERROR_MALFORMED;
             goto _err;
         }
 
-        MediaItem *tmp = mediaGroup->mMediaItems;/*mediaGroup->mMediaItems²»»áÎª¿Õ*/
+        MediaItem *tmp = mediaGroup->mMediaItems;/*mediaGroup->mMediaItemsï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½*/
         while(tmp->next != NULL)
         {
             tmp = tmp->next;
@@ -1055,8 +1055,8 @@ static status_t parseMedia(AString *line, Playlist *playlist)
 
 _err:
 
-/*mediaGroup²»ÓÃÊÍ·Å£¬Ò²²»ÄÜ¼òµ¥ÊÍ·Å¡£ÒòÎªmediaGroup·Ç¿Õ¿ÉÄÜÊÇ´ÓÒÑÓÐµÄÖÐÕÒµ½µÄ£¬¶ø²»ÊÇÐÂ½¨Á¢µÄ*/
-/*µ±mediaGroupÊÇÐÂ½¨Á¢µÄÊ±£¬Î¨Ò»¿ÉÄÜµÄ´íÎóÊÇerr_no_memory£¬mediaGroupÎª¿Õ£¬²»ÓÃÊÍ·Å*/
+/*mediaGroupï¿½ï¿½ï¿½ï¿½ï¿½Í·Å£ï¿½Ò²ï¿½ï¿½ï¿½Ü¼ï¿½ï¿½Í·Å¡ï¿½ï¿½ï¿½ÎªmediaGroupï¿½Ç¿Õ¿ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½Òµï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½ï¿½ï¿½ï¿½ï¿½ï¿½*/
+/*ï¿½ï¿½mediaGroupï¿½ï¿½ï¿½Â½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Î¨Ò»ï¿½ï¿½ï¿½ÜµÄ´ï¿½ï¿½ï¿½ï¿½ï¿½err_no_memoryï¿½ï¿½mediaGroupÎªï¿½Õ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·ï¿½*/
 
     destroyMediaItem(mediaItem);
     destroyAString(groupID);
@@ -1073,12 +1073,12 @@ static status_t parseStreamInf(AString *line, AMessage *meta, Playlist *playlist
     char *colonPos = strstr(line->mData, ":");
     if(colonPos == NULL)
     {
-        CDX_LOGE("ERROR_MALFORMED");
+        LOGE("ERROR_MALFORMED");
         return ERROR_MALFORMED;
     }
     status_t err = OK;
     AString *groupID = NULL;
-    cdx_uint32 offset= colonPos - line->mData + 1;/*´ËÊ±line->mData+offsetÖ¸ÏòµÄÊÇ¡°:¡±µÄÏÂÒ»¸ö×Ö·û*/
+    cdx_uint32 offset= colonPos - line->mData + 1;/*ï¿½ï¿½Ê±line->mData+offsetÖ¸ï¿½ï¿½ï¿½ï¿½Ç¡ï¿½:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ö·ï¿½*/
 
     while (offset < line->mSize)
     {
@@ -1100,7 +1100,7 @@ static status_t parseStreamInf(AString *line, AMessage *meta, Playlist *playlist
         *equalPos = '\0';
         char *key = trim_char(attr);
         char *val = trim_char(equalPos + 1);
-        CDX_LOGV("key=%s value=%s", key, val);
+        LOGV("key=%s value=%s", key, val);
         tolower_str(key);
         if (!strcmp("bandwidth", key))
         {
@@ -1114,7 +1114,7 @@ static status_t parseStreamInf(AString *line, AMessage *meta, Playlist *playlist
             }
             if(setInt64(meta, "bandwidth", (cdx_int64)x) != OK)
             {
-                CDX_LOGE("ERROR_maxNumAtom_too_little");
+                LOGE("ERROR_maxNumAtom_too_little");
                 err = ERROR_maxNumAtom_too_little;
                 goto _err;
             }
@@ -1128,7 +1128,7 @@ static status_t parseStreamInf(AString *line, AMessage *meta, Playlist *playlist
                     || val[0] != '"'
                     || val[len - 1] != '"')
             {
-                CDX_LOGE("Expected quoted string for %s attribute, got '%s' instead.",
+                LOGE("Expected quoted string for %s attribute, got '%s' instead.",
                       key, val);
                 err = ERROR_MALFORMED;
                 goto _err;
@@ -1137,7 +1137,7 @@ static status_t parseStreamInf(AString *line, AMessage *meta, Playlist *playlist
             groupID = creatAString(val, 1, len - 2);
             if (!groupID)
             {
-                CDX_LOGE("Failed to creatAString from '%s'", val);
+                LOGE("Failed to creatAString from '%s'", val);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
@@ -1148,15 +1148,15 @@ static status_t parseStreamInf(AString *line, AMessage *meta, Playlist *playlist
             }
             if(mediaGroup == NULL)
             {
-                CDX_LOGE("Undefined media group '%s' referenced in stream info.",
+                LOGE("Undefined media group '%s' referenced in stream info.",
                       groupID->mData);
                 err = ERROR_MALFORMED;
                 goto _err;
             }
             setString(meta, key, groupID);
-            groupID = NULL;/*ÖØÒª!ÒòÎªgroupIDÊÇ¸´ÓÃµÄ£¬Èç¹ûÃ»ÓÐÕâ¾ä¿ÉÄÜµ¼ÖÂÄÚ´æµÄÖØ¸´ÊÍ·Å*/
-            /*ÀýÈç£¬µÚÒ»´ÎÑ­»·Ê±groupID±»Ð´Èëmeta£¬µ«µÚ¶þ´ÎÑ­»·ÖÐ³ö´í£¬´ËÊ±destroyAString(groupID);
-              ºÍdestroyPlaylistÖØ¸´ÊÍ·ÅÄÚ´æ*/
+            groupID = NULL;/*ï¿½ï¿½Òª!ï¿½ï¿½ÎªgroupIDï¿½Ç¸ï¿½ï¿½ÃµÄ£ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Üµï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½Ø¸ï¿½ï¿½Í·ï¿½*/
+            /*ï¿½ï¿½ï¿½ç£¬ï¿½ï¿½Ò»ï¿½ï¿½Ñ­ï¿½ï¿½Ê±groupIDï¿½ï¿½Ð´ï¿½ï¿½metaï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½Ð³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±destroyAString(groupID);
+              ï¿½ï¿½destroyPlaylistï¿½Ø¸ï¿½ï¿½Í·ï¿½ï¿½Ú´ï¿½*/
         }
     }
 
@@ -1164,16 +1164,16 @@ static status_t parseStreamInf(AString *line, AMessage *meta, Playlist *playlist
 _err:
 
     destroyAString(groupID);
-    /*´ËÊ±¿ÉÄÜÓÐÒ»Ð©groupIDÒÑ¾­Ð´Èëmeta£¬¸Ã´¦²¢Î´½«ÆäÊÍ·Å£¬ÒòÎªgroupID´¦ÓÚwhileÖÐ¡£Ã»ÓÐ¹ØÏµ£¬·µ»Ø´í
-    Îó£¬destroyPlaylist»á½«ÆäÊÍ·Å*/
+    /*ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»Ð©groupIDï¿½Ñ¾ï¿½Ð´ï¿½ï¿½metaï¿½ï¿½ï¿½Ã´ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½Í·Å£ï¿½ï¿½ï¿½ÎªgroupIDï¿½ï¿½ï¿½ï¿½whileï¿½Ð¡ï¿½Ã»ï¿½Ð¹ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿½
+    ï¿½ï¿½destroyPlaylistï¿½á½«ï¿½ï¿½ï¿½Í·ï¿½*/
     return err;
 }
 
-/*ÅÐ¶ÏÊÇ·ñm3u8ÎÄ¼þ*/
+/*ï¿½Ð¶ï¿½ï¿½Ç·ï¿½m3u8ï¿½Ä¼ï¿½*/
 bool M3uProbe(const char *data, cdx_uint32 size)
 {
     cdx_uint32 offset = 0;
-    while (offset < size && isspace(data[offset])) //isspaceÖÐ°üº¬¡®\n¡¯\r,ËùÒÔÒÑ¾­ÅÅ³ýÁË¿ÕÐÐµÄÇé¿ö
+    while (offset < size && isspace(data[offset])) //isspaceï¿½Ð°ï¿½ï¿½ï¿½ï¿½ï¿½\nï¿½ï¿½\r,ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½Å³ï¿½ï¿½Ë¿ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½
     {
         offset++;
     }
@@ -1197,14 +1197,14 @@ bool M3uProbe(const char *data, cdx_uint32 size)
             return true;
     }
 
-    logw("start with #EXTM3U but don't have some #EXT tags, don't treat it as HLS");
+    LOGW("start with #EXTM3U but don't have some #EXT tags, don't treat it as HLS");
     return false;
 }
 
 //***********************************************************//
-/* ½âÎö_dataËùÖ¸ÏòµÄÒÑÏÂÔØµ½µÄm3u8ÎÄ¼þ£¬Ðè½âÎöµÄ´óÐ¡Îªsize*/
-/* baseURIËùÖ¸×Ö·û´®µÄÄÚ´æÊÇÔÚÍâ²¿¿ª±ÙµÄ,±ØÐëÒÔ¡®\0¡¯½áÊø,³ÌÐòÖÐ²»»á¸Ä±ächar *baseURI*/
-/* Èç¹ûparse³ö´í£¬ÏàÓ¦ÄÚ´æÒÑ¾­±»ÊÍ·Å*/
+/* ï¿½ï¿½ï¿½ï¿½_dataï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Øµï¿½ï¿½ï¿½m3u8ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½Ð¡Îªsize*/
+/* baseURIï¿½ï¿½Ö¸ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â²¿ï¿½ï¿½ï¿½Ùµï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½Ô¡ï¿½\0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½Ð²ï¿½ï¿½ï¿½Ä±ï¿½char *baseURI*/
+/* ï¿½ï¿½ï¿½parseï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ú´ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½Í·ï¿½*/
 //***********************************************************//
 status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char *baseURI)
 {
@@ -1225,19 +1225,19 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
     Playlist *playList = (Playlist*)malloc(sizeof(Playlist));
     if(playList == NULL)
     {
-        CDX_LOGE("err_no_memory");
+        LOGE("err_no_memory");
         return err_no_memory;
     }
     memset(playList, 0x00, sizeof(Playlist));
-    int mIsVariantPlaylist = -1;/*ÉèÖÃÕâ¸ö±äÁ¿µÄÔ­ÒòÊÇplayList->mIsVariantPlaylistÊÇbool£¬ÔÚÎ´Ã÷È·
-                                  ÅÐ¶ÏÖ®Ç°ÒÑ¾­ÓÐÖµ0*/
+    int mIsVariantPlaylist = -1;/*ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½playList->mIsVariantPlaylistï¿½ï¿½boolï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½È·
+                                  ï¿½Ð¶ï¿½Ö®Ç°ï¿½Ñ¾ï¿½ï¿½ï¿½Öµ0*/
 
-    CDX_LOGV("baseURI=%s", baseURI);
+    LOGV("baseURI=%s", baseURI);
     int baseLen = strlen(baseURI);
     playList->mBaseURI.mData = (char *)malloc(baseLen+1);
     if(playList->mBaseURI.mData == NULL)
     {
-        CDX_LOGE("err_no_memory");
+        LOGE("err_no_memory");
         err = err_no_memory;
         goto _err;
     }
@@ -1247,7 +1247,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
 
     while (offset < size)
     {
-        while(offset < size && isspace(data[offset]))//isspaceÖÐ°üº¬¡®\n¡¯\r,ËùÒÔÒÑ¾­ÅÅ³ýÁË¿ÕÐÐµÄÇé¿ö
+        while(offset < size && isspace(data[offset]))//isspaceï¿½Ð°ï¿½ï¿½ï¿½ï¿½ï¿½\nï¿½ï¿½\r,ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½Å³ï¿½ï¿½Ë¿ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½
         {
             offset++;
         }
@@ -1260,7 +1260,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
         {
             ++uOffsetLF;
         }
-        /*È¥µôÕâ¶Îcode,ÒÔ¼æÈÝ×îºóÒ»ÐÐ²»ÒÔ'\n'½áÊøµÄÇé¿ö
+        /*È¥ï¿½ï¿½ï¿½ï¿½ï¿½code,ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Ð²ï¿½ï¿½ï¿½'\n'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         if(uOffsetLF >= size)
         {
             break;
@@ -1270,9 +1270,9 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
         while(isspace(data[offsetData-1]))
         {
             --offsetData;
-        }/*offsetDataµÄÇ°Ò»¸öÎ»ÖÃdata[offsetData-1]ÊÇÓÐÐ§×Ö·û£¬²»»áÊÇ'\r'ºÍ'\n'£¬data[offsetData]ÊÇ
-           '\r'»ò'\n'£¬offsetData - offsetÊÇÓÐÐ§×Ö·ûµÄ¸öÊý*/
-        if ((offsetData - offset)<=0)        /*ËµÃ÷ÊÇ¿ÕÐÐ*/
+        }/*offsetDataï¿½ï¿½Ç°Ò»ï¿½ï¿½Î»ï¿½ï¿½data[offsetData-1]ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½'\r'ï¿½ï¿½'\n'ï¿½ï¿½data[offsetData]ï¿½ï¿½
+           '\r'ï¿½ï¿½'\n'ï¿½ï¿½offsetData - offsetï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ö·ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½*/
+        if ((offsetData - offset)<=0)        /*Ëµï¿½ï¿½ï¿½Ç¿ï¿½ï¿½ï¿½*/
         {
             offset = uOffsetLF + 1;
             continue;
@@ -1282,16 +1282,16 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             line.mData = (char *)malloc((offsetData - offset+1)*sizeof(char));
             if(line.mData == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 err = err_no_memory;
                 goto _err;
             }
             line.mSize = offsetData - offset;
             line.mAllocSize = offsetData - offset+1;
-            /*´Ódata[offset]¶Áµ½data[offsetData-1]¹¹³ÉÒ»ÐÐ*/
+            /*ï¿½ï¿½data[offset]ï¿½ï¿½ï¿½ï¿½data[offsetData-1]ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½*/
             memcpy(line.mData, &data[offset], offsetData - offset);
             line.mData[offsetData - offset] = '\0';
-            CDX_LOGV("#%s#", line.mData);
+            LOGV("#%s#", line.mData);
         }
 
         if (lineNo == 0)
@@ -1302,7 +1302,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             }
             else
             {
-                CDX_LOGE("lineNo == 0, but line != EXTM3U");
+                LOGE("lineNo == 0, but line != EXTM3U");
                 err = ERROR_MALFORMED;
                 goto _err;
             }
@@ -1313,13 +1313,13 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             {
                 if (playList->mIsVariantPlaylist)
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
-                    err = ERROR_MALFORMED;/*ÕâÐ©tag²»»á³öÏÖÔÚmaster playlist ÖÐ
-                                            ¶øÖ»³öÏÖÔÚmedia playlisyÖÐ*/
+                    LOGE("ERROR_MALFORMED");
+                    err = ERROR_MALFORMED;/*ï¿½ï¿½Ð©tagï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½master playlist ï¿½ï¿½
+                                            ï¿½ï¿½Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½media playlisyï¿½ï¿½*/
                     goto _err;
                 }
                 err = parseMetaData(&line, &(playList->mMeta), "target-duration");
-            /*mMetaÊÂ¹ØplaylisyµÄÈ«¾Ö£¬²»ÊÇÕë¶ÔÒ»¸öURL,ÍùÍùÖ»³öÏÖÒ»´Î£¬¶øitemMetaÔòÕë¶ÔÒ»¸öurl*/
+            /*mMetaï¿½Â¹ï¿½playlisyï¿½ï¿½È«ï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½URL,ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î£ï¿½ï¿½ï¿½itemMetaï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½url*/
                 mIsVariantPlaylist = 0;
 
             }
@@ -1327,7 +1327,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             {
                 if (playList->mIsVariantPlaylist)
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
+                    LOGE("ERROR_MALFORMED");
                     err = ERROR_MALFORMED;
                     goto _err;
                 }
@@ -1339,7 +1339,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             {
                 if (playList->mIsVariantPlaylist)
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
+                    LOGE("ERROR_MALFORMED");
                     err = ERROR_MALFORMED;
                     goto _err;
                 }
@@ -1354,11 +1354,11 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
 
             else if (startsWith(line.mData,"#EXT-X-ENDLIST"))
             {
-                //CDX_LOGV("#EXT-X-ENDLIST");
+                //LOGV("#EXT-X-ENDLIST");
 
                 if (playList->mIsVariantPlaylist)
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
+                    LOGE("ERROR_MALFORMED");
                     //err = ERROR_MALFORMED;
                     //goto _err;
                 }
@@ -1368,7 +1368,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             {
                 if (playList->mIsVariantPlaylist)
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
+                    LOGE("ERROR_MALFORMED");
                     err = ERROR_MALFORMED;
                     goto _err;
                 }
@@ -1378,7 +1378,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             {
                 if (playList->mIsVariantPlaylist)
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
+                    LOGE("ERROR_MALFORMED");
                     err = ERROR_MALFORMED;
                     goto _err;
                 }
@@ -1389,7 +1389,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             {
                 if (playList->mIsVariantPlaylist)
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
+                    LOGE("ERROR_MALFORMED");
                     err = ERROR_MALFORMED;
                     goto _err;
                 }
@@ -1400,7 +1400,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             {
                 if (!mIsVariantPlaylist)
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
+                    LOGE("ERROR_MALFORMED");
                     err = ERROR_MALFORMED;
                     goto _err;
                 }
@@ -1412,7 +1412,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             {
                 if (playList->mIsVariantPlaylist)
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
+                    LOGE("ERROR_MALFORMED");
                     err = ERROR_MALFORMED;
                     goto _err;
                 }
@@ -1421,7 +1421,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
                 err = parseByteRange(&line, segmentRangeOffset, &length, &offset);
                 if (err != OK)
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
+                    LOGE("ERROR_MALFORMED");
                     goto _err;
                 }
 
@@ -1429,7 +1429,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
                 status_t err2 = setInt64(&itemMeta, "range-length", length);
                 if (err1 !=OK || err2 != OK)
                 {
-                    CDX_LOGE("ERROR_maxNumAtom_too_little");
+                    LOGE("ERROR_maxNumAtom_too_little");
                     err = ERROR_maxNumAtom_too_little;
                     goto _err;
                 }
@@ -1443,12 +1443,12 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
 
             if (err != OK)
             {
-                CDX_LOGE("err = %d", err);
+                LOGE("err = %d", err);
                 goto _err;
             }
         }
 
-        if (!startsWith(line.mData,"#")) /*²»ÊÇ¿ÕÐÐ£¬²»ÊÇ±êÇ©£¬²»ÊÇ×¢ÊÍ£¬ÊÇURL*/
+        if (!startsWith(line.mData,"#")) /*ï¿½ï¿½ï¿½Ç¿ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½Ç±ï¿½Ç©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¢ï¿½Í£ï¿½ï¿½ï¿½URL*/
         {
             cdx_int64 durationUs = 0;
             cdx_int64 bandwidth = 0;
@@ -1457,7 +1457,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             {
                 if (itemMeta.mNumAtom == 0 || !findInt64(&itemMeta,"durationUs", &durationUs))
                 {
-                    CDX_LOGE("ERROR_MALFORMED");
+                    LOGE("ERROR_MALFORMED");
                     goto freeAndContinue;
                 }
             }
@@ -1465,12 +1465,12 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
             PlaylistItem *item= (PlaylistItem*)malloc(sizeof(PlaylistItem));
             if (item == NULL)
             {
-                CDX_LOGE("err_no_memory");
+                LOGE("err_no_memory");
                 err = err_no_memory;
                 goto _err;
             }
             memset(item, 0, sizeof(PlaylistItem));
-            //AmessageÖÐµÄatom¿ÉÄÜÊÇÖ¸Õë£¬ËùÒÔmemcpyºÍfreeÐèÒªÐ¡ÐÄ
+            //Amessageï¿½Ðµï¿½atomï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ë£¬ï¿½ï¿½ï¿½ï¿½memcpyï¿½ï¿½freeï¿½ï¿½ÒªÐ¡ï¿½ï¿½
             memcpy(&(item->itemMeta),&itemMeta,sizeof(AMessage));
             if(durationUs >= 0)
             {
@@ -1490,7 +1490,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
                 }
                 item->u.mediaItemAttribute.baseTimeUs=playList->u.mediaPlaylistPrivate.mDurationUs;
                 hasEncrypteInf = false;
-                playList->u.mediaPlaylistPrivate.mDurationUs += durationUs;/*¼ÆËãÆ¬³¤*/
+                playList->u.mediaPlaylistPrivate.mDurationUs += durationUs;/*ï¿½ï¿½ï¿½ï¿½Æ¬ï¿½ï¿½*/
                 playList->u.mediaPlaylistPrivate.lastSeqNum = seqNum;
             }
             if (findInt64(&itemMeta,"bandwidth", &bandwidth) && (bandwidth > 0))
@@ -1519,7 +1519,7 @@ status_t M3u8Parse(const void *_data, cdx_uint32 size, Playlist **P, const char 
                 item2->next = item;
             }
             (playList->mNumItems)++;
-            memset(&itemMeta, 0, sizeof(AMessage)); /*ÒòÎªitemMeta¶ÔÓ¦ÓÚÒ»¸öURL*/
+            memset(&itemMeta, 0, sizeof(AMessage)); /*ï¿½ï¿½ÎªitemMetaï¿½ï¿½Ó¦ï¿½ï¿½Ò»ï¿½ï¿½URL*/
         }
 
 freeAndContinue:
@@ -1528,15 +1528,15 @@ freeAndContinue:
         offset = uOffsetLF + 1;
         ++lineNo;
     }
-    if (mIsVariantPlaylist == -1)/*´ËÊ±ÈÔÎ´ÅÐÃ÷ÀàÐÍ*/
+    if (mIsVariantPlaylist == -1)/*ï¿½ï¿½Ê±ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
     {
-        CDX_LOGE("ERROR_MALFORMED");
+        LOGE("ERROR_MALFORMED");
         err = ERROR_MALFORMED;
         goto _err;
     }
     if(playList->mNumItems <= 0)
     {
-        CDX_LOGE("playList->mNumItems <= 0");
+        LOGE("playList->mNumItems <= 0");
         err = ERROR_MALFORMED;
         goto _err;
     }

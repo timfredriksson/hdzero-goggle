@@ -13,7 +13,7 @@
 */
 //#define LOG_NDEBUG 0
 #define LOG_TAG "mpgStatusChange"
-#include <cdx_log.h>
+#include <log/log.h>
 
 #include "CdxMpgParser.h"
 #include "CdxMpgParserImpl.h"
@@ -275,7 +275,7 @@ cdx_int16 VobSelectRightPos(CdxMpgParserT *MpgParser, cdx_uint32 dispTime)
      curFpPos = mMpgParserCxt->nLastNvPackPos;
 
      nRet = VobJudgePosValid(MpgParser, &curFpPos, timeInterval);
-     if(nRet== 0)       //µ½´ï±ß½ç
+     if(nRet== 0)       //ï¿½ï¿½ï¿½ï¿½ß½ï¿½
      {
         mMpgParserCxt->mDataChunkT.bFileEndFlag = CDX_TRUE;
      }
