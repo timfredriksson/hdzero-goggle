@@ -17,7 +17,7 @@ ExternalProject_Add(
         ./configure
         --host=arm-linux-musleabihf
         --target=arm-linux-musleabihf
-        --prefix=<INSTALL_DIR>
+        --prefix=/usr
         --enable-shared=no
         --enable-static=yes
         --disable-python
@@ -25,18 +25,17 @@ ExternalProject_Add(
         --with-versioned=no
     BUILD_IN_SOURCE true
     BUILD_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make
-    INSTALL_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make install
-    BUILD_BYPRODUCTS <INSTALL_DIR>/include <INSTALL_DIR>/lib/libasound.a
+    INSTALL_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make install DESTDIR=<INSTALL_DIR>
+    BUILD_BYPRODUCTS <INSTALL_DIR>/usr/include <INSTALL_DIR>/usr/lib/libasound.a
 )
 
 ExternalProject_Get_property(alsa-lib-project INSTALL_DIR)
-set(ALSA_LIB_INSTALL_DIR ${CMAKE_BINARY_DIR}/${INSTALL_DIR})
 
-file (MAKE_DIRECTORY ${INSTALL_DIR}/include)
+file (MAKE_DIRECTORY ${INSTALL_DIR}/usr/include)
 
 add_library(alsa-lib STATIC IMPORTED GLOBAL)
 add_dependencies(alsa-lib alsa-lib-project)
 set_target_properties(alsa-lib PROPERTIES
-  IMPORTED_LOCATION ${ALSA_LIB_INSTALL_DIR}/lib/libasound.a
-  INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/include
+  IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/${INSTALL_DIR}/usr/lib/libasound.a
+  INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/usr/include
 )
