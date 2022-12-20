@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sys/vfs.h>
+#include <dirent.h>
 
 #include "defines.h"
 #include "thread.h"
@@ -28,16 +29,21 @@
 // SD card exist
 static void detect_sdcard(void)
 {
-	char   buf[128]; 
-	FILE   *stream;  
 	static bool sdcard_enable_last = false;
 
-    memset( buf, '\0', sizeof(buf) );
-    stream = popen( "ls /mnt/extsd/" , "r" );
-	fread( buf, sizeof(char), sizeof(buf),  stream);  
-	pclose( stream ); 
+	g_sdcard_enable = false;
 
-	g_sdcard_enable = strcmp(buf, "") == 0 ? false : true;
+	DIR *dir = opendir("/mnt/extsd/");
+	if (dir != NULL) {
+		struct dirent *d;
+		while ((d = readdir(dir)) != NULL) {
+			if (d->d_name[0] != '.') {
+				g_sdcard_enable = true;
+				break;
+			}
+		}
+		closedir(dir);
+	}
 
 	if((g_sdcard_enable && !sdcard_enable_last) || g_sdcard_det_req) {
 		struct statfs info;
