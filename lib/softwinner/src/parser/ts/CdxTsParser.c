@@ -14,7 +14,7 @@
 #include <CdxBitReader.h>
 #include <CdxMemory.h>
 #include <CdxTime.h>
-#include <CdxTsParser.h>
+#include "CdxTsParser.h"
 #include <stdint.h>
 #define SAVE_FILE    (0)
 

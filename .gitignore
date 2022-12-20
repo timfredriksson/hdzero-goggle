@@ -1,5 +1,7 @@
 /toolchain
 
+/.vscode/settings.json
+
 /build
 /out
 

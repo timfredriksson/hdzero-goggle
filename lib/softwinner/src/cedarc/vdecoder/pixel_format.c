@@ -16,8 +16,11 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include "vdecoder.h"
+
 #include <log/log.h>
+
+#include "vdecoder.h"
+#include "CdxTypes.h"
 
 /*******************************************************************************
 Function name: map32x32_to_yuv_Y

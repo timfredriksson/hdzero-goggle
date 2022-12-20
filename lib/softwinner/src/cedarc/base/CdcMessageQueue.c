@@ -19,6 +19,7 @@
 #include <log/log.h>
 #include "CdcMessageQueue.h"
 #include "AwMessageQueue.h"
+#include "CdxTypes.h"
 
 typedef struct MessageNode MessageNode;
 

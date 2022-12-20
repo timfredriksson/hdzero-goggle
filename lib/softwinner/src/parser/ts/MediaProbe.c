@@ -8,8 +8,9 @@
  *
  */
 
-#include <CdxTsParser.h>
 #include <log/log.h>
+
+#include "CdxTsParser.h"
 
 #define    SYNCWORDH            0xff
 #define    SYNCWORDL            0xf0

@@ -151,8 +151,9 @@ AwdmxContext_t* awdmx_open(char* sFile, CB_onDmxEof cbOnEof, void* context)
     dmxCtx->cbOnEof = cbOnEof;
     dmxCtx->cbOnEofContext = context;
 
-    LOGD("open file");
-    strcpy(dmxCtx->srcFile, sFile);
+    strncpy(dmxCtx->srcFile, sFile, MAX_FILE_PATH_LEN);
+    
+    LOGD("open file %s", dmxCtx->srcFile);
     dmxCtx->srcFd = open(sFile, O_RDONLY);
     if(dmxCtx->srcFd < 0) {
         LOGE("open file failed: %s", strerror(errno));

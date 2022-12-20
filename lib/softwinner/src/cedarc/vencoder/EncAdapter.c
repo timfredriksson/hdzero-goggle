@@ -13,6 +13,8 @@
 
 #include <log/log.h>
 
+#include "CdxTypes.h"
+
 #include "EncAdapter.h"
 
 //* use method provide by libVE.so to process ve control methods.

@@ -28,6 +28,7 @@
 
 #include <log/log.h>
 #include "CdcUtil.h"
+#include "CdxTypes.h"
 
 int CdcIonGetMemType()
 {

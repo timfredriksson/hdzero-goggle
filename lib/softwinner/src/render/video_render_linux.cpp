@@ -29,7 +29,7 @@
 #include <vdecoder.h>
 #include <vencoder.h>
 #include "video_render.h"
-#include <CedarXNativeRenderer.h>
+#include "CedarXNativeRenderer.h"
 #include <hwdisplay.h>
 #include <CDX_ErrorType.h>
 #include <MetaData.h>

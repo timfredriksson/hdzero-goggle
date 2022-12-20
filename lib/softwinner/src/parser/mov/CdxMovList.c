@@ -9,6 +9,9 @@
  */
 
 #define LOG_TAG "CdxMovList"
+
+#include <log/log.h>
+
 #include "CdxMovList.h"
 
 typedef struct cdxtagIS

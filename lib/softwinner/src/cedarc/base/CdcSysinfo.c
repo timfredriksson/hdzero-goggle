@@ -22,6 +22,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 
+#include "CdxTypes.h"
 #include "CdcSysinfo.h"
 
 #define NODE_DDR_FREQ    "/sys/class/devfreq/sunxi-ddrfreq/cur_freq"

@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <stdio.h>
 #include <CdxDebug.h>
 
 #define FILE_STREAM_SCHEME "file://"
@@ -483,7 +484,7 @@ cdx_int32 __FileStreamConnect(CdxStreamT *stream)
         goto failure;
     }
 
-    CDX_BUF_DUMP(impl->probeData.buf, 16);
+    // CDX_BUF_DUMP(impl->probeData.buf, 16);
 
     ret = (cdx_int32)cdxfseek64(impl->fd, impl->offset, SEEK_SET);
     if (-1 == ret)

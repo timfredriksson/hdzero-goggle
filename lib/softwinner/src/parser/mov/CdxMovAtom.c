@@ -144,7 +144,7 @@ static MovParserProcess s_mov_stsd_parser[] =
 };
 
 /* See Genre List at http://id3.org/id3v2.3.0 */
-const char * const ff_id3v1_genre_str[ID3v1_GENRE_MAX + 1] = {
+static const char * const ff_id3v1_genre_str[ID3v1_GENRE_MAX + 1] = {
       [0] = "Blues",
       [1] = "Classic Rock",
       [2] = "Country",
