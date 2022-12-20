@@ -17,11 +17,11 @@
 #include <stdlib.h>
 #include<string.h>
 #include <pthread.h>
-#include "sbm.h"
-
-//#include "secureMemoryAdapter.h"
 
 #include <log/log.h>
+
+#include "sbm.h"
+#include "CdxTypes.h"
 
 #define SBM_FRAME_FIFO_SIZE (2048)  //* store 2048 frames of bitstream data at maximum.
 

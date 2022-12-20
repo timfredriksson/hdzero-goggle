@@ -19,10 +19,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <memory.h>
-#include "fbm.h"
+
 #include <log/log.h>
 
+#include "fbm.h"
 #include "CdcUtil.h"
+#include "CdxTypes.h"
 
 extern int bDynamicShowLogFlag;
 extern const char* strPixelFormat[];

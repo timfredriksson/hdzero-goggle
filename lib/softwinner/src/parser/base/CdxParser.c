@@ -437,15 +437,15 @@ void AwParserInit(void)
     AwParserRegister(&envParserCtor, CDX_PARSER_ENV, &envKeyInfo);
 #endif
 
-    AwParserRegister(&mpgParserCtor, CDX_PARSER_MPG, &mpgKeyInfo);
+    //AwParserRegister(&mpgParserCtor, CDX_PARSER_MPG, &mpgKeyInfo);
     //AwParserRegister(&apeParserCtor, CDX_PARSER_APE, &apeKeyInfo);
     //AwParserRegister(&flacParserCtor, CDX_PARSER_FLAC, &flacKeyInfo);
     //AwParserRegister(&amrParserCtor, CDX_PARSER_AMR, &amrKeyInfo);
 #ifdef __ANDROID__
     AwParserRegister(&atracParserCtor, CDX_PARSER_ATRAC, &atracKeyInfo);
 #endif
-    AwParserRegister(&mp3ParserCtor, CDX_PARSER_MP3, &mp3KeyInfo);
-    AwParserRegister(&aacParserCtor, CDX_PARSER_AAC, &aacKeyInfo);
+    //AwParserRegister(&mp3ParserCtor, CDX_PARSER_MP3, &mp3KeyInfo);
+    //AwParserRegister(&aacParserCtor, CDX_PARSER_AAC, &aacKeyInfo);
     //AwParserRegister(&wavParserCtor, CDX_PARSER_WAV, &wavKeyInfo);
 
 #ifdef __ANDROID__
@@ -457,7 +457,7 @@ void AwParserInit(void)
     AwParserRegister(&aiffParserCtor, CDX_PARSER_AIFF, &aiffKeyInfo);
 #endif
 
-    AwParserRegister(&id3v2ParserCtor, CDX_PARSER_ID3V2, &id3v2KeyInfo);
+    //AwParserRegister(&id3v2ParserCtor, CDX_PARSER_ID3V2, &id3v2KeyInfo);
 #if ENABLE_RAW_STREAM_PARSER
     AwParserRegister(&rawStreamParserCtor, CDX_PARSER_AWRAWSTREAM, &rawStreamKeyInfo);
 #endif

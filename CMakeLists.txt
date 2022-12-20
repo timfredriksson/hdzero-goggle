@@ -3,13 +3,28 @@ cmake_minimum_required(VERSION 3.16)
 project(HDZGOGGLE VERSION 1.1)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
-set(CMAKE_C_COMPILE_OPTIONS_IPO "-flto")
-set(CMAKE_CXX_COMPILE_OPTIONS_IPO "-flto")
 set(OS_APP_PATH ${PROJECT_SOURCE_DIR}/mkapp/app/app)
+
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+	set(CMAKE_C_COMPILE_OPTIONS_IPO "-flto")
+	set(CMAKE_CXX_COMPILE_OPTIONS_IPO "-flto")
+endif()
 
 add_definitions(
 	-DAWCHIP=AW_V5
+)
+
+set(COMMON_COMPILE_OPTIONS
+	-march=armv7-a
+	-mtune=cortex-a7
+	-mfpu=neon
+	-mfloat-abi=hard
+	-Wno-unused-function
+	-Wno-unused-variable
+	-ffunction-sections
+	-fdata-sections 
+	-Wl,-gc-sections
 )
 
 # deps
@@ -24,21 +39,10 @@ add_subdirectory(lib/glog)
 add_subdirectory(lib/log)
 add_subdirectory(lib/lvgl)
 add_subdirectory(lib/alsa-lib)
+add_subdirectory(lib/zlib)
 add_subdirectory(lib/softwinner)
 
 # build settings
-set(COMMON_COMPILE_OPTIONS 
-	-O3
-	-march=armv7-a
-	-mtune=cortex-a7
-	-mfpu=neon
-	-mfloat-abi=hard
-	-Wno-unused-function
-	-Wno-unused-variable
-	-ffunction-sections
-	-fdata-sections 
-	-Wl,-gc-sections
-)
 set(STANDARD_LIBRARIES
 	c
 	crypt
