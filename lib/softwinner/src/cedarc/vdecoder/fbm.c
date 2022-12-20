@@ -489,7 +489,7 @@ VideoPicture* FbmRequestBuffer(Fbm* pFbm)
     VideoFbmInfo*  pFbmInfo = NULL;
     struct ScMemOpsS *_memops = NULL;
 
-    LOGI("FbmRequestBuffer");
+    LOGV("FbmRequestBuffer");
     if(pFbm == NULL)
         return NULL;
 
@@ -856,7 +856,7 @@ int FbmReturnPicture(Fbm* pFbm, VideoPicture* pVPicture)
     {
         return 0;
     }
-    LOGI("**************FbmReturnPicture pVPicture=%p", pVPicture,pVPicture->nID);
+    LOGV("**************FbmReturnPicture pVPicture=%p", pVPicture,pVPicture->nID);
     if(pFbmInfo->bTwoStreamShareOneFbm == 1)
     {
         if(pFbm == pFbmInfo->pFbmFirst)

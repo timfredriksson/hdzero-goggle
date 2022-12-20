@@ -924,7 +924,7 @@ int DecodeVideoStream(VideoDecoder* pDecoder,
     int                  ret;
     VideoDecoderContext* p;
 
-    LOGI("DecodeVideoStream, pDecoder=%p, \
+    LOGV("DecodeVideoStream, pDecoder=%p, \
             bEndOfStream=%d, bDropBFrameIfDelay=%d, nCurrentTimeUs=%lld", \
             pDecoder, bEndOfStream, bDropBFrameIfDelay, nCurrentTimeUs);
 
@@ -1051,7 +1051,7 @@ int RequestVideoStreamBuffer(VideoDecoder* pDecoder,
     SbmInterface*        pSbm;
     VideoDecoderContext* p;
 
-    LOGI("RequestVideoStreamBuffer, pDecoder=%p, nRequireSize=%d, nStreamBufIndex=%d",
+    LOGV("RequestVideoStreamBuffer, pDecoder=%p, nRequireSize=%d, nStreamBufIndex=%d",
             pDecoder, nRequireSize, nStreamBufIndex);
 
     p = (VideoDecoderContext*)pDecoder;
@@ -1118,7 +1118,7 @@ int RequestVideoStreamBuffer(VideoDecoder* pDecoder,
         *pBufSize     = pStreamBufEnd - pStart;
         *ppRingBuf    = SbmBufferAddress(pSbm);
         *pRingBufSize = nFreeSize - *pBufSize;
-        LOGI("stream buffer %d ring back.", nStreamBufIndex);
+        LOGV("stream buffer %d ring back.", nStreamBufIndex);
     }
 
     return 0;
@@ -1161,7 +1161,7 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
 #if DEBUG_MAKE_SPECIAL_STREAM
     char mask[6] = "awsp";
 #endif
-    LOGI("SubmitVideoStreamData, pDecoder=%p, pDataInfo=%p, nStreamBufIndex=%d",
+    LOGV("SubmitVideoStreamData, pDecoder=%p, pDataInfo=%p, nStreamBufIndex=%d",
             pDecoder, pDataInfo, nStreamBufIndex);
 
     p = (VideoDecoderContext*)pDecoder;
@@ -1190,8 +1190,8 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
         {
             LOGV("stream data frame uncomplete.");
             if(bSaveStreamFlag){
-                LOGD("lenth=%d", pPartialStreamDataInfo->nLength);
-                LOGD("pts=%lld", (long long int)pPartialStreamDataInfo->nPts);
+                LOGV("lenth=%d", pPartialStreamDataInfo->nLength);
+                LOGV("pts=%lld", (long long int)pPartialStreamDataInfo->nPts);
                 char* pWriteAddr          = SbmBufferWritePointer(pSbm);
                 char* pSbmBufferStartAddr = SbmBufferAddress(pSbm);
                 int   nSbmBufferSize      = SbmBufferSize(pSbm);
@@ -1303,8 +1303,8 @@ int SubmitVideoStreamData(VideoDecoder*        pDecoder,
                         pPartialStreamDataInfo->nLength- \
                         (pSbmBufferEndAddr-pWriteAddr+1), fpStream);
                 }
-                LOGD("lenth=%d", pPartialStreamDataInfo->nLength);
-                LOGD("pts=%lld", (long long int)pPartialStreamDataInfo->nPts);
+                LOGV("lenth=%d", pPartialStreamDataInfo->nLength);
+                LOGV("pts=%lld", (long long int)pPartialStreamDataInfo->nPts);
             }
 
 #if DEBUG_MAKE_SPECIAL_STREAM
@@ -1364,7 +1364,7 @@ int VideoStreamBufferSize(VideoDecoder* pDecoder, int nStreamBufIndex)
 {
     VideoDecoderContext* p = (VideoDecoderContext*)pDecoder;
 
-    LOGI("VideoStreamBufferSize, nStreamBufIndex=%d", nStreamBufIndex);
+    LOGV("VideoStreamBufferSize, nStreamBufIndex=%d", nStreamBufIndex);
 
     if(p->pSbm[nStreamBufIndex] == NULL)
         return 0;
@@ -1376,7 +1376,7 @@ int VideoStreamDataSize(VideoDecoder* pDecoder, int nStreamBufIndex)
 {
     VideoDecoderContext* p = (VideoDecoderContext*)pDecoder;
 
-    LOGI("VideoStreamDataSize, nStreamBufIndex=%d", nStreamBufIndex);
+    LOGV("VideoStreamDataSize, nStreamBufIndex=%d", nStreamBufIndex);
 
     if(p->pSbm[nStreamBufIndex] == NULL)
         return 0;
@@ -1388,7 +1388,7 @@ int VideoStreamFrameNum(VideoDecoder* pDecoder, int nStreamBufIndex)
 {
     VideoDecoderContext* p = (VideoDecoderContext*)pDecoder;
 
-    LOGI("VideoStreamFrameNum, nStreamBufIndex=%d", nStreamBufIndex);
+    LOGV("VideoStreamFrameNum, nStreamBufIndex=%d", nStreamBufIndex);
 
     if(p->pSbm[nStreamBufIndex] == NULL)
         return 0;
@@ -1400,7 +1400,7 @@ void* VideoStreamDataInfoPointer(VideoDecoder* pDecoder, int nStreamBufIndex)
 {
     VideoDecoderContext* p = (VideoDecoderContext*)pDecoder;
 
-    LOGI("VideoStreamDataSize, nStreamBufIndex=%d", nStreamBufIndex);
+    LOGV("VideoStreamDataSize, nStreamBufIndex=%d", nStreamBufIndex);
 
     if(p->pSbm[nStreamBufIndex] == NULL)
         return NULL;
@@ -1484,7 +1484,7 @@ VideoPicture* RequestPicture(VideoDecoder* pDecoder, int nStreamIndex)
     Fbm*                 pFbm;
     VideoPicture*        pPicture;
 
-    LOGI("RequestPicture, nStreamIndex=%d", nStreamIndex);
+    LOGV("RequestPicture, nStreamIndex=%d", nStreamIndex);
 
     p = (VideoDecoderContext*)pDecoder;
 
@@ -1545,7 +1545,7 @@ int ReturnPicture(VideoDecoder* pDecoder, VideoPicture* pPicture)
     int                  nStreamIndex;
     int                  ret;
 
-    LOGI("ReturnPicture, pPicture=%p", pPicture);
+    LOGV("ReturnPicture, pPicture=%p", pPicture);
 
     p = (VideoDecoderContext*)pDecoder;
 
@@ -1582,7 +1582,7 @@ VideoPicture* NextPictureInfo(VideoDecoder* pDecoder, int nStreamIndex)
     Fbm*                 pFbm;
     VideoPicture*        pPicture;
 
-    LOGI("RequestPicture, nStreamIndex=%d", nStreamIndex);
+    LOGV("RequestPicture, nStreamIndex=%d", nStreamIndex);
 
     p = (VideoDecoderContext*)pDecoder;
 
