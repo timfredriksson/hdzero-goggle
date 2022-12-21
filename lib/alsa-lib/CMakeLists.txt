@@ -4,16 +4,14 @@ ExternalProject_Add(
     alsa-lib-project
     URL      ${CMAKE_CURRENT_LIST_DIR}/alsa-lib-1.1.4.1.tar.bz2
     URL_HASH MD5=29fa3e69122d3cf3e8f0e01a0cb1d183
-    DOWNLOAD_COMMAND ""
-    DOWNLOAD_EXTRACT_TIMESTAMP 1
-    PATCH_COMMAND
+    PATCH_COMMAND 
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/001_dmix_support_S16_LE_format.patch &&
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/002-add-muslabihf.patch &&
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/100-link_fix.patch &&
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/200-fix_include_file_redirect_warnings.patch &&
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/201-fix-snd_pcm_area_silence-remaining-samples-issue.patch &&
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/300-ensure-ringbuffer-empty-with-dmix.patch
-    CONFIGURE_COMMAND
+    CONFIGURE_COMMAND 
         env PATH=${TOOLS}/bin:$ENV{PATH}
         ./configure
         --host=arm-linux-musleabihf
@@ -24,10 +22,11 @@ ExternalProject_Add(
         --disable-python
         --without-debug
         --with-versioned=no
-    BUILD_IN_SOURCE 1
     BUILD_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make
     INSTALL_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make install DESTDIR=<INSTALL_DIR>
     BUILD_BYPRODUCTS <INSTALL_DIR>/usr/include <INSTALL_DIR>/usr/lib/libasound.a
+    DOWNLOAD_EXTRACT_TIMESTAMP 1
+    BUILD_IN_SOURCE 1
 )
 
 ExternalProject_Get_property(alsa-lib-project INSTALL_DIR)
