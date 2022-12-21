@@ -8,4 +8,4 @@ if [[ ! -d toolchain ]]; then
 fi
 
 rm -rf build && mkdir build
-cmake . --toolchain=toolchain.cmake -Bbuild
+cmake . -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -Bbuild
