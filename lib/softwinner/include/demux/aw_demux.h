@@ -4,10 +4,6 @@
 #include <log/log.h>
 
 #include "cedarx_demux.h"
-//#include "CDX_Debug.h"
-//#include "CDX_Fileformat.h"
-
-//#include "CDX_Common.h"
 
 #ifdef __cplusplus
 extern "C" {

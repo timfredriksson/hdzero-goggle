@@ -20,7 +20,7 @@
 #define _DEMUXTYPEMAP_H_
 
 #include <CdxParser.h>
-#include <CDX_fileformat.h>
+#include <media/CDX_fileformat.h>
 
 #ifdef __cplusplus
 extern "C" {

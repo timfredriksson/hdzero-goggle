@@ -29,7 +29,7 @@
 
 //#include <CDX_Debug.h>
 #include <CDX_ErrorType.h>
-#include <CDX_fileformat.h>
+#include <media/CDX_fileformat.h>
 #include "cedarx_demux.h"
 #include "plat_math.h"
 #include "aw_demux.h"
