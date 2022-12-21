@@ -4,18 +4,17 @@ ExternalProject_Add(
     zlib-project
     URL ${CMAKE_CURRENT_LIST_DIR}/zlib-1.2.8.tar.gz
     URL_HASH MD5=44d667c142d7cda120332623eab69f40 
-    DOWNLOAD_COMMAND ""
-    DOWNLOAD_EXTRACT_TIMESTAMP 1
     PATCH_COMMAND ""
-    CONFIGURE_COMMAND
+    CONFIGURE_COMMAND 
         env PATH=${TOOLS}/bin:$ENV{PATH} CROSS_PREFIX=${TRIPLE}-
         ./configure
         --static
         --prefix=/usr
-    BUILD_IN_SOURCE 1
     BUILD_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make
     INSTALL_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make install DESTDIR=<INSTALL_DIR>
     BUILD_BYPRODUCTS <INSTALL_DIR>/usr/include <INSTALL_DIR>/usr/lib/libz.a
+    BUILD_IN_SOURCE 1
+    DOWNLOAD_EXTRACT_TIMESTAMP 1
 )
 
 ExternalProject_Get_property(zlib-project INSTALL_DIR)
