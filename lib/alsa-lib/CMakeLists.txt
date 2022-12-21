@@ -2,9 +2,10 @@ include(ExternalProject)
 
 ExternalProject_Add(
     alsa-lib-project
-    URL file://${CMAKE_CURRENT_LIST_DIR}/alsa-lib-1.1.4.1.tar.bz2
-    DOWNLOAD_EXTRACT_TIMESTAMP 1
+    URL      ${CMAKE_CURRENT_LIST_DIR}/alsa-lib-1.1.4.1.tar.bz2
     URL_HASH MD5=29fa3e69122d3cf3e8f0e01a0cb1d183
+    DOWNLOAD_COMMAND ""
+    DOWNLOAD_EXTRACT_TIMESTAMP 1
     PATCH_COMMAND
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/001_dmix_support_S16_LE_format.patch &&
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/002-add-muslabihf.patch &&

@@ -2,9 +2,10 @@ include(ExternalProject)
 
 ExternalProject_Add(
     zlib-project
-    URL file://${CMAKE_CURRENT_LIST_DIR}/zlib-1.2.8.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP 1
+    URL ${CMAKE_CURRENT_LIST_DIR}/zlib-1.2.8.tar.gz
     URL_HASH MD5=44d667c142d7cda120332623eab69f40 
+    DOWNLOAD_COMMAND ""
+    DOWNLOAD_EXTRACT_TIMESTAMP 1
     PATCH_COMMAND ""
     CONFIGURE_COMMAND
         env PATH=${TOOLS}/bin:$ENV{PATH} CROSS_PREFIX=${TRIPLE}-
