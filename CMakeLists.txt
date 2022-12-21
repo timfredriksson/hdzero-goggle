@@ -79,7 +79,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	src/page
 	src/player
 )
-target_include_directories(${PROJECT_NAME} SYSTEM AFTER PRIVATE 
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE 
 	lib/linux/include
 )
 target_link_directories(${PROJECT_NAME} PRIVATE 
