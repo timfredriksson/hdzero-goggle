@@ -3,8 +3,8 @@ include(ExternalProject)
 ExternalProject_Add(
     alsa-lib-project
     URL file://${CMAKE_CURRENT_LIST_DIR}/alsa-lib-1.1.4.1.tar.bz2
+    DOWNLOAD_EXTRACT_TIMESTAMP 1
     URL_HASH MD5=29fa3e69122d3cf3e8f0e01a0cb1d183
-    DOWNLOAD_EXTRACT_TIMESTAMP true
     PATCH_COMMAND
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/001_dmix_support_S16_LE_format.patch &&
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/002-add-muslabihf.patch &&
@@ -23,7 +23,7 @@ ExternalProject_Add(
         --disable-python
         --without-debug
         --with-versioned=no
-    BUILD_IN_SOURCE true
+    BUILD_IN_SOURCE 1
     BUILD_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make
     INSTALL_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make install DESTDIR=<INSTALL_DIR>
     BUILD_BYPRODUCTS <INSTALL_DIR>/usr/include <INSTALL_DIR>/usr/lib/libasound.a
