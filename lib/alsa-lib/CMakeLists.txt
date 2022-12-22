@@ -22,7 +22,7 @@ ExternalProject_Add(
         --disable-python
         --without-debug
         --with-versioned=no
-    BUILD_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make
+    BUILD_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make -j${CPU_COUNT}
     INSTALL_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make install DESTDIR=<INSTALL_DIR>
     BUILD_BYPRODUCTS <INSTALL_DIR>/usr/include <INSTALL_DIR>/usr/lib/libasound.a
     DOWNLOAD_EXTRACT_TIMESTAMP 1

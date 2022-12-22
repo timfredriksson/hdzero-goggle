@@ -27,6 +27,9 @@ set(COMMON_COMPILE_OPTIONS
 	-Wl,-gc-sections
 )
 
+include(ProcessorCount)
+ProcessorCount(CPU_COUNT)
+
 # deps
 set(BUILD_SHARED_LIBS OFF)
 set(WITH_GFLAGS OFF)
