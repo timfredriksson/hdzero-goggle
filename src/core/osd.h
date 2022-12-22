@@ -70,6 +70,8 @@ typedef struct {
 extern bool is_recording;
 extern uint8_t channel_osd_mode;
 
+void osd_resource_path(char* buf, const char *fmt, ...);
+
 int draw_osd_clear(void);
 int draw_osd_on_screen(uint8_t row, uint8_t col);
 int osd_init(void);

@@ -37,6 +37,27 @@ static pthread_mutex_t dvr_mutex;
 extern lv_style_t style_osd;
 extern pthread_mutex_t lvgl_mutex;
 
+void osd_resource_path(char* buf, const char *fmt, ...) {
+	char filename[128];
+
+	va_list args;
+    va_start(args, fmt);
+	vsprintf(filename, fmt, args);
+	va_end(args);
+
+	strcpy(buf, RESOURCE_PATH_SDCARD);
+	strcat(buf, filename);
+
+	if (access(buf, F_OK) != 0) {
+		strcpy(buf, RESOURCE_PATH);
+		strcat(buf, filename);
+	}
+
+	memmove(buf + 2, buf, strlen(buf) + 2);
+	buf[0] = 'A';
+	buf[1] = ':';
+}
+
 
 ///////////////////////////////////////////////////////////////////
 //-1=error;
@@ -213,13 +234,13 @@ void osd_rec_show(bool bShow)
 	}
 	
 	if(!g_sdcard_enable) {
-		sprintf(buf,"%s%s",RESOURCE_PATH,noSdcard_bmp);
+		osd_resource_path(buf,noSdcard_bmp);
     	lv_img_set_src(g_osd_hdzero.sd_rec, buf);
 		lv_obj_clear_flag(g_osd_hdzero.sd_rec, LV_OBJ_FLAG_HIDDEN);
 	}
 	else {
 		if(is_recording) {
-			sprintf(buf,"%s%s",RESOURCE_PATH,recording_bmp);
+			osd_resource_path(buf,recording_bmp);
 			lv_img_set_src(g_osd_hdzero.sd_rec, buf);
 			lv_obj_clear_flag(g_osd_hdzero.sd_rec, LV_OBJ_FLAG_HIDDEN);
 		}
@@ -251,7 +272,7 @@ void osd_topfan_show(bool bShow)
 	}
 
 	if(g_setting.fans.top_speed>5) return;
-	sprintf(buf,"%sfan%d.bmp",RESOURCE_PATH,fan_speeds[2]+1);
+	osd_resource_path(buf,"fan%d.bmp",fan_speeds[2]+1);
     lv_img_set_src(g_osd_hdzero.topfan_speed, buf);
 	lv_obj_clear_flag(g_osd_hdzero.topfan_speed, LV_OBJ_FLAG_HIDDEN);
 }
@@ -274,9 +295,9 @@ void osd_vlq_show(bool bShow)
 
 	if(link_quality > 8) return;
 	if(rx_status[0].rx_valid || rx_status[1].rx_valid) 
-		sprintf(buf,"%sVLQ%d.bmp",RESOURCE_PATH,link_quality+1); //VLQ7.bmp
+		osd_resource_path(buf,"VLQ%d.bmp",link_quality+1); //VLQ7.bmp
 	else 	
-		sprintf(buf,"%sVLQ1.bmp",RESOURCE_PATH); //VLQ1.bmp
+		osd_resource_path(buf,"VLQ1.bmp"); //VLQ1.bmp
 
     lv_img_set_src(g_osd_hdzero.vlq, buf);
 	lv_obj_clear_flag(g_osd_hdzero.vlq, LV_OBJ_FLAG_HIDDEN);
@@ -398,10 +419,10 @@ void osd_hdzero_update(void)
 			i = vtxTempInfo&0xF;
 			if(i==0) i=1;
 			else if(i>8) i= 8;
-			sprintf(buf,"%sVtxTemp%d",RESOURCE_PATH,i);  //"VtxTemp1.bmp"
+			osd_resource_path(buf,"VtxTemp%d.bmp",i);  //"VtxTemp1.bmp"
 		}
 		else
-			sprintf(buf,"%s%s",RESOURCE_PATH,blank_bmp);
+			osd_resource_path(buf,blank_bmp);
 		lv_img_set_src(g_osd_hdzero.vtx_temp, buf);
 	}
 
@@ -414,13 +435,13 @@ void osd_hdzero_update(void)
 
 	osd_vlq_show(showRXOSD);
 
-	sprintf(buf, "%sant%d.bmp", RESOURCE_PATH,RSSI2Ant(rx_status[0].rx_rssi[0]));
+	osd_resource_path(buf, "ant%d.bmp", RSSI2Ant(rx_status[0].rx_rssi[0]));
 	lv_img_set_src(g_osd_hdzero.ant0, buf);
-	sprintf(buf, "%sant%d.bmp", RESOURCE_PATH,RSSI2Ant(rx_status[0].rx_rssi[1]));
+	osd_resource_path(buf, "ant%d.bmp", RSSI2Ant(rx_status[0].rx_rssi[1]));
 	lv_img_set_src(g_osd_hdzero.ant1, buf);
-	sprintf(buf, "%sant%d.bmp", RESOURCE_PATH,RSSI2Ant(rx_status[1].rx_rssi[0]));
+	osd_resource_path(buf, "ant%d.bmp", RSSI2Ant(rx_status[1].rx_rssi[0]));
 	lv_img_set_src(g_osd_hdzero.ant2, buf);
-	sprintf(buf, "%sant%d.bmp", RESOURCE_PATH,RSSI2Ant(rx_status[1].rx_rssi[1]));
+	osd_resource_path(buf, "ant%d.bmp", RSSI2Ant(rx_status[1].rx_rssi[1]));
 	lv_img_set_src(g_osd_hdzero.ant3, buf);
 
 	if(showRXOSD) {
@@ -469,19 +490,19 @@ static void embedded_osd_init(void)
 {
 	char buf[128];
 
-	sprintf(buf,"%s%s",RESOURCE_PATH,fan1_bmp);
+	osd_resource_path(buf, fan1_bmp);
 	create_osd_object(&g_osd_hdzero.topfan_speed, buf, 0);  
 
-	sprintf(buf,"%s%s",RESOURCE_PATH,VtxTemp1_bmp);
+	osd_resource_path(buf, VtxTemp1_bmp);
 	create_osd_object(&g_osd_hdzero.vtx_temp, buf, 1);
 
-	sprintf(buf,"%s%s",RESOURCE_PATH,lowBattery_gif);
+	osd_resource_path(buf, lowBattery_gif);
 	create_osd_object(&g_osd_hdzero.battery,  buf, 2);
 
-	sprintf(buf,"%s%s",RESOURCE_PATH,VrxTemp7_gif);
+	osd_resource_path(buf, VrxTemp7_gif);
 	create_osd_object(&g_osd_hdzero.vrx_temp, buf, 3);
 
-	sprintf(buf,"%s%s",RESOURCE_PATH,LLOCK_bmp);
+	osd_resource_path(buf, LLOCK_bmp);
 	create_osd_object(&g_osd_hdzero.latency_lock, buf, 4);
 		
 	g_osd_hdzero.ch = lv_label_create(scr_osd);
@@ -494,13 +515,13 @@ static void embedded_osd_init(void)
 	lv_obj_set_style_radius(g_osd_hdzero.ch,50, 0);
 	channel_osd_mode = 0;
 	
-	sprintf(buf,"%s%s",RESOURCE_PATH,noSdcard_bmp);
+	osd_resource_path(buf, noSdcard_bmp);
 	create_osd_object(&g_osd_hdzero.sd_rec,  buf, 5);
 
-	sprintf(buf,"%s%s",RESOURCE_PATH,VLQ1_bmp);
+	osd_resource_path(buf, VLQ1_bmp);
 	create_osd_object(&g_osd_hdzero.vlq,   buf, 6);
 
-	sprintf(buf,"%s%s",RESOURCE_PATH,ant1_bmp);
+	osd_resource_path(buf, ant1_bmp);
 	create_osd_object(&g_osd_hdzero.ant0,     buf, 7);
 	create_osd_object(&g_osd_hdzero.ant1,     buf, 8);
 	create_osd_object(&g_osd_hdzero.ant2,     buf, 9);
