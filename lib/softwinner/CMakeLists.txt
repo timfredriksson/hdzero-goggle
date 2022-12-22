@@ -82,12 +82,12 @@ target_include_directories(softwinner PRIVATE
     ../linux/include
     ../linux/include/media
 )
-add_dependencies(softwinner alsa-lib-project)
 target_link_libraries(softwinner PUBLIC
     log
-    zlib
-    alsa-lib
 
+    ALSA_LIB_TARGET
+    ZLIB_TARGET
+    
     ${CMAKE_CURRENT_LIST_DIR}/lib/lib_eis.a
     ${CMAKE_CURRENT_LIST_DIR}/lib/lib_ise_bi.a
     ${CMAKE_CURRENT_LIST_DIR}/lib/lib_ise_mo.a
@@ -112,3 +112,5 @@ target_link_libraries(softwinner PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/lib/libVE.a
 )
 
+file(GLOB PREBUILT_LIBRARIES ${CMAKE_CURRENT_LIST_DIR}/lib/*.so)
+install(FILES ${PREBUILT_LIBRARIES} TYPE LIB)

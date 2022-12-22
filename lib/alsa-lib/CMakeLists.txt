@@ -36,6 +36,6 @@ file (MAKE_DIRECTORY ${INSTALL_DIR}/usr/include)
 add_library(alsa-lib STATIC IMPORTED GLOBAL)
 add_dependencies(alsa-lib alsa-lib-project)
 set_target_properties(alsa-lib PROPERTIES
-  IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/${INSTALL_DIR}/usr/lib/libasound.a
-  INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/usr/include
+    IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/${INSTALL_DIR}/usr/lib/libasound.a
+    INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/usr/include
 )

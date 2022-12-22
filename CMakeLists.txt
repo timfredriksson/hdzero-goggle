@@ -17,8 +17,6 @@ add_definitions(
 )
 
 set(COMMON_COMPILE_OPTIONS
-	-march=armv7-a
-	-mtune=cortex-a7
 	-mfpu=neon
 	-mfloat-abi=hard
 	-Wno-unused-function
@@ -32,18 +30,42 @@ include(ProcessorCount)
 ProcessorCount(CPU_COUNT)
 
 # deps
-set(BUILD_SHARED_LIBS OFF)
-set(WITH_GFLAGS OFF)
-set(WITH_GTEST OFF)
-set(WITH_PKGCONFIG OFF)
-set(WITH_UNWIND OFF)
-set(BUILD_TESTING OFF)
-add_subdirectory(lib/glog)
+option(USE_SYSTEM_GLOG "use system glog" OFF)
+if(USE_SYSTEM_GLOG)
+	find_package(glog REQUIRED)
+	add_library(GLOG_TARGET ALIAS glog::glog)
+else(USE_SYSTEM_GLOG)
+	set(BUILD_SHARED_LIBS OFF)
+	set(WITH_GFLAGS OFF)
+	set(WITH_GTEST OFF)
+	set(WITH_PKGCONFIG OFF)
+	set(WITH_UNWIND OFF)
+	set(BUILD_TESTING OFF)
+	add_subdirectory(lib/glog)
+	add_library(GLOG_TARGET ALIAS glog)
+endif(USE_SYSTEM_GLOG)
 
 add_subdirectory(lib/log)
 add_subdirectory(lib/lvgl)
-add_subdirectory(lib/alsa-lib)
-add_subdirectory(lib/zlib)
+
+option(USE_SYSTEM_ALSA_LIB "use system alsa-lib" OFF)
+if(USE_SYSTEM_ALSA_LIB)
+	find_package(ALSA REQUIRED)
+	add_library(ALSA_LIB_TARGET ALIAS ALSA::ALSA)
+else(USE_SYSTEM_ALSA_LIB)
+	add_subdirectory(lib/alsa-lib)
+	add_library(ALSA_LIB_TARGET ALIAS alsa-lib)
+endif(USE_SYSTEM_ALSA_LIB)
+
+option(USE_SYSTEM_ZLIB "use system zlib" OFF)
+if(USE_SYSTEM_ZLIB)
+	find_package(ZLIB REQUIRED)
+	add_library(ZLIB_TARGET ALIAS ZLIB::ZLIB)
+else(USE_SYSTEM_ZLIB)
+	add_subdirectory(lib/zlib)
+	add_library(ZLIB_TARGET ALIAS zlib)
+endif(USE_SYSTEM_ZLIB)
+
 add_subdirectory(lib/softwinner)
 
 # build settings
@@ -90,12 +112,15 @@ target_link_directories(${PROJECT_NAME} PRIVATE
 	media/lib
 )
 target_link_libraries(${PROJECT_NAME}
-	-static
 	${STANDARD_LIBRARIES}
+
 	lvgl
-	glog::glog
 	log
 	softwinner
+
+	GLOG_TARGET
+	ZLIB_TARGET
+    ALSA_LIB_TARGET
 )
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMMON_COMPILE_OPTIONS})
 target_link_options(${PROJECT_NAME} PRIVATE ${COMMON_COMPILE_OPTIONS})
