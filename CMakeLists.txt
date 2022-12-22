@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(HDZGOGGLE VERSION 1.1)
 
+set(TRIPLE arm-buildroot-linux-musleabihf)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(OS_APP_PATH ${PROJECT_SOURCE_DIR}/mkapp/app/app)
 

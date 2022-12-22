@@ -12,18 +12,18 @@ ExternalProject_Add(
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/201-fix-snd_pcm_area_silence-remaining-samples-issue.patch &&
         patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/patches/300-ensure-ringbuffer-empty-with-dmix.patch
     CONFIGURE_COMMAND 
-        env PATH=${TOOLS}/bin:$ENV{PATH}
+        env PATH=${CMAKE_PROGRAM_PATH}:$ENV{PATH}/bin:$ENV{PATH}
         ./configure
-        --host=arm-linux-musleabihf
-        --target=arm-linux-musleabihf
+        --host=arm-linux
+        --target=arm-linux
         --prefix=/usr
         --enable-shared=no
         --enable-static=yes
         --disable-python
         --without-debug
         --with-versioned=no
-    BUILD_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make -j${CPU_COUNT}
-    INSTALL_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make install DESTDIR=<INSTALL_DIR>
+    BUILD_COMMAND env PATH=${CMAKE_PROGRAM_PATH}:$ENV{PATH}/bin:$ENV{PATH} make -j${CPU_COUNT}
+    INSTALL_COMMAND env PATH=${CMAKE_PROGRAM_PATH}:$ENV{PATH}/bin:$ENV{PATH} make install DESTDIR=<INSTALL_DIR>
     BUILD_BYPRODUCTS <INSTALL_DIR>/usr/include <INSTALL_DIR>/usr/lib/libasound.a
     DOWNLOAD_EXTRACT_TIMESTAMP 1
     BUILD_IN_SOURCE 1
