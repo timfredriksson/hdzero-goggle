@@ -10,7 +10,7 @@ ExternalProject_Add(
         ./configure
         --static
         --prefix=/usr
-    BUILD_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make
+    BUILD_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make -j${CPU_COUNT}
     INSTALL_COMMAND env PATH=${TOOLS}/bin:$ENV{PATH} make install DESTDIR=<INSTALL_DIR>
     BUILD_BYPRODUCTS <INSTALL_DIR>/usr/include <INSTALL_DIR>/usr/lib/libz.a
     BUILD_IN_SOURCE 1
