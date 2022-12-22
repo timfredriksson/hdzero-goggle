@@ -99,13 +99,21 @@ target_link_libraries(${PROJECT_NAME}
 target_compile_options(${PROJECT_NAME} PRIVATE ${COMMON_COMPILE_OPTIONS})
 target_link_options(${PROJECT_NAME} PRIVATE ${COMMON_COMPILE_OPTIONS})
 
-# post command
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
+file(GLOB RESOURCE_FILES 
+	${PROJECT_SOURCE_DIR}/mkapp/app/app/resource/*
+)
+
+# ota target
+add_custom_command(
+	OUTPUT ${PROJECT_SOURCE_DIR}/out/${PROJECT_NAME}
 	COMMAND size -A ${PROJECT_NAME}
 	COMMAND mkdir -p ${PROJECT_SOURCE_DIR}/out/
 	COMMAND cp ${PROJECT_NAME} ${PROJECT_SOURCE_DIR}/out/
 	COMMAND cp ${PROJECT_NAME} ${OS_APP_PATH}
 	COMMAND cd ${PROJECT_SOURCE_DIR}/mkapp && rm -f ./ota_app/hdzgoggle_app_ota*.tar && ./mkapp_ota.sh && ./make_fw.sh
 	COMMAND mv ${PROJECT_SOURCE_DIR}/mkapp/HDZERO_GOGGLE-*.bin ${PROJECT_SOURCE_DIR}/out/
+	DEPENDS ${RESOURCE_FILES} ${PROJECT_NAME} 
 )
-
+add_custom_target(${PROJECT_NAME}-OTA ALL
+  DEPENDS ${PROJECT_SOURCE_DIR}/out/${PROJECT_NAME}
+)
