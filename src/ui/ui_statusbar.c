@@ -1,12 +1,16 @@
-#include <stdio.h>
 #include "ui/ui_statusbar.h"
-#include "lvgl/lvgl.h"
+
+#include <stdio.h>
+
+#include <lvgl/lvgl.h>
+
+#include "common.hh"
+#include "driver/gpio.h"
+#include "mcp3021.h"
+#include "osd.h"
 #include "ui/page_common.h"
 #include "ui/page_playback.h"
 #include "ui/ui_style.h"
-#include "mcp3021.h"
-#include "osd.h"
-#include "common.hh"
 
 ///////////////////////////////////////////////////////////////////////////////
 //local

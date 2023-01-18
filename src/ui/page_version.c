@@ -7,14 +7,15 @@
 #include <log/log.h>
 #include <minIni.h>
 
-#include "../core/elrs.h"
-#include "../core/esp32_flash.h"
-#include "../driver/dm5680.h"
-#include "../driver/esp32.h"
-#include "../driver/fans.h"
-#include "../driver/i2c.h"
-#include "../driver/uart.h"
 #include "common.hh"
+#include "core/elrs.h"
+#include "core/esp32_flash.h"
+#include "driver/dm5680.h"
+#include "driver/esp32.h"
+#include "driver/fans.h"
+#include "driver/gpio.h"
+#include "driver/i2c.h"
+#include "driver/uart.h"
 #include "ui/page_common.h"
 #include "ui/ui_main_menu.h"
 #include "ui/ui_style.h"
@@ -244,13 +245,12 @@ uint8_t command_monitor(char *cmd) {
     return ret;
 }
 
-static void elrs_version_timer(struct _lv_timer_t *timer)
-{
+static void elrs_version_timer(struct _lv_timer_t *timer) {
     char label[80];
     uint8_t version[32] = {0};
     uint16_t size = sizeof(version) - 1;
 
-    if(!msp_read_resposne(MSP_GET_BP_VERSION, &size, version)) {
+    if (!msp_read_resposne(MSP_GET_BP_VERSION, &size, version)) {
         msp_send_packet(MSP_GET_BP_VERSION, MSP_PACKET_COMMAND, 0, NULL);
         return;
     }

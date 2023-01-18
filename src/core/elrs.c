@@ -21,9 +21,10 @@
 #include "hardware.h"
 #include "osd.h"
 
-#include "../driver/uart.h"
-#include "../driver/dm5680.h"
-#include "../driver/mcp3021.h"
+#include "driver/dm5680.h"
+#include "driver/gpio.h"
+#include "driver/mcp3021.h"
+#include "driver/uart.h"
 
 #include "ui/page_common.h"
 #include "ui/page_scannow.h"
@@ -306,7 +307,7 @@ void msp_process_packet()
 				break;
 			case MSP_SET_BUZZER:
 				//TODO after merge
-				//beep_n((packet.payload[0] | packet.payload[1]<<8) * 1000);
+				//beep_dur((packet.payload[0] | packet.payload[1]<<8) * 1000);
 				break;
 			case MSP_SET_OSD_ELEM:
 				// TODO
