@@ -10,6 +10,7 @@
 #include "common.hh"
 #include "core/elrs.h"
 #include "core/esp32_flash.h"
+#include "core/update.h"
 #include "driver/dm5680.h"
 #include "driver/esp32.h"
 #include "driver/fans.h"
@@ -37,7 +38,6 @@ static lv_obj_t *label_esp = NULL;
 #define I2C_Write(s, a, d) i2c_write(2, s, a, d)
 #define I2C_Read(s, a)     i2c_read(2, s, a)
 
-static bool is_need_update_progress = false;
 static bool reboot_flag = false;
 static lv_obj_t *cur_ver_label;
 
@@ -214,37 +214,6 @@ static lv_obj_t *page_version_create(lv_obj_t *parent, panel_arr_t *arr) {
     return page;
 }
 
-uint8_t command_monitor(char *cmd) {
-    FILE *stream;
-    char buf[128];
-    size_t rsize = 0;
-    uint8_t ret;
-
-    stream = popen(cmd, "r");
-    if (!stream)
-        return 0;
-
-    LOGI("---%s---", cmd);
-    ret = 0;
-    do {
-        rsize = fread(buf, sizeof(char), sizeof(buf), stream);
-        LOGI("%s", buf);
-        if (strstr(buf, "all done")) {
-            ret = 1;
-            break;
-        } else if (strstr(buf, "skip")) {
-            ret = 2;
-            break;
-        } else if (strstr(buf, "repeat")) {
-            ret = 3;
-            break;
-        }
-    } while (rsize == sizeof(buf));
-    pclose(stream);
-    LOGI("");
-    return ret;
-}
-
 static void elrs_version_timer(struct _lv_timer_t *timer) {
     char label[80];
     uint8_t version[32] = {0};
@@ -257,6 +226,24 @@ static void elrs_version_timer(struct _lv_timer_t *timer) {
     lv_timer_del(timer);
     sprintf(label, "ver: %s", version);
     lv_label_set_text(label_esp, label);
+}
+
+static void update_vtx_progress(uint32_t val) {
+    if (!bar_vtx) {
+        return;
+    }
+
+    lv_bar_set_value(bar_vtx, val, LV_ANIM_OFF);
+    lv_timer_handler();
+}
+
+static void update_goggle_progress(uint32_t val) {
+    if (!bar_goggle) {
+        return;
+    }
+
+    lv_bar_set_value(bar_goggle, val, LV_ANIM_OFF);
+    lv_timer_handler();
 }
 
 static void page_version_enter() {
@@ -303,65 +290,85 @@ static void page_version_on_click(uint8_t key, int sel) {
         fclose(fp);
         // system("rm /tmp/rd_reg");
     } else if (sel == 1) {
-        uint8_t ret;
         lv_obj_clear_flag(bar_vtx, LV_OBJ_FLAG_HIDDEN);
         lv_label_set_text(btn_vtx, "Flashing...");
         lv_timer_handler();
 
-        is_need_update_progress = true;
-        ret = command_monitor("/mnt/app/script/update_vtx.sh");
-        is_need_update_progress = false;
+        const update_result_t ret = update_vtx(update_vtx_progress);
 
-        if (ret == 1) {
-            if (file_compare("/tmp/HDZERO_TX.bin", "/tmp/HDZERO_TX_RB.bin")) {
-                lv_label_set_text(btn_vtx, "#000FF00 SUCCESS#");
-            } else
-                lv_label_set_text(btn_vtx, "#FF0000 Verification failed, try it again#");
-        } else if (ret == 2) {
-            lv_label_set_text(btn_vtx, "#FFFF00 No firmware found.#");
-        } else {
-            lv_label_set_text(btn_vtx, "#FF0000 Failed, check connection...#");
-        }
-        system("rm /tmp/HDZERO_TX.bin");
-        system("rm /tmp/HDZERO_TX_RB.bin");
         lv_obj_add_flag(bar_vtx, LV_OBJ_FLAG_HIDDEN);
+        lv_timer_handler();
+
+        switch (ret) {
+        case UPDATE_SUCCESS:
+            lv_label_set_text(btn_vtx, "#000FF00 SUCCESS#");
+            lv_timer_handler();
+            break;
+
+        case UPDATE_VERIFY_FAIL:
+            lv_label_set_text(btn_vtx, "#FF0000 Verification failed, try it again#");
+            lv_timer_handler();
+            break;
+
+        case UPDATE_NOT_FOUND:
+            lv_label_set_text(btn_vtx, "#FFFF00 No firmware found.#");
+            lv_timer_handler();
+            break;
+
+        case UPDATE_MULTIPLE_FILES:
+        case UPDATE_ERROR:
+            lv_label_set_text(btn_vtx, "#FF0000 Failed, check connection...#");
+            lv_timer_handler();
+            break;
+        }
     } else if ((sel == 2) && !reboot_flag) {
-        uint8_t ret = 0;
         lv_obj_clear_flag(bar_goggle, LV_OBJ_FLAG_HIDDEN);
         lv_label_set_text(btn_goggle, "WAIT... DO NOT POWER OFF... ");
         lv_timer_handler();
 
-        is_need_update_progress = true;
-        ret = command_monitor("/mnt/app/script/update_goggle.sh");
-        is_need_update_progress = false;
+        const update_result_t ret = update_goggle(update_goggle_progress);
+
         lv_obj_add_flag(bar_goggle, LV_OBJ_FLAG_HIDDEN);
-        if (ret == 1) {
-            // bool b1 = file_compare("/tmp//tmp/goggle_update/HDZERO_RX.bin","/tmp//tmp/goggle_update/HDZERO_RX_RBL.bin");
-            // bool b2 = file_compare("/tmp//tmp/goggle_update/HDZERO_RX.bin","/tmp//tmp/goggle_update/HDZERO_RX_RBR.bin");
-            // bool b3 = file_compare("/tmp//tmp/goggle_update/HDZERO_VA.bin","/tmp//tmp/goggle_update/HDZERO_VA_RB.bin");
-            // LOGI("Verify result: %d %d %d", b1,b2,b3);
-            // if(b1 && b2 && b3) {
-            if (1) {
-                lv_timer_handler();
-                lv_label_set_text(btn_goggle, "#00FF00 Update success, repower goggle NOW!#");
-                beep();
-                usleep(1000000);
-                beep();
-                usleep(1000000);
-                beep();
-            } else
-                lv_label_set_text(btn_goggle, "#FF0000 FAILED#");
+        lv_timer_handler();
+
+        switch (ret) {
+        case UPDATE_SUCCESS:
             reboot_flag = true;
+
+            lv_label_set_text(btn_goggle, "#00FF00 Update success, repower goggle NOW!#");
             lv_timer_handler();
+
+            beep();
+            usleep(1000000);
+            beep();
+            usleep(1000000);
+            beep();
+
             while (1)
                 ; // dead loop
-        } else if (ret == 2) {
+
+            break;
+
+        case UPDATE_VERIFY_FAIL:
+            lv_label_set_text(btn_goggle, "#FF0000 Verification failed, try it again#");
+            lv_timer_handler();
+            break;
+
+        case UPDATE_NOT_FOUND:
             lv_label_set_text(btn_goggle, "#FFFF00 No firmware found.#");
-        } else if (ret == 3) {
+            lv_timer_handler();
+            break;
+
+        case UPDATE_MULTIPLE_FILES:
             lv_label_set_text(btn_goggle, "#FFFF00 Multiple versions been found. Keep only one.#");
-        } else
+            lv_timer_handler();
+            break;
+
+        case UPDATE_ERROR:
             lv_label_set_text(btn_goggle, "#FF0000 FAILED#");
-        lv_obj_add_flag(bar_goggle, LV_OBJ_FLAG_HIDDEN);
+            lv_timer_handler();
+            break;
+        }
     } else if (sel == 3) { // flash ESP via SD
         lv_obj_clear_flag(bar_esp, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(label_esp, LV_OBJ_FLAG_HIDDEN);
@@ -376,23 +383,6 @@ static void page_version_on_click(uint8_t key, int sel) {
             lv_label_set_text(btn_esp, "#FF0000 FAILED#");
         page_version_enter();
     }
-}
-
-void process_bar_update(const int value0,
-                        const int value1) {
-    if (bar_vtx && bar_goggle) {
-        // LOGI("v0=%d, v1=%d\n", value0, value1);
-        lv_bar_set_value(bar_vtx, value0, LV_ANIM_OFF);
-        lv_bar_set_value(bar_goggle, value1, LV_ANIM_OFF);
-    }
-}
-
-void bar_update(int sel, int value) {
-    if (bar_goggle && sel)
-        lv_bar_set_value(bar_goggle, value, LV_ANIM_OFF);
-    else if (bar_vtx && !sel)
-        lv_bar_set_value(bar_vtx, value, LV_ANIM_OFF);
-    lv_timer_handler();
 }
 
 void update_current_version() {
@@ -417,90 +407,10 @@ void version_update_title() {
     lv_label_set_text(btn_esp, "Update ESP32");
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// for progress info
-static int get_progress_info(int *v0, int *v1) {
-    FILE *stream;
-    char buf[128];
-    memset(buf, '\0', sizeof(buf));
-    stream = popen("/mnt/app/script/get_progress_info.sh", "r");
-    fread(buf, sizeof(char), sizeof(buf), stream);
-    pclose(stream);
-
-    char *pos = strchr(buf, 0xa);
-    char buf_v0[10];
-    char buf_v1[10];
-    memset(buf_v0, '\0', sizeof(buf_v0));
-    memset(buf_v1, '\0', sizeof(buf_v1));
-    memcpy(buf_v0, buf, pos - buf);
-    memcpy(buf_v1, pos + 1, strlen(buf) - (pos - buf - 1));
-
-    *v0 = atoi(buf_v0);
-    *v1 = atoi(buf_v1);
-    return 0;
-}
-
-extern pthread_mutex_t lvgl_mutex;
-
 void *thread_version(void *ptr) {
-    int count = 0;
-    int sec = 0;
-    int sec_last = 0;
-    int v0 = 0;
-    int v1 = 0;
-    bool is_step1 = false;
-    bool is_step2 = false;
-
-    int percentage = 0;
     for (;;) {
-        if (is_need_update_progress) {
-            // pthread_mutex_lock(&lvgl_mutex);
-            get_progress_info(&v0, &v1);
-            if (v1 == 0) {
-                percentage = 0;
-            } else if (v1 == 1) {
-                if (is_step1 == false)
-                    percentage = 1;
-
-                is_step1 = true;
-
-                if (sec_last != sec)
-                    percentage++;
-
-                if (percentage > 45)
-                    percentage = 45;
-            } else if (v1 == 45) {
-                if (is_step2 == false)
-                    percentage = 45;
-
-                is_step2 = true;
-                if (sec_last != sec)
-                    percentage++;
-
-                if (percentage > 99)
-                    percentage = 99;
-            } else if (v1 == 100) {
-                is_step1 = false;
-                is_step2 = false;
-
-                percentage = 100;
-            }
-
-            sec_last = sec;
-            process_bar_update(v0, percentage);
-            lv_timer_handler();
-            //	pthread_mutex_unlock(&lvgl_mutex);
-        }
-
-        if (count >= 10) {
-            count = 0;
-            sec++;
-        }
-
         /// Progess bar
         progress_bar_update();
-
-        count++;
         usleep(100000);
     }
     return NULL;
