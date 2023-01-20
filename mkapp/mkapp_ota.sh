@@ -17,15 +17,16 @@ function get_app_version() {
 ROOT_DIR=$PWD
 
 BIN_DIR=$ROOT_DIR/bin
-IMG_DIR=$ROOT_DIR/ota_app
+OTA_DIR=$ROOT_DIR/ota_app
+IMG_DIR=$ROOT_DIR/image
 APP_DIR=$ROOT_DIR/app
 
 APP_SIZE=12582912
-APP_IMAGE=${IMG_DIR}/app.fex
+APP_IMAGE=${OTA_DIR}/app.fex
 APP_VERSION=$(get_app_version "$ROOT_DIR/app/version")
 
-rm -rf $IMG_DIR
-mkdir -p $IMG_DIR
+rm -rf $OTA_DIR
+mkdir -p $OTA_DIR
 
 ${BIN_DIR}/mkfs.jffs2 -l -e 0x10000 \
 	-p ${APP_SIZE} \
@@ -34,6 +35,9 @@ ${BIN_DIR}/mkfs.jffs2 -l -e 0x10000 \
 
 make_img_md5 ${APP_IMAGE}
 
-pushd $IMG_DIR
-tar cvf $IMG_DIR/hdzgoggle_app_ota-${APP_VERSION}.tar *
+cp $IMG_DIR/system-*.img $OTA_DIR
+make_img_md5 $OTA_DIR/system-*.img
+
+pushd $OTA_DIR
+tar cvf $OTA_DIR/hdzgoggle_app_ota-${APP_VERSION}.tar *
 popd
