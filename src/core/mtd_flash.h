@@ -4,6 +4,7 @@
 
 bool mtd_update_rx(const char *filename);
 bool mtd_update_fpga(const char *filename);
+bool mtd_update_system(const char *filename);
 bool mtd_update_app(const char *filename);
 
 bool mtd_detect_vtx();

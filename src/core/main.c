@@ -36,6 +36,7 @@
 #include "ui/ui_main_menu.h"
 #include "ui/ui_porting.h"
 #include "ui/ui_statusbar.h"
+#include "ui/ui_update.h"
 
 static void load_ini_setting(void) {
     char str[128];
@@ -238,11 +239,12 @@ int main(int argc, char *argv[]) {
 
     gpio_init();
     lvgl_init();
+
     load_ini_setting();
     main_menu_init();
     statusbar_init();
+    ui_update_init();
     lv_timer_handler();
-    input_device_init();
 
     iic_init();
     OLED_Startup();
@@ -252,6 +254,10 @@ int main(int argc, char *argv[]) {
     uart_init();
     hw_stat_init();
     device_init();
+
+    ui_update_run();
+
+    input_device_init();
 
     osd_init();
     ims_init();

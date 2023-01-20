@@ -18,7 +18,7 @@
 
 #define PROC_MTD_DELIM ": \""
 
-#define BUFFER_SIZE (4UL * 1024UL * 1024UL)
+#define BUFFER_SIZE (8UL * 1024UL)
 
 #define DRIVER_BIND        "/sys/bus/spi/drivers/m25p80/bind"
 #define DRIVER_LEGACY_BIND "/sys/bus/spi/drivers/w25q128/bind"
@@ -98,12 +98,16 @@ static int getmeminfo(int fd, struct mtd_info_user *mtd) {
 
 static void spi_driver_bind(const char *dev) {
     file_printf(DRIVER_BIND, dev);
+    usleep(2000);
     file_printf(DRIVER_LEGACY_BIND, dev);
+    usleep(2000);
 }
 
 static void spi_driver_unbind(const char *dev) {
     file_printf(DRIVER_UNBIND, dev);
+    usleep(2000);
     file_printf(DRIVER_LEGACY_UNBIND, dev);
+    usleep(2000);
 }
 
 static bool mtd_erase_all(int fd) {
@@ -113,13 +117,14 @@ static bool mtd_erase_all(int fd) {
         return false;
     }
 
-    struct erase_info_user erase;
-    erase.start = 0x0;
-    erase.length = mtd.size;
-    LOGD("erasing %d bytes", mtd.size);
-    if (memerase(fd, &erase) < 0) {
-        LOGE("memerase failed");
-        return false;
+    struct erase_info_user ei;
+    ei.length = mtd.erasesize;
+    for (ei.start = 0; ei.start < mtd.size; ei.start += ei.length) {
+        LOGD("erasing bytes 0x%x - 0x%x", ei.start, ei.start + ei.length);
+        if (memerase(fd, &ei) < 0) {
+            LOGE("memerase failed");
+            return false;
+        }
     }
 
     return true;
@@ -160,6 +165,7 @@ static bool mtd_write_all(int fd, const char *filename) {
             LOGE("write error %d", written);
             break;
         }
+        LOGD("wrote %d bytes", offset);
         offset += written;
     }
 
@@ -247,6 +253,51 @@ bool mtd_update_fpga(const char *filename) {
     connect_fpga();
 
     return ret;
+}
+
+bool mtd_update_system(const char *filename) {
+    // erase boot sector
+    {
+        int fd = open("/dev/mtd0", O_SYNC | O_RDWR);
+        if (fd < 0) {
+            LOGE("open /dev/mtd0 failed");
+            return false;
+        }
+        if (!mtd_erase_all(fd)) {
+            close(fd);
+            return false;
+        }
+        close(fd);
+    }
+
+    // re-read partion table, should be empty now,
+    // giving us access to the whole device on mtd0
+    spi_driver_unbind("spi0.0");
+    spi_driver_bind("spi0.0");
+
+    // write the new image to device
+    {
+        int fd = open("/dev/mtd0", O_SYNC | O_RDWR);
+        if (fd < 0) {
+            LOGE("open /dev/mtd0 failed");
+            return false;
+        }
+        if (!mtd_erase_all(fd)) {
+            close(fd);
+            return false;
+        }
+        if (!mtd_write_all(fd, filename)) {
+            close(fd);
+            return false;
+        }
+        close(fd);
+    }
+
+    // re-read partion table, giving us back partions as written
+    spi_driver_unbind("spi0.0");
+    spi_driver_bind("spi0.0");
+
+    return true;
 }
 
 bool mtd_update_app(const char *filename) {
