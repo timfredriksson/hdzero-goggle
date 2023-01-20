@@ -59,6 +59,11 @@ update_result_t update_goggle(update_progress_cb_t progress) {
     progress(0);
     RUN_SCRIPT(UNTAR);
 
+    bool is_legacy_root = !file_exists("/version");
+    if (is_legacy_root) {
+        system("insmod /mnt/app/ko/w25q128.ko");
+    }
+
     // disable it66021
     IT66021_srst();
 
@@ -80,6 +85,10 @@ update_result_t update_goggle(update_progress_cb_t progress) {
     }
     progress(100);
 
+    if (is_legacy_root) {
+        system("rmmod /mnt/app/ko/w25q128.ko");
+    }
+
     return UPDATE_SUCCESS;
 }
 
@@ -94,11 +103,20 @@ update_result_t update_vtx(update_progress_cb_t progress) {
         return UPDATE_ERROR;
     }
 
+    bool is_legacy_root = !file_exists("/version");
+    if (is_legacy_root) {
+        system("insmod /mnt/app/ko/w25q128.ko");
+    }
+
     progress(0);
     if (!mtd_update_vtx(VTX_UPDATE_FILE)) {
         return UPDATE_ERROR;
     }
     progress(100);
+
+    if (is_legacy_root) {
+        system("rmmod /mnt/app/ko/w25q128.ko");
+    }
 
     return UPDATE_SUCCESS;
 }

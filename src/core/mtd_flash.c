@@ -20,8 +20,11 @@
 
 #define BUFFER_SIZE (4UL * 1024UL * 1024UL)
 
-#define DRIVER_BIND   "/sys/bus/spi/drivers/m25p80/bind"
-#define DRIVER_UNBIND "/sys/bus/spi/drivers/m25p80/unbind"
+#define DRIVER_BIND        "/sys/bus/spi/drivers/m25p80/bind"
+#define DRIVER_LEGACY_BIND "/sys/bus/spi/drivers/w25q128/bind"
+
+#define DRIVER_UNBIND        "/sys/bus/spi/drivers/m25p80/unbind"
+#define DRIVER_LEGACY_UNBIND "/sys/bus/spi/drivers/w25q128/unbind"
 
 static void disconnect_fpga() {
     gpio_set(GPIO_FPGA_RESET, 1);
@@ -75,7 +78,7 @@ static bool mtd_find_device(const char *name, char *dev) {
     fclose(fp);
 
     if (!found) {
-        LOGW("%s not found in /proc/mtd");
+        LOGW("%s not found in /proc/mtd", name);
         return false;
     }
 
@@ -91,6 +94,16 @@ static int memerase(int fd, struct erase_info_user *erase) {
 
 static int getmeminfo(int fd, struct mtd_info_user *mtd) {
     return ioctl(fd, MEMGETINFO, mtd);
+}
+
+static void spi_driver_bind(const char *dev) {
+    file_printf(DRIVER_BIND, dev);
+    file_printf(DRIVER_LEGACY_BIND, dev);
+}
+
+static void spi_driver_unbind(const char *dev) {
+    file_printf(DRIVER_UNBIND, dev);
+    file_printf(DRIVER_LEGACY_UNBIND, dev);
 }
 
 static bool mtd_erase_all(int fd) {
@@ -205,16 +218,16 @@ bool mtd_update_rx(const char *filename) {
     LOGD("disconnect hdz rx");
     disconnect_hdz_rx();
 
-    file_printf(DRIVER_BIND, "spi1.0");
-    file_printf(DRIVER_BIND, "spi1.1");
+    spi_driver_bind("spi1.0");
+    spi_driver_bind("spi1.1");
 
     bool ret = mtd_write_file("spi1.0", filename);
     if (ret) {
         ret = mtd_write_file("spi1.1", filename);
     }
 
-    file_printf(DRIVER_UNBIND, "spi1.1");
-    file_printf(DRIVER_UNBIND, "spi1.0");
+    spi_driver_unbind("spi1.1");
+    spi_driver_unbind("spi1.0");
 
     LOGD("connect hdz rx");
     connect_hdz_rx();
@@ -226,9 +239,9 @@ bool mtd_update_fpga(const char *filename) {
     LOGD("disconnect fpga");
     disconnect_fpga();
 
-    file_printf(DRIVER_BIND, "spi3.0");
+    spi_driver_bind("spi3.0");
     bool ret = mtd_write_file("spi3.0", filename);
-    file_printf(DRIVER_UNBIND, "spi3.0");
+    spi_driver_unbind("spi3.0");
 
     LOGD("connect fpga");
     connect_fpga();
@@ -241,9 +254,9 @@ bool mtd_update_app(const char *filename) {
 }
 
 bool mtd_detect_vtx() {
-    file_printf(DRIVER_BIND, "spi1.0");
+    spi_driver_bind("spi1.0");
     const uint32_t size = mtd_get_size("spi1.0");
-    file_printf(DRIVER_UNBIND, "spi1.0");
+    spi_driver_unbind("spi1.0");
 
     // we expect a flash chip with 1MB
     // this check should probably be extended
@@ -251,8 +264,8 @@ bool mtd_detect_vtx() {
 }
 
 bool mtd_update_vtx(const char *filename) {
-    file_printf(DRIVER_BIND, "spi1.0");
+    spi_driver_bind("spi1.0");
     bool ret = mtd_write_file("spi1.0", filename);
-    file_printf(DRIVER_UNBIND, "spi1.0");
+    spi_driver_unbind("spi1.0");
     return ret;
 }
