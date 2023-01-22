@@ -2,10 +2,12 @@
 
 #include <stdbool.h>
 
-bool mtd_update_rx(const char *filename);
-bool mtd_update_fpga(const char *filename);
-bool mtd_update_system(const char *filename);
-bool mtd_update_app(const char *filename);
+#include "core/update.h"
+
+bool mtd_update_rx(update_progress_cb_t progress, const char *filename);
+bool mtd_update_fpga(update_progress_cb_t progress, const char *filename);
+bool mtd_update_system(update_progress_cb_t progress, const char *filename);
+bool mtd_update_app(update_progress_cb_t progress, const char *filename);
 
 bool mtd_detect_vtx();
-bool mtd_update_vtx(const char *filename);
+bool mtd_update_vtx(update_progress_cb_t progress, const char *filename);

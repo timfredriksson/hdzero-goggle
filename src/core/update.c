@@ -59,7 +59,6 @@ update_result_t update_goggle(update_progress_cb_t progress) {
         return UPDATE_MULTIPLE_FILES;
     }
 
-    progress(0);
     RUN_SCRIPT(UNTAR);
 
     bool is_legacy_root = !file_exists("/version");
@@ -77,30 +76,26 @@ update_result_t update_goggle(update_progress_cb_t progress) {
     mlockall(MCL_CURRENT | MCL_FUTURE);
 
     LOGD("flashing hdz rx");
-    if (!mtd_update_rx(TMP_DIR "/HDZGOGGLE_RX.bin")) {
+    if (!mtd_update_rx(progress, TMP_DIR "/HDZGOGGLE_RX.bin")) {
         return UPDATE_ERROR;
     }
-    progress(30);
 
     LOGD("flashing fpga");
-    if (!mtd_update_fpga(TMP_DIR "/HDZGOGGLE_VA.bin")) {
+    if (!mtd_update_fpga(progress, TMP_DIR "/HDZGOGGLE_VA.bin")) {
         return UPDATE_ERROR;
     }
-    progress(60);
 
     if (file_exists(TMP_DIR "/system.img")) {
         LOGD("flashing system");
-        if (!mtd_update_system(TMP_DIR "/system.img")) {
+        if (!mtd_update_system(progress, TMP_DIR "/system.img")) {
             return UPDATE_ERROR;
         }
     } else {
         LOGD("flashing app");
-        if (!mtd_update_app(TMP_DIR "/app.fex")) {
+        if (!mtd_update_app(progress, TMP_DIR "/app.fex")) {
             return UPDATE_ERROR;
         }
     }
-
-    progress(100);
 
     if (is_legacy_root) {
         system("rmmod /mnt/app/ko/w25q128.ko");
@@ -137,20 +132,16 @@ update_result_t update_finalize(update_progress_cb_t progress) {
 
     system("rmmod /mnt/app/ko/w25q128.ko");
 
-    progress(0);
     RUN_SCRIPT(UNTAR);
 
     if (!file_exists(TMP_DIR "/system.img")) {
         return UPDATE_NOT_FOUND;
     }
-    progress(10);
 
     LOGD("flashing system");
-    if (!mtd_update_system(TMP_DIR "/system.img")) {
+    if (!mtd_update_system(progress, TMP_DIR "/system.img")) {
         return UPDATE_ERROR;
     }
-
-    progress(100);
 
     return UPDATE_SUCCESS;
 }
@@ -171,11 +162,9 @@ update_result_t update_vtx(update_progress_cb_t progress) {
         system("insmod /mnt/app/ko/w25q128.ko");
     }
 
-    progress(0);
-    if (!mtd_update_vtx(VTX_UPDATE_FILE)) {
+    if (!mtd_update_vtx(progress, VTX_UPDATE_FILE)) {
         return UPDATE_ERROR;
     }
-    progress(100);
 
     if (is_legacy_root) {
         system("rmmod /mnt/app/ko/w25q128.ko");

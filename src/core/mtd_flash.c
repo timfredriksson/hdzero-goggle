@@ -110,12 +110,14 @@ static void spi_driver_unbind(const char *dev) {
     usleep(2000);
 }
 
-static bool mtd_erase_all(int fd) {
+static bool mtd_erase_all(update_progress_cb_t progress, int fd) {
     struct mtd_info_user mtd;
     if (getmeminfo(fd, &mtd) < 0) {
         LOGE("getmeminfo failed");
         return false;
     }
+
+    progress(0);
 
     struct erase_info_user ei;
     ei.length = mtd.erasesize;
@@ -125,12 +127,15 @@ static bool mtd_erase_all(int fd) {
             LOGE("memerase failed");
             return false;
         }
+        progress((ei.start * 100) / mtd.size);
     }
+
+    progress(100);
 
     return true;
 }
 
-static bool mtd_write_all(int fd, const char *filename) {
+static bool mtd_write_all(update_progress_cb_t progress, int fd, const char *filename) {
     uint8_t *buf = (uint8_t *)malloc(BUFFER_SIZE);
     if (!buf) {
         return false;
@@ -147,6 +152,7 @@ static bool mtd_write_all(int fd, const char *filename) {
         return false;
     }
 
+    progress(0);
     fseek(fp, 0L, SEEK_END);
     size_t file_size = ftell(fp);
     fseek(fp, 0L, SEEK_SET);
@@ -167,15 +173,18 @@ static bool mtd_write_all(int fd, const char *filename) {
         }
         LOGD("wrote %d bytes", offset);
         offset += written;
+        progress((offset * 100) / file_size);
     }
 
     free(buf);
     fclose(fp);
 
+    progress(100);
+
     return true;
 }
 
-static bool mtd_write_file(const char *dev_name, const char *filename) {
+static bool mtd_write_file(update_progress_cb_t progress, const char *dev_name, const char *filename) {
     char dev_path[64];
     if (!mtd_find_device(dev_name, dev_path)) {
         return false;
@@ -187,12 +196,12 @@ static bool mtd_write_file(const char *dev_name, const char *filename) {
         return false;
     }
 
-    if (!mtd_erase_all(fd)) {
+    if (!mtd_erase_all(progress, fd)) {
         close(fd);
         return false;
     }
 
-    bool ret = mtd_write_all(fd, filename);
+    bool ret = mtd_write_all(progress, fd, filename);
     close(fd);
     return ret;
 }
@@ -220,16 +229,16 @@ static uint32_t mtd_get_size(const char *dev_name) {
     return mtd.size;
 }
 
-bool mtd_update_rx(const char *filename) {
+bool mtd_update_rx(update_progress_cb_t progress, const char *filename) {
     LOGD("disconnect hdz rx");
     disconnect_hdz_rx();
 
     spi_driver_bind("spi1.0");
     spi_driver_bind("spi1.1");
 
-    bool ret = mtd_write_file("spi1.0", filename);
+    bool ret = mtd_write_file(progress, "spi1.0", filename);
     if (ret) {
-        ret = mtd_write_file("spi1.1", filename);
+        ret = mtd_write_file(progress, "spi1.1", filename);
     }
 
     spi_driver_unbind("spi1.1");
@@ -241,12 +250,12 @@ bool mtd_update_rx(const char *filename) {
     return ret;
 }
 
-bool mtd_update_fpga(const char *filename) {
+bool mtd_update_fpga(update_progress_cb_t progress, const char *filename) {
     LOGD("disconnect fpga");
     disconnect_fpga();
 
     spi_driver_bind("spi3.0");
-    bool ret = mtd_write_file("spi3.0", filename);
+    bool ret = mtd_write_file(progress, "spi3.0", filename);
     spi_driver_unbind("spi3.0");
 
     LOGD("connect fpga");
@@ -255,7 +264,7 @@ bool mtd_update_fpga(const char *filename) {
     return ret;
 }
 
-bool mtd_update_system(const char *filename) {
+bool mtd_update_system(update_progress_cb_t progress, const char *filename) {
     // erase boot sector
     {
         int fd = open("/dev/mtd0", O_SYNC | O_RDWR);
@@ -263,7 +272,7 @@ bool mtd_update_system(const char *filename) {
             LOGE("open /dev/mtd0 failed");
             return false;
         }
-        if (!mtd_erase_all(fd)) {
+        if (!mtd_erase_all(progress, fd)) {
             close(fd);
             return false;
         }
@@ -282,11 +291,11 @@ bool mtd_update_system(const char *filename) {
             LOGE("open /dev/mtd0 failed");
             return false;
         }
-        if (!mtd_erase_all(fd)) {
+        if (!mtd_erase_all(progress, fd)) {
             close(fd);
             return false;
         }
-        if (!mtd_write_all(fd, filename)) {
+        if (!mtd_write_all(progress, fd, filename)) {
             close(fd);
             return false;
         }
@@ -300,8 +309,8 @@ bool mtd_update_system(const char *filename) {
     return true;
 }
 
-bool mtd_update_app(const char *filename) {
-    return mtd_write_file("app", filename);
+bool mtd_update_app(update_progress_cb_t progress, const char *filename) {
+    return mtd_write_file(progress, "app", filename);
 }
 
 bool mtd_detect_vtx() {
@@ -314,9 +323,9 @@ bool mtd_detect_vtx() {
     return size == 1048576;
 }
 
-bool mtd_update_vtx(const char *filename) {
+bool mtd_update_vtx(update_progress_cb_t progress, const char *filename) {
     spi_driver_bind("spi1.0");
-    bool ret = mtd_write_file("spi1.0", filename);
+    bool ret = mtd_write_file(progress, "spi1.0", filename);
     spi_driver_unbind("spi1.0");
     return ret;
 }
