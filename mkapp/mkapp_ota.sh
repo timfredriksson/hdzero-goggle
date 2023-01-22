@@ -32,10 +32,10 @@ ${BIN_DIR}/mkfs.jffs2 -l -e 0x10000 \
 	-p ${APP_SIZE} \
 	-d ${APP_DIR} \
 	-o ${APP_IMAGE}
-
 make_img_md5 ${APP_IMAGE}
 
 cp $IMG_DIR/system-*.img $OTA_DIR
+${BIN_DIR}/sunxi-mbr patch $OTA_DIR/system-*.img app ${APP_IMAGE}
 make_img_md5 $OTA_DIR/system-*.img
 
 pushd $OTA_DIR
